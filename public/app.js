@@ -39,6 +39,7 @@ const benchmarkSummary = document.querySelector('#benchmarkSummary');
 const deploymentStatus = document.querySelector('#deploymentStatus');
 const readinessJsonLink = document.querySelector('#readinessJsonLink');
 const benchmarksJsonLink = document.querySelector('#benchmarksJsonLink');
+const goldenDemoLink = document.querySelector('#goldenDemoLink');
 
 function escapeHtml(value = '') {
   return String(value)
@@ -166,6 +167,7 @@ function humanize(value = '') {
 function updateJsonLinks() {
   readinessJsonLink.href = apiUrl('/api/readiness');
   benchmarksJsonLink.href = apiUrl('/api/benchmarks');
+  goldenDemoLink.href = apiUrl('/api/demo/golden');
 }
 
 function hydrateConfigForm() {

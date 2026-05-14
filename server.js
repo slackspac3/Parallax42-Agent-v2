@@ -8,6 +8,7 @@ const { URL } = require('node:url');
 const { appendAuditRecord, readRecentAuditRecords } = require('./lib/auditStore');
 const { runBenchmark } = require('./lib/benchmarkSuite');
 const { getReadinessInventory, runComplianceAgent } = require('./lib/complianceAgent');
+const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
 const { readJsonBody, writeJson } = require('./lib/http');
 
 const PORT = Number(process.env.PORT || 3020);
@@ -62,6 +63,11 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && url.pathname === '/api/benchmarks') {
       writeJson(res, 200, runBenchmark());
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/demo/golden') {
+      writeJson(res, 200, buildGoldenWorkflowRun({ mode: 'local_golden_demo' }));
       return;
     }
 

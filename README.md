@@ -27,6 +27,7 @@ Implemented in this repo:
 - optional CrewAI adapter with six role-specific agents and YAML task definitions
 - local benchmark endpoint and audit JSONL persistence
 - generated evidence capture under `evidence/`
+- replayable golden demo workflow at `GET /api/demo/golden`
 - unit tests and syntax checks
 - initial G42 submission dossier under `docs/`
 
@@ -99,6 +100,9 @@ python crewai_adapter/compliance_crew.py --live-crewai --input examples/high_ris
 ## Submission Dossier
 
 - [Agent Resume](docs/AGENT_RESUME.md)
+- [End State](docs/END_STATE.md)
+- [Work-Backward Roadmap](docs/ROADMAP.md)
+- [Golden Demo Workflow](docs/GOLDEN_DEMO_WORKFLOW.md)
 - [Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md)
 - [Benchmark Report](docs/BENCHMARK_REPORT.md)
 - [Responsible AI Controls](docs/RESPONSIBLE_AI_CONTROLS.md)

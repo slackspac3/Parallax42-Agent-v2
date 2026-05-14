@@ -14,6 +14,7 @@ This repo is designed to exceed the G42 brief by packaging a runnable agent, an 
 | Serverless API | Vercel handlers for health, readiness, benchmarks, audit, agent run, and relay. |
 | Production proof link | Live Parallax42 backend and Compass gateway health capture. |
 | Benchmarking | Local benchmark runner plus generated evidence artifacts. |
+| Golden demo replay | `GET /api/demo/golden` plus `evidence/golden-demo-run.json`. |
 
 ## Next Hardening Steps
 
@@ -22,6 +23,7 @@ This repo is designed to exceed the G42 brief by packaging a runnable agent, an 
 | Durable audit | PostgreSQL append-only run/audit tables with hash chaining. | Makes traceability enterprise-grade instead of local JSONL. |
 | RBAC | Microsoft Entra JWT validation plus role-policy middleware. | Satisfies secure authentication and reviewer/operator separation. |
 | Live workflow switch | Route selected `/api/agent/run` cases to the Parallax42 workflow. | Converts the demo agent into the deployed enterprise workflow path. |
+| CrewAI Flow runtime | Promote the current CrewAI adapter into a Flow-first execution path. | Aligns the implementation with production-oriented CrewAI patterns while preserving deterministic fallback. |
 | Responsible AI evals | Adversarial cases, unsupported-claim detection, bias review, and refusal checks. | Moves RAI from control design to measurable assurance. |
 | Integration tests | Contract tests for ServiceNow, Coupa, SharePoint, Dynamics, and GRC payloads. | Proves integration readiness beyond documentation. |
 | Demo recording | Capture intake, evidence upload, domain scan, gap challenge, recommendation, and audit. | Satisfies "Watch the Agent Work" with repeatable proof. |

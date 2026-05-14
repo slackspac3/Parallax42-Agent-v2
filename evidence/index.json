@@ -1,15 +1,17 @@
 {
-  "generatedAt": "2026-05-14T07:20:30.496Z",
+  "generatedAt": "2026-05-14T07:53:21.650Z",
   "artifacts": [
     "live-health.json",
     "benchmark-report.json",
     "readiness.json",
-    "sample-agent-run.json"
+    "sample-agent-run.json",
+    "golden-demo-run.json"
   ],
   "summary": {
     "backendHealthOk": true,
     "gatewayHealthOk": true,
     "benchmarkPassRate": 1,
-    "sampleDecision": "not_ready"
+    "sampleDecision": "not_ready",
+    "goldenDemoAcceptance": "passed"
   }
 }

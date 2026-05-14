@@ -243,8 +243,8 @@
   },
   "trace": [
     {
-      "eventId": "evt_1778743231126_krut0j",
-      "timestamp": "2026-05-14T07:20:31.126Z",
+      "eventId": "evt_1778745202257_rh7tpf",
+      "timestamp": "2026-05-14T07:53:22.257Z",
       "agent": "intake_agent",
       "eventType": "case_loaded",
       "parentEventId": "",
@@ -256,11 +256,11 @@
       }
     },
     {
-      "eventId": "evt_1778743231126_7pwkku",
-      "timestamp": "2026-05-14T07:20:31.126Z",
+      "eventId": "evt_1778745202258_rbjm5r",
+      "timestamp": "2026-05-14T07:53:22.258Z",
       "agent": "domain_scanner_agent",
       "eventType": "domains_scanned",
-      "parentEventId": "evt_1778743231126_krut0j",
+      "parentEventId": "evt_1778745202257_rh7tpf",
       "payload": {
         "matchedDomains": [
           {
@@ -334,11 +334,11 @@
       }
     },
     {
-      "eventId": "evt_1778743231126_xzuglh",
-      "timestamp": "2026-05-14T07:20:31.126Z",
+      "eventId": "evt_1778745202258_dxln2x",
+      "timestamp": "2026-05-14T07:53:22.258Z",
       "agent": "evidence_agent",
       "eventType": "evidence_mapped",
-      "parentEventId": "evt_1778743231126_krut0j",
+      "parentEventId": "evt_1778745202257_rh7tpf",
       "payload": {
         "evidenceIds": [
           "p42:ai-supplier-review-playbook",
@@ -358,22 +358,22 @@
       }
     },
     {
-      "eventId": "evt_1778743231126_keqj1x",
-      "timestamp": "2026-05-14T07:20:31.126Z",
+      "eventId": "evt_1778745202258_5srigo",
+      "timestamp": "2026-05-14T07:53:22.258Z",
       "agent": "control_agent",
       "eventType": "controls_recommended",
-      "parentEventId": "evt_1778743231126_krut0j",
+      "parentEventId": "evt_1778745202257_rh7tpf",
       "payload": {
         "controlCount": 14,
         "highSeverityGaps": 3
       }
     },
     {
-      "eventId": "evt_1778743231126_jbsb17",
-      "timestamp": "2026-05-14T07:20:31.126Z",
+      "eventId": "evt_1778745202258_2sxnly",
+      "timestamp": "2026-05-14T07:53:22.258Z",
       "agent": "output_review_agent",
       "eventType": "output_review_completed",
-      "parentEventId": "evt_1778743231126_krut0j",
+      "parentEventId": "evt_1778745202257_rh7tpf",
       "payload": {
         "status": "needs_revision",
         "finalOutputSafeForHumanReview": true,

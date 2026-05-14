@@ -52,6 +52,7 @@ GET  /api/health
 GET  /api/readiness
 GET  /api/benchmarks
 GET  /api/audit/recent
+GET  /api/demo/golden
 POST /api/agent/run
 GET  /api/backend?path=/health
 ```

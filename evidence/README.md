@@ -15,5 +15,6 @@ Generated artifacts:
 | `benchmark-report.json` | Local benchmark report. |
 | `readiness.json` | Submission readiness inventory. |
 | `sample-agent-run.json` | Sample compliance case decision, gaps, evidence IDs, and trace. |
+| `golden-demo-run.json` | Canonical replayable workflow for the submission demo. |
 
 Do not place secrets, raw customer documents, or private uploads in this directory.

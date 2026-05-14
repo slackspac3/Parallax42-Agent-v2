@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { runBenchmark } = require('../lib/benchmarkSuite');
 const { getReadinessInventory, runComplianceAgent } = require('../lib/complianceAgent');
+const { buildGoldenWorkflowRun } = require('../lib/goldenWorkflow');
 const sampleCase = require('../examples/high_risk_ai_saas_case.json');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -49,19 +50,22 @@ async function main() {
   const benchmark = runBenchmark();
   const readiness = getReadinessInventory();
   const sampleRun = runComplianceAgent(sampleCase, { mode: 'evidence_capture' });
+  const goldenDemo = buildGoldenWorkflowRun({ mode: 'evidence_capture_golden_demo' });
   const index = {
     generatedAt,
     artifacts: [
       'live-health.json',
       'benchmark-report.json',
       'readiness.json',
-      'sample-agent-run.json'
+      'sample-agent-run.json',
+      'golden-demo-run.json'
     ],
     summary: {
       backendHealthOk: backendHealth.ok,
       gatewayHealthOk: gatewayHealth.ok,
       benchmarkPassRate: benchmark.summary.passRate,
-      sampleDecision: sampleRun.decision?.status || 'blocked'
+      sampleDecision: sampleRun.decision?.status || 'blocked',
+      goldenDemoAcceptance: goldenDemo.evidenceChecklist.acceptanceStatus
     }
   };
 
@@ -69,6 +73,7 @@ async function main() {
   writeJson('benchmark-report.json', benchmark);
   writeJson('readiness.json', readiness);
   writeJson('sample-agent-run.json', sampleRun);
+  writeJson('golden-demo-run.json', goldenDemo);
   writeJson('index.json', index);
   process.stdout.write(`Evidence captured in ${path.relative(ROOT, EVIDENCE_DIR)}\n`);
 }
