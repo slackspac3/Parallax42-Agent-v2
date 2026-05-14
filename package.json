@@ -1,0 +1,17 @@
+{
+  "name": "parallax42-compliance-intelligence-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node server.js",
+    "check:syntax": "node scripts/syntax-check.js",
+    "benchmark": "node scripts/benchmark.js",
+    "test": "node --test tests/unit/**/*.test.js",
+    "check:crewai": "python3 crewai_adapter/compliance_crew.py --dry-run",
+    "qa": "npm run check:syntax && npm test && npm run benchmark && npm run check:crewai"
+  }
+}

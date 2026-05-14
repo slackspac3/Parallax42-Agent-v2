@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Parallax42 Compliance Intelligence Agent</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <canvas id="networkCanvas" aria-hidden="true"></canvas>
+    <header class="topbar">
+      <div>
+        <span class="brand-mark">P42</span>
+        <span class="brand-name">Parallax42 Compliance Intelligence Agent</span>
+      </div>
+      <nav aria-label="Primary">
+        <a href="#run">Run</a>
+        <a href="#evidence">Evidence</a>
+        <a href="#readiness">Readiness</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="workspace" id="run">
+        <div class="intro">
+          <p class="eyebrow">G42 AI agent submission workspace</p>
+          <h1>Compliance decisions with traceable evidence, named gaps, and human approval.</h1>
+          <p class="lede">Run a compliance case through the local agent loop, then package the live Parallax42 deployment, benchmarks, and architecture evidence for submission.</p>
+          <div class="actions">
+            <button id="sampleRun" type="button">Run sample case</button>
+            <a href="/api/readiness">Readiness JSON</a>
+            <a href="/api/benchmarks">Benchmarks</a>
+          </div>
+        </div>
+
+        <form id="agentForm" class="run-panel">
+          <label>
+            Compliance brief
+            <textarea name="brief" rows="7">Procure a critical AI SaaS supplier that processes personal data, integrates with Azure AD and ServiceNow, and supports finance reporting across the UAE.</textarea>
+          </label>
+          <div class="grid">
+            <label>
+              Business unit
+              <input name="businessUnit" value="Group Technology Risk" />
+            </label>
+            <label>
+              Geography
+              <input name="geography" value="UAE" />
+            </label>
+          </div>
+          <label>
+            Evidence summary
+            <textarea name="documentSummary" rows="4">SOC 2 summary available. No signed DPA, model-training exclusion, or continuity plan attached.</textarea>
+          </label>
+          <button type="submit">Run agent</button>
+        </form>
+      </section>
+
+      <section class="decision-band" aria-live="polite">
+        <div>
+          <span class="label">Decision</span>
+          <strong id="decisionText">Waiting for run</strong>
+        </div>
+        <div>
+          <span class="label">Readiness</span>
+          <strong id="readinessScore">--</strong>
+        </div>
+        <div>
+          <span class="label">Evidence IDs</span>
+          <strong id="evidenceCount">--</strong>
+        </div>
+      </section>
+
+      <section class="split" id="evidence">
+        <div>
+          <h2>Domain Scan</h2>
+          <div id="domainList" class="list"></div>
+        </div>
+        <div>
+          <h2>Blocking Gaps</h2>
+          <div id="gapList" class="list"></div>
+        </div>
+      </section>
+
+      <section class="trace-section">
+        <h2>Agent Trace</h2>
+        <ol id="traceList" class="trace"></ol>
+      </section>
+
+      <section class="readiness" id="readiness">
+        <div>
+          <h2>Submission Readiness</h2>
+          <p>Current state from this packaging repo plus linked Parallax42 deployment evidence.</p>
+        </div>
+        <dl id="readinessList"></dl>
+      </section>
+
+      <section class="trace-section">
+        <h2>Local Benchmark</h2>
+        <div id="benchmarkSummary" class="list"></div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

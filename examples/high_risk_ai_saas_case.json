@@ -1,0 +1,16 @@
+{
+  "caseId": "g42-cia-demo-001",
+  "requester": "Group Technology Risk",
+  "businessUnit": "Group Technology Risk",
+  "geography": "UAE",
+  "supplierName": "Example AI SaaS",
+  "serviceDescription": "Critical AI workflow automation service for finance reporting and operational analytics.",
+  "brief": "Procure a critical AI SaaS supplier that processes personal data, integrates with Azure AD and ServiceNow, and supports finance reporting across the UAE.",
+  "integrations": ["Azure AD", "ServiceNow", "Finance reporting"],
+  "documents": [
+    {
+      "title": "Supplier assurance summary",
+      "summary": "SOC 2 summary available. No signed DPA, model-training exclusion, or continuity plan attached."
+    }
+  ]
+}

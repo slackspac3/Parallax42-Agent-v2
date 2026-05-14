@@ -1,0 +1,7 @@
+# Optional CrewAI runtime dependencies.
+# Install only when running the CrewAI adapter:
+#   python3 -m venv .venv
+#   source .venv/bin/activate
+#   python -m pip install -r requirements-crewai.txt
+crewai
+pyyaml
