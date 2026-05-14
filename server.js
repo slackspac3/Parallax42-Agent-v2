@@ -5,9 +5,10 @@ const http = require('node:http');
 const path = require('node:path');
 const { URL } = require('node:url');
 
+const { runAgentWithRuntime, runtimeHealth } = require('./lib/agentRuntime');
 const { appendAuditRecord, readRecentAuditRecords } = require('./lib/auditStore');
 const { runBenchmark } = require('./lib/benchmarkSuite');
-const { getReadinessInventory, runComplianceAgent } = require('./lib/complianceAgent');
+const { getReadinessInventory } = require('./lib/complianceAgent');
 const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
 const { readJsonBody, writeJson } = require('./lib/http');
 
@@ -50,7 +51,8 @@ const server = http.createServer(async (req, res) => {
       writeJson(res, 200, {
         ok: true,
         service: 'parallax42-compliance-intelligence-agent',
-        mode: process.env.AGENT_MODE || 'local_deterministic',
+        mode: process.env.AGENT_MODE || 'crewai_flow',
+        agentRuntime: runtimeHealth(),
         linkedBackend: process.env.PARALLAX42_BACKEND_URL || 'https://api.parallax42.bhavukarora.com'
       });
       return;
@@ -80,7 +82,9 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/agent/run') {
       const body = await readJsonBody(req);
-      const result = runComplianceAgent(body);
+      const result = runAgentWithRuntime(body, {
+        runtime: req.headers['x-agent-runtime'] || body.runtime
+      });
       appendAuditRecord({
         actor: result.case?.requester || 'browser_operator',
         caseId: result.case?.caseId,
@@ -90,7 +94,8 @@ const server = http.createServer(async (req, res) => {
           decision: result.decision,
           evidenceIds: result.evidenceIds,
           gapCount: result.gaps?.length || 0,
-          traceEventCount: result.trace?.length || 0
+          traceEventCount: result.trace?.length || 0,
+          runtime: result.runtime
         }
       });
       writeJson(res, result.ok ? 200 : 400, result);

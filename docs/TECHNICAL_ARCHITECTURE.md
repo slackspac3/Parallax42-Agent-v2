@@ -5,6 +5,7 @@
 ```text
 Browser cockpit
   -> local Node API or Vercel API
+  -> CrewAI Flow runtime router
   -> compliance agent loop
   -> evidence/domain library
   -> decision + control plan + trace
@@ -35,7 +36,9 @@ GitHub Pages cockpit
 | --- | --- | --- |
 | Node API | `server.js` | Static cockpit, health, readiness, and agent-run endpoint. |
 | Vercel API | `api/` | Serverless equivalent of the local API plus backend relay. |
+| Runtime router | `lib/agentRuntime.js` | Selects CrewAI Flow, deterministic fallback, and runtime metadata. |
 | Agent runtime | `lib/complianceAgent.js` | Intake normalization, domain scan, gaps, decision, controls, trace. |
+| CrewAI Flow adapter | `crewai_adapter/compliance_flow.py` | Flow state/stage mapping and optional live Flow validation. |
 | Evidence layer | `lib/evidenceLibrary.js` | Initial compliance domain library and evidence IDs. |
 | Audit store | `lib/auditStore.js` | JSONL audit locally, with Vercel-safe temporary persistence. |
 | Cockpit UI | `public/` | Operator-facing run surface for the submission package. |

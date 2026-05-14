@@ -1,5 +1,6 @@
 'use strict';
 
+const { runtimeHealth } = require('../lib/agentRuntime');
 const { methodGuard, sendJson } = require('./_http');
 
 module.exports = async function handler(req, res) {
@@ -8,7 +9,8 @@ module.exports = async function handler(req, res) {
     ok: true,
     service: 'parallax42-compliance-intelligence-agent',
     runtime: 'vercel',
-    mode: process.env.AGENT_MODE || 'local_deterministic',
+    mode: process.env.AGENT_MODE || 'crewai_flow',
+    agentRuntime: runtimeHealth(),
     linkedBackend: process.env.PARALLAX42_BACKEND_URL || 'https://api.parallax42.bhavukarora.com',
     pagesOrigin: process.env.P42_PAGES_ORIGIN || 'https://slackspac3.github.io'
   });

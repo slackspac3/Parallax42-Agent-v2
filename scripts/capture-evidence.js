@@ -2,8 +2,9 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { runAgentWithRuntime } = require('../lib/agentRuntime');
 const { runBenchmark } = require('../lib/benchmarkSuite');
-const { getReadinessInventory, runComplianceAgent } = require('../lib/complianceAgent');
+const { getReadinessInventory } = require('../lib/complianceAgent');
 const { buildGoldenWorkflowRun } = require('../lib/goldenWorkflow');
 const sampleCase = require('../examples/high_risk_ai_saas_case.json');
 
@@ -49,8 +50,8 @@ async function main() {
 
   const benchmark = runBenchmark();
   const readiness = getReadinessInventory();
-  const sampleRun = runComplianceAgent(sampleCase, { mode: 'evidence_capture' });
-  const goldenDemo = buildGoldenWorkflowRun({ mode: 'evidence_capture_golden_demo' });
+  const sampleRun = runAgentWithRuntime(sampleCase, { mode: 'evidence_capture', runtime: 'crewai_flow' });
+  const goldenDemo = buildGoldenWorkflowRun({ mode: 'evidence_capture_golden_demo', runtime: 'crewai_flow' });
   const index = {
     generatedAt,
     artifacts: [

@@ -15,8 +15,8 @@
 | Technical architecture | `docs/TECHNICAL_ARCHITECTURE.md`. | Strong | Add diagrams and data-flow threat model. |
 | Integration capabilities | Integration matrix, Parallax42 ingestion API design, and sample payloads for Coupa, ServiceNow, SharePoint, and Dynamics. | Strong | Add live replay screenshots and integration contract tests. |
 | Video demonstration | Script planned. | Gap | Record "Watch the Agent Work" using live demo route. |
-| CrewAI | Optional CrewAI adapter, agents/tasks YAML, dry-run CI check. | Strong scaffold | Add live CrewAI run mode with configured LLM once secrets are available. |
+| CrewAI | CrewAI Flow runtime router, Flow adapter, agents/tasks YAML, dry-run CI check, live Flow validation path. | Strong | Add live LLM-backed specialist outputs with configured provider secrets and eval gates. |
 
 ## Positioning
 
-The submission should not claim every enterprise hardening task is complete. It should claim the agent already has a runnable core, a live adjacent Parallax42 deployment, CrewAI orchestration design, and a clear hardening path that is more mature than a demonstration-only prototype.
+The submission should not claim every enterprise hardening task is complete. It should claim the agent already has a runnable core, a live adjacent Parallax42 deployment, CrewAI Flow orchestration, and a clear hardening path that is more mature than a demonstration-only prototype.

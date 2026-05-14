@@ -41,6 +41,7 @@ Recommended environment:
 
 ```text
 PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com
+AGENT_RUNTIME=crewai_flow
 P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020,http://localhost:3020
 AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
 ```

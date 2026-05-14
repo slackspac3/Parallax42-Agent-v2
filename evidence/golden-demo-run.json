@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-14T07:53:22.258Z",
+  "generatedAt": "2026-05-14T08:07:09.916Z",
   "workflow": {
     "id": "golden-ai-saas-compliance-review",
     "title": "High-risk AI SaaS supplier compliance review",
@@ -81,7 +81,7 @@
   },
   "run": {
     "ok": true,
-    "mode": "evidence_capture_golden_demo",
+    "mode": "crewai_flow_dry_run",
     "case": {
       "caseId": "g42-cia-demo-001",
       "requester": "Group Technology Risk",
@@ -324,8 +324,23 @@
     },
     "trace": [
       {
-        "eventId": "evt_1778745202258_jyrzst",
-        "timestamp": "2026-05-14T07:53:22.258Z",
+        "eventId": "evt_1778746029916_w6z8pg",
+        "timestamp": "2026-05-14T08:07:09.916Z",
+        "agent": "runtime_router",
+        "eventType": "runtime_selected",
+        "parentEventId": "",
+        "payload": {
+          "requestedRuntime": "crewai_flow",
+          "actualRuntime": "crewai_flow_dry_run",
+          "actualMode": "crewai_flow_dry_run",
+          "manifestSource": "python_dry_run",
+          "degraded": false,
+          "fallbackReason": ""
+        }
+      },
+      {
+        "eventId": "evt_1778746029916_vw8omc",
+        "timestamp": "2026-05-14T08:07:09.916Z",
         "agent": "intake_agent",
         "eventType": "case_loaded",
         "parentEventId": "",
@@ -337,11 +352,11 @@
         }
       },
       {
-        "eventId": "evt_1778745202258_dccfvv",
-        "timestamp": "2026-05-14T07:53:22.258Z",
+        "eventId": "evt_1778746029916_8ztbnv",
+        "timestamp": "2026-05-14T08:07:09.916Z",
         "agent": "domain_scanner_agent",
         "eventType": "domains_scanned",
-        "parentEventId": "evt_1778745202258_jyrzst",
+        "parentEventId": "evt_1778746029916_vw8omc",
         "payload": {
           "matchedDomains": [
             {
@@ -415,11 +430,11 @@
         }
       },
       {
-        "eventId": "evt_1778745202258_jyt5dm",
-        "timestamp": "2026-05-14T07:53:22.258Z",
+        "eventId": "evt_1778746029916_50k4xe",
+        "timestamp": "2026-05-14T08:07:09.916Z",
         "agent": "evidence_agent",
         "eventType": "evidence_mapped",
-        "parentEventId": "evt_1778745202258_jyrzst",
+        "parentEventId": "evt_1778746029916_vw8omc",
         "payload": {
           "evidenceIds": [
             "p42:ai-supplier-review-playbook",
@@ -439,22 +454,22 @@
         }
       },
       {
-        "eventId": "evt_1778745202258_wtyqk2",
-        "timestamp": "2026-05-14T07:53:22.258Z",
+        "eventId": "evt_1778746029916_lfysb3",
+        "timestamp": "2026-05-14T08:07:09.916Z",
         "agent": "control_agent",
         "eventType": "controls_recommended",
-        "parentEventId": "evt_1778745202258_jyrzst",
+        "parentEventId": "evt_1778746029916_vw8omc",
         "payload": {
           "controlCount": 14,
           "highSeverityGaps": 3
         }
       },
       {
-        "eventId": "evt_1778745202258_ckdfp0",
-        "timestamp": "2026-05-14T07:53:22.258Z",
+        "eventId": "evt_1778746029916_iqabh1",
+        "timestamp": "2026-05-14T08:07:09.916Z",
         "agent": "output_review_agent",
         "eventType": "output_review_completed",
-        "parentEventId": "evt_1778745202258_jyrzst",
+        "parentEventId": "evt_1778746029916_vw8omc",
         "payload": {
           "status": "needs_revision",
           "finalOutputSafeForHumanReview": true,
@@ -478,7 +493,260 @@
           ]
         }
       }
-    ]
+    ],
+    "runtime": {
+      "requestedRuntime": "crewai_flow",
+      "actualRuntime": "crewai_flow_dry_run",
+      "actualMode": "crewai_flow_dry_run",
+      "manifestSource": "python_dry_run",
+      "degraded": false,
+      "fallbackReason": "",
+      "flowManifest": {
+        "caseId": "g42-cia-demo-001",
+        "crew": {
+          "agent_count": 6,
+          "agents": [
+            {
+              "goal": "Convert a messy enterprise request into a bounded compliance work plan with review checkpoints.",
+              "key": "compliance_orchestrator",
+              "role": "Compliance Orchestrator"
+            },
+            {
+              "goal": "Identify likely policies, regulations, standards, and internal obligations from the case context.",
+              "key": "regulatory_obligation_mapper",
+              "role": "Regulatory Obligation Mapper"
+            },
+            {
+              "goal": "Inspect supplied evidence summaries, document signals, and missing artifacts.",
+              "key": "evidence_examiner",
+              "role": "Evidence Examiner"
+            },
+            {
+              "goal": "Translate obligations and evidence gaps into controls, blockers, owners, and remediation actions.",
+              "key": "risk_control_analyst",
+              "role": "Risk And Control Analyst"
+            },
+            {
+              "goal": "Check the proposed output for unsupported certainty, bias-sensitive assumptions, unsafe automation, and missing human approval.",
+              "key": "responsible_ai_reviewer",
+              "role": "Responsible AI Reviewer"
+            },
+            {
+              "goal": "Produce an audit-ready decision brief with trace, evidence IDs, gaps, controls, and escalation path.",
+              "key": "audit_packager",
+              "role": "Audit Packager"
+            }
+          ],
+          "human_approval_required": true,
+          "input": "examples/high_risk_ai_saas_case.json",
+          "mode": "dry_run",
+          "process": "sequential",
+          "secrets_required": false,
+          "task_count": 6,
+          "tasks": [
+            {
+              "agent": "compliance_orchestrator",
+              "expected_output": "JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
+              "key": "triage_case"
+            },
+            {
+              "agent": "regulatory_obligation_mapper",
+              "expected_output": "JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
+              "key": "map_obligations"
+            },
+            {
+              "agent": "evidence_examiner",
+              "expected_output": "JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
+              "key": "examine_evidence"
+            },
+            {
+              "agent": "risk_control_analyst",
+              "expected_output": "JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
+              "key": "recommend_controls"
+            },
+            {
+              "agent": "responsible_ai_reviewer",
+              "expected_output": "JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
+              "key": "review_responsible_ai"
+            },
+            {
+              "agent": "audit_packager",
+              "expected_output": "JSON decision brief suitable for human approval and audit review.\n",
+              "key": "package_audit_brief"
+            }
+          ]
+        },
+        "flow": {
+          "class": "ComplianceIntelligenceFlow",
+          "control_model": "start/listen state machine",
+          "deterministic_fallback": true,
+          "entrypoint": "kickoff",
+          "human_approval_required": true,
+          "stages": [
+            {
+              "agent": "compliance_orchestrator",
+              "expectedTraceEvent": "case_loaded",
+              "expected_output": "JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
+              "id": "intake",
+              "kind": "start",
+              "method": "load_case",
+              "role": "Compliance Orchestrator",
+              "task": "triage_case"
+            },
+            {
+              "agent": "regulatory_obligation_mapper",
+              "expectedTraceEvent": "domains_scanned",
+              "expected_output": "JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
+              "id": "obligations",
+              "kind": "listen",
+              "method": "map_obligations",
+              "role": "Regulatory Obligation Mapper",
+              "task": "map_obligations"
+            },
+            {
+              "agent": "evidence_examiner",
+              "expectedTraceEvent": "evidence_mapped",
+              "expected_output": "JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
+              "id": "evidence",
+              "kind": "listen",
+              "method": "examine_evidence",
+              "role": "Evidence Examiner",
+              "task": "examine_evidence"
+            },
+            {
+              "agent": "risk_control_analyst",
+              "expectedTraceEvent": "controls_recommended",
+              "expected_output": "JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
+              "id": "controls",
+              "kind": "listen",
+              "method": "recommend_controls",
+              "role": "Risk And Control Analyst",
+              "task": "recommend_controls"
+            },
+            {
+              "agent": "responsible_ai_reviewer",
+              "expectedTraceEvent": "output_review_completed",
+              "expected_output": "JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
+              "id": "rai_review",
+              "kind": "listen",
+              "method": "review_responsible_ai",
+              "role": "Responsible AI Reviewer",
+              "task": "review_responsible_ai"
+            },
+            {
+              "agent": "audit_packager",
+              "expectedTraceEvent": "output_review_completed",
+              "expected_output": "JSON decision brief suitable for human approval and audit review.\n",
+              "id": "audit_pack",
+              "kind": "listen",
+              "method": "package_audit_brief",
+              "role": "Audit Packager",
+              "task": "package_audit_brief"
+            }
+          ]
+        },
+        "framework": "CrewAI Flow",
+        "input": "stdin",
+        "live_crewai": false,
+        "mode": "crewai_flow_dry_run",
+        "primary_runtime": true,
+        "secrets_required_for_dry_run": false,
+        "state_schema": {
+          "auditBrief": "final decision package",
+          "case": "original normalized compliance case",
+          "controlPlan": "controls, blockers, owners, remediation",
+          "evidenceReview": "supported and missing evidence",
+          "obligations": "mapped obligations and applicability",
+          "responsibleAiReview": "approval boundary and safety checks",
+          "workPlan": "triage and domain scope"
+        }
+      }
+    },
+    "orchestration": {
+      "framework": "CrewAI Flow",
+      "primaryRuntime": true,
+      "manifestSource": "python_dry_run",
+      "flow": {
+        "class": "ComplianceIntelligenceFlow",
+        "control_model": "start/listen state machine",
+        "deterministic_fallback": true,
+        "entrypoint": "kickoff",
+        "human_approval_required": true,
+        "stages": [
+          {
+            "agent": "compliance_orchestrator",
+            "expectedTraceEvent": "case_loaded",
+            "expected_output": "JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
+            "id": "intake",
+            "kind": "start",
+            "method": "load_case",
+            "role": "Compliance Orchestrator",
+            "task": "triage_case"
+          },
+          {
+            "agent": "regulatory_obligation_mapper",
+            "expectedTraceEvent": "domains_scanned",
+            "expected_output": "JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
+            "id": "obligations",
+            "kind": "listen",
+            "method": "map_obligations",
+            "role": "Regulatory Obligation Mapper",
+            "task": "map_obligations"
+          },
+          {
+            "agent": "evidence_examiner",
+            "expectedTraceEvent": "evidence_mapped",
+            "expected_output": "JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
+            "id": "evidence",
+            "kind": "listen",
+            "method": "examine_evidence",
+            "role": "Evidence Examiner",
+            "task": "examine_evidence"
+          },
+          {
+            "agent": "risk_control_analyst",
+            "expectedTraceEvent": "controls_recommended",
+            "expected_output": "JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
+            "id": "controls",
+            "kind": "listen",
+            "method": "recommend_controls",
+            "role": "Risk And Control Analyst",
+            "task": "recommend_controls"
+          },
+          {
+            "agent": "responsible_ai_reviewer",
+            "expectedTraceEvent": "output_review_completed",
+            "expected_output": "JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
+            "id": "rai_review",
+            "kind": "listen",
+            "method": "review_responsible_ai",
+            "role": "Responsible AI Reviewer",
+            "task": "review_responsible_ai"
+          },
+          {
+            "agent": "audit_packager",
+            "expectedTraceEvent": "output_review_completed",
+            "expected_output": "JSON decision brief suitable for human approval and audit review.\n",
+            "id": "audit_pack",
+            "kind": "listen",
+            "method": "package_audit_brief",
+            "role": "Audit Packager",
+            "task": "package_audit_brief"
+          }
+        ]
+      },
+      "stateSchema": {
+        "auditBrief": "final decision package",
+        "case": "original normalized compliance case",
+        "controlPlan": "controls, blockers, owners, remediation",
+        "evidenceReview": "supported and missing evidence",
+        "obligations": "mapped obligations and applicability",
+        "responsibleAiReview": "approval boundary and safety checks",
+        "workPlan": "triage and domain scope"
+      },
+      "humanApprovalRequired": true,
+      "deterministicDecisionEngine": true
+    }
   },
   "evidenceChecklist": {
     "decisionStatus": "not_ready",

@@ -2,15 +2,21 @@
 
 ## Why CrewAI
 
-CrewAI gives the submission a recognizable multi-agent orchestration layer for role-specific compliance work while the deterministic Node runtime keeps the demo fast and dependency-light.
+CrewAI gives the submission a recognizable multi-agent orchestration layer for role-specific compliance work while the deterministic Node control engine keeps the demo fast and dependency-light.
 
-The adapter follows the current CrewAI concepts of `Agent`, `Task`, `Crew`, and `Process.sequential`, with YAML-backed agent and task definitions.
+The adapter now follows the current CrewAI Flow-first production pattern:
+
+- `Flow` state machine as the primary runtime shape
+- `@start` / `@listen` stage model for orchestration
+- YAML-backed `Agent` and `Task` definitions for specialist work
+- deterministic fallback for CI, demos, and missing optional dependencies
+- normalized trace output so CrewAI and deterministic paths share the same API contract
 
 Official CrewAI documentation referenced:
 
-- https://docs.crewai.com/en/concepts/tasks
+- https://docs.crewai.com/en/concepts/flows
 - https://docs.crewai.com/en/concepts/crews
-- https://docs.crewai.com/en/introduction
+- https://docs.crewai.com/en/concepts/tasks
 
 ## Crew Design
 
@@ -23,11 +29,26 @@ Official CrewAI documentation referenced:
 | Responsible AI Reviewer | Check unsupported certainty, bias risk, and approval safety. |
 | Audit Packager | Produce the final audit-ready brief. |
 
+## Flow Design
+
+| Flow Stage | CrewAI Agent | Trace Event |
+| --- | --- | --- |
+| `load_case` | Compliance Orchestrator | `case_loaded` |
+| `map_obligations` | Regulatory Obligation Mapper | `domains_scanned` |
+| `examine_evidence` | Evidence Examiner | `evidence_mapped` |
+| `recommend_controls` | Risk And Control Analyst | `controls_recommended` |
+| `review_responsible_ai` | Responsible AI Reviewer | `output_review_completed` |
+| `package_audit_brief` | Audit Packager | `output_review_completed` |
+
 ## Operating Modes
 
 | Mode | Command | Purpose |
 | --- | --- | --- |
-| Dry run | `python3 crewai_adapter/compliance_crew.py --dry-run` | Validate crew shape without dependencies. |
+| Flow dry run | `python3 crewai_adapter/compliance_flow.py --dry-run` | Validate Flow state, stages, and crew mapping without dependencies. |
+| Crew dry run | `python3 crewai_adapter/compliance_crew.py --dry-run` | Validate crew shape without dependencies. |
+| API default | `AGENT_RUNTIME=crewai_flow` | Route `/api/agent/run` through CrewAI Flow dry-run orchestration plus deterministic decision engine. |
+| Deterministic fallback | `AGENT_RUNTIME=deterministic` | Run the stable local decision engine directly. |
+| Live Flow validation | `python crewai_adapter/compliance_flow.py --live-flow --input examples/high_risk_ai_saas_case.json` | Execute the Flow state machine when CrewAI is installed. |
 | Live CrewAI | `python crewai_adapter/compliance_crew.py --live-crewai --input examples/high_risk_ai_saas_case.json` | Run the CrewAI crew when dependencies and LLM config are installed. |
 
 ## Guardrails
@@ -36,4 +57,5 @@ Official CrewAI documentation referenced:
 - CrewAI output must be packaged through output review.
 - Secrets are never committed.
 - CrewAI live mode is optional until an approved LLM provider configuration is available.
-- The deterministic runtime remains the baseline for CI and local reproducibility.
+- The deterministic decision engine remains the baseline for CI and local reproducibility.
+- Runtime metadata is included in API output and audit payloads.

@@ -34,23 +34,25 @@ Acceptance:
 
 ## Milestone 1: CrewAI Flow Runtime
 
+Status: implemented.
+
 Goal: make CrewAI the primary orchestration path while keeping deterministic fallback for demos and CI.
 
 Build:
 
-- `crewai_adapter/flow.py` or equivalent Flow wrapper
-- typed state model for case, evidence, domains, gaps, controls, decision, trace
-- crew handoff from orchestrator to specialist agents
-- memory scope for reusable policy/control facts
-- API mode switch: deterministic, CrewAI dry-run, CrewAI live
-- trace normalization so CrewAI and deterministic runs emit the same UI contract
+- `crewai_adapter/flow.py` or equivalent Flow wrapper. `Implemented: crewai_adapter/compliance_flow.py`
+- typed state model for case, evidence, domains, gaps, controls, decision, trace. `Implemented as Flow state schema manifest`
+- crew handoff from orchestrator to specialist agents. `Implemented through Flow stages mapped to YAML agents/tasks`
+- memory scope for reusable policy/control facts. `Deferred to evidence/retrieval milestone`
+- API mode switch: deterministic, CrewAI dry-run, CrewAI live. `Implemented via AGENT_RUNTIME and X-Agent-Runtime/body runtime`
+- trace normalization so CrewAI and deterministic runs emit the same UI contract. `Implemented via runtime_router trace event`
 
 Acceptance:
 
-- `npm run check:crewai` remains dependency-light
-- optional live CrewAI run works when secrets are present
-- golden case produces the same acceptance status as deterministic replay
-- missing secrets degrade to deterministic fallback with explicit mode label
+- `npm run check:crewai` remains dependency-light. `Passed`
+- optional live CrewAI Flow validation works when CrewAI is installed. `Available via --live-flow`
+- golden case produces the same acceptance status as deterministic replay. `Passed`
+- missing secrets/dependencies degrade to deterministic decision fallback with explicit mode label. `Passed`
 
 ## Milestone 2: Evidence Intake And Citation Discipline
 

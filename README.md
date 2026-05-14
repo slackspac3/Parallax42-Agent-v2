@@ -11,20 +11,20 @@ This repo is the clean build surface for packaging the existing Parallax42 work 
 - enterprise integration and deployment evidence
 - Responsible AI and benchmark artifacts
 
-The implementation starts with a dependency-light local agent runtime so the repo is runnable immediately. The stronger Parallax42 assets remain the source of truth for the live supplier-risk backend and are referenced in the submission dossier.
+The implementation now defaults agent execution through a dependency-light CrewAI Flow orchestration path with deterministic compliance decisions as the stable fallback. The stronger Parallax42 assets remain the source of truth for the live supplier-risk backend and are referenced in the submission dossier.
 
 ## Current Status
 
 Implemented in this repo:
 
-- `POST /api/agent/run` deterministic compliance-agent run
+- `POST /api/agent/run` CrewAI Flow-routed compliance-agent run with deterministic fallback
 - `GET /api/readiness` submission-readiness inventory
 - `GET /api/health` runtime and linked-platform status
 - Vercel-compatible serverless API functions under `api/`
 - allowlisted browser relay to the live Parallax42 backend at `GET/POST /api/backend`
 - GitHub Pages static cockpit with runtime mode controls
 - browser cockpit for running the agent and reviewing evidence, gaps, and trace events
-- optional CrewAI adapter with six role-specific agents and YAML task definitions
+- CrewAI Flow adapter plus six role-specific agents and YAML task definitions
 - local benchmark endpoint and audit JSONL persistence
 - generated evidence capture under `evidence/`
 - replayable golden demo workflow at `GET /api/demo/golden`
@@ -75,6 +75,7 @@ The generated files land in `evidence/` and are safe to include in a submission 
 Key environment variables:
 
 ```text
+AGENT_RUNTIME=crewai_flow
 PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com
 P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020
 AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
@@ -88,12 +89,13 @@ Validate the CrewAI crew design without installing optional dependencies:
 npm run check:crewai
 ```
 
-Install and run the optional live CrewAI adapter:
+Dry-run validation covers both CrewAI Crew and CrewAI Flow manifests. Install optional dependencies for live CrewAI validation:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements-crewai.txt
+python crewai_adapter/compliance_flow.py --live-flow --input examples/high_risk_ai_saas_case.json
 python crewai_adapter/compliance_crew.py --live-crewai --input examples/high_risk_ai_saas_case.json
 ```
 
@@ -104,6 +106,7 @@ python crewai_adapter/compliance_crew.py --live-crewai --input examples/high_ris
 - [Work-Backward Roadmap](docs/ROADMAP.md)
 - [Golden Demo Workflow](docs/GOLDEN_DEMO_WORKFLOW.md)
 - [Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md)
+- [Milestone 1 CrewAI Flow Runtime](docs/MILESTONE_1_CREWAI_FLOW.md)
 - [Benchmark Report](docs/BENCHMARK_REPORT.md)
 - [Responsible AI Controls](docs/RESPONSIBLE_AI_CONTROLS.md)
 - [Integration Matrix](docs/INTEGRATION_MATRIX.md)
@@ -117,10 +120,10 @@ python crewai_adapter/compliance_crew.py --live-crewai --input examples/high_ris
 
 ## Build Direction
 
-The next implementation milestone is to replace the deterministic local evidence layer with a packaged extraction from Parallax42 and promote the Vercel API deployment:
+The next implementation milestone is evidence intake and citation discipline:
 
-1. connect `/api/agent/run` to the live Parallax42 workflow behind an approval-gated switch
-2. move audit events from JSONL to PostgreSQL or another immutable append store
-3. add Entra-ready JWT validation and role-policy middleware
-4. expand benchmark coverage to upload/OCR, adversarial, latency, and fallback cases
-5. record the "Watch the Agent Work" demo path
+1. add document/evidence upload or relay-backed evidence intake
+2. add evidence chunk IDs and citation-required output
+3. make uploaded DPA/model-training/continuity evidence clear specific blockers
+4. preserve redaction and audit trace boundaries
+5. add citation precision and missing-evidence evals

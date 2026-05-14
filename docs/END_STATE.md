@@ -44,7 +44,7 @@ The target runtime is a layered agent stack:
 
 | Layer | End-State Choice | Why |
 | --- | --- | --- |
-| Workflow spine | CrewAI Flow | CrewAI recommends a Flow-first mindset for production AI applications, and Flows provide state, event structure, and multi-step control. |
+| Workflow spine | CrewAI Flow | Implemented as the current default runtime shape. CrewAI recommends a Flow-first mindset for production AI applications, and Flows provide state, event structure, and multi-step control. |
 | Specialist collaboration | CrewAI Crews | Maps cleanly to orchestrator, obligation mapper, evidence examiner, risk/control analyst, RAI reviewer, and audit packager. |
 | Model/tool execution | Responses API or sovereign Compass-compatible adapter | OpenAI's current tools model supports function calling, file search, remote MCP, web search, shell/computer-use patterns, and tool choice control. |
 | Structured output | JSON Schema / Pydantic / Zod contracts | Structured Outputs are preferred over JSON mode where possible because schema adherence is enforceable. |
@@ -99,7 +99,7 @@ The submission should include:
 
 | Gap | Why It Matters |
 | --- | --- |
-| CrewAI is currently a validated adapter, not the primary runtime path. | The submission explicitly asks for AI Agent capability; CrewAI should become an executable orchestration path. |
+| Live LLM-backed CrewAI specialist output is optional. | CrewAI Flow is now the primary runtime shape, but live model-backed specialist outputs still need approved provider configuration and eval gates. |
 | Evidence upload is not yet first-class in this repo. | The role expects production workflows and technical integration, not only text summaries. |
 | Audit is JSONL/temporary rather than durable. | Enterprise review needs durable records and audit retrieval. |
 | RBAC is documented but not enforced. | Secure authentication is a role requirement. |

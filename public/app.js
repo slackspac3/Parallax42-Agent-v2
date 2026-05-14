@@ -29,6 +29,7 @@ const apiMode = document.querySelector('#apiMode');
 const relayUrl = document.querySelector('#relayUrl');
 const backendUrl = document.querySelector('#backendUrl');
 const decisionText = document.querySelector('#decisionText');
+const runtimeText = document.querySelector('#runtimeText');
 const readinessScore = document.querySelector('#readinessScore');
 const evidenceCount = document.querySelector('#evidenceCount');
 const domainList = document.querySelector('#domainList');
@@ -181,6 +182,7 @@ function hydrateConfigForm() {
 function renderRun(result) {
   if (!result.ok) {
     decisionText.textContent = result.message || 'Run blocked';
+    runtimeText.textContent = '--';
     readinessScore.textContent = '--';
     evidenceCount.textContent = '--';
     domainList.innerHTML = '';
@@ -195,6 +197,7 @@ function renderRun(result) {
   const evidenceIds = Array.isArray(result.evidenceIds) ? result.evidenceIds : [];
 
   decisionText.textContent = result.decision.recommendation;
+  runtimeText.textContent = humanize(result.runtime?.actualRuntime || result.mode || 'unknown');
   readinessScore.textContent = `${Math.round(result.decision.readinessScore * 100)}%`;
   evidenceCount.textContent = String(evidenceIds.length);
 
@@ -306,7 +309,9 @@ async function loadDeploymentStatus() {
     {
       label: `Compliance API (${config.resolvedMode})`,
       url: apiUrl('/api/health'),
-      detail: (body) => body?.status || body?.service || 'API responded'
+      detail: (body) => body?.agentRuntime?.configuredRuntime
+        ? `${body.service} using ${body.agentRuntime.configuredRuntime}`
+        : body?.status || body?.service || 'API responded'
     },
     backendCheck,
     {
