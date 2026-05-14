@@ -38,9 +38,10 @@ GitHub Pages cockpit
 | Vercel API | `api/` | Serverless equivalent of the local API plus backend relay. |
 | Runtime router | `lib/agentRuntime.js` | Selects CrewAI Flow, deterministic fallback, and runtime metadata. |
 | Agent runtime | `lib/complianceAgent.js` | Intake normalization, domain scan, gaps, decision, controls, trace. |
+| RBAC policy | `lib/rbac.js` | Route policy, role normalization, bearer JWT validation, and Entra-compatible RS256/JWKS support. |
 | CrewAI Flow adapter | `crewai_adapter/compliance_flow.py` | Flow state/stage mapping and optional live Flow validation. |
 | Evidence layer | `lib/evidenceLibrary.js` | Initial compliance domain library and evidence IDs. |
-| Audit store | `lib/auditStore.js` | JSONL audit locally, with Vercel-safe temporary persistence. |
+| Audit store | `lib/auditStore.js` | Hash-chained append-only JSONL audit with integrity verification; production should point `AGENT_AUDIT_DIR` at durable storage. |
 | Cockpit UI | `public/` | Operator-facing run surface for the submission package. |
 | Evidence capture | `scripts/capture-evidence.js` | Generates health, benchmark, readiness, and sample trace artifacts. |
 | Dossier | `docs/` | Role-aligned submission evidence. |

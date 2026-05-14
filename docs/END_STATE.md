@@ -100,9 +100,9 @@ The submission should include:
 | Gap | Why It Matters |
 | --- | --- |
 | Live LLM-backed CrewAI specialist output is opt-in and advisory. | The wiring exists, but provider credentials, eval gates, and approval policy must be enabled before live output can influence decisions. |
-| Evidence upload is not yet first-class in this repo. | The role expects production workflows and technical integration, not only text summaries. |
-| Audit is JSONL/temporary rather than durable. | Enterprise review needs durable records and audit retrieval. |
-| RBAC is documented but not enforced. | Secure authentication is a role requirement. |
+| Evidence upload handles text-like files but needs production OCR/document parsing for PDF/DOCX. | The role expects robust evidence processing, not only browser text extraction. |
+| Audit is hash-chained locally but Vercel uses ephemeral `/tmp` unless durable storage is configured. | Enterprise review needs retained records across deployments and function instances. |
+| RBAC middleware and JWT validation are implemented, but live Entra config is not set. | Secure authentication must be enabled in the target enterprise environment. |
 | Evals are local and deterministic only. | World-class agent delivery requires regression, adversarial, and trace-level evals. |
 | Demo video is not recorded. | G42 explicitly asks for "Watch the Agent Work." |
 

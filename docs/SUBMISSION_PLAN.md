@@ -30,8 +30,8 @@
 
 ### Phase 3: Harden Submission Criteria
 
-- Add persistent audit records. `Implemented locally: JSONL, Vercel-safe /tmp fallback`
-- Add Entra/RBAC implementation or scoped proof.
+- Add persistent audit records. `Implemented: hash-chained JSONL; production must configure durable storage or DB retention`
+- Add Entra/RBAC implementation or scoped proof. `Implemented: route policy and JWT validation; live tenant env remains`
 - Add benchmark report generator. `Implemented: npm run benchmark`
 - Add Responsible AI evals.
 - Add integration payload examples. `Implemented: examples/integrations`
@@ -49,6 +49,6 @@
 
 ## Current Open Risks
 
-- Vercel API project still needs to be deployed and linked to the GitHub Pages cockpit default relay URL.
-- Security story needs live Entra/RBAC and durable database audit before enterprise-grade claims.
+- Vercel API project is live and linked to the GitHub Pages cockpit default relay URL.
+- Security story now has RBAC/audit implementation, but still needs live Entra env configuration and durable audit retention before enterprise-grade claims.
 - Benchmark story needs broader live, adversarial, upload/OCR, and latency tests.

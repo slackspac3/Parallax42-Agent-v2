@@ -20,8 +20,8 @@ This repo is designed to exceed the G42 brief by packaging a runnable agent, an 
 
 | Area | Implementation Target | Why It Matters |
 | --- | --- | --- |
-| Durable audit | PostgreSQL append-only run/audit tables with hash chaining. | Makes traceability enterprise-grade instead of local JSONL. |
-| RBAC | Microsoft Entra JWT validation plus role-policy middleware. | Satisfies secure authentication and reviewer/operator separation. |
+| Durable audit | Hash-chained append-only audit is implemented; PostgreSQL or durable mounted storage remains the production retention target. | Makes traceability verifiable now and enterprise-retained when storage is configured. |
+| RBAC | Microsoft Entra-compatible JWT validation plus role-policy middleware is implemented behind `P42_AUTH_MODE=enforced`. | Satisfies secure authentication and reviewer/operator separation once tenant config is supplied. |
 | Live workflow switch | Route selected `/api/agent/run` cases to the Parallax42 workflow. | Converts the demo agent into the deployed enterprise workflow path. |
 | CrewAI Flow runtime | Promote the current CrewAI adapter into a Flow-first execution path. | Aligns the implementation with production-oriented CrewAI patterns while preserving deterministic fallback. |
 | Responsible AI evals | Adversarial cases, unsupported-claim detection, bias review, and refusal checks. | Moves RAI from control design to measurable assurance. |
