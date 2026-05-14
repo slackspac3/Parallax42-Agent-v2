@@ -1,0 +1,26 @@
+{
+  "source": "microsoft_dynamics",
+  "eventType": "project_compliance_checkpoint",
+  "projectId": "DYN-PROJ-2026-071",
+  "projectName": "Finance AI Reporting Automation",
+  "businessUnit": "Finance",
+  "geography": "UAE",
+  "milestone": "pre_go_live",
+  "systems": [
+    "Dynamics 365 Finance",
+    "Azure AD",
+    "Power BI",
+    "ServiceNow"
+  ],
+  "complianceQuestions": [
+    "Is personal data processed by the AI supplier?",
+    "Is production access controlled through enterprise identity?",
+    "Are audit logs retained for the required period?",
+    "Are exception owners and remediation dates assigned?"
+  ],
+  "expectedAgentOutput": {
+    "decision": "conditional",
+    "requiresHumanApproval": true,
+    "artifacts": ["gap_register", "control_map", "audit_trace"]
+  }
+}

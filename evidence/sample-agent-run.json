@@ -1,0 +1,401 @@
+{
+  "ok": true,
+  "mode": "evidence_capture",
+  "case": {
+    "caseId": "g42-cia-demo-001",
+    "requester": "Group Technology Risk",
+    "businessUnit": "Group Technology Risk",
+    "geography": "UAE",
+    "supplierName": "Example AI SaaS",
+    "serviceDescription": "Critical AI workflow automation service for finance reporting and operational analytics.",
+    "brief": "Procure a critical AI SaaS supplier that processes personal data, integrates with Azure AD and ServiceNow, and supports finance reporting across the UAE.",
+    "integrations": [
+      "Azure AD",
+      "ServiceNow",
+      "Finance reporting"
+    ],
+    "documents": [
+      {
+        "title": "Supplier assurance summary",
+        "summary": "SOC 2 summary available. No signed DPA, model-training exclusion, or continuity plan attached."
+      }
+    ]
+  },
+  "decision": {
+    "status": "not_ready",
+    "recommendation": "Do not approve yet",
+    "readinessScore": 0.32,
+    "rationale": "Multiple high-severity evidence or applicability gaps remain open."
+  },
+  "domains": [
+    {
+      "id": "ai_model_governance",
+      "label": "AI And Model Governance",
+      "status": "applicable",
+      "score": 1,
+      "obligations": [
+        "Determine whether customer data is used for training, fine-tuning, or service improvement.",
+        "Require model-use limitations, human oversight, and explainability controls for AI services.",
+        "Run Responsible AI checks before production reliance."
+      ],
+      "controls": [
+        "model-training exclusion",
+        "human oversight",
+        "rai assessment"
+      ],
+      "evidenceIds": [
+        "p42:ai-supplier-review-playbook",
+        "p42:responsible-ai-control-pack"
+      ]
+    },
+    {
+      "id": "business_continuity",
+      "label": "Business Continuity",
+      "status": "applicable",
+      "score": 0.67,
+      "obligations": [
+        "Confirm recovery objectives, continuity evidence, and exit support for critical services.",
+        "Treat missing continuity evidence as a blocking gap for operationally critical suppliers.",
+        "Require remediation milestones before unconditional approval."
+      ],
+      "controls": [
+        "business continuity plan",
+        "disaster recovery evidence",
+        "exit assistance"
+      ],
+      "evidenceIds": [
+        "p42:continuity-exit-requirements"
+      ]
+    },
+    {
+      "id": "privacy_data_governance",
+      "label": "Privacy And Data Governance",
+      "status": "applicable",
+      "score": 0.67,
+      "obligations": [
+        "Validate lawful data-processing basis, retention commitments, and deletion assistance.",
+        "Confirm subprocessors, hosting region, and cross-border transfer mechanism.",
+        "Escalate to privacy/legal review when personal data or uncertain transfer paths are present."
+      ],
+      "controls": [
+        "signed dpa",
+        "subprocessor register",
+        "retention and deletion evidence"
+      ],
+      "evidenceIds": [
+        "p42:dpa-review-checklist",
+        "p42:model-training-data-use-policy"
+      ]
+    },
+    {
+      "id": "financial_project_compliance",
+      "label": "Finance And Project Compliance",
+      "status": "needs_confirmation",
+      "score": 0.33,
+      "obligations": [
+        "Check approval authority, payment-control exposure, and project-governance accountability.",
+        "Separate commercial approval from compliance readiness.",
+        "Escalate material exceptions to the accountable finance or project governance owner."
+      ],
+      "controls": [
+        "approval authority check",
+        "payment control review",
+        "project exception register"
+      ],
+      "evidenceIds": [
+        "p42:finance-project-control-baseline"
+      ]
+    },
+    {
+      "id": "licensing_microsoft_governance",
+      "label": "Licensing And Microsoft Governance",
+      "status": "applicable",
+      "score": 0.33,
+      "obligations": [
+        "Validate licensing terms, tenant access, data residency, and administrative ownership.",
+        "Confirm that automation and analytics use complies with platform licensing limits.",
+        "Route tenant-wide privilege or integration risks to technical review."
+      ],
+      "controls": [
+        "license entitlement review",
+        "tenant access review",
+        "admin privilege review"
+      ],
+      "evidenceIds": [
+        "p42:microsoft-governance-baseline"
+      ]
+    },
+    {
+      "id": "technical_risk",
+      "label": "Technical Risk",
+      "status": "applicable",
+      "score": 0.33,
+      "obligations": [
+        "Review identity, access, encryption, logging, vulnerability, and integration control evidence.",
+        "Require technical assurance artifacts before connecting material systems.",
+        "Capture residual technical risk and required compensating controls."
+      ],
+      "controls": [
+        "security assurance review",
+        "identity and access controls",
+        "integration risk assessment"
+      ],
+      "evidenceIds": [
+        "p42:technical-risk-control-pack",
+        "p42:soc2-iso-evidence-map"
+      ]
+    },
+    {
+      "id": "third_party_compliance",
+      "label": "Third-Party Compliance",
+      "status": "applicable",
+      "score": 0.33,
+      "obligations": [
+        "Confirm ownership, scope, and service criticality before approval.",
+        "Require evidence of baseline control posture and contractual control commitments.",
+        "Track unresolved findings as open risks with owner, due date, and closure evidence."
+      ],
+      "controls": [
+        "supplier due diligence",
+        "contract clause review",
+        "risk acceptance workflow"
+      ],
+      "evidenceIds": [
+        "p42:vendor-risk-sop",
+        "p42:approval-matrix",
+        "p42:contract-clause-pack"
+      ]
+    }
+  ],
+  "gaps": [
+    {
+      "severity": "high",
+      "gap": "AI/model governance is applicable but training-data handling is unclear.",
+      "action": "Require model-training exclusion or approved data-use terms before approval."
+    },
+    {
+      "severity": "high",
+      "gap": "Critical service indicators exist without continuity or exit evidence.",
+      "action": "Require BCP/DR and exit-assistance evidence for critical operations."
+    },
+    {
+      "severity": "high",
+      "gap": "Privacy/data governance is applicable but DPA evidence was not detected.",
+      "action": "Require DPA, subprocessors, retention, deletion, and transfer evidence."
+    },
+    {
+      "severity": "medium",
+      "gap": "Finance And Project Compliance applicability needs confirmation.",
+      "action": "Ask the domain owner whether finance and project compliance obligations apply."
+    }
+  ],
+  "controlPlan": [
+    "model-training exclusion",
+    "human oversight",
+    "rai assessment",
+    "business continuity plan",
+    "disaster recovery evidence",
+    "exit assistance",
+    "signed dpa",
+    "subprocessor register",
+    "retention and deletion evidence",
+    "approval authority check",
+    "payment control review",
+    "project exception register",
+    "license entitlement review",
+    "tenant access review"
+  ],
+  "evidenceIds": [
+    "p42:ai-supplier-review-playbook",
+    "p42:responsible-ai-control-pack",
+    "p42:continuity-exit-requirements",
+    "p42:dpa-review-checklist",
+    "p42:model-training-data-use-policy",
+    "p42:finance-project-control-baseline",
+    "p42:microsoft-governance-baseline",
+    "p42:technical-risk-control-pack",
+    "p42:soc2-iso-evidence-map",
+    "p42:vendor-risk-sop",
+    "p42:approval-matrix",
+    "p42:contract-clause-pack"
+  ],
+  "outputReview": {
+    "status": "needs_revision",
+    "finalOutputSafeForHumanReview": true,
+    "checks": [
+      {
+        "name": "evidence_attached",
+        "status": "passed"
+      },
+      {
+        "name": "blocking_gaps_named",
+        "status": "passed"
+      },
+      {
+        "name": "human_approval_required",
+        "status": "passed"
+      },
+      {
+        "name": "no_automatic_approval",
+        "status": "passed"
+      }
+    ]
+  },
+  "trace": [
+    {
+      "eventId": "evt_1778743231126_krut0j",
+      "timestamp": "2026-05-14T07:20:31.126Z",
+      "agent": "intake_agent",
+      "eventType": "case_loaded",
+      "parentEventId": "",
+      "payload": {
+        "caseId": "g42-cia-demo-001",
+        "requester": "Group Technology Risk",
+        "businessUnit": "Group Technology Risk",
+        "geography": "UAE"
+      }
+    },
+    {
+      "eventId": "evt_1778743231126_7pwkku",
+      "timestamp": "2026-05-14T07:20:31.126Z",
+      "agent": "domain_scanner_agent",
+      "eventType": "domains_scanned",
+      "parentEventId": "evt_1778743231126_krut0j",
+      "payload": {
+        "matchedDomains": [
+          {
+            "id": "ai_model_governance",
+            "label": "AI And Model Governance",
+            "score": 1,
+            "status": "applicable",
+            "hits": [
+              "ai",
+              "model",
+              "training"
+            ]
+          },
+          {
+            "id": "business_continuity",
+            "label": "Business Continuity",
+            "score": 0.67,
+            "status": "applicable",
+            "hits": [
+              "critical",
+              "continuity"
+            ]
+          },
+          {
+            "id": "privacy_data_governance",
+            "label": "Privacy And Data Governance",
+            "score": 0.67,
+            "status": "applicable",
+            "hits": [
+              "personal data",
+              "dpa"
+            ]
+          },
+          {
+            "id": "financial_project_compliance",
+            "label": "Finance And Project Compliance",
+            "score": 0.33,
+            "status": "needs_confirmation",
+            "hits": [
+              "finance"
+            ]
+          },
+          {
+            "id": "licensing_microsoft_governance",
+            "label": "Licensing And Microsoft Governance",
+            "score": 0.33,
+            "status": "applicable",
+            "hits": [
+              "azure"
+            ]
+          },
+          {
+            "id": "technical_risk",
+            "label": "Technical Risk",
+            "score": 0.33,
+            "status": "applicable",
+            "hits": [
+              "soc 2"
+            ]
+          },
+          {
+            "id": "third_party_compliance",
+            "label": "Third-Party Compliance",
+            "score": 0.33,
+            "status": "applicable",
+            "hits": [
+              "supplier"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "eventId": "evt_1778743231126_xzuglh",
+      "timestamp": "2026-05-14T07:20:31.126Z",
+      "agent": "evidence_agent",
+      "eventType": "evidence_mapped",
+      "parentEventId": "evt_1778743231126_krut0j",
+      "payload": {
+        "evidenceIds": [
+          "p42:ai-supplier-review-playbook",
+          "p42:responsible-ai-control-pack",
+          "p42:continuity-exit-requirements",
+          "p42:dpa-review-checklist",
+          "p42:model-training-data-use-policy",
+          "p42:finance-project-control-baseline",
+          "p42:microsoft-governance-baseline",
+          "p42:technical-risk-control-pack",
+          "p42:soc2-iso-evidence-map",
+          "p42:vendor-risk-sop",
+          "p42:approval-matrix",
+          "p42:contract-clause-pack"
+        ],
+        "gapCount": 4
+      }
+    },
+    {
+      "eventId": "evt_1778743231126_keqj1x",
+      "timestamp": "2026-05-14T07:20:31.126Z",
+      "agent": "control_agent",
+      "eventType": "controls_recommended",
+      "parentEventId": "evt_1778743231126_krut0j",
+      "payload": {
+        "controlCount": 14,
+        "highSeverityGaps": 3
+      }
+    },
+    {
+      "eventId": "evt_1778743231126_jbsb17",
+      "timestamp": "2026-05-14T07:20:31.126Z",
+      "agent": "output_review_agent",
+      "eventType": "output_review_completed",
+      "parentEventId": "evt_1778743231126_krut0j",
+      "payload": {
+        "status": "needs_revision",
+        "finalOutputSafeForHumanReview": true,
+        "checks": [
+          {
+            "name": "evidence_attached",
+            "status": "passed"
+          },
+          {
+            "name": "blocking_gaps_named",
+            "status": "passed"
+          },
+          {
+            "name": "human_approval_required",
+            "status": "passed"
+          },
+          {
+            "name": "no_automatic_approval",
+            "status": "passed"
+          }
+        ]
+      }
+    }
+  ]
+}

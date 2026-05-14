@@ -34,11 +34,14 @@ Run:
 
 ```bash
 npm run qa
+npm run capture:evidence
 ```
+
+Generated benchmark output is written to `evidence/benchmark-report.json`.
 
 ## Missing Before Submission
 
-- Latency report for `POST /api/agent/run`.
+- Broader latency report for `POST /api/agent/run` across local and Vercel API surfaces.
 - Live Parallax42 backend latency and fallback-rate report.
 - Upload/OCR throughput report.
 - Responsible AI test suite against prompt injection, unsupported approval language, bias-sensitive assumptions, and data minimization.

@@ -23,18 +23,18 @@
 
 ### Phase 2: Extract Parallax42 Production Evidence
 
-- Add live endpoint status capture.
+- Add live endpoint status capture. `Implemented: npm run capture:evidence`
 - Add Parallax42 architecture appendix.
-- Add golden eval output and trace samples.
+- Add golden eval output and trace samples. `Implemented locally: evidence/sample-agent-run.json`
 - Add demo script for supplier AI SaaS compliance case.
 
 ### Phase 3: Harden Submission Criteria
 
-- Add persistent audit records.
+- Add persistent audit records. `Implemented locally: JSONL, Vercel-safe /tmp fallback`
 - Add Entra/RBAC implementation or scoped proof.
-- Add benchmark report generator.
+- Add benchmark report generator. `Implemented: npm run benchmark`
 - Add Responsible AI evals.
-- Add integration payload examples.
+- Add integration payload examples. `Implemented: examples/integrations`
 
 ### Phase 4: Demo
 
@@ -49,6 +49,6 @@
 
 ## Current Open Risks
 
-- Packaging still depends on linked Parallax42 repo for the strongest production proof.
-- Security story needs Entra/RBAC and durable audit before enterprise-grade claims.
-- Benchmark story needs broader live and adversarial tests.
+- Vercel API project still needs to be deployed and linked to the GitHub Pages cockpit default relay URL.
+- Security story needs live Entra/RBAC and durable database audit before enterprise-grade claims.
+- Benchmark story needs broader live, adversarial, upload/OCR, and latency tests.

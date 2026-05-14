@@ -4,7 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Parallax42 Compliance Intelligence Agent</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="%2306110d"/><text x="5" y="22" fill="%2312d6a1" font-family="Arial" font-size="13" font-weight="700">P42</text></svg>' />
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <canvas id="networkCanvas" aria-hidden="true"></canvas>
@@ -15,6 +16,7 @@
       </div>
       <nav aria-label="Primary">
         <a href="#run">Run</a>
+        <a href="#deployment">Deploy</a>
         <a href="#evidence">Evidence</a>
         <a href="#readiness">Readiness</a>
       </nav>
@@ -28,8 +30,8 @@
           <p class="lede">Run a compliance case through the local agent loop, then package the live Parallax42 deployment, benchmarks, and architecture evidence for submission.</p>
           <div class="actions">
             <button id="sampleRun" type="button">Run sample case</button>
-            <a href="/api/readiness">Readiness JSON</a>
-            <a href="/api/benchmarks">Benchmarks</a>
+            <a id="readinessJsonLink" href="api/readiness">Readiness JSON</a>
+            <a id="benchmarksJsonLink" href="api/benchmarks">Benchmarks</a>
           </div>
         </div>
 
@@ -71,6 +73,38 @@
         </div>
       </section>
 
+      <section class="status-panel" id="deployment">
+        <div>
+          <p class="eyebrow">Deployment control</p>
+          <h2>Live readiness across local, Vercel, and Parallax42 services.</h2>
+          <p>The cockpit can run against the local Node service during development or the Vercel API relay from GitHub Pages.</p>
+        </div>
+        <form id="runtimeConfig" class="config-panel">
+          <label>
+            API mode
+            <select name="apiMode" id="apiMode">
+              <option value="auto">Auto</option>
+              <option value="local">Local</option>
+              <option value="relay">Vercel relay</option>
+              <option value="live">Live backend focus</option>
+            </select>
+          </label>
+          <label>
+            Vercel relay URL
+            <input name="relayUrl" id="relayUrl" autocomplete="off" />
+          </label>
+          <label>
+            Parallax42 backend URL
+            <input name="backendUrl" id="backendUrl" autocomplete="off" />
+          </label>
+          <div class="form-actions">
+            <button type="submit">Save runtime</button>
+            <button type="button" id="resetConfig" class="secondary-button">Reset</button>
+          </div>
+        </form>
+        <div id="deploymentStatus" class="status-list" aria-live="polite"></div>
+      </section>
+
       <section class="split" id="evidence">
         <div>
           <h2>Domain Scan</h2>
@@ -101,6 +135,7 @@
       </section>
     </main>
 
-    <script src="/app.js"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>

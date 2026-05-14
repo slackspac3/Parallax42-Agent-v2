@@ -4,7 +4,7 @@
 
 ```text
 Browser cockpit
-  -> local Node API
+  -> local Node API or Vercel API
   -> compliance agent loop
   -> evidence/domain library
   -> decision + control plan + trace
@@ -20,14 +20,26 @@ Parallax42 GitHub Pages UI
   -> Core42 Compass GPT-5.1
 ```
 
+Submission deployment:
+
+```text
+GitHub Pages cockpit
+  -> Vercel /api/health, /api/readiness, /api/benchmarks, /api/agent/run
+  -> Vercel /api/backend allowlisted relay
+  -> Parallax42 backend health/demo endpoints
+```
+
 ## Components In This Repo
 
 | Component | Path | Responsibility |
 | --- | --- | --- |
 | Node API | `server.js` | Static cockpit, health, readiness, and agent-run endpoint. |
+| Vercel API | `api/` | Serverless equivalent of the local API plus backend relay. |
 | Agent runtime | `lib/complianceAgent.js` | Intake normalization, domain scan, gaps, decision, controls, trace. |
 | Evidence layer | `lib/evidenceLibrary.js` | Initial compliance domain library and evidence IDs. |
+| Audit store | `lib/auditStore.js` | JSONL audit locally, with Vercel-safe temporary persistence. |
 | Cockpit UI | `public/` | Operator-facing run surface for the submission package. |
+| Evidence capture | `scripts/capture-evidence.js` | Generates health, benchmark, readiness, and sample trace artifacts. |
 | Dossier | `docs/` | Role-aligned submission evidence. |
 
 ## Production Target
@@ -48,3 +60,4 @@ The production target should be extracted from Parallax42 rather than rewritten:
 - Output is never automatic approval; it is a human-review decision brief.
 - Raw private documents and secrets must not appear in admin or trace outputs.
 - Any write-capable future tool must use explicit approval and audit logging.
+- The Vercel backend relay forwards only explicit demo routes and blocks arbitrary backend access.

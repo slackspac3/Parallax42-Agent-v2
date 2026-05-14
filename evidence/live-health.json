@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-05-14T07:20:30.496Z",
+  "backendHealth": {
+    "ok": true,
+    "status": 200,
+    "durationMs": 622,
+    "url": "https://api.parallax42.bhavukarora.com/health",
+    "body": {
+      "status": "ok",
+      "service": "parallax42-supplier-risk-lens",
+      "mock_compass": false,
+      "replay_mode": false,
+      "demo_token_required": false,
+      "document_parser": {
+        "parser_provider": "local",
+        "ocr_provider": "tesseract",
+        "ocr_enabled": true,
+        "ocrmypdf_available": true,
+        "tesseract_available": true,
+        "can_ocr_scanned_pdf": true,
+        "max_file_bytes": 104857600,
+        "max_pages": 50,
+        "chunked_upload_chunk_bytes": 2097152,
+        "secrets_redacted": true
+      }
+    }
+  },
+  "gatewayHealth": {
+    "ok": true,
+    "status": 200,
+    "durationMs": 544,
+    "url": "https://parallax42-compass-gateway.vercel.app/api/health",
+    "body": {
+      "ok": true,
+      "service": "parallax42-vercel-compass-gateway",
+      "config": {
+        "compass_api_key_configured": true,
+        "compass_base_url_configured": true,
+        "parallax42_gateway_token_configured": true,
+        "compass_model": {
+          "configured": true,
+          "valid": true
+        }
+      }
+    }
+  }
+}

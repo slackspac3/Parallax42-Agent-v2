@@ -6,6 +6,7 @@
   --text: #f4faf6;
   --muted: #a9bab0;
   --accent: #12d6a1;
+  --info: #8fb7ff;
   --warning: #ffd166;
   --danger: #ff6b6b;
 }
@@ -161,6 +162,7 @@ label {
 }
 
 input,
+select,
 textarea {
   width: 100%;
   border: 1px solid var(--line);
@@ -169,6 +171,14 @@ textarea {
   padding: 12px;
   font: inherit;
   resize: vertical;
+}
+
+select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 18px, calc(100% - 12px) 18px;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
 }
 
 .grid {
@@ -235,6 +245,71 @@ textarea {
 
 .status-danger {
   color: var(--danger);
+}
+
+.status-panel {
+  display: grid;
+  grid-template-columns: 0.75fr minmax(300px, 420px) 1fr;
+  gap: 28px;
+  align-items: start;
+  padding: 42px 0;
+  border-top: 1px solid var(--line);
+}
+
+.status-panel p:not(.eyebrow) {
+  margin-top: 12px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.config-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: rgba(6, 17, 13, 0.76);
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.secondary-button {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+.status-list {
+  display: grid;
+  gap: 12px;
+}
+
+.status-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.status-card strong {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.status-card code {
+  color: var(--info);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.status-card p {
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .trace-section {
@@ -311,6 +386,7 @@ dt {
   .topbar,
   .workspace,
   .split,
+  .status-panel,
   .readiness {
     grid-template-columns: 1fr;
   }

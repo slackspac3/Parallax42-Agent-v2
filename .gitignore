@@ -6,6 +6,7 @@ node_modules/
 logs/
 coverage/
 test-results/
+.playwright-cli/
 dist/
 build/
 *.local

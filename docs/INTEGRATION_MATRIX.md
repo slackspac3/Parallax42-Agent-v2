@@ -2,13 +2,14 @@
 
 | Integration | Current State | Target For Submission |
 | --- | --- | --- |
-| Parallax42 FastAPI backend | Live endpoint exists. | Link as production deployment evidence. |
+| Parallax42 FastAPI backend | Live endpoint exists and Vercel relay is allowlisted for browser-safe demo calls. | Link as production deployment evidence and capture health proof. |
 | Compass gateway | Live health confirms configured model/key/token presence. | Show one safe smoke test and explain boundary. |
-| GitHub Pages UI | Live demo UI exists. | Use as "Watch the Agent Work" entry point or record from it. |
+| GitHub Pages UI | Static cockpit has runtime controls for local, relay, and live-backend focus modes. | Use as "Watch the Agent Work" entry point or record from it. |
+| Vercel Functions | API handlers exist for health, readiness, benchmark, agent run, audit, and backend relay. | Deploy and point Pages `public/config.js` at the Vercel URL. |
 | OCR/document parsing | Available in Parallax42 backend. | Demonstrate PDF/DOCX evidence intake. |
-| Coupa/ServiceNow/Dynamics/GRC/SharePoint/SAP/Ariba/Oracle/Workday | Normalization API documented in Parallax42. | Add example payloads and screenshots. |
+| Coupa/ServiceNow/Dynamics/GRC/SharePoint/SAP/Ariba/Oracle/Workday | Normalization API documented in Parallax42, with local sample payloads under `examples/integrations/`. | Add screenshots and live replay evidence. |
 | Microsoft Entra ID | Roadmap only. | Implement or clearly mark as planned enterprise hardening. |
-| PostgreSQL | Optional/scaffolded in Parallax42. | Enable for durable run/audit records. |
+| PostgreSQL | Optional/scaffolded in Parallax42; this repo uses JSONL plus Vercel `/tmp` fallback. | Enable for durable run/audit records. |
 | Qdrant/vector memory | Optional/scaffolded in Parallax42. | Decide whether to keep scaffolded or activate retrieval. |
 | AI assurance portal | Separate repo. | Use for Responsible AI benchmark evidence. |
 

@@ -1,0 +1,145 @@
+{
+  "generatedAt": "2026-05-14T07:20:31.126Z",
+  "submissionReadiness": {
+    "productionDeployment": "partial_live",
+    "sovereignLlmBoundary": "live_gateway_present",
+    "auditTraceability": "local_trace_present_needs_persistence",
+    "rbac": "roadmap_needs_entra_implementation",
+    "benchmarks": "parallax42_golden_evals_20_of_20_passed",
+    "responsibleAi": "documented_controls_need_packaged_assurance_run",
+    "videoDemo": "not_recorded"
+  },
+  "linkedSystems": {
+    "parallax42Backend": "https://api.parallax42.bhavukarora.com",
+    "parallax42DemoUi": "https://slackspac3.github.io/Parallax42/",
+    "compassGateway": "https://parallax42-compass-gateway.vercel.app/api/compass"
+  },
+  "domains": [
+    {
+      "id": "third_party_compliance",
+      "label": "Third-Party Compliance",
+      "controls": [
+        "supplier due diligence",
+        "contract clause review",
+        "risk acceptance workflow"
+      ],
+      "evidenceIds": [
+        "p42:vendor-risk-sop",
+        "p42:approval-matrix",
+        "p42:contract-clause-pack"
+      ]
+    },
+    {
+      "id": "privacy_data_governance",
+      "label": "Privacy And Data Governance",
+      "controls": [
+        "signed dpa",
+        "subprocessor register",
+        "retention and deletion evidence"
+      ],
+      "evidenceIds": [
+        "p42:dpa-review-checklist",
+        "p42:model-training-data-use-policy"
+      ]
+    },
+    {
+      "id": "ai_model_governance",
+      "label": "AI And Model Governance",
+      "controls": [
+        "model-training exclusion",
+        "human oversight",
+        "rai assessment"
+      ],
+      "evidenceIds": [
+        "p42:ai-supplier-review-playbook",
+        "p42:responsible-ai-control-pack"
+      ]
+    },
+    {
+      "id": "business_continuity",
+      "label": "Business Continuity",
+      "controls": [
+        "business continuity plan",
+        "disaster recovery evidence",
+        "exit assistance"
+      ],
+      "evidenceIds": [
+        "p42:continuity-exit-requirements"
+      ]
+    },
+    {
+      "id": "financial_project_compliance",
+      "label": "Finance And Project Compliance",
+      "controls": [
+        "approval authority check",
+        "payment control review",
+        "project exception register"
+      ],
+      "evidenceIds": [
+        "p42:finance-project-control-baseline"
+      ]
+    },
+    {
+      "id": "licensing_microsoft_governance",
+      "label": "Licensing And Microsoft Governance",
+      "controls": [
+        "license entitlement review",
+        "tenant access review",
+        "admin privilege review"
+      ],
+      "evidenceIds": [
+        "p42:microsoft-governance-baseline"
+      ]
+    },
+    {
+      "id": "esg_hse_bcm",
+      "label": "ESG, HSE And BCM",
+      "controls": [
+        "hse evidence",
+        "esg attestation",
+        "business continuity mapping"
+      ],
+      "evidenceIds": [
+        "p42:esg-hse-bcm-baseline"
+      ]
+    },
+    {
+      "id": "physical_security_international_growth",
+      "label": "Physical Security And International Growth",
+      "controls": [
+        "jurisdiction screening",
+        "site security review",
+        "market-entry compliance check"
+      ],
+      "evidenceIds": [
+        "p42:international-growth-control-pack"
+      ]
+    },
+    {
+      "id": "technical_risk",
+      "label": "Technical Risk",
+      "controls": [
+        "security assurance review",
+        "identity and access controls",
+        "integration risk assessment"
+      ],
+      "evidenceIds": [
+        "p42:technical-risk-control-pack",
+        "p42:soc2-iso-evidence-map"
+      ]
+    },
+    {
+      "id": "regulatory_reporting",
+      "label": "Regulatory Compliance",
+      "controls": [
+        "obligation mapping",
+        "policy exception workflow",
+        "audit-ready decision record"
+      ],
+      "evidenceIds": [
+        "p42:regulatory-obligation-register",
+        "p42:audit-ready-decision-schema"
+      ]
+    }
+  ]
+}

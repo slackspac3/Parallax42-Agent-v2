@@ -20,9 +20,13 @@ Implemented in this repo:
 - `POST /api/agent/run` deterministic compliance-agent run
 - `GET /api/readiness` submission-readiness inventory
 - `GET /api/health` runtime and linked-platform status
+- Vercel-compatible serverless API functions under `api/`
+- allowlisted browser relay to the live Parallax42 backend at `GET/POST /api/backend`
+- GitHub Pages static cockpit with runtime mode controls
 - browser cockpit for running the agent and reviewing evidence, gaps, and trace events
 - optional CrewAI adapter with six role-specific agents and YAML task definitions
 - local benchmark endpoint and audit JSONL persistence
+- generated evidence capture under `evidence/`
 - unit tests and syntax checks
 - initial G42 submission dossier under `docs/`
 
@@ -48,6 +52,30 @@ http://127.0.0.1:3020
 
 ```bash
 npm run qa
+```
+
+## Evidence Capture
+
+Capture live health snapshots, benchmark output, readiness inventory, and a sample agent trace:
+
+```bash
+npm run capture:evidence
+```
+
+The generated files land in `evidence/` and are safe to include in a submission pack because secrets and raw uploads are not stored there.
+
+## Deployment Surfaces
+
+- Static cockpit: `public/`, deployed by `.github/workflows/pages.yml`.
+- Serverless API: `api/`, deployable to Vercel.
+- Live backend proof: proxied through the allowlisted `/api/backend` relay.
+
+Key environment variables:
+
+```text
+PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com
+P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020
+AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
 ```
 
 ## CrewAI
@@ -77,15 +105,17 @@ python crewai_adapter/compliance_crew.py --live-crewai --input examples/high_ris
 - [Requirements Traceability](docs/REQUIREMENTS_TRACEABILITY.md)
 - [Security, RBAC, And Audit Plan](docs/SECURITY_RBAC_AUDIT_PLAN.md)
 - [CrewAI Architecture](docs/CREWAI_ARCHITECTURE.md)
+- [Deployment Runbook](docs/DEPLOYMENT_RUNBOOK.md)
+- [Production Track](docs/PRODUCTION_TRACK.md)
 - [Demo Script](docs/DEMO_SCRIPT.md)
 - [Submission Plan](docs/SUBMISSION_PLAN.md)
 
 ## Build Direction
 
-The next implementation milestone is to replace the deterministic local evidence layer with a packaged extraction from Parallax42:
+The next implementation milestone is to replace the deterministic local evidence layer with a packaged extraction from Parallax42 and promote the Vercel API deployment:
 
-1. import the supplier-risk council flow as the first live compliance workflow
-2. add persisted run records and audit events
-3. add Entra-ready RBAC middleware
-4. add benchmark and latency reporting endpoints
+1. connect `/api/agent/run` to the live Parallax42 workflow behind an approval-gated switch
+2. move audit events from JSONL to PostgreSQL or another immutable append store
+3. add Entra-ready JWT validation and role-policy middleware
+4. expand benchmark coverage to upload/OCR, adversarial, latency, and fallback cases
 5. record the "Watch the Agent Work" demo path

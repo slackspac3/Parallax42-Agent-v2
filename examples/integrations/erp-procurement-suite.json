@@ -1,0 +1,28 @@
+{
+  "source": "enterprise_procurement_suite",
+  "eventType": "cross_platform_supplier_compliance_sync",
+  "systems": ["SAP", "SAP Ariba", "Oracle Procurement", "Workday"],
+  "supplier": {
+    "name": "Example Infrastructure Services",
+    "vendorIds": {
+      "sap": "SAP-448102",
+      "ariba": "AN-778812",
+      "oracle": "ORA-552901",
+      "workday": "WD-SUP-11902"
+    },
+    "criticality": "high"
+  },
+  "syncPolicy": {
+    "dedupeKey": "supplier.name",
+    "preserveSourceIds": true,
+    "requireHumanMergeApproval": true
+  },
+  "controls": [
+    "sanctions_screening",
+    "contract_terms_exception",
+    "financial_resilience",
+    "third_party_risk_review",
+    "data_processing_review"
+  ],
+  "targetAgentWorkflow": "supplier_master_compliance_reconciliation"
+}

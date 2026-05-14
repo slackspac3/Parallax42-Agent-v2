@@ -4,10 +4,12 @@
 
 - No committed secrets.
 - `.env` ignored.
-- Local audit records written to `logs/agent_audit.jsonl`.
+- Local audit records written to `logs/agent_audit.jsonl`; Vercel falls back to `/tmp/p42-compliance-intelligence-agent`.
 - Audit payloads redact secret-looking keys and truncate large strings.
 - Human approval required in the decision model.
 - Output review checks for unsupported automatic approval.
+- Browser backend relay is allowlisted and blocks arbitrary backend routes.
+- CORS is restricted to configured origins.
 
 ## Target Enterprise Controls
 
@@ -40,6 +42,7 @@ Initial roles:
 | `/api/readiness` | Platform Admin, Risk Admin, Auditor |
 | `/api/benchmarks` | Platform Admin, Risk Admin, Auditor |
 | `/api/audit/recent` | Platform Admin, Auditor |
+| `/api/backend?path=/health` | Demo users, reviewers |
 | Future write/apply endpoints | Explicit approver role plus expected revision |
 
 ### Audit Schema

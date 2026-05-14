@@ -1,0 +1,27 @@
+{
+  "source": "coupa",
+  "eventType": "supplier_onboarding_review",
+  "requestId": "COUPA-REQ-2026-3388",
+  "businessUnit": "Finance Transformation",
+  "geography": "UAE",
+  "supplier": {
+    "name": "Example Analytics Platform",
+    "category": "ai_saas",
+    "annualSpendUsd": 420000,
+    "criticality": "medium",
+    "paymentDataAccess": false
+  },
+  "contract": {
+    "termMonths": 24,
+    "renewal": "auto_renew_with_notice",
+    "subprocessorsListed": true,
+    "modelTrainingExclusion": false
+  },
+  "controlsRequested": [
+    "privacy_review",
+    "supplier_security_assessment",
+    "business_continuity_review",
+    "legal_terms_exception_review"
+  ],
+  "targetWorkflow": "conditional_purchase_approval"
+}

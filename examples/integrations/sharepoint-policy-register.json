@@ -1,0 +1,27 @@
+{
+  "source": "sharepoint",
+  "eventType": "policy_register_ingestion",
+  "library": "Corporate Compliance Policies",
+  "folder": "AI Supplier Controls",
+  "documents": [
+    {
+      "documentId": "SP-AI-POL-001",
+      "title": "AI Supplier Risk Standard",
+      "version": "3.2",
+      "classification": "internal",
+      "effectiveDate": "2026-01-15"
+    },
+    {
+      "documentId": "SP-BCP-POL-008",
+      "title": "Technology Supplier Business Continuity Minimums",
+      "version": "2.4",
+      "classification": "internal",
+      "effectiveDate": "2025-11-01"
+    }
+  ],
+  "agentUse": {
+    "indexForRetrieval": true,
+    "citePolicyEvidence": true,
+    "rejectUncitedRecommendations": true
+  }
+}
