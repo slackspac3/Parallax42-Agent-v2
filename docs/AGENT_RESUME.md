@@ -15,6 +15,8 @@ Strengthen compliance visibility across enterprise workflows by turning intake, 
 - Blocking-gap identification with action owners expressed as concrete controls.
 - Human-review decision posture: ready, conditionally ready, or not ready.
 - Trace event output for intake, domain scan, evidence mapping, control recommendation, and output review.
+- Hash-chained audit records with integrity verification for run history and reviewer traceability.
+- Route-level RBAC policy with Entra-compatible JWT validation available in enforced mode.
 - Live Parallax42 deployment evidence for multi-agent supplier risk, OCR document parsing, Compass gateway boundary, admin health, and golden evals.
 
 ## Differentiators
@@ -28,7 +30,7 @@ Strengthen compliance visibility across enterprise workflows by turning intake, 
 ## Current Limitations
 
 - This packaging repo is early; it contains the clean submission surface and deterministic agent loop.
-- Full Entra ID/RBAC is not active yet.
-- Persistent audit records need to move from local trace output into a durable store.
+- Entra ID/RBAC code is implemented, but production tenant, issuer, audience, and JWKS configuration still need to be set in the live environment.
+- Audit records are hash chained locally; production retention should use durable mounted storage or a managed database.
 - Benchmark evidence exists in Parallax42 but must be expanded into latency, reliability, and Responsible AI reports.
 - Demo video is not recorded yet.

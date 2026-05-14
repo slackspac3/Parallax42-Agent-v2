@@ -6,11 +6,12 @@ const path = require('node:path');
 const { URL } = require('node:url');
 
 const { runAgentWithRuntime, runtimeHealth } = require('./lib/agentRuntime');
-const { appendAuditRecord, readRecentAuditRecords } = require('./lib/auditStore');
+const { appendAuditRecord, auditStoreHealth, readRecentAuditRecords, verifyAuditChain } = require('./lib/auditStore');
 const { runBenchmark } = require('./lib/benchmarkSuite');
 const { getReadinessInventory } = require('./lib/complianceAgent');
 const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
 const { readJsonBody, writeJson } = require('./lib/http');
+const { authHealth, authorizeRequest } = require('./lib/rbac');
 
 const PORT = Number(process.env.PORT || 3020);
 const PUBLIC_ROOT = path.join(__dirname, 'public');
@@ -53,44 +54,80 @@ const server = http.createServer(async (req, res) => {
         service: 'parallax42-compliance-intelligence-agent',
         mode: process.env.AGENT_MODE || 'crewai_flow',
         agentRuntime: runtimeHealth(),
+        auth: authHealth(),
+        audit: {
+          store: auditStoreHealth(),
+          integrity: verifyAuditChain()
+        },
         linkedBackend: process.env.PARALLAX42_BACKEND_URL || 'https://api.parallax42.bhavukarora.com'
       });
       return;
     }
 
     if (req.method === 'GET' && url.pathname === '/api/readiness') {
+      const auth = await authorizeRequest(req, 'readiness:read');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
       writeJson(res, 200, getReadinessInventory());
       return;
     }
 
     if (req.method === 'GET' && url.pathname === '/api/benchmarks') {
+      const auth = await authorizeRequest(req, 'benchmarks:read');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
       writeJson(res, 200, runBenchmark());
       return;
     }
 
     if (req.method === 'GET' && url.pathname === '/api/demo/golden') {
+      const auth = await authorizeRequest(req, 'demo:read');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
       writeJson(res, 200, buildGoldenWorkflowRun({ mode: 'local_golden_demo' }));
       return;
     }
 
     if (req.method === 'GET' && url.pathname === '/api/audit/recent') {
+      const auth = await authorizeRequest(req, 'audit:read');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
       writeJson(res, 200, {
+        integrity: verifyAuditChain(),
         records: readRecentAuditRecords(Number(url.searchParams.get('limit') || 25))
       });
       return;
     }
 
     if (req.method === 'POST' && url.pathname === '/api/agent/run') {
+      const auth = await authorizeRequest(req, 'agent:run');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
       const body = await readJsonBody(req);
       const result = runAgentWithRuntime(body, {
         runtime: req.headers['x-agent-runtime'] || body.runtime
       });
       appendAuditRecord({
-        actor: result.case?.requester || 'browser_operator',
+        actor: auth.actor,
         caseId: result.case?.caseId,
         status: result.ok ? 'completed' : 'blocked',
         summary: result.ok ? result.decision.recommendation : result.message,
         payload: {
+          auth: {
+            policy: auth.policy,
+            roles: auth.actor.roles,
+            authenticated: auth.actor.authenticated
+          },
           decision: result.decision,
           evidenceIds: result.evidenceIds,
           gapCount: result.gaps?.length || 0,

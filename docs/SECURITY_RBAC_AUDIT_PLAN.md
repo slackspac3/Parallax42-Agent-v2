@@ -4,8 +4,12 @@
 
 - No committed secrets.
 - `.env` ignored.
-- Local audit records written to `logs/agent_audit.jsonl`; Vercel falls back to `/tmp/p42-compliance-intelligence-agent`.
+- Local audit records written to `logs/agent_audit.jsonl`; Vercel falls back to `/tmp/p42-compliance-intelligence-agent` unless `AGENT_AUDIT_DIR` points to durable mounted storage.
+- Audit records are append-only JSONL with SHA-256 hash chaining, sequence numbers, previous-hash pointers, and `/api/audit/recent` integrity verification.
 - Audit payloads redact secret-looking keys and truncate large strings.
+- Route-level RBAC policy exists for agent run, readiness, benchmarks, audit, health, and demo endpoints.
+- `P42_AUTH_MODE=enforced` requires a bearer token and blocks actors without a permitted role.
+- JWT validation supports HS256 for private smoke tests and RS256/JWKS for Entra-compatible OIDC deployments.
 - Human approval required in the decision model.
 - Output review checks for unsupported automatic approval.
 - Browser backend relay is allowlisted and blocks arbitrary backend routes.
@@ -19,6 +23,15 @@
 - Tenant and audience validation.
 - JWKS cache with rotation handling.
 - Conditional access delegated to Entra where available.
+- Production env:
+
+```bash
+P42_AUTH_MODE=enforced
+P42_AUTH_AUDIENCE=api://parallax42-compliance-agent
+P42_AUTH_ISSUER=https://login.microsoftonline.com/<tenant-id>/v2.0
+P42_ENTRA_TENANT_ID=<tenant-id>
+P42_ENTRA_JWKS_URL=https://login.microsoftonline.com/<tenant-id>/discovery/v2.0/keys
+```
 
 ### RBAC
 
@@ -52,7 +65,7 @@ Each record should include:
 - event id
 - timestamp
 - actor identity
-- role
+- role set
 - case id
 - event type
 - decision status
@@ -63,10 +76,13 @@ Each record should include:
 - fallback status
 - trace event count
 - redaction flags
+- integrity sequence
+- previous record hash
+- current record hash
 
 ## Production Upgrade
 
-Move local JSONL into PostgreSQL:
+For a final enterprise deployment, back `AGENT_AUDIT_DIR` with durable storage or move the same event shape into PostgreSQL:
 
 ```sql
 create table compliance_agent_audit_events (
@@ -77,7 +93,11 @@ create table compliance_agent_audit_events (
   case_id text not null,
   event_type text not null,
   payload jsonb not null,
-  redacted boolean not null default true
+  redacted boolean not null default true,
+  sequence bigint not null,
+  previous_hash text not null,
+  record_hash text not null,
+  algorithm text not null default 'sha256'
 );
 ```
 

@@ -1,6 +1,8 @@
 'use strict';
 
+const { auditStoreHealth, verifyAuditChain } = require('../lib/auditStore');
 const { runtimeHealth } = require('../lib/agentRuntime');
+const { authHealth } = require('../lib/rbac');
 const { methodGuard, sendJson } = require('./_http');
 
 module.exports = async function handler(req, res) {
@@ -11,6 +13,11 @@ module.exports = async function handler(req, res) {
     runtime: 'vercel',
     mode: process.env.AGENT_MODE || 'crewai_flow',
     agentRuntime: runtimeHealth(),
+    auth: authHealth(),
+    audit: {
+      store: auditStoreHealth(),
+      integrity: verifyAuditChain()
+    },
     linkedBackend: process.env.PARALLAX42_BACKEND_URL || 'https://api.parallax42.bhavukarora.com',
     pagesOrigin: process.env.P42_PAGES_ORIGIN || 'https://slackspac3.github.io'
   });

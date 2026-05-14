@@ -6,9 +6,9 @@
 | Cloud-agnostic or Azure-compatible | Azure migration design exists in source Parallax42/Risk Intelligence work. | Partial | Add Azure deployment reference architecture and IaC later. |
 | Secure API / sovereign LLM integration | Compass gateway boundary and no browser-held model keys. | Strong | Add live smoke-test artifact and gateway threat model. |
 | Structured data processing/reporting | Agent outputs JSON decisions, controls, evidence IDs, trace; `npm run capture:evidence` exports JSON artifacts. | Strong | Add CSV export and signed audit pack endpoint. |
-| Explainability and audit traceability | Trace events plus local audit JSONL with Vercel-safe temporary persistence. | Strong locally | Move to PostgreSQL-backed immutable audit table. |
+| Explainability and audit traceability | Trace events plus hash-chained append-only audit JSONL with integrity verification and Vercel-safe temporary persistence. | Strong locally | Back `AGENT_AUDIT_DIR` with durable storage or move the same event shape into PostgreSQL. |
 | Exception handling and escalation | Gaps include severity and action; decision is ready/conditional/not-ready. | Strong | Add role owner mapping and SLA/due-date fields. |
-| RBAC/authentication | Parallax42 has admin-token model and Entra roadmap. | Gap | Implement Entra JWT validation and role-policy middleware. |
+| RBAC/authentication | Route policy middleware, Entra-compatible JWT validation, and enforced mode via `P42_AUTH_MODE=enforced`. | Partial | Configure production Entra tenant/audience/JWKS and record reviewer role proof. |
 | Responsible AI controls | Human approval, no automatic approval, evidence discipline, docs. | Partial | Add adversarial evals and RAI report generator. |
 | Performance benchmarks | Local benchmark endpoint, benchmark script, and Parallax42 20/20 golden eval evidence. | Partial | Add load, latency, fallback-rate, and upload/OCR benchmarks. |
 | Prior deployments/references | Live Parallax42 deployment and generated health evidence artifacts. | Partial | Add deployment screenshots, endpoint proofs, and reference note. |

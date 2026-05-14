@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-14T08:36:06.053Z",
+  "generatedAt": "2026-05-14T15:14:08.712Z",
   "workflow": {
     "id": "golden-ai-saas-compliance-review",
     "title": "High-risk AI SaaS supplier compliance review",
@@ -324,8 +324,8 @@
     },
     "trace": [
       {
-        "eventId": "evt_1778747766053_bjz6xq",
-        "timestamp": "2026-05-14T08:36:06.053Z",
+        "eventId": "evt_1778771648712_3cp3ut",
+        "timestamp": "2026-05-14T15:14:08.712Z",
         "agent": "runtime_router",
         "eventType": "runtime_selected",
         "parentEventId": "",
@@ -339,8 +339,8 @@
         }
       },
       {
-        "eventId": "evt_1778747766053_2gd715",
-        "timestamp": "2026-05-14T08:36:06.053Z",
+        "eventId": "evt_1778771648712_wtvcdk",
+        "timestamp": "2026-05-14T15:14:08.712Z",
         "agent": "intake_agent",
         "eventType": "case_loaded",
         "parentEventId": "",
@@ -352,11 +352,11 @@
         }
       },
       {
-        "eventId": "evt_1778747766053_iz39pm",
-        "timestamp": "2026-05-14T08:36:06.053Z",
+        "eventId": "evt_1778771648712_w9x5o4",
+        "timestamp": "2026-05-14T15:14:08.712Z",
         "agent": "domain_scanner_agent",
         "eventType": "domains_scanned",
-        "parentEventId": "evt_1778747766053_2gd715",
+        "parentEventId": "evt_1778771648712_wtvcdk",
         "payload": {
           "matchedDomains": [
             {
@@ -430,11 +430,11 @@
         }
       },
       {
-        "eventId": "evt_1778747766053_bhivtc",
-        "timestamp": "2026-05-14T08:36:06.053Z",
+        "eventId": "evt_1778771648712_kze83p",
+        "timestamp": "2026-05-14T15:14:08.712Z",
         "agent": "evidence_agent",
         "eventType": "evidence_mapped",
-        "parentEventId": "evt_1778747766053_2gd715",
+        "parentEventId": "evt_1778771648712_wtvcdk",
         "payload": {
           "evidenceIds": [
             "p42:ai-supplier-review-playbook",
@@ -454,22 +454,22 @@
         }
       },
       {
-        "eventId": "evt_1778747766053_x0kymr",
-        "timestamp": "2026-05-14T08:36:06.053Z",
+        "eventId": "evt_1778771648712_cq7976",
+        "timestamp": "2026-05-14T15:14:08.712Z",
         "agent": "control_agent",
         "eventType": "controls_recommended",
-        "parentEventId": "evt_1778747766053_2gd715",
+        "parentEventId": "evt_1778771648712_wtvcdk",
         "payload": {
           "controlCount": 14,
           "highSeverityGaps": 3
         }
       },
       {
-        "eventId": "evt_1778747766053_sqii2k",
-        "timestamp": "2026-05-14T08:36:06.053Z",
+        "eventId": "evt_1778771648712_epbfuk",
+        "timestamp": "2026-05-14T15:14:08.712Z",
         "agent": "output_review_agent",
         "eventType": "output_review_completed",
-        "parentEventId": "evt_1778747766053_2gd715",
+        "parentEventId": "evt_1778771648712_wtvcdk",
         "payload": {
           "status": "needs_revision",
           "finalOutputSafeForHumanReview": true,

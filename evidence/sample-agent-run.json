@@ -243,8 +243,8 @@
   },
   "trace": [
     {
-      "eventId": "evt_1778747765997_k7mabq",
-      "timestamp": "2026-05-14T08:36:05.997Z",
+      "eventId": "evt_1778771648638_9s4tf5",
+      "timestamp": "2026-05-14T15:14:08.638Z",
       "agent": "runtime_router",
       "eventType": "runtime_selected",
       "parentEventId": "",
@@ -258,8 +258,8 @@
       }
     },
     {
-      "eventId": "evt_1778747765997_x4mgv0",
-      "timestamp": "2026-05-14T08:36:05.997Z",
+      "eventId": "evt_1778771648637_x4yczn",
+      "timestamp": "2026-05-14T15:14:08.637Z",
       "agent": "intake_agent",
       "eventType": "case_loaded",
       "parentEventId": "",
@@ -271,11 +271,11 @@
       }
     },
     {
-      "eventId": "evt_1778747765997_mq4k52",
-      "timestamp": "2026-05-14T08:36:05.997Z",
+      "eventId": "evt_1778771648637_pp87r6",
+      "timestamp": "2026-05-14T15:14:08.637Z",
       "agent": "domain_scanner_agent",
       "eventType": "domains_scanned",
-      "parentEventId": "evt_1778747765997_x4mgv0",
+      "parentEventId": "evt_1778771648637_x4yczn",
       "payload": {
         "matchedDomains": [
           {
@@ -349,11 +349,11 @@
       }
     },
     {
-      "eventId": "evt_1778747765997_qweaiw",
-      "timestamp": "2026-05-14T08:36:05.997Z",
+      "eventId": "evt_1778771648638_habzwv",
+      "timestamp": "2026-05-14T15:14:08.638Z",
       "agent": "evidence_agent",
       "eventType": "evidence_mapped",
-      "parentEventId": "evt_1778747765997_x4mgv0",
+      "parentEventId": "evt_1778771648637_x4yczn",
       "payload": {
         "evidenceIds": [
           "p42:ai-supplier-review-playbook",
@@ -373,22 +373,22 @@
       }
     },
     {
-      "eventId": "evt_1778747765997_zekjgd",
-      "timestamp": "2026-05-14T08:36:05.997Z",
+      "eventId": "evt_1778771648638_l6nv9y",
+      "timestamp": "2026-05-14T15:14:08.638Z",
       "agent": "control_agent",
       "eventType": "controls_recommended",
-      "parentEventId": "evt_1778747765997_x4mgv0",
+      "parentEventId": "evt_1778771648637_x4yczn",
       "payload": {
         "controlCount": 14,
         "highSeverityGaps": 3
       }
     },
     {
-      "eventId": "evt_1778747765997_srp6m8",
-      "timestamp": "2026-05-14T08:36:05.997Z",
+      "eventId": "evt_1778771648638_omktsf",
+      "timestamp": "2026-05-14T15:14:08.638Z",
       "agent": "output_review_agent",
       "eventType": "output_review_completed",
-      "parentEventId": "evt_1778747765997_x4mgv0",
+      "parentEventId": "evt_1778771648637_x4yczn",
       "payload": {
         "status": "needs_revision",
         "finalOutputSafeForHumanReview": true,

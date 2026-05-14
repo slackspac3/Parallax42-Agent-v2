@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-05-14T08:36:05.309Z",
+  "generatedAt": "2026-05-14T15:14:07.926Z",
   "backendHealth": {
     "ok": true,
     "status": 200,
-    "durationMs": 623,
+    "durationMs": 622,
     "url": "https://api.parallax42.bhavukarora.com/health",
     "body": {
       "status": "ok",
@@ -22,13 +22,68 @@
         "max_pages": 50,
         "chunked_upload_chunk_bytes": 2097152,
         "secrets_redacted": true
+      },
+      "platform": {
+        "case_store": {
+          "enabled": false,
+          "mode": "disabled",
+          "database_configured": false,
+          "local_path": "data/memory/case_runs.jsonl",
+          "recent_count": 0,
+          "content_redacted": true,
+          "postgres_driver_available": true
+        },
+        "queue": {
+          "enabled": false,
+          "redis_configured": false,
+          "redis_driver_available": true,
+          "mode": "disabled"
+        },
+        "object_storage": {
+          "provider": "local",
+          "mode": "local_filesystem",
+          "enabled": false,
+          "local_dir": "data/cache/object_store",
+          "bucket_configured": false,
+          "endpoint_configured": false,
+          "region_configured": false,
+          "content_redacted": true
+        },
+        "vector_memory": {
+          "enabled": false,
+          "qdrant_url_configured": false,
+          "qdrant_driver_available": true,
+          "collection": "parallax42_supplier_memory",
+          "embedding_provider": "local_hash",
+          "embedding_dimension": 384,
+          "mode": "disabled"
+        },
+        "auth": {
+          "admin_token_configured": true,
+          "backend_demo_token_configured": false,
+          "mode": "admin_token",
+          "auth_provider": "admin_token",
+          "rbac_mode": "disabled",
+          "entra_id_status": "planned",
+          "entra_tenant_configured": false,
+          "entra_client_configured": false,
+          "entra_audience_configured": false,
+          "entra_issuer_configured": false,
+          "entra_jwks_configured": false
+        },
+        "supplier_runtime": "SupplierRiskFlow",
+        "disabled_scaffolds": [
+          "CrewAI adapter",
+          "OpenClaw operator"
+        ],
+        "secrets_redacted": true
       }
     }
   },
   "gatewayHealth": {
     "ok": true,
     "status": 200,
-    "durationMs": 380,
+    "durationMs": 170,
     "url": "https://parallax42-compass-gateway.vercel.app/api/health",
     "body": {
       "ok": true,

@@ -81,19 +81,19 @@ Goal: make the agent enterprise-operable.
 
 Build:
 
-- SQLite local audit prototype
+- hash-chained local audit prototype. `Implemented: append-only JSONL with sequence, previous hash, and record hash`
 - PostgreSQL-ready schema and migration
-- append-only audit events
-- run retrieval endpoint
-- role policy middleware
-- Entra JWT validation design and optional implementation switch
+- append-only audit events. `Implemented`
+- run retrieval endpoint. `Implemented: /api/audit/recent with integrity report`
+- role policy middleware. `Implemented`
+- Entra JWT validation design and optional implementation switch. `Implemented: P42_AUTH_MODE=enforced plus RS256/JWKS configuration`
 
 Acceptance:
 
-- every agent run has a durable run ID
-- audit records include actor, role, case, evidence IDs, decision, gaps, controls, trace count, model mode
+- every agent run has a durable run ID. `Implemented as audit event id plus case id`
+- audit records include actor, role, case, evidence IDs, decision, gaps, trace count, model mode. `Implemented`
 - reviewer cannot approve without approver role
-- auditor can read but not mutate
+- auditor can read but not mutate. `Implemented for audit/read policy; no mutation endpoint exists`
 
 ## Milestone 4: Evals, Guardrails, And Observability
 

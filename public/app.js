@@ -155,13 +155,13 @@ const readinessCopy = {
   },
   auditTraceability: {
     label: 'Audit traceability',
-    proof: 'Decision trace and JSONL audit records are present',
-    next: 'Move to durable append-only database audit.'
+    proof: 'Hash-chained append-only audit records with integrity verification',
+    next: 'Back the audit path with managed durable storage for production retention.'
   },
   rbac: {
     label: 'RBAC and authentication',
-    proof: 'Role model and route policy are documented',
-    next: 'Implement Entra JWT validation and reviewer/approver enforcement.'
+    proof: 'Route policy and JWT validation are implemented with Entra-ready configuration',
+    next: 'Set P42_AUTH_MODE=enforced and configure Entra issuer, audience, tenant, and JWKS.'
   },
   benchmarks: {
     label: 'Benchmarks',

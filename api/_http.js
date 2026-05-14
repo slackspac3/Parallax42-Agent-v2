@@ -14,7 +14,7 @@ function allowedOrigins() {
   return new Set([...DEFAULT_ALLOWED_ORIGINS, ...configured]);
 }
 
-function setCors(req, res, { methods = 'GET,POST,OPTIONS', headers = 'accept,content-type,x-p42-demo-token,x-parallax42-demo-token' } = {}) {
+function setCors(req, res, { methods = 'GET,POST,OPTIONS', headers = 'accept,authorization,content-type,x-agent-runtime,x-p42-demo-token,x-parallax42-demo-token' } = {}) {
   const origin = req?.headers?.origin || '';
   if (allowedOrigins().has(origin)) {
     res.setHeader('access-control-allow-origin', origin);

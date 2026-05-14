@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-05-14T08:36:05.941Z",
+  "generatedAt": "2026-05-14T15:14:08.561Z",
   "summary": {
     "cases": 4,
     "passed": 4,
     "failed": 0,
     "passRate": 1,
-    "totalDurationMs": 8.01,
-    "p95DurationMs": 7.21
+    "totalDurationMs": 11.81,
+    "p95DurationMs": 10.97
   },
   "results": [
     {
@@ -14,7 +14,7 @@
       "expected": "not_ready",
       "actual": "not_ready",
       "passed": true,
-      "durationMs": 7.21,
+      "durationMs": 10.97,
       "evidenceCount": 11,
       "gapCount": 3
     },
@@ -23,7 +23,7 @@
       "expected": "conditionally_ready",
       "actual": "conditionally_ready",
       "passed": true,
-      "durationMs": 0.57,
+      "durationMs": 0.47,
       "evidenceCount": 4,
       "gapCount": 1
     },
@@ -32,7 +32,7 @@
       "expected": "conditionally_ready",
       "actual": "conditionally_ready",
       "passed": true,
-      "durationMs": 0.15,
+      "durationMs": 0.24,
       "evidenceCount": 8,
       "gapCount": 3
     },
@@ -41,7 +41,7 @@
       "expected": "ready",
       "actual": "ready",
       "passed": true,
-      "durationMs": 0.05,
+      "durationMs": 0.08,
       "evidenceCount": 5,
       "gapCount": 0
     }
