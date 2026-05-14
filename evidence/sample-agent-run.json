@@ -243,8 +243,8 @@
   },
   "trace": [
     {
-      "eventId": "evt_1778746029861_go9kte",
-      "timestamp": "2026-05-14T08:07:09.861Z",
+      "eventId": "evt_1778747765997_k7mabq",
+      "timestamp": "2026-05-14T08:36:05.997Z",
       "agent": "runtime_router",
       "eventType": "runtime_selected",
       "parentEventId": "",
@@ -258,8 +258,8 @@
       }
     },
     {
-      "eventId": "evt_1778746029860_iy794g",
-      "timestamp": "2026-05-14T08:07:09.860Z",
+      "eventId": "evt_1778747765997_x4mgv0",
+      "timestamp": "2026-05-14T08:36:05.997Z",
       "agent": "intake_agent",
       "eventType": "case_loaded",
       "parentEventId": "",
@@ -271,11 +271,11 @@
       }
     },
     {
-      "eventId": "evt_1778746029860_2p3toy",
-      "timestamp": "2026-05-14T08:07:09.860Z",
+      "eventId": "evt_1778747765997_mq4k52",
+      "timestamp": "2026-05-14T08:36:05.997Z",
       "agent": "domain_scanner_agent",
       "eventType": "domains_scanned",
-      "parentEventId": "evt_1778746029860_iy794g",
+      "parentEventId": "evt_1778747765997_x4mgv0",
       "payload": {
         "matchedDomains": [
           {
@@ -349,11 +349,11 @@
       }
     },
     {
-      "eventId": "evt_1778746029860_1pmj77",
-      "timestamp": "2026-05-14T08:07:09.860Z",
+      "eventId": "evt_1778747765997_qweaiw",
+      "timestamp": "2026-05-14T08:36:05.997Z",
       "agent": "evidence_agent",
       "eventType": "evidence_mapped",
-      "parentEventId": "evt_1778746029860_iy794g",
+      "parentEventId": "evt_1778747765997_x4mgv0",
       "payload": {
         "evidenceIds": [
           "p42:ai-supplier-review-playbook",
@@ -373,22 +373,22 @@
       }
     },
     {
-      "eventId": "evt_1778746029860_2u808a",
-      "timestamp": "2026-05-14T08:07:09.860Z",
+      "eventId": "evt_1778747765997_zekjgd",
+      "timestamp": "2026-05-14T08:36:05.997Z",
       "agent": "control_agent",
       "eventType": "controls_recommended",
-      "parentEventId": "evt_1778746029860_iy794g",
+      "parentEventId": "evt_1778747765997_x4mgv0",
       "payload": {
         "controlCount": 14,
         "highSeverityGaps": 3
       }
     },
     {
-      "eventId": "evt_1778746029860_kg4iq1",
-      "timestamp": "2026-05-14T08:07:09.860Z",
+      "eventId": "evt_1778747765997_srp6m8",
+      "timestamp": "2026-05-14T08:36:05.997Z",
       "agent": "output_review_agent",
       "eventType": "output_review_completed",
-      "parentEventId": "evt_1778746029860_iy794g",
+      "parentEventId": "evt_1778747765997_x4mgv0",
       "payload": {
         "status": "needs_revision",
         "finalOutputSafeForHumanReview": true,
@@ -579,7 +579,17 @@
         "responsibleAiReview": "approval boundary and safety checks",
         "workPlan": "triage and domain scope"
       }
-    }
+    },
+    "llm": {
+      "requested": false,
+      "enabled": false,
+      "model": "gpt-4o-mini",
+      "baseUrlConfigured": false,
+      "providerEnv": "OPENAI_API_KEY",
+      "apiKeyConfigured": true,
+      "outputAvailable": false
+    },
+    "llmOutput": null
   },
   "orchestration": {
     "framework": "CrewAI Flow",
@@ -663,6 +673,16 @@
       "responsibleAiReview": "approval boundary and safety checks",
       "workPlan": "triage and domain scope"
     },
+    "liveLlm": {
+      "requested": false,
+      "enabled": false,
+      "model": "gpt-4o-mini",
+      "baseUrlConfigured": false,
+      "providerEnv": "OPENAI_API_KEY",
+      "apiKeyConfigured": true,
+      "outputAvailable": false
+    },
+    "llmOutput": null,
     "humanApprovalRequired": true,
     "deterministicDecisionEngine": true
   }

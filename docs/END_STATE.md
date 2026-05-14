@@ -99,7 +99,7 @@ The submission should include:
 
 | Gap | Why It Matters |
 | --- | --- |
-| Live LLM-backed CrewAI specialist output is optional. | CrewAI Flow is now the primary runtime shape, but live model-backed specialist outputs still need approved provider configuration and eval gates. |
+| Live LLM-backed CrewAI specialist output is opt-in and advisory. | The wiring exists, but provider credentials, eval gates, and approval policy must be enabled before live output can influence decisions. |
 | Evidence upload is not yet first-class in this repo. | The role expects production workflows and technical integration, not only text summaries. |
 | Audit is JSONL/temporary rather than durable. | Enterprise review needs durable records and audit retrieval. |
 | RBAC is documented but not enforced. | Secure authentication is a role requirement. |

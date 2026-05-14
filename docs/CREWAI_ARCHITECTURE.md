@@ -11,6 +11,7 @@ The adapter now follows the current CrewAI Flow-first production pattern:
 - YAML-backed `Agent` and `Task` definitions for specialist work
 - deterministic fallback for CI, demos, and missing optional dependencies
 - normalized trace output so CrewAI and deterministic paths share the same API contract
+- opt-in live LLM calls for specialist analysis, gated by `CREWAI_ENABLE_LIVE_LLM=1`
 
 Official CrewAI documentation referenced:
 
@@ -49,6 +50,7 @@ Official CrewAI documentation referenced:
 | API default | `AGENT_RUNTIME=crewai_flow` | Route `/api/agent/run` through CrewAI Flow dry-run orchestration plus deterministic decision engine. |
 | Deterministic fallback | `AGENT_RUNTIME=deterministic` | Run the stable local decision engine directly. |
 | Live Flow validation | `python crewai_adapter/compliance_flow.py --live-flow --input examples/high_risk_ai_saas_case.json` | Execute the Flow state machine when CrewAI is installed. |
+| Live LLM specialists | `CREWAI_ENABLE_LIVE_LLM=1 AGENT_RUNTIME=crewai_llm npm run dev` | Run CrewAI agents against a configured LLM and attach advisory task output. |
 | Live CrewAI | `python crewai_adapter/compliance_crew.py --live-crewai --input examples/high_risk_ai_saas_case.json` | Run the CrewAI crew when dependencies and LLM config are installed. |
 
 ## Guardrails
@@ -59,3 +61,4 @@ Official CrewAI documentation referenced:
 - CrewAI live mode is optional until an approved LLM provider configuration is available.
 - The deterministic decision engine remains the baseline for CI and local reproducibility.
 - Runtime metadata is included in API output and audit payloads.
+- Live LLM specialist output is advisory until eval gates are added; it cannot approve a case by itself.

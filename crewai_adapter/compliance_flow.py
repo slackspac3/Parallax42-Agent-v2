@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -123,6 +125,206 @@ def flow_manifest(case: dict[str, Any], input_label: str, *, live_crewai: bool) 
     }
 
 
+def truthy_env(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def llm_config() -> dict[str, Any]:
+    model = (
+        os.getenv("CREWAI_LLM_MODEL")
+        or os.getenv("OPENAI_MODEL_NAME")
+        or os.getenv("MODEL")
+        or "gpt-4o-mini"
+    )
+    base_url = (
+        os.getenv("CREWAI_LLM_BASE_URL")
+        or os.getenv("OPENAI_API_BASE")
+        or os.getenv("OPENAI_BASE_URL")
+        or ""
+    )
+    api_key = (
+        os.getenv("CREWAI_LLM_API_KEY")
+        or os.getenv("OPENAI_API_KEY")
+        or os.getenv("ANTHROPIC_API_KEY")
+        or os.getenv("GEMINI_API_KEY")
+        or os.getenv("GOOGLE_API_KEY")
+        or os.getenv("AZURE_API_KEY")
+        or ""
+    )
+    return {
+        "enabled": truthy_env("CREWAI_ENABLE_LIVE_LLM"),
+        "model": model,
+        "base_url_configured": bool(base_url),
+        "api_key_configured": bool(api_key),
+        "temperature": float(os.getenv("CREWAI_LLM_TEMPERATURE", "0.1")),
+        "timeout": float(os.getenv("CREWAI_LLM_TIMEOUT", "120")),
+        "max_tokens": int(os.getenv("CREWAI_LLM_MAX_TOKENS", "1800")),
+        "provider_env": configured_provider_env(),
+    }
+
+
+def configured_provider_env() -> str:
+    for key in [
+        "CREWAI_LLM_API_KEY",
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "GEMINI_API_KEY",
+        "GOOGLE_API_KEY",
+        "AZURE_API_KEY",
+    ]:
+        if os.getenv(key):
+            return key
+    return ""
+
+
+def build_llm() -> Any:
+    try:
+        from crewai import LLM  # type: ignore
+    except Exception as exc:
+        raise RuntimeError(
+            "CrewAI is not installed. Run `python -m pip install -r requirements-crewai.txt` first."
+        ) from exc
+
+    config = llm_config()
+    if not config["enabled"]:
+        raise RuntimeError("Live CrewAI LLM calls are disabled. Set CREWAI_ENABLE_LIVE_LLM=1 to enable them.")
+    if not config["api_key_configured"]:
+        raise RuntimeError("No provider API key is configured for live CrewAI LLM calls.")
+
+    kwargs: dict[str, Any] = {
+        "model": config["model"],
+        "temperature": config["temperature"],
+        "timeout": config["timeout"],
+        "max_tokens": config["max_tokens"],
+        "response_format": {"type": "json"},
+    }
+    base_url = os.getenv("CREWAI_LLM_BASE_URL") or os.getenv("OPENAI_API_BASE") or os.getenv("OPENAI_BASE_URL")
+    api_key = os.getenv("CREWAI_LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+    if base_url:
+        kwargs["base_url"] = base_url
+    if api_key:
+        kwargs["api_key"] = api_key
+    return LLM(**kwargs)
+
+
+def parse_jsonish(value: str) -> Any:
+    text = (value or "").strip()
+    if not text:
+        return None
+    try:
+        return json.loads(text)
+    except Exception:
+        pass
+    match = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL | re.IGNORECASE)
+    if match:
+        try:
+            return json.loads(match.group(1).strip())
+        except Exception:
+            return None
+    start = text.find("{")
+    end = text.rfind("}")
+    if start >= 0 and end > start:
+        try:
+            return json.loads(text[start : end + 1])
+        except Exception:
+            return None
+    return None
+
+
+def output_to_payload(output: Any) -> dict[str, Any]:
+    raw = str(getattr(output, "raw", output))
+    task_outputs = []
+    for item in getattr(output, "tasks_output", []) or []:
+        item_raw = str(getattr(item, "raw", item))
+        task_outputs.append({
+            "agent": getattr(getattr(item, "agent", None), "role", "") or "",
+            "description": str(getattr(item, "description", "") or "")[:500],
+            "raw": item_raw,
+            "json": parse_jsonish(item_raw),
+        })
+    return {
+        "raw": raw,
+        "json": getattr(output, "json_dict", None) or parse_jsonish(raw),
+        "tasks": task_outputs,
+        "token_usage": getattr(output, "token_usage", None),
+    }
+
+
+def live_llm_system_note() -> str:
+    return (
+        "Return strict JSON only. Do not approve the case automatically. "
+        "Treat your output as specialist analysis for a human reviewer and deterministic guardrail engine. "
+        "Name missing evidence, uncertainty, and required human approvals."
+    )
+
+
+def run_live_llm_review(case: dict[str, Any], input_label: str) -> dict[str, Any]:
+    try:
+        from crewai import Agent, Crew, Process, Task  # type: ignore
+    except Exception as exc:
+        raise RuntimeError(
+            "CrewAI is not installed. Run `python -m pip install -r requirements-crewai.txt` first."
+        ) from exc
+
+    llm = build_llm()
+    agents_config = load_yaml(CONFIG_DIR / "agents.yaml")
+    tasks_config = load_yaml(CONFIG_DIR / "tasks.yaml")
+    agents = {
+        key: Agent(
+            role=config.get("role", key),
+            goal=config.get("goal", ""),
+            backstory=f"{config.get('backstory', '')}\n\n{live_llm_system_note()}",
+            allow_delegation=False,
+            verbose=truthy_env("CREWAI_VERBOSE"),
+            llm=llm,
+            max_iter=int(os.getenv("CREWAI_AGENT_MAX_ITER", "2")),
+            max_execution_time=int(os.getenv("CREWAI_AGENT_MAX_SECONDS", "120")),
+        )
+        for key, config in agents_config.items()
+    }
+
+    tasks = []
+    for key, config in tasks_config.items():
+        agent_key = config.get("agent", "")
+        if agent_key not in agents:
+            raise RuntimeError(f"Task {key} references unknown agent {agent_key}")
+        tasks.append(Task(
+            description=(
+                f"{config.get('description', '')}\n\n"
+                f"{live_llm_system_note()}\n\n"
+                f"Case input:\n{json.dumps(case, indent=2)}"
+            ),
+            expected_output=f"{config.get('expected_output', '')}\nReturn valid JSON only.",
+            agent=agents[agent_key],
+        ))
+
+    crew = Crew(
+        agents=list(agents.values()),
+        tasks=tasks,
+        process=Process.sequential,
+        verbose=truthy_env("CREWAI_VERBOSE"),
+    )
+    output = crew.kickoff(inputs={"case": case})
+    config = llm_config()
+    return {
+        "mode": "crewai_llm_live",
+        "framework": "CrewAI",
+        "input": input_label,
+        "llm": {
+            "enabled": True,
+            "model": config["model"],
+            "base_url_configured": config["base_url_configured"],
+            "provider_env": config["provider_env"],
+            "temperature": config["temperature"],
+            "max_tokens": config["max_tokens"],
+        },
+        "crewOutput": output_to_payload(output),
+        "flow": flow_manifest(case, input_label, live_crewai=True)["flow"],
+        "human_approval_required": True,
+        "deterministic_guardrail_required": True,
+    }
+
+
 def run_live_flow(case: dict[str, Any], input_label: str) -> dict[str, Any]:
     try:
         from crewai.flow.flow import Flow, listen, start  # type: ignore
@@ -173,12 +375,15 @@ def main() -> int:
     parser.add_argument("--input", default=str(DEFAULT_INPUT), help="Path to compliance case JSON, or '-' for stdin.")
     parser.add_argument("--dry-run", action="store_true", help="Print Flow manifest without importing CrewAI.")
     parser.add_argument("--live-flow", action="store_true", help="Execute the Flow state machine with CrewAI installed.")
+    parser.add_argument("--live-llm", action="store_true", help="Run CrewAI agents with configured live LLM calls.")
     args = parser.parse_args()
 
     input_path = None if args.input == "-" else Path(args.input).expanduser().resolve()
     case, input_label = load_case_input(input_path)
 
-    if args.live_flow:
+    if args.live_llm:
+        payload = run_live_llm_review(case, input_label)
+    elif args.live_flow:
         payload = run_live_flow(case, input_label)
     else:
         payload = flow_manifest(case, input_label, live_crewai=False)

@@ -38,6 +38,17 @@ python crewai_adapter/compliance_crew.py --live-crewai --input examples/high_ris
 
 The live CrewAI path requires an LLM configuration supported by your CrewAI installation. The adapter intentionally does not commit model keys or provider secrets.
 
+Run live specialist LLM calls only after configuring approved credentials:
+
+```bash
+export CREWAI_ENABLE_LIVE_LLM=1
+export CREWAI_LLM_MODEL=gpt-4o-mini
+export OPENAI_API_KEY=...
+python crewai_adapter/compliance_flow.py --live-llm --input examples/high_risk_ai_saas_case.json
+```
+
+The live LLM result is advisory analysis. The Node API still applies deterministic decision guardrails.
+
 ## API Runtime
 
 The Node API defaults to the CrewAI Flow dry-run orchestration path:

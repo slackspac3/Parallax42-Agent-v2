@@ -42,9 +42,13 @@ Recommended environment:
 ```text
 PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com
 AGENT_RUNTIME=crewai_flow
+CREWAI_ENABLE_LIVE_LLM=0
+CREWAI_LLM_MODEL=gpt-4o-mini
 P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020,http://localhost:3020
 AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
 ```
+
+Set `CREWAI_ENABLE_LIVE_LLM=1` only after approved provider credentials are configured in Vercel. Live LLM specialist output is advisory and remains behind deterministic decision guardrails.
 
 Expected endpoints:
 

@@ -76,6 +76,8 @@ Key environment variables:
 
 ```text
 AGENT_RUNTIME=crewai_flow
+CREWAI_ENABLE_LIVE_LLM=0
+CREWAI_LLM_MODEL=gpt-4o-mini
 PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com
 P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020
 AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
@@ -98,6 +100,17 @@ python -m pip install -r requirements-crewai.txt
 python crewai_adapter/compliance_flow.py --live-flow --input examples/high_risk_ai_saas_case.json
 python crewai_adapter/compliance_crew.py --live-crewai --input examples/high_risk_ai_saas_case.json
 ```
+
+Enable live LLM calls only with approved credentials:
+
+```bash
+export CREWAI_ENABLE_LIVE_LLM=1
+export CREWAI_LLM_MODEL=gpt-4o-mini
+export OPENAI_API_KEY=...
+AGENT_RUNTIME=crewai_llm npm run dev
+```
+
+Live LLM specialist output is attached under `orchestration.llmOutput`; the final decision remains guarded by the deterministic engine until eval gates are added.
 
 ## Submission Dossier
 

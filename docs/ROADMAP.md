@@ -51,6 +51,7 @@ Acceptance:
 
 - `npm run check:crewai` remains dependency-light. `Passed`
 - optional live CrewAI Flow validation works when CrewAI is installed. `Available via --live-flow`
+- optional live LLM specialist output is wired and guarded. `Available via AGENT_RUNTIME=crewai_llm and CREWAI_ENABLE_LIVE_LLM=1`
 - golden case produces the same acceptance status as deterministic replay. `Passed`
 - missing secrets/dependencies degrade to deterministic decision fallback with explicit mode label. `Passed`
 
