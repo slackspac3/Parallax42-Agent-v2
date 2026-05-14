@@ -48,10 +48,16 @@ let lastRun = null;
 const agentLabels = {
   runtime_router: 'Runtime Router',
   intake_agent: 'Compliance Orchestrator',
+  compliance_orchestrator: 'Compliance Orchestrator',
   domain_scanner_agent: 'Regulatory Obligation Mapper',
+  regulatory_obligation_mapper: 'Regulatory Obligation Mapper',
   evidence_agent: 'Evidence Examiner',
+  evidence_examiner: 'Evidence Examiner',
   control_agent: 'Risk And Control Analyst',
-  output_review_agent: 'Responsible AI Reviewer'
+  risk_control_analyst: 'Risk And Control Analyst',
+  output_review_agent: 'Responsible AI Reviewer',
+  responsible_ai_reviewer: 'Responsible AI Reviewer',
+  audit_packager: 'Audit Packager'
 };
 
 const readinessCopy = {
@@ -216,7 +222,10 @@ function humanize(value = '') {
 }
 
 function titleCase(value = '') {
-  return humanize(value).replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return humanize(value)
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    .replace(/\bAi\b/g, 'AI')
+    .replace(/\bRbac\b/g, 'RBAC');
 }
 
 function formatRuntime(value = '') {
@@ -329,7 +338,7 @@ function renderSpecialists(result) {
     return `
       <article class="specialist ${complete ? 'is-complete' : ''}">
         <span>${escapeHtml(complete ? 'complete' : 'queued')}</span>
-        <strong>${escapeHtml(stage.role || titleCase(stage.agent || stage.id))}</strong>
+        <strong>${escapeHtml(agentLabels[stage.agent] || stage.role || titleCase(stage.agent || stage.id))}</strong>
         <p>${escapeHtml(humanize(stage.method || stage.id))}</p>
       </article>
     `;
@@ -437,7 +446,7 @@ async function loadDeploymentStatus() {
       label: `Compliance API (${config.resolvedMode})`,
       url: apiUrl('/api/health'),
       detail: (body) => body?.agentRuntime?.configuredRuntime
-        ? `${body.service} using ${body.agentRuntime.configuredRuntime}`
+        ? `${body.service} using ${formatRuntime(body.agentRuntime.configuredRuntime)}`
         : body?.status || body?.service || 'API responded'
     },
     backendCheck,
