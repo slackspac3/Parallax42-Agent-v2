@@ -78,6 +78,10 @@ const readinessList = document.querySelector('#readinessList');
 const specialistList = document.querySelector('#specialistList');
 const artifactPreview = document.querySelector('#artifactPreview');
 const evidenceQueue = document.querySelector('#evidenceQueue');
+const evidenceInput = document.querySelector('#evidenceInput');
+const evidenceDropzone = document.querySelector('#evidenceDropzone');
+const evidenceIngestionStatus = document.querySelector('#evidenceIngestionStatus');
+const citationList = document.querySelector('#citationList');
 const benchmarkSummary = document.querySelector('#benchmarkSummary');
 const deploymentStatus = document.querySelector('#deploymentStatus');
 const readinessJsonLink = document.querySelector('#readinessJsonLink');
@@ -87,6 +91,7 @@ const topHealth = document.querySelector('#topHealth');
 let lastRun = null;
 let currentScenarioKey = 'aiSaas';
 let playbackTimers = [];
+let uploadedEvidence = [];
 
 const agentLabels = {
   runtime_router: 'Runtime Router',
@@ -148,6 +153,16 @@ const fallbackStages = [
   { role: 'Risk And Control Analyst', agent: 'risk_control_analyst', method: 'recommend_controls', expectedTraceEvent: 'controls_recommended' },
   { role: 'Responsible AI Reviewer', agent: 'responsible_ai_reviewer', method: 'review_responsible_ai', expectedTraceEvent: 'output_review_completed' },
   { role: 'Audit Packager', agent: 'audit_packager', method: 'package_audit_brief', expectedTraceEvent: 'output_review_completed' }
+];
+
+const readableEvidenceExtensions = new Set(['txt', 'md', 'markdown', 'json', 'csv', 'log']);
+const evidenceSignalPatterns = [
+  ['DPA', /dpa|data processing agreement|subprocessor|retention|deletion|transfer/i],
+  ['model training exclusion', /no\s+(customer\s+)?data\s+(is\s+)?used\s+for\s+(model\s+)?training|model[- ]training exclusion|training exclusion|no training/i],
+  ['continuity', /continuity|business continuity|bcp|disaster recovery|dr plan|exit assistance|exit support/i],
+  ['identity access', /azure ad|entra|sso|single sign[- ]on|privileged access|rbac|mfa/i],
+  ['finance controls', /payment|finance|ledger|invoice|approval authority|project governance/i],
+  ['security assurance', /soc\s*2|iso\s*27001|encryption|vulnerability|logging|audit/i]
 ];
 
 function escapeHtml(value = '') {
@@ -304,6 +319,105 @@ function downloadJson(filename, payload) {
   URL.revokeObjectURL(url);
 }
 
+function fileExtension(fileName = '') {
+  const parts = String(fileName).toLowerCase().split('.');
+  return parts.length > 1 ? parts.pop() : '';
+}
+
+function formatBytes(bytes = 0) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function cleanEvidenceText(value = '') {
+  return String(value || '')
+    .replace(/\u0000/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function summarizeEvidenceText(text = '', maxLength = 720) {
+  const clean = cleanEvidenceText(text);
+  if (!clean) return 'No extractable text was detected.';
+  return clean.length > maxLength ? `${clean.slice(0, maxLength).trim()}...` : clean;
+}
+
+function detectEvidenceSignals(text = '') {
+  return evidenceSignalPatterns
+    .filter(([, pattern]) => pattern.test(text))
+    .map(([label]) => label);
+}
+
+function bestEffortPdfText(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let raw = '';
+  const limit = Math.min(bytes.length, 220000);
+  for (let index = 0; index < limit; index += 1) {
+    const code = bytes[index];
+    raw += code >= 32 && code <= 126 ? String.fromCharCode(code) : ' ';
+  }
+  const strings = Array.from(raw.matchAll(/\(([^()]{8,220})\)/g))
+    .map((match) => match[1].replace(/\\([()\\])/g, '$1'));
+  return cleanEvidenceText(strings.join(' '));
+}
+
+async function extractEvidenceFile(file, index) {
+  const extension = fileExtension(file.name);
+  const evidenceId = `UP-${String(index + 1).padStart(2, '0')}`;
+  let extractedText = '';
+  let extractionStatus = 'metadata_only';
+  let sourceType = extension || file.type || 'unknown';
+
+  if (file.type.startsWith('text/') || readableEvidenceExtensions.has(extension)) {
+    extractedText = await file.text();
+    extractionStatus = 'text_extracted';
+  } else if (extension === 'pdf' || file.type === 'application/pdf') {
+    const buffer = await file.arrayBuffer();
+    extractedText = bestEffortPdfText(buffer);
+    extractionStatus = extractedText ? 'best_effort_pdf_text' : 'binary_registered';
+  }
+
+  const summary = extractedText
+    ? summarizeEvidenceText(extractedText)
+    : `Binary evidence registered: ${file.name}. Text extraction requires backend OCR/document parsing.`;
+  const signals = detectEvidenceSignals(`${file.name} ${summary} ${extractedText}`);
+
+  return {
+    evidenceId,
+    title: file.name,
+    fileName: file.name,
+    sourceType,
+    sizeBytes: file.size,
+    extractionStatus,
+    summary,
+    excerpt: summarizeEvidenceText(extractedText || summary, 260),
+    signals,
+    uploadedAt: new Date().toISOString()
+  };
+}
+
+async function ingestEvidenceFiles(files = []) {
+  const selected = Array.from(files).slice(0, 8);
+  if (!selected.length) return;
+  evidenceIngestionStatus.textContent = `Extracting ${selected.length} evidence file${selected.length === 1 ? '' : 's'}...`;
+  try {
+    const offset = uploadedEvidence.length;
+    const extracted = [];
+    for (const [index, file] of selected.entries()) {
+      extracted.push(await extractEvidenceFile(file, offset + index));
+    }
+    uploadedEvidence = [...uploadedEvidence, ...extracted].slice(0, 12);
+    evidenceIngestionStatus.textContent = `${uploadedEvidence.length} uploaded evidence file${uploadedEvidence.length === 1 ? '' : 's'} attached to next run.`;
+    renderEvidenceQueue();
+    runAgent(currentFormPayload(), { playback: true });
+  } catch (error) {
+    evidenceIngestionStatus.textContent = error instanceof Error ? error.message : 'Evidence extraction failed.';
+  } finally {
+    evidenceInput.value = '';
+  }
+}
+
 function getStages(result) {
   return result?.orchestration?.flow?.stages?.length ? result.orchestration.flow.stages : fallbackStages;
 }
@@ -316,15 +430,21 @@ function clearPlaybackTimers() {
 function currentFormPayload() {
   const data = new FormData(form);
   const scenario = scenarios[currentScenarioKey];
+  const manualDocument = {
+    evidenceId: 'INTAKE-01',
+    title: 'User supplied evidence summary',
+    sourceType: 'manual_summary',
+    extractionStatus: 'manual',
+    summary: data.get('documentSummary'),
+    excerpt: summarizeEvidenceText(data.get('documentSummary'), 260),
+    signals: detectEvidenceSignals(data.get('documentSummary'))
+  };
   return {
     supplierName: scenario.supplierName,
     brief: data.get('brief'),
     businessUnit: data.get('businessUnit'),
     geography: data.get('geography'),
-    documents: [{
-      title: 'User supplied evidence summary',
-      summary: data.get('documentSummary')
-    }],
+    documents: [manualDocument, ...uploadedEvidence],
     integrations: scenario.integrations
   };
 }
@@ -339,12 +459,23 @@ function applyScenario(key) {
   document.querySelectorAll('[data-scenario]').forEach((button) => {
     button.classList.toggle('is-active', button.dataset.scenario === key);
   });
-  renderEvidenceQueue(scenario);
+  renderEvidenceQueue();
 }
 
 function renderEvidenceQueue(scenario = scenarios[currentScenarioKey]) {
-  evidenceQueue.innerHTML = scenario.evidenceQueue.map((item, index) => `
-    <span><b>E${String(index + 1).padStart(2, '0')}</b>${escapeHtml(item)}</span>
+  const scenarioItems = scenario.evidenceQueue.map((item, index) => ({
+    evidenceId: `S${String(index + 1).padStart(2, '0')}`,
+    title: item,
+    extractionStatus: 'scenario_signal',
+    signals: []
+  }));
+  const items = [...scenarioItems, ...uploadedEvidence];
+  evidenceQueue.innerHTML = items.map((item) => `
+    <span class="${item.extractionStatus === 'binary_registered' ? 'needs-extraction' : ''}">
+      <b>${escapeHtml(item.evidenceId)}</b>
+      <span>${escapeHtml(item.title || item.fileName)}</span>
+      ${item.signals?.length ? `<em>${escapeHtml(item.signals.slice(0, 2).join(', '))}</em>` : ''}
+    </span>
   `).join('');
 }
 
@@ -399,6 +530,7 @@ function renderRun(result, options = {}) {
     traceList.innerHTML = '';
     specialistList.innerHTML = '';
     artifactPreview.innerHTML = '';
+    citationList.innerHTML = '';
     flowProgress.style.width = '0%';
     return;
   }
@@ -433,6 +565,7 @@ function renderRun(result, options = {}) {
 
   renderSpecialists(result, { stageIndex, activeIndex, finalVisible });
   renderEvidence(result, { stageIndex, finalVisible });
+  renderCitations(result, { stageIndex, finalVisible });
   renderTrace(trace, stages, { stageIndex, finalVisible });
   renderArtifactPreview(result, { finalVisible });
 }
@@ -486,6 +619,39 @@ function renderEvidence(result, options = {}) {
     : '<article class="empty-row">Blocking gaps appear after control analysis completes.</article>';
 }
 
+function evidenceDocuments(result = {}) {
+  return Array.isArray(result.case?.documents) ? result.case.documents : [];
+}
+
+function renderCitations(result, options = {}) {
+  const showCitations = options.finalVisible || options.stageIndex >= 2;
+  const documents = evidenceDocuments(result);
+  if (!showCitations) {
+    citationList.innerHTML = '<article class="empty-row">Citations appear after the evidence examiner maps uploaded documents.</article>';
+    return;
+  }
+  if (!documents.length) {
+    citationList.innerHTML = '<article class="empty-row">No uploaded or manual evidence is attached to this run.</article>';
+    return;
+  }
+  citationList.innerHTML = documents.map((doc, index) => {
+    const evidenceId = doc.evidenceId || `DOC-${String(index + 1).padStart(2, '0')}`;
+    const signals = Array.isArray(doc.signals) && doc.signals.length
+      ? doc.signals.join(', ')
+      : 'No strong signal detected';
+    return `
+      <article class="citation-row ${doc.extractionStatus === 'binary_registered' ? 'needs-extraction' : ''}">
+        <div>
+          <span>${escapeHtml(evidenceId)} · ${escapeHtml(doc.extractionStatus || 'attached')}</span>
+          <strong>${escapeHtml(doc.title || doc.fileName || `Evidence ${index + 1}`)}</strong>
+          <p>${escapeHtml(doc.excerpt || doc.summary || 'Evidence attached without extracted text.')}</p>
+        </div>
+        <small>${escapeHtml(signals)}</small>
+      </article>
+    `;
+  }).join('');
+}
+
 function renderTrace(trace, stages, options = {}) {
   const visibleEventTypes = new Set(stages.slice(0, options.finalVisible ? stages.length : options.stageIndex + 1).map((stage) => stage.expectedTraceEvent));
   const visibleTrace = options.finalVisible
@@ -506,6 +672,8 @@ function renderArtifactPreview(result, options = {}) {
   const domains = Array.isArray(result.domains) ? result.domains : [];
   const gaps = Array.isArray(result.gaps) ? result.gaps : [];
   const evidenceIds = Array.isArray(result.evidenceIds) ? result.evidenceIds : [];
+  const documents = evidenceDocuments(result);
+  const extractedCount = documents.filter((doc) => /text|pdf|manual/i.test(doc.extractionStatus || '')).length;
   const ready = options.finalVisible;
   artifactPreview.innerHTML = `
     <div class="artifact-header">
@@ -517,6 +685,8 @@ function renderArtifactPreview(result, options = {}) {
       <span>Domains</span><b>${escapeHtml(domains.length)}</b>
       <span>Gaps</span><b>${escapeHtml(gaps.length)}</b>
       <span>Evidence IDs</span><b>${escapeHtml(evidenceIds.length)}</b>
+      <span>Uploaded docs</span><b>${escapeHtml(documents.length)}</b>
+      <span>Extracted docs</span><b>${escapeHtml(extractedCount)}</b>
       <span>Runtime</span><b>${escapeHtml(formatRuntime(result.runtime?.actualRuntime || result.mode || 'unknown'))}</b>
     </div>
     <pre>{
@@ -696,6 +866,28 @@ document.querySelectorAll('[data-scenario]').forEach((button) => {
   });
 });
 
+evidenceInput.addEventListener('change', (event) => {
+  ingestEvidenceFiles(event.target.files);
+});
+
+['dragenter', 'dragover'].forEach((eventName) => {
+  evidenceDropzone.addEventListener(eventName, (event) => {
+    event.preventDefault();
+    evidenceDropzone.classList.add('is-dragging');
+  });
+});
+
+['dragleave', 'drop'].forEach((eventName) => {
+  evidenceDropzone.addEventListener(eventName, (event) => {
+    event.preventDefault();
+    evidenceDropzone.classList.remove('is-dragging');
+  });
+});
+
+evidenceDropzone.addEventListener('drop', (event) => {
+  ingestEvidenceFiles(event.dataTransfer.files);
+});
+
 form.addEventListener('submit', (event) => {
   event.preventDefault();
   runAgent(currentFormPayload(), { playback: true });
@@ -733,6 +925,7 @@ exportRun.addEventListener('click', () => {
   downloadJson(`p42-audit-pack-${lastRun.case?.caseId || 'demo'}.json`, {
     exportedAt: new Date().toISOString(),
     service: 'parallax42-compliance-intelligence-agent',
+    evidenceManifest: evidenceDocuments(lastRun),
     run: lastRun
   });
 });

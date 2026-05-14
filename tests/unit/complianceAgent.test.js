@@ -53,3 +53,28 @@ test('can return a ready decision when evidence is sufficient', () => {
   assert.notEqual(result.decision.status, 'not_ready');
   assert.ok(result.trace.length >= 5);
 });
+
+test('uploaded positive evidence clears training and continuity blockers', () => {
+  const result = runComplianceAgent({
+    businessUnit: 'Group Technology Risk',
+    geography: 'UAE',
+    supplierName: 'Example AI SaaS',
+    brief: 'Procure a critical AI SaaS supplier that processes personal data, uses AI workflows, integrates with Azure AD, and supports finance reporting.',
+    documents: [
+      {
+        title: 'Initial summary',
+        summary: 'SOC 2 summary available. No signed DPA, model-training exclusion, or continuity plan attached.'
+      },
+      {
+        title: 'Uploaded compliance pack',
+        summary: 'Signed DPA attached with subprocessors, retention, deletion, and transfer evidence. Supplier states no customer data is used for model training, fine-tuning, or service improvement. Business continuity plan and exit assistance are attached.'
+      }
+    ],
+    integrations: ['Azure AD', 'Finance reporting']
+  });
+
+  assert.equal(result.ok, true);
+  assert.ok(!result.gaps.some((gap) => /training-data handling/i.test(gap.gap)));
+  assert.ok(!result.gaps.some((gap) => /continuity or exit/i.test(gap.gap)));
+  assert.ok(!result.gaps.some((gap) => /DPA evidence/i.test(gap.gap)));
+});

@@ -61,6 +61,12 @@
               Evidence summary
               <textarea name="documentSummary" rows="4">SOC 2 summary available. No signed DPA, model-training exclusion, or continuity plan attached.</textarea>
             </label>
+            <label class="upload-zone" id="evidenceDropzone">
+              <input id="evidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.doc,.docx,text/*,application/json,text/csv,application/pdf" />
+              <span>Drop or select evidence files</span>
+              <small>Text, Markdown, JSON, CSV, and logs are extracted in-browser. PDF/DOCX are registered for backend extraction.</small>
+            </label>
+            <div id="evidenceIngestionStatus" class="ingestion-status">No uploaded evidence yet.</div>
             <div id="evidenceQueue" class="evidence-queue" aria-live="polite"></div>
             <button type="submit" class="primary-action">Run case</button>
           </form>
@@ -154,6 +160,10 @@
             <div class="board-label">Blocking gaps</div>
             <div id="gapList" class="gap-stack"></div>
           </div>
+        </div>
+        <div class="citation-panel">
+          <div class="board-label">Evidence citations</div>
+          <div id="citationList" class="citation-list"></div>
         </div>
       </section>
 

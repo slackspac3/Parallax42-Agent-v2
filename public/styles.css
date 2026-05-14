@@ -309,19 +309,80 @@ select {
   gap: 7px;
 }
 
-.evidence-queue span {
+.evidence-queue > span {
   display: flex;
   gap: 8px;
   align-items: center;
+  justify-content: space-between;
   padding: 9px 0;
   border-top: 1px solid var(--line);
   color: var(--muted);
   font-size: 12px;
 }
 
-.evidence-queue b {
+.evidence-queue > span > b {
   color: var(--info);
   font-size: 11px;
+}
+
+.evidence-queue em {
+  max-width: 110px;
+  color: var(--accent);
+  font-size: 10px;
+  font-style: normal;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.evidence-queue > span > span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-zone {
+  padding: 14px;
+  border: 1px dashed rgba(25, 214, 165, 0.46);
+  background: rgba(25, 214, 165, 0.055);
+  cursor: pointer;
+}
+
+.upload-zone input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.upload-zone span {
+  color: var(--text);
+  font-weight: 820;
+}
+
+.upload-zone small,
+.ingestion-status {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.upload-zone.is-dragging {
+  border-color: var(--accent);
+  background: rgba(25, 214, 165, 0.12);
+}
+
+.ingestion-status {
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+}
+
+.needs-extraction {
+  color: var(--warning);
 }
 
 .primary-action {
@@ -596,8 +657,13 @@ select {
   margin-top: 22px;
 }
 
+.citation-panel {
+  margin-top: 24px;
+}
+
 .domain-matrix,
 .gap-stack,
+.citation-list,
 .status-list,
 .hardening-list {
   display: grid;
@@ -608,6 +674,7 @@ select {
 
 .domain-row,
 .gap-row,
+.citation-row,
 .status-card,
 .hardening-item,
 .benchmark-panel article,
@@ -659,6 +726,38 @@ select {
 .empty-row {
   padding: 18px;
   color: var(--muted);
+}
+
+.citation-row {
+  display: grid;
+  grid-template-columns: 1fr minmax(120px, 210px);
+  gap: 18px;
+  padding: 15px;
+}
+
+.citation-row span {
+  color: var(--info);
+  font-size: 11px;
+  font-weight: 840;
+  text-transform: uppercase;
+}
+
+.citation-row strong {
+  display: block;
+  margin-top: 7px;
+}
+
+.citation-row p {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.citation-row small {
+  color: var(--accent);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .artifact-preview {
@@ -884,6 +983,7 @@ pre {
   .trace,
   .metric-stack,
   .domain-row,
+  .citation-row,
   .hardening-list {
     grid-template-columns: 1fr;
   }
