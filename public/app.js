@@ -8,11 +8,25 @@ const storageKeys = {
 };
 
 const scenarios = {
-  aiSaas: {
+  exportControl: {
+    businessUnit: 'Research Compute Operations',
+    geography: 'UAE and Singapore',
+    supplierName: 'HelioChip Logistics',
+    brief: 'Import restricted AI accelerator hardware for an internal research compute cluster, with freight forwarding, firmware support, chain-of-custody evidence, and remote diagnostic access.',
+    documents: [
+      {
+        title: 'Export-control intake summary',
+        summary: 'Freight forwarder screened clean. Manufacturer classification, end-use certificate, import permit, and firmware support runbook are not final.'
+      }
+    ],
+    integrations: ['Freight forwarder portal', 'Asset inventory', 'Firmware support channel'],
+    evidenceQueue: ['Denied-party screening', 'Draft end-use certificate', 'Chain-of-custody plan']
+  },
+  modelOpsVendor: {
     businessUnit: 'Group Technology Risk',
     geography: 'UAE',
-    supplierName: 'Example AI SaaS',
-    brief: 'Procure a critical AI SaaS supplier that processes personal data, integrates with Azure AD and ServiceNow, and supports finance reporting across the UAE.',
+    supplierName: 'ModelOps Review Platform',
+    brief: 'Procure a model operations platform that processes employee support data, integrates with identity and ticketing systems, and supports finance reporting across the UAE.',
     documents: [
       {
         title: 'Supplier assurance summary',
@@ -107,14 +121,14 @@ const lastRuns = {
   chat: null
 };
 let activeRunMode = 'chat';
-let currentScenarioKey = 'aiSaas';
+let currentScenarioKey = 'exportControl';
 let playbackTimers = [];
 let uploadedEvidence = [];
 let chatCaseDraft = {};
 let chatMessages = [
   {
     role: 'assistant',
-    text: 'Tell me the supplier or workflow, geography, data handled, integrations, and any evidence you already have. I will build the case, ask what is missing, and run the workflow when ready.'
+    text: 'Start with the supplier or workflow, geography, regulated data or assets, integrations, and evidence you already have. I will build the case, ask only for missing context, and run the workflow when ready.'
   }
 ];
 
@@ -123,7 +137,7 @@ const runModeCopy = {
     caseEyebrow: 'Demo workspace',
     caseTitle: 'Golden review file',
     runwayTitle: 'Watch the agent work',
-    runwayDescription: 'Preset scenarios replay the G42 submission story with deterministic evidence and trace output.',
+    runwayDescription: 'Preset scenarios replay the submission workflow with deterministic evidence and trace output.',
     runButton: 'Run demo',
     actionButton: 'Watch demo',
     waitingDecision: 'Demo not started',
@@ -142,8 +156,8 @@ const runModeCopy = {
   chat: {
     caseEyebrow: 'Conversation',
     caseTitle: 'Compliance advisor',
-    runwayTitle: 'Agent workflow',
-    runwayDescription: 'The case builder promotes ready context into a traced CrewAI run.',
+    runwayTitle: 'Case command',
+    runwayDescription: 'The advisor turns intake into a traceable agent run with explicit blockers and evidence IDs.',
     runButton: 'Ask agent',
     actionButton: 'Run chat',
     waitingDecision: 'Conversation ready',
@@ -218,6 +232,8 @@ const evidenceSignalPatterns = [
   ['DPA', /dpa|data processing agreement|subprocessor|retention|deletion|transfer/i],
   ['model training exclusion', /no\s+(customer\s+)?data\s+(is\s+)?used\s+for\s+(model\s+)?training|model[- ]training exclusion|training exclusion|no training/i],
   ['continuity', /continuity|business continuity|bcp|disaster recovery|dr plan|exit assistance|exit support/i],
+  ['export control', /export control|classification|end[- ]use|end user|import permit|sanctions|restricted party|freight forwarder/i],
+  ['chain of custody', /chain[- ]of[- ]custody|serial number|asset inventory|firmware|remote access|warehouse|customs/i],
   ['identity access', /azure ad|entra|sso|single sign[- ]on|privileged access|rbac|mfa/i],
   ['finance controls', /payment|finance|ledger|invoice|approval authority|project governance/i],
   ['security assurance', /soc\s*2|iso\s*27001|encryption|vulnerability|logging|audit/i]
@@ -577,7 +593,7 @@ function currentFormPayload() {
 }
 
 function applyScenario(key) {
-  const scenario = scenarios[key] || scenarios.aiSaas;
+  const scenario = scenarios[key] || scenarios.exportControl;
   currentScenarioKey = key;
   form.elements.brief.value = scenario.brief;
   form.elements.businessUnit.value = scenario.businessUnit;
@@ -875,7 +891,7 @@ function renderRun(result, options = {}) {
   flowProgress.style.width = `${progress}%`;
   stageKicker.textContent = finalVisible ? 'Audit pack ready' : `Stage ${Math.max(1, stageIndex + 1)} of ${stages.length}`;
   stageStatus.textContent = currentStage ? (agentLabels[currentStage.agent] || currentStage.role || titleCase(currentStage.id)) : 'Ready';
-  stageOutput.textContent = currentStage ? stageNarrative(currentStage, result) : 'Select a scenario or run the golden AI SaaS case.';
+  stageOutput.textContent = currentStage ? stageNarrative(currentStage, result) : 'Select a scenario or run the golden compliance case.';
 
   renderSpecialists(result, { stageIndex, activeIndex, finalVisible });
   renderEvidence(result, { stageIndex, finalVisible });

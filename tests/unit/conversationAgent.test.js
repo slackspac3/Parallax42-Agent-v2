@@ -62,3 +62,20 @@ test('conversation executes the agent workflow when the draft is complete', () =
   assert.ok(result.actions.some((action) => action.id === 'agent_workflow' && action.status === 'complete'));
   assert.match(result.reply, /Decision:/i);
 });
+
+test('conversation NLP handles export-control hardware import cases', () => {
+  const result = processConversation({
+    message: 'Review an AI accelerator import for UAE and Singapore. The supplier will ship restricted hardware, provide firmware support, and has no final end-use certificate.'
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.caseDraft.businessUnit, 'Trade Compliance And Export Controls');
+  assert.equal(result.caseDraft.geography, 'UAE');
+  assert.ok(result.caseDraft.integrations.includes('Firmware support channel'));
+  assert.ok(result.caseDraft.riskSignals.includes('export control'));
+  assert.ok(result.caseDraft.riskSignals.includes('remote support access'));
+  assert.ok(!result.caseDraft.riskSignals.includes('AI/model use'));
+  assert.ok(!result.caseDraft.evidenceSignals.includes('end-use certificate'));
+  assert.ok(result.missingFields.includes('export_control_evidence'));
+  assert.ok(result.questions.some((question) => /classification|end-use|import permit|denied-party/i.test(question)));
+});

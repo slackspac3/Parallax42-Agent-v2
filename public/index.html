@@ -32,16 +32,16 @@
       <section class="command-center" id="run">
         <div class="mode-tabs" role="tablist" aria-label="Run mode">
           <button id="chatModeTab" type="button" class="mode-tab is-active" role="tab" aria-selected="true" aria-controls="run" data-run-mode="chat">
-            <span>Chat agent</span>
-            <small>Natural-language case builder</small>
+            <span>Advisor</span>
+            <small>Primary workspace</small>
           </button>
           <button id="demoModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="run" data-run-mode="demo">
-            <span>Demo replay</span>
-            <small>Advanced walkthrough</small>
+            <span>Replay</span>
+            <small>Packaged cases</small>
           </button>
           <button id="liveModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="run" data-run-mode="live">
-            <span>Live run</span>
-            <small>Advanced evidence form</small>
+            <span>Evidence</span>
+            <small>Upload and run</small>
           </button>
         </div>
 
@@ -62,7 +62,7 @@
           </div>
 
           <div class="scenario-switcher mode-demo-only" aria-label="Case scenarios">
-            <button type="button" class="scenario-button is-active" data-scenario="aiSaas">AI SaaS</button>
+            <button type="button" class="scenario-button is-active" data-scenario="exportControl">Export control</button>
             <button type="button" class="scenario-button" data-scenario="financeVendor">Finance vendor</button>
             <button type="button" class="scenario-button" data-scenario="lowRisk">Low risk</button>
           </div>
@@ -70,21 +70,21 @@
           <form id="agentForm" class="case-form mode-form-only">
             <label>
               Compliance brief
-              <textarea name="brief" rows="7">Procure a critical AI SaaS supplier that processes personal data, integrates with Azure AD and ServiceNow, and supports finance reporting across the UAE.</textarea>
+              <textarea name="brief" rows="7">Import restricted AI accelerator hardware for an internal research compute cluster, with firmware support, freight forwarding, and remote diagnostic access.</textarea>
             </label>
             <div class="field-grid">
               <label>
                 Business unit
-                <input name="businessUnit" value="Group Technology Risk" />
+                <input name="businessUnit" value="Research Compute Operations" />
               </label>
               <label>
                 Geography
-                <input name="geography" value="UAE" />
+                <input name="geography" value="UAE and Singapore" />
               </label>
             </div>
             <label>
               Evidence summary
-              <textarea name="documentSummary" rows="4">SOC 2 summary available. No signed DPA, model-training exclusion, or continuity plan attached.</textarea>
+              <textarea name="documentSummary" rows="4">Manufacturer classification is pending. Freight forwarder screened clean. No final end-use certificate, import permit, or firmware remote-access runbook attached.</textarea>
             </label>
             <label class="upload-zone mode-live-only" id="evidenceDropzone">
               <input id="evidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.doc,.docx,text/*,application/json,text/csv,application/pdf" />
@@ -99,15 +99,15 @@
           <section id="conversationPanel" class="conversation-panel mode-chat-only" aria-label="Conversational compliance advisor">
             <div id="caseDraftPanel" class="case-draft-panel" aria-live="polite"></div>
             <div class="chat-suggestions" aria-label="Suggested prompts">
-              <button type="button" data-chat-prompt="Assess an AI SaaS supplier processing employee data with Azure AD access, SOC 2 evidence, no signed DPA, and no continuity plan.">Assess AI SaaS</button>
-              <button type="button" data-chat-prompt="What evidence would clear a model-training and DPA blocker for an AI vendor?">Evidence checklist</button>
-              <button type="button" data-chat-prompt="Review a finance workflow vendor with payment approval access, Microsoft 365 integration, and missing exit support.">Finance workflow</button>
+              <button type="button" data-chat-prompt="Review an AI accelerator import for UAE and Singapore. The supplier will ship restricted hardware, provide firmware support, and has no final end-use certificate.">Export-control import</button>
+              <button type="button" data-chat-prompt="Assess a managed integration partner connecting Oracle ERP, Workday, ServiceNow, SharePoint, and Snowflake with privileged implementation access.">Platform integrator</button>
+              <button type="button" data-chat-prompt="Review a treasury workflow vendor with payment approval access, Microsoft 365 integration, finance reporting, and missing exit support.">Treasury workflow</button>
             </div>
             <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
             <form id="chatForm" class="chat-form">
               <label>
                 Message
-                <textarea id="chatInput" rows="5" placeholder="Example: onboard an AI SaaS vendor in UAE with Azure AD access, employee data, SOC 2, but no signed DPA."></textarea>
+                <textarea id="chatInput" rows="5" placeholder="Example: review a chip import agreement with export-control classification pending, remote firmware access, freight forwarding, and no final end-use certificate."></textarea>
               </label>
               <div class="form-actions">
                 <button id="chatSubmit" type="submit" class="primary-action">Send</button>
