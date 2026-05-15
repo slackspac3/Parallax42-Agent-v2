@@ -247,6 +247,7 @@ const fallbackStages = [
 ];
 
 const readableEvidenceExtensions = new Set(['txt', 'md', 'markdown', 'json', 'csv', 'log']);
+const textEvidenceSampleBytes = 180 * 1024;
 const evidenceSignalPatterns = [
   ['export control', /export control|classification|end[- ]use|end user|import permit|sanctions|restricted party|freight forwarder/i],
   ['chain of custody', /chain[- ]of[- ]custody|serial number|asset inventory|firmware|remote access|warehouse|customs/i],
@@ -470,19 +471,6 @@ function detectEvidenceSignals(text = '') {
     .map(([label]) => label);
 }
 
-function bestEffortPdfText(buffer) {
-  const bytes = new Uint8Array(buffer);
-  let raw = '';
-  const limit = Math.min(bytes.length, 220000);
-  for (let index = 0; index < limit; index += 1) {
-    const code = bytes[index];
-    raw += code >= 32 && code <= 126 ? String.fromCharCode(code) : ' ';
-  }
-  const strings = Array.from(raw.matchAll(/\(([^()]{8,220})\)/g))
-    .map((match) => match[1].replace(/\\([()\\])/g, '$1'));
-  return cleanEvidenceText(strings.join(' '));
-}
-
 async function extractEvidenceFile(file, index) {
   const extension = fileExtension(file.name);
   const evidenceId = `UP-${String(index + 1).padStart(2, '0')}`;
@@ -491,18 +479,15 @@ async function extractEvidenceFile(file, index) {
   let sourceType = extension || file.type || 'unknown';
 
   if (file.type.startsWith('text/') || readableEvidenceExtensions.has(extension)) {
-    extractedText = await file.text();
-    extractionStatus = 'text_extracted';
-  } else if (extension === 'pdf' || file.type === 'application/pdf') {
-    const sampleSize = Math.min(file.size, 320 * 1024);
-    const buffer = await file.slice(0, sampleSize).arrayBuffer();
-    extractedText = bestEffortPdfText(buffer);
-    extractionStatus = extractedText ? 'sampled_pdf_text' : 'binary_registered';
+    extractedText = await file.slice(0, textEvidenceSampleBytes).text();
+    extractionStatus = file.size > textEvidenceSampleBytes ? 'sampled_text' : 'text_extracted';
+  } else {
+    extractionStatus = 'binary_registered';
   }
 
   const summary = extractedText
     ? summarizeEvidenceText(extractedText)
-    : `Binary evidence registered: ${file.name}. Text extraction requires backend OCR/document parsing.`;
+    : `Evidence registered without browser parsing: ${file.name}. Full text extraction is reserved for backend document processing.`;
   const signals = detectEvidenceSignals(`${file.name} ${summary} ${extractedText}`);
 
   return {
