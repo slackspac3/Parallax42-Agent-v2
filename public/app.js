@@ -115,8 +115,8 @@ const chatMessagesEl = document.querySelector('#chatMessages');
 const chatForm = document.querySelector('#chatForm');
 const chatInput = document.querySelector('#chatInput');
 const chatRunNow = document.querySelector('#chatRunNow');
-const chatAttachButton = document.querySelector('#chatAttachButton');
 const chatEvidenceInput = document.querySelector('#chatEvidenceInput');
+const chatEvidencePicker = document.querySelector('.chat-evidence-picker');
 const chatAttachmentStatus = document.querySelector('#chatAttachmentStatus');
 const chatAttachmentList = document.querySelector('#chatAttachmentList');
 const agentActivity = document.querySelector('#agentActivity');
@@ -1611,15 +1611,29 @@ evidenceInput.addEventListener('change', (event) => {
   ingestEvidenceFiles(event.target.files);
 });
 
-chatAttachButton?.addEventListener('keydown', (event) => {
-  if (event.key !== 'Enter' && event.key !== ' ') return;
-  event.preventDefault();
-  chatEvidenceInput?.click();
-});
-
 chatEvidenceInput?.addEventListener('change', (event) => {
   ingestEvidenceFiles(event.target.files);
 });
+
+if (chatEvidencePicker) {
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    chatEvidencePicker.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      chatEvidencePicker.classList.add('is-dragging');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach((eventName) => {
+    chatEvidencePicker.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      chatEvidencePicker.classList.remove('is-dragging');
+    });
+  });
+
+  chatEvidencePicker.addEventListener('drop', (event) => {
+    ingestEvidenceFiles(event.dataTransfer.files);
+  });
+}
 
 ['dragenter', 'dragover'].forEach((eventName) => {
   evidenceDropzone.addEventListener(eventName, (event) => {

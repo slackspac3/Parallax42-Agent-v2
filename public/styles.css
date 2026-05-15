@@ -2071,11 +2071,38 @@ body[data-run-mode="chat"] .chat-form {
 }
 
 #chatEvidenceInput {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
+  pointer-events: auto;
+}
+
+#chatEvidenceInput::file-selector-button {
+  min-height: 38px;
+  margin-right: 12px;
+  padding: 0 15px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.chat-evidence-picker {
+  padding: 12px;
+  border: 1px dashed rgba(143, 180, 255, 0.24);
+  border-radius: 16px;
+  background: rgba(143, 180, 255, 0.045);
+}
+
+.chat-evidence-picker.is-dragging {
+  border-color: rgba(34, 227, 180, 0.72);
+  background: rgba(34, 227, 180, 0.085);
 }
 
 body[data-run-mode="chat"] .chat-form textarea {
@@ -2098,24 +2125,6 @@ body[data-run-mode="chat"] .form-actions .primary-action,
 body[data-run-mode="chat"] .form-actions .secondary-button,
 .hero-run-button {
   border-radius: 999px;
-}
-
-.file-upload-button {
-  min-height: 38px;
-  padding: 0 15px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 820;
-  text-align: center;
-}
-
-.file-upload-button:focus-visible {
-  outline: 2px solid rgba(34, 227, 180, 0.62);
-  outline-offset: 3px;
 }
 
 .hero-run-button {
