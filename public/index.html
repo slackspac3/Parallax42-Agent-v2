@@ -125,9 +125,10 @@
                 <textarea id="chatInput" rows="5" placeholder="Example: review a chip import agreement with export-control classification pending, remote firmware access, freight forwarding, and no final end-use certificate."></textarea>
               </label>
               <input id="chatEvidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.doc,.docx,text/*,application/json,text/csv,application/pdf" />
+              <div id="chatAttachmentStatus" class="attachment-status" aria-live="polite">No files attached.</div>
               <div id="chatAttachmentList" class="chat-attachment-list" aria-live="polite"></div>
               <div class="form-actions">
-                <button id="chatAttachButton" type="button" class="secondary-button">Attach files</button>
+                <label id="chatAttachButton" for="chatEvidenceInput" class="secondary-button file-upload-button" role="button" tabindex="0">Attach files</label>
                 <button id="chatSubmit" type="submit" class="primary-action">Send</button>
                 <button id="chatRunNow" type="button" class="hero-run-button">Run council</button>
               </div>

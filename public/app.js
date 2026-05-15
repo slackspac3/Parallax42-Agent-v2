@@ -117,6 +117,7 @@ const chatInput = document.querySelector('#chatInput');
 const chatRunNow = document.querySelector('#chatRunNow');
 const chatAttachButton = document.querySelector('#chatAttachButton');
 const chatEvidenceInput = document.querySelector('#chatEvidenceInput');
+const chatAttachmentStatus = document.querySelector('#chatAttachmentStatus');
 const chatAttachmentList = document.querySelector('#chatAttachmentList');
 const agentActivity = document.querySelector('#agentActivity');
 const contextStrengthLabel = document.querySelector('#contextStrengthLabel');
@@ -445,6 +446,18 @@ function cleanEvidenceText(value = '') {
     .trim();
 }
 
+function yieldToBrowser() {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, 0);
+  });
+}
+
+function setAttachmentStatus(message = '', state = 'idle') {
+  if (!chatAttachmentStatus) return;
+  chatAttachmentStatus.textContent = message;
+  chatAttachmentStatus.dataset.state = state;
+}
+
 function summarizeEvidenceText(text = '', maxLength = 720) {
   const clean = cleanEvidenceText(text);
   if (!clean) return 'No extractable text was detected.';
@@ -481,9 +494,10 @@ async function extractEvidenceFile(file, index) {
     extractedText = await file.text();
     extractionStatus = 'text_extracted';
   } else if (extension === 'pdf' || file.type === 'application/pdf') {
-    const buffer = await file.arrayBuffer();
+    const sampleSize = Math.min(file.size, 320 * 1024);
+    const buffer = await file.slice(0, sampleSize).arrayBuffer();
     extractedText = bestEffortPdfText(buffer);
-    extractionStatus = extractedText ? 'best_effort_pdf_text' : 'binary_registered';
+    extractionStatus = extractedText ? 'sampled_pdf_text' : 'binary_registered';
   }
 
   const summary = extractedText
@@ -508,12 +522,29 @@ async function extractEvidenceFile(file, index) {
 async function ingestEvidenceFiles(files = []) {
   const selected = Array.from(files).slice(0, 8);
   if (!selected.length) return;
-  evidenceIngestionStatus.textContent = `Extracting ${selected.length} evidence file${selected.length === 1 ? '' : 's'}...`;
+  const fileLabel = `${selected.length} evidence file${selected.length === 1 ? '' : 's'}`;
+  evidenceIngestionStatus.textContent = `Preparing ${fileLabel}...`;
+  if (activeRunMode === 'chat') {
+    setAttachmentStatus(`Preparing ${fileLabel}...`, 'working');
+    renderAgentActivity([
+      { label: 'Evidence', detail: 'reading files', status: 'active' },
+      { label: 'NLP Intake', detail: 'waiting', status: 'queued' },
+      { label: 'Obligations', detail: 'queued', status: 'queued' },
+      { label: 'Controls', detail: 'queued', status: 'queued' },
+      { label: 'Council', detail: 'waiting', status: 'queued' }
+    ]);
+  }
   try {
     const offset = uploadedEvidence.length;
     const extracted = [];
     for (const [index, file] of selected.entries()) {
+      evidenceIngestionStatus.textContent = `Reading ${index + 1}/${selected.length}: ${file.name}`;
+      if (activeRunMode === 'chat') {
+        setAttachmentStatus(`Reading ${index + 1}/${selected.length}: ${file.name}`, 'working');
+      }
+      await yieldToBrowser();
       extracted.push(await extractEvidenceFile(file, offset + index));
+      await yieldToBrowser();
     }
     uploadedEvidence = [...uploadedEvidence, ...extracted].slice(0, 12);
     evidenceIngestionStatus.textContent = `${uploadedEvidence.length} uploaded evidence file${uploadedEvidence.length === 1 ? '' : 's'} attached to next run.`;
@@ -524,6 +555,7 @@ async function ingestEvidenceFiles(files = []) {
         role: 'assistant',
         text: `Attached ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. I extracted ${unique(extracted.flatMap((item) => item.signals || [])).length} signal${unique(extracted.flatMap((item) => item.signals || [])).length === 1 ? '' : 's'} for the case draft.`
       });
+      setAttachmentStatus(`${uploadedEvidence.length} file${uploadedEvidence.length === 1 ? '' : 's'} attached. Add another file or continue the case.`, 'ready');
       renderChatMessages();
       renderAgentActivity([
         { label: 'Evidence', detail: 'attached', status: 'complete' },
@@ -541,6 +573,9 @@ async function ingestEvidenceFiles(files = []) {
     }
   } catch (error) {
     evidenceIngestionStatus.textContent = error instanceof Error ? error.message : 'Evidence extraction failed.';
+    if (activeRunMode === 'chat') {
+      setAttachmentStatus(error instanceof Error ? error.message : 'Evidence extraction failed.', 'error');
+    }
   } finally {
     if (evidenceInput) evidenceInput.value = '';
     if (chatEvidenceInput) chatEvidenceInput.value = '';
@@ -1576,7 +1611,9 @@ evidenceInput.addEventListener('change', (event) => {
   ingestEvidenceFiles(event.target.files);
 });
 
-chatAttachButton?.addEventListener('click', () => {
+chatAttachButton?.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
   chatEvidenceInput?.click();
 });
 

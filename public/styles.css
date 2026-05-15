@@ -2100,11 +2100,44 @@ body[data-run-mode="chat"] .form-actions .secondary-button,
   border-radius: 999px;
 }
 
+.file-upload-button {
+  min-height: 38px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 820;
+  text-align: center;
+}
+
+.file-upload-button:focus-visible {
+  outline: 2px solid rgba(34, 227, 180, 0.62);
+  outline-offset: 3px;
+}
+
 .hero-run-button {
   min-width: 142px;
   background: linear-gradient(135deg, var(--accent), #7ee7ff);
   color: #03110d;
   box-shadow: 0 0 0 1px rgba(34, 227, 180, 0.22), 0 16px 34px rgba(34, 227, 180, 0.18);
+}
+
+.attachment-status {
+  min-height: 18px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.attachment-status[data-state="working"] {
+  color: var(--accent);
+}
+
+.attachment-status[data-state="error"] {
+  color: var(--danger);
 }
 
 .chat-attachment-list {
