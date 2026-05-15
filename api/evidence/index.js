@@ -1,7 +1,7 @@
 'use strict';
 
 const { appendAuditRecord } = require('../../lib/auditStore');
-const { indexEvidence } = require('../../lib/compassGatewayClient');
+const { indexEvidenceServerSide } = require('../../lib/evidenceVectorStore');
 const { authorizeRequest } = require('../../lib/rbac');
 const { methodGuard, readJsonRequest, sendJson } = require('../_http');
 
@@ -16,7 +16,7 @@ module.exports = async function handler(req, res) {
     }
 
     const body = await readJsonRequest(req);
-    const result = await indexEvidence(body);
+    const result = await indexEvidenceServerSide(body);
     appendAuditRecord({
       actor: auth.actor,
       caseId: result.context?.caseId || body.caseId || 'evidence-index',
@@ -32,7 +32,8 @@ module.exports = async function handler(req, res) {
         model: result.model,
         context: result.context,
         chunking: result.chunking,
-        evidenceIds: Array.from(new Set((result.chunks || []).map((chunk) => chunk.evidenceId).filter(Boolean)))
+        index: result.index,
+        evidenceIds: result.index?.evidenceIds || []
       }
     });
     sendJson(req, res, 200, result);

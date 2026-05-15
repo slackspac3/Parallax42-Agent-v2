@@ -100,7 +100,7 @@ The submission should include:
 | Gap | Why It Matters |
 | --- | --- |
 | Live LLM-backed CrewAI specialist output is opt-in and advisory. | The wiring exists, but provider credentials, eval gates, and approval policy must be enabled before live output can influence decisions. |
-| Evidence upload handles text-like files and can call the shared embedding/index gateway, but needs production OCR/document parsing for PDF/DOCX. | The role expects robust evidence processing, not only browser registration of binary files. |
+| Evidence upload streams to the backend parser/OCR boundary, calls the shared embedding/index gateway, and stores chunk vectors behind the API. | Production should use a durable managed vector store such as Qdrant or Azure AI Search instead of the local demo provider. |
 | Audit is hash-chained locally but Vercel uses ephemeral `/tmp` unless durable storage is configured. | Enterprise review needs retained records across deployments and function instances. |
 | RBAC middleware and JWT validation are implemented, but live Entra config is not set. | Secure authentication must be enabled in the target enterprise environment. |
 | Evals are local and deterministic only. | World-class agent delivery requires regression, adversarial, and trace-level evals. |

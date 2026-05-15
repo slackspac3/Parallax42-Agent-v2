@@ -19,7 +19,8 @@
         "title": "Supplier assurance summary",
         "summary": "SOC 2 summary available. No signed DPA, model-training exclusion, or continuity plan attached."
       }
-    ]
+    ],
+    "retrievalContext": null
   },
   "decision": {
     "status": "not_ready",
@@ -217,8 +218,23 @@
     "p42:soc2-iso-evidence-map",
     "p42:vendor-risk-sop",
     "p42:approval-matrix",
-    "p42:contract-clause-pack"
+    "p42:contract-clause-pack",
+    "DOC-01"
   ],
+  "citations": [
+    {
+      "citationId": "cite_01",
+      "evidenceId": "DOC-01",
+      "title": "Supplier assurance summary",
+      "sourceType": "document",
+      "extractionStatus": "attached",
+      "score": 0,
+      "text": "SOC 2 summary available. No signed DPA, model-training exclusion, or continuity plan attached.",
+      "signals": [],
+      "metadata": {}
+    }
+  ],
+  "retrievalContext": null,
   "outputReview": {
     "status": "needs_revision",
     "finalOutputSafeForHumanReview": true,
@@ -226,6 +242,10 @@
       {
         "name": "evidence_attached",
         "status": "passed"
+      },
+      {
+        "name": "retrieval_citations",
+        "status": "not_applicable"
       },
       {
         "name": "blocking_gaps_named",
@@ -243,8 +263,8 @@
   },
   "trace": [
     {
-      "eventId": "evt_1778771648638_9s4tf5",
-      "timestamp": "2026-05-14T15:14:08.638Z",
+      "eventId": "evt_1778840615968_ilvevy",
+      "timestamp": "2026-05-15T10:23:35.968Z",
       "agent": "runtime_router",
       "eventType": "runtime_selected",
       "parentEventId": "",
@@ -258,8 +278,8 @@
       }
     },
     {
-      "eventId": "evt_1778771648637_x4yczn",
-      "timestamp": "2026-05-14T15:14:08.637Z",
+      "eventId": "evt_1778840615967_fydp1q",
+      "timestamp": "2026-05-15T10:23:35.967Z",
       "agent": "intake_agent",
       "eventType": "case_loaded",
       "parentEventId": "",
@@ -271,11 +291,11 @@
       }
     },
     {
-      "eventId": "evt_1778771648637_pp87r6",
-      "timestamp": "2026-05-14T15:14:08.637Z",
+      "eventId": "evt_1778840615967_on2pn2",
+      "timestamp": "2026-05-15T10:23:35.967Z",
       "agent": "domain_scanner_agent",
       "eventType": "domains_scanned",
-      "parentEventId": "evt_1778771648637_x4yczn",
+      "parentEventId": "evt_1778840615967_fydp1q",
       "payload": {
         "matchedDomains": [
           {
@@ -349,11 +369,11 @@
       }
     },
     {
-      "eventId": "evt_1778771648638_habzwv",
-      "timestamp": "2026-05-14T15:14:08.638Z",
+      "eventId": "evt_1778840615968_vy37rk",
+      "timestamp": "2026-05-15T10:23:35.968Z",
       "agent": "evidence_agent",
       "eventType": "evidence_mapped",
-      "parentEventId": "evt_1778771648637_x4yczn",
+      "parentEventId": "evt_1778840615967_fydp1q",
       "payload": {
         "evidenceIds": [
           "p42:ai-supplier-review-playbook",
@@ -367,28 +387,31 @@
           "p42:soc2-iso-evidence-map",
           "p42:vendor-risk-sop",
           "p42:approval-matrix",
-          "p42:contract-clause-pack"
+          "p42:contract-clause-pack",
+          "DOC-01"
         ],
+        "citationCount": 1,
+        "retrievalAugmented": false,
         "gapCount": 4
       }
     },
     {
-      "eventId": "evt_1778771648638_l6nv9y",
-      "timestamp": "2026-05-14T15:14:08.638Z",
+      "eventId": "evt_1778840615968_7xr4zh",
+      "timestamp": "2026-05-15T10:23:35.968Z",
       "agent": "control_agent",
       "eventType": "controls_recommended",
-      "parentEventId": "evt_1778771648637_x4yczn",
+      "parentEventId": "evt_1778840615967_fydp1q",
       "payload": {
         "controlCount": 14,
         "highSeverityGaps": 3
       }
     },
     {
-      "eventId": "evt_1778771648638_omktsf",
-      "timestamp": "2026-05-14T15:14:08.638Z",
+      "eventId": "evt_1778840615968_5p1437",
+      "timestamp": "2026-05-15T10:23:35.968Z",
       "agent": "output_review_agent",
       "eventType": "output_review_completed",
-      "parentEventId": "evt_1778771648637_x4yczn",
+      "parentEventId": "evt_1778840615967_fydp1q",
       "payload": {
         "status": "needs_revision",
         "finalOutputSafeForHumanReview": true,
@@ -396,6 +419,10 @@
           {
             "name": "evidence_attached",
             "status": "passed"
+          },
+          {
+            "name": "retrieval_citations",
+            "status": "not_applicable"
           },
           {
             "name": "blocking_gaps_named",
@@ -583,7 +610,7 @@
     "llm": {
       "requested": false,
       "enabled": false,
-      "model": "gpt-4o-mini",
+      "model": "gpt-5.1",
       "baseUrlConfigured": false,
       "providerEnv": "OPENAI_API_KEY",
       "apiKeyConfigured": true,
@@ -676,7 +703,7 @@
     "liveLlm": {
       "requested": false,
       "enabled": false,
-      "model": "gpt-4o-mini",
+      "model": "gpt-5.1",
       "baseUrlConfigured": false,
       "providerEnv": "OPENAI_API_KEY",
       "apiKeyConfigured": true,

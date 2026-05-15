@@ -135,7 +135,6 @@ let activeRunMode = 'chat';
 let currentScenarioKey = 'exportControl';
 let playbackTimers = [];
 let uploadedEvidence = [];
-let indexedEvidenceChunks = [];
 let evidenceIndexMeta = {};
 let chatCaseDraft = {};
 let workspaceView = 'chat';
@@ -223,6 +222,11 @@ const readinessCopy = {
     proof: 'Route policy and JWT validation are implemented with Entra-ready configuration',
     next: 'Set P42_AUTH_MODE=enforced and configure Entra issuer, audience, tenant, and JWKS.'
   },
+  evidenceRetrieval: {
+    label: 'Evidence retrieval',
+    proof: 'Browser keeps case/evidence IDs while embeddings and chunks stay behind server-side APIs',
+    next: 'Configure Qdrant or approved managed vector DB for durable enterprise retention.'
+  },
   benchmarks: {
     label: 'Benchmarks',
     proof: 'Golden evals and local benchmark suite pass',
@@ -250,11 +254,9 @@ const fallbackStages = [
 ];
 
 const readableEvidenceExtensions = new Set(['txt', 'md', 'markdown', 'json', 'csv', 'log']);
-const backendParsedEvidenceExtensions = new Set(['pdf', 'docx']);
+const backendParsedEvidenceExtensions = new Set(['pdf', 'docx', 'txt', 'md', 'markdown', 'json', 'csv', 'log']);
 const textEvidenceSampleBytes = 180 * 1024;
 const defaultUploadChunkBytes = 1024 * 1024;
-const evidenceDbName = 'p42-compliance-evidence-index';
-const evidenceDbVersion = 1;
 const evidencePipelineSteps = [
   { id: 'queue', label: 'Queue' },
   { id: 'upload', label: 'Upload' },
@@ -589,50 +591,6 @@ function writeJsonStorage(key, value) {
   }
 }
 
-function openEvidenceDb() {
-  return new Promise((resolve, reject) => {
-    if (!window.indexedDB) {
-      reject(new Error('IndexedDB is not available in this browser context.'));
-      return;
-    }
-    const request = window.indexedDB.open(evidenceDbName, evidenceDbVersion);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains('chunks')) {
-        const store = db.createObjectStore('chunks', { keyPath: 'chunkId' });
-        store.createIndex('caseId', 'caseId', { unique: false });
-        store.createIndex('evidenceId', 'evidenceId', { unique: false });
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error('Could not open evidence index.'));
-  });
-}
-
-async function persistIndexedChunks(chunks = []) {
-  if (!chunks.length) return;
-  const db = await openEvidenceDb();
-  try {
-    const tx = db.transaction('chunks', 'readwrite');
-    const store = tx.objectStore('chunks');
-    chunks.forEach((chunk) => {
-      store.put({
-        ...chunk,
-        caseId: chunk.metadata?.caseId || chatCaseDraft.caseId || '',
-        evidenceId: chunk.evidenceId || '',
-        persistedAt: new Date().toISOString()
-      });
-    });
-    await new Promise((resolve, reject) => {
-      tx.oncomplete = resolve;
-      tx.onerror = () => reject(tx.error || new Error('Evidence index persistence failed.'));
-      tx.onabort = () => reject(tx.error || new Error('Evidence index persistence aborted.'));
-    });
-  } finally {
-    db.close();
-  }
-}
-
 async function restoreEvidenceIndexFromStorage() {
   const meta = readJsonStorage(storageKeys.evidenceIndexMeta, {});
   if (!meta.caseId) return;
@@ -642,32 +600,6 @@ async function restoreEvidenceIndexFromStorage() {
     caseId: meta.caseId,
     indexedEvidence: meta
   };
-  try {
-    const db = await openEvidenceDb();
-    try {
-      const tx = db.transaction('chunks', 'readonly');
-      const store = tx.objectStore('chunks').index('caseId');
-      const request = store.getAll(meta.caseId);
-      const chunks = await new Promise((resolve, reject) => {
-        request.onsuccess = () => resolve(request.result || []);
-        request.onerror = () => reject(request.error || new Error('Evidence index restore failed.'));
-      });
-      indexedEvidenceChunks = chunks.filter((chunk) => Array.isArray(chunk.embedding)).slice(-256);
-      evidenceIndexMeta = {
-        ...meta,
-        chunkCount: indexedEvidenceChunks.length,
-        restoredAt: new Date().toISOString()
-      };
-      chatCaseDraft = {
-        ...chatCaseDraft,
-        indexedEvidence: evidenceIndexMeta
-      };
-    } finally {
-      db.close();
-    }
-  } catch {
-    // The active page can still index fresh evidence if persisted chunks are unavailable.
-  }
 }
 
 function ensureChatCaseId() {
@@ -737,6 +669,15 @@ function uploadedDocumentToEvidence(document = {}, index = 0) {
   };
 }
 
+function stripEvidencePayloadForBrowser(item = {}) {
+  if (!item || typeof item !== 'object') return item;
+  delete item.text;
+  delete item.semanticParse;
+  item.excerpt = item.excerpt ? summarizeEvidenceText(item.excerpt, 180) : '';
+  item.browserRetention = 'case_metadata_only';
+  return item;
+}
+
 function indexableEvidenceText(item = {}) {
   return cleanEvidenceText([
     item.text,
@@ -752,35 +693,26 @@ function indexableEvidenceText(item = {}) {
   ].join(' '));
 }
 
-function mergeIndexedChunks(chunks = []) {
-  const byId = new Map(indexedEvidenceChunks.map((chunk) => [chunk.chunkId, chunk]));
-  chunks.forEach((chunk) => {
-    if (chunk?.chunkId && Array.isArray(chunk.embedding)) {
-      byId.set(chunk.chunkId, chunk);
-    }
-  });
-  indexedEvidenceChunks = Array.from(byId.values()).slice(-256);
+function applyServerEvidenceIndex(result = {}) {
+  const index = result.index || {};
+  const safeChunks = Array.isArray(result.chunks) ? result.chunks : [];
   evidenceIndexMeta = {
-    caseId: chatCaseDraft.caseId || '',
-    model: chunks[0]?.embeddingModel || evidenceIndexMeta.model || 'text-embedding-3-large',
-    chunkCount: indexedEvidenceChunks.length,
-    evidenceIds: unique(indexedEvidenceChunks.map((chunk) => chunk.evidenceId)),
-    updatedAt: new Date().toISOString(),
-    storage: 'browser_indexeddb_gateway_stateless'
+    caseId: index.caseId || chatCaseDraft.caseId || '',
+    model: result.model || evidenceIndexMeta.model || 'text-embedding-3-large',
+    chunkCount: Number(index.chunkCount || result.chunking?.chunkCount || safeChunks.length || 0),
+    evidenceIds: unique(index.evidenceIds || safeChunks.map((chunk) => chunk.evidenceId)),
+    chunkIds: unique(index.chunkIds || safeChunks.map((chunk) => chunk.chunkId)).slice(0, 50),
+    updatedAt: index.updatedAt || new Date().toISOString(),
+    storage: index.storage || 'server_side_vector_store',
+    provider: index.provider || 'server',
+    browserEmbeddingsRetained: false
   };
   writeJsonStorage(storageKeys.evidenceIndexMeta, evidenceIndexMeta);
-  persistIndexedChunks(indexedEvidenceChunks).catch(() => {
-    evidenceIndexMeta = {
-      ...evidenceIndexMeta,
-      storage: 'browser_session_gateway_stateless',
-      persistenceWarning: 'IndexedDB persistence failed; retrieval remains available for this page session.'
-    };
-    writeJsonStorage(storageKeys.evidenceIndexMeta, evidenceIndexMeta);
-  });
   chatCaseDraft = {
     ...chatCaseDraft,
     indexedEvidence: evidenceIndexMeta
   };
+  return evidenceIndexMeta;
 }
 
 function buildEvidenceIndexDocuments(items = []) {
@@ -819,14 +751,15 @@ async function indexEvidenceForRetrieval(items = []) {
       documents
     })
   });
-  mergeIndexedChunks(Array.isArray(result.chunks) ? result.chunks : []);
+  const indexMeta = applyServerEvidenceIndex(result);
+  const safeChunks = Array.isArray(result.chunks) ? result.chunks : [];
   const indexedEvidenceIds = new Set(documents.map((document) => document.evidenceId));
   items.forEach((item) => {
     if (indexedEvidenceIds.has(item.evidenceId)) {
       item.indexStatus = 'indexed';
-      item.embeddingModel = result.model || evidenceIndexMeta.model;
-      item.indexedAt = evidenceIndexMeta.updatedAt;
-      item.indexedChunkIds = indexedEvidenceChunks
+      item.embeddingModel = result.model || indexMeta.model;
+      item.indexedAt = indexMeta.updatedAt;
+      item.indexedChunkIds = safeChunks
         .filter((chunk) => chunk.evidenceId === item.evidenceId)
         .map((chunk) => chunk.chunkId);
     }
@@ -866,7 +799,8 @@ function retrievalDocumentsFromMatches(matches = []) {
 }
 
 async function retrieveIndexedEvidenceForCouncil() {
-  if (!indexedEvidenceChunks.length) return null;
+  const indexedChunkCount = Number(chatCaseDraft.indexedEvidence?.chunkCount || evidenceIndexMeta.chunkCount || 0);
+  if (!indexedChunkCount) return null;
   const caseId = ensureChatCaseId();
   const query = retrievalQueryFromDraft();
   if (!query) return null;
@@ -879,7 +813,6 @@ async function retrieveIndexedEvidenceForCouncil() {
       projectId: 'compliance-intelligence-agent',
       purpose: 'council_evidence_retrieval',
       query,
-      chunks: indexedEvidenceChunks,
       topK: 8
     })
   });
@@ -893,7 +826,7 @@ async function retrieveIndexedEvidenceForCouncil() {
     retrievalContext: {
       query,
       model: result.model || evidenceIndexMeta.model || 'text-embedding-3-large',
-      chunkCount: indexedEvidenceChunks.length,
+      chunkCount: result.index?.chunkCount || indexedChunkCount,
       matchCount: matches.length,
       matches: matches.map((match) => ({
         chunkId: match.chunkId,
@@ -1042,14 +975,14 @@ async function uploadEvidenceFilesToBackend(files = [], onProgress = () => {}) {
   throw new Error(lastStatus?.status ? `Document parser is still ${lastStatus.status}. Try again shortly.` : 'Document parser timed out.');
 }
 
-async function extractEvidenceFile(file, index) {
+async function extractEvidenceFile(file, index, { allowBrowserText = false } = {}) {
   const extension = fileExtension(file.name);
   const evidenceId = `UP-${String(index + 1).padStart(2, '0')}`;
   let extractedText = '';
   let extractionStatus = 'metadata_only';
   let sourceType = extension || file.type || 'unknown';
 
-  if (file.type.startsWith('text/') || readableEvidenceExtensions.has(extension)) {
+  if (allowBrowserText && (file.type.startsWith('text/') || readableEvidenceExtensions.has(extension))) {
     extractedText = await file.slice(0, textEvidenceSampleBytes).text();
     extractionStatus = file.size > textEvidenceSampleBytes ? 'sampled_text' : 'text_extracted';
   } else {
@@ -1109,7 +1042,7 @@ async function ingestEvidenceFiles(files = []) {
           phase: 'upload',
           progress: 12,
           title: 'Backend parser online',
-          detail: 'Streaming PDF/DOCX evidence in small chunks; browser parsing stays off the main thread.',
+          detail: 'Streaming evidence in small chunks; parsing, OCR, and clause extraction stay behind the backend boundary.',
           files: backendFiles
         });
         renderAgentActivity([
@@ -1129,28 +1062,28 @@ async function ingestEvidenceFiles(files = []) {
         const detail = error instanceof Error ? error.message : 'Backend parsing failed.';
         chatMessages.push({
           role: 'assistant',
-          text: `I could not parse the PDF/DOCX through the backend parser: ${detail} I registered the file metadata only, so please summarize the supplier/workflow and key clauses in chat before running council.`
+          text: `I could not parse the evidence through the backend parser: ${detail} I registered the file metadata only, so please summarize the supplier/workflow and key clauses in chat before running council.`
         });
         for (const [index, file] of backendFiles.entries()) {
-          extracted.push(await extractEvidenceFile(file, offset + index));
+          extracted.push(await extractEvidenceFile(file, offset + index, { allowBrowserText: false }));
         }
       }
     }
 
     for (const [index, file] of browserFiles.entries()) {
-      evidenceIngestionStatus.textContent = `Reading ${index + 1}/${browserFiles.length}: ${file.name}`;
+      evidenceIngestionStatus.textContent = `Registering ${index + 1}/${browserFiles.length}: ${file.name}`;
       if (activeRunMode === 'chat') {
         renderEvidencePipelineStatus({
           phase: 'parse',
           progress: 36 + ((index + 1) / browserFiles.length) * 28,
-          title: 'Reading local text evidence',
-          detail: `Sampling ${file.name} for signals and metadata.`,
+          title: 'Registering evidence metadata',
+          detail: `No browser parsing is performed for ${file.name}; add a backend parser adapter before indexing this file type.`,
           metric: `${index + 1}/${browserFiles.length}`,
           files: browserFiles
         });
       }
       await yieldToBrowser();
-      extracted.push(await extractEvidenceFile(file, offset + extracted.length));
+      extracted.push(await extractEvidenceFile(file, offset + extracted.length, { allowBrowserText: false }));
       await yieldToBrowser();
     }
 
@@ -1181,7 +1114,7 @@ async function ingestEvidenceFiles(files = []) {
             phase: 'ready',
             progress: 100,
             title: 'Evidence retrieval ready',
-            detail: `${indexResult?.chunking?.chunkCount || indexedEvidenceChunks.length} embedded chunks are ready for council citations.`,
+            detail: `${indexResult?.index?.chunkCount || indexResult?.chunking?.chunkCount || indexedChunkCount()} embedded chunks are stored server-side for council citations.`,
             metric: 'indexed',
             files: extracted,
             state: 'ready'
@@ -1196,6 +1129,7 @@ async function ingestEvidenceFiles(files = []) {
       }
     }
 
+    extracted.forEach(stripEvidencePayloadForBrowser);
     uploadedEvidence = [...uploadedEvidence, ...extracted].slice(0, 12);
     evidenceIngestionStatus.textContent = `${uploadedEvidence.length} uploaded evidence file${uploadedEvidence.length === 1 ? '' : 's'} attached to next run.`;
     if (activeRunMode === 'chat') {
@@ -1205,13 +1139,13 @@ async function ingestEvidenceFiles(files = []) {
       const binaryOnlyCount = extracted.length - parsedCount;
       const signalCount = unique(extracted.flatMap((item) => item.signals || [])).length;
       const indexedCount = extracted.filter((item) => item.indexStatus === 'indexed').length;
-      const chunkCount = indexResult?.chunking?.chunkCount || 0;
+      const chunkCount = indexResult?.index?.chunkCount || indexResult?.chunking?.chunkCount || indexedChunkCount();
       chatMessages.push({
         role: 'assistant',
         text: binaryOnlyCount
           ? `Attached ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. ${parsedCount} parsed, ${binaryOnlyCount} registered as metadata only. Add a short description of the supplier/workflow and key clauses before running council.`
           : indexedCount
-            ? `Attached, parsed, and indexed ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. I extracted ${signalCount} signal${signalCount === 1 ? '' : 's'} and embedded ${chunkCount || indexedEvidenceChunks.length} retrieval chunk${(chunkCount || indexedEvidenceChunks.length) === 1 ? '' : 's'} for council citations.`
+            ? `Attached, parsed, and indexed ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. I extracted ${signalCount} signal${signalCount === 1 ? '' : 's'} and stored ${chunkCount} retrieval chunk${chunkCount === 1 ? '' : 's'} server-side for council citations.`
             : `Attached and parsed ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. I extracted ${signalCount} signal${signalCount === 1 ? '' : 's'}, but semantic retrieval is not indexed yet.`
       });
       if (indexedCount) {
@@ -1219,7 +1153,7 @@ async function ingestEvidenceFiles(files = []) {
           phase: 'ready',
           progress: 100,
           title: 'Evidence ready for council',
-          detail: `${uploadedEvidence.length} file${uploadedEvidence.length === 1 ? '' : 's'} attached · ${indexedEvidenceChunks.length} indexed chunks ready for semantic retrieval.`,
+          detail: `${uploadedEvidence.length} file${uploadedEvidence.length === 1 ? '' : 's'} attached · ${indexedChunkCount()} server-side indexed chunks ready for semantic retrieval.`,
           metric: 'ready',
           files: extracted,
           state: 'ready'
@@ -1357,6 +1291,10 @@ function syncUploadedEvidenceIntoChatDraft() {
     documents: Array.from(byId.values()).slice(-12),
     evidenceSignals
   };
+}
+
+function indexedChunkCount() {
+  return Number(chatCaseDraft.indexedEvidence?.chunkCount || evidenceIndexMeta.chunkCount || 0);
 }
 
 function renderModeIdle(mode = activeRunMode) {
@@ -1505,7 +1443,7 @@ function renderCaseDraft() {
   const riskSignals = Array.isArray(draft.riskSignals) ? draft.riskSignals : [];
   const pills = [...riskSignals, ...evidenceSignals, ...integrations].slice(0, 8);
   const indexedLabel = draft.indexedEvidence?.chunkCount
-    ? `${draft.indexedEvidence.chunkCount} indexed chunks`
+    ? `${draft.indexedEvidence.chunkCount} server-side chunks`
     : '';
   caseDraftPanel.innerHTML = `
     <div class="case-draft-header">
@@ -1563,7 +1501,7 @@ function promptForChatContext() {
   setRunMode('chat', { skipRender: true });
   const lastMessage = chatMessages.at(-1)?.text || '';
   const hasBinaryOnlyEvidence = uploadedEvidence.some((item) => item.extractionStatus === 'binary_registered');
-  const hasIndexedEvidence = Boolean(chatCaseDraft.indexedEvidence?.chunkCount || indexedEvidenceChunks.length);
+  const hasIndexedEvidence = Boolean(indexedChunkCount());
   const guidance = uploadedEvidence.length
     ? hasBinaryOnlyEvidence
       ? 'I have the file registered, but I still need the case context because the document text was not parsed. Tell me the supplier or workflow, geography, data/assets, integrations, and the key clauses or missing evidence you want reviewed.'
@@ -2163,43 +2101,21 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   ]);
 
   try {
-    if (options.forceRun && indexedEvidenceChunks.length) {
-      pendingMessage.text = 'Retrieving the most relevant evidence chunks before council execution...';
+    const serverChunkCount = indexedChunkCount();
+    if (options.forceRun && serverChunkCount) {
+      pendingMessage.text = 'Preparing server-side evidence retrieval before council execution...';
       flowProgress.style.width = '24%';
       stageKicker.textContent = 'Semantic retrieval';
-      stageStatus.textContent = 'Searching indexed evidence';
-      stageOutput.textContent = 'Using text-embedding-3-large through the shared gateway to select citation-ready clauses.';
+      stageStatus.textContent = 'Server retrieval queued';
+      stageOutput.textContent = 'The API will retrieve citation-ready evidence from the server-side vector index during the council run.';
       renderChatMessages();
       renderAgentActivity([
         { label: 'NLP Intake', detail: 'ready', status: 'complete' },
-        { label: 'Embeddings', detail: `${indexedEvidenceChunks.length} chunks`, status: 'complete' },
-        { label: 'Retriever', detail: 'searching', status: 'active' },
+        { label: 'Embeddings', detail: `${serverChunkCount} chunks`, status: 'complete' },
+        { label: 'Retriever', detail: 'server-side', status: 'active' },
         { label: 'Council', detail: 'queued', status: 'queued' },
         { label: 'Reviewer', detail: 'queued', status: 'queued' }
       ]);
-      try {
-        const retrieval = await retrieveIndexedEvidenceForCouncil();
-        const matchCount = retrieval?.matches?.length || 0;
-        pendingMessage.text = matchCount
-          ? `Retrieved ${matchCount} evidence match${matchCount === 1 ? '' : 'es'}. Running the council with citations now...`
-          : 'No semantic evidence matches were returned. Running the council with parsed evidence summaries...';
-        renderChatMessages();
-      } catch (error) {
-        const detail = error instanceof Error ? error.message : 'Evidence retrieval failed.';
-        chatCaseDraft = {
-          ...chatCaseDraft,
-          retrievalContext: {
-            query: retrievalQueryFromDraft(),
-            model: evidenceIndexMeta.model || 'text-embedding-3-large',
-            chunkCount: indexedEvidenceChunks.length,
-            matchCount: 0,
-            error: detail,
-            matches: []
-          }
-        };
-        pendingMessage.text = `Semantic retrieval failed: ${detail} Running the council with parsed evidence summaries.`;
-        renderChatMessages();
-      }
     }
     const result = await apiFetch('/api/conversation', {
       method: 'POST',
@@ -2208,6 +2124,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
         message,
         caseDraft: chatCaseDraft,
         uploadedEvidence,
+        retrievalQuery: options.forceRun ? retrievalQueryFromDraft() : '',
         forceRun: Boolean(options.forceRun)
       })
     });

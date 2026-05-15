@@ -19,7 +19,7 @@ Implemented in this repo:
 
 - `POST /api/conversation` NLP case-builder endpoint that asks follow-up questions and executes the agent workflow when ready
 - `POST /api/agent/run` CrewAI Flow-routed compliance-agent run with deterministic fallback
-- `POST /api/evidence/index` and `POST /api/evidence/search` server-side bridge to the reusable Parallax42 embeddings gateway
+- `POST /api/evidence/index` and `POST /api/evidence/search` server-side retrieval boundary: gateway embeddings are stored behind the API, and the browser receives only case/evidence/index metadata
 - `GET /api/readiness` submission-readiness inventory
 - `GET /api/health` runtime and linked-platform status
 - Vercel-compatible serverless API functions under `api/`
@@ -86,6 +86,12 @@ PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com
 COMPASS_GATEWAY_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
 COMPASS_GATEWAY_TOKEN=<server-side gateway token>
 EMBEDDINGS_MODEL=text-embedding-3-large
+P42_VECTOR_STORE_PROVIDER=local_file
+# Production option:
+# P42_VECTOR_STORE_PROVIDER=qdrant
+# QDRANT_URL=https://<cluster>.cloud.qdrant.io
+# QDRANT_API_KEY=<server-side-vector-db-key>
+# QDRANT_COLLECTION=p42_compliance_evidence
 P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020
 AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
 ```
@@ -118,7 +124,7 @@ export CREWAI_LLM_API_KEY=$COMPASS_GATEWAY_TOKEN
 AGENT_RUNTIME=crewai_llm npm run dev
 ```
 
-Live LLM specialist output is attached under `orchestration.llmOutput`; the final decision remains guarded by the deterministic engine until eval gates are added. The gateway also exposes server-side `POST /api/evidence/index` and `POST /api/evidence/search`, which call the reusable Parallax42 embedding boundary using `text-embedding-3-large`.
+Live LLM specialist output is attached under `orchestration.llmOutput`; the final decision remains guarded by the deterministic engine until eval gates are added. The evidence boundary uses server-side `POST /api/evidence/index` and `POST /api/evidence/search`, calls the reusable Parallax42 embedding boundary using `text-embedding-3-large`, stores chunk vectors behind the API, and keeps browser state limited to case IDs, evidence IDs, and sanitized index metadata.
 
 ## Submission Dossier
 

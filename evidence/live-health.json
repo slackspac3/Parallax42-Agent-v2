@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-05-14T15:14:07.926Z",
+  "generatedAt": "2026-05-15T10:23:35.145Z",
   "backendHealth": {
     "ok": true,
     "status": 200,
-    "durationMs": 622,
+    "durationMs": 628,
     "url": "https://api.parallax42.bhavukarora.com/health",
     "body": {
       "status": "ok",
@@ -83,7 +83,7 @@
   "gatewayHealth": {
     "ok": true,
     "status": 200,
-    "durationMs": 170,
+    "durationMs": 661,
     "url": "https://parallax42-compass-gateway.vercel.app/api/health",
     "body": {
       "ok": true,
@@ -94,8 +94,26 @@
         "parallax42_gateway_token_configured": true,
         "compass_model": {
           "configured": true,
-          "valid": true
+          "valid": true,
+          "expected": "gpt-5.1"
+        },
+        "embeddings": {
+          "configured": true,
+          "valid": true,
+          "expected": "text-embedding-3-large",
+          "deploymentConfigured": true,
+          "includeModelInPayload": true,
+          "requestModelConfigured": true,
+          "apiKeyConfigured": true,
+          "baseUrlConfigured": true
         }
+      },
+      "routes": {
+        "chatCompletions": "/api/chat/completions",
+        "compass": "/api/compass",
+        "embeddings": "/api/embeddings",
+        "evidenceIndex": "/api/evidence/index",
+        "evidenceSearch": "/api/evidence/search"
       }
     }
   }

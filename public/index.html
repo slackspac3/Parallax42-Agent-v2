@@ -93,7 +93,7 @@
             <label class="upload-zone mode-live-only" id="evidenceDropzone">
               <input id="evidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.doc,.docx,text/*,application/json,text/csv,application/pdf" />
               <span>Drop or select evidence files</span>
-              <small>Text files are sampled locally. PDF/DOCX stream to the backend parser, then index through the shared embeddings gateway.</small>
+              <small>Evidence streams to the backend parser/OCR boundary, then indexes through the shared embeddings gateway and server-side vector store.</small>
             </label>
             <div id="evidenceIngestionStatus" class="ingestion-status mode-live-only">No uploaded evidence yet.</div>
             <div id="evidenceQueue" class="evidence-queue" aria-live="polite"></div>

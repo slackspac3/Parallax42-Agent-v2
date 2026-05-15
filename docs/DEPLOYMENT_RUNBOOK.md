@@ -49,6 +49,12 @@ CREWAI_LLM_API_KEY=<same-value-as-COMPASS_GATEWAY_TOKEN>
 COMPASS_GATEWAY_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
 COMPASS_GATEWAY_TOKEN=<server-side gateway token>
 EMBEDDINGS_MODEL=text-embedding-3-large
+P42_VECTOR_STORE_PROVIDER=local_file
+# Enterprise production:
+# P42_VECTOR_STORE_PROVIDER=qdrant
+# QDRANT_URL=https://<cluster>.cloud.qdrant.io
+# QDRANT_API_KEY=<server-side-vector-db-key>
+# QDRANT_COLLECTION=p42_compliance_evidence
 P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020,http://localhost:3020
 AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
 ```
@@ -68,6 +74,8 @@ POST /api/evidence/index
 POST /api/evidence/search
 GET  /api/backend?path=/health
 ```
+
+`/api/evidence/index` returns only sanitized index metadata to the cockpit. Chunk embeddings are kept in the server-side vector store. Use the local-file provider for demos; use Qdrant or an approved managed vector service for enterprise retention, scaling, and multi-instance Vercel deployments.
 
 The backend relay only forwards allowlisted demo routes. Private admin, knowledge, and arbitrary backend paths are intentionally blocked.
 

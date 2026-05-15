@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-14T15:14:08.712Z",
+  "generatedAt": "2026-05-15T10:23:36.057Z",
   "workflow": {
     "id": "golden-ai-saas-compliance-review",
     "title": "High-risk AI SaaS supplier compliance review",
@@ -100,7 +100,8 @@
           "title": "Supplier assurance summary",
           "summary": "SOC 2 summary available. No signed DPA, model-training exclusion, or continuity plan attached."
         }
-      ]
+      ],
+      "retrievalContext": null
     },
     "decision": {
       "status": "not_ready",
@@ -298,8 +299,23 @@
       "p42:soc2-iso-evidence-map",
       "p42:vendor-risk-sop",
       "p42:approval-matrix",
-      "p42:contract-clause-pack"
+      "p42:contract-clause-pack",
+      "DOC-01"
     ],
+    "citations": [
+      {
+        "citationId": "cite_01",
+        "evidenceId": "DOC-01",
+        "title": "Supplier assurance summary",
+        "sourceType": "document",
+        "extractionStatus": "attached",
+        "score": 0,
+        "text": "SOC 2 summary available. No signed DPA, model-training exclusion, or continuity plan attached.",
+        "signals": [],
+        "metadata": {}
+      }
+    ],
+    "retrievalContext": null,
     "outputReview": {
       "status": "needs_revision",
       "finalOutputSafeForHumanReview": true,
@@ -307,6 +323,10 @@
         {
           "name": "evidence_attached",
           "status": "passed"
+        },
+        {
+          "name": "retrieval_citations",
+          "status": "not_applicable"
         },
         {
           "name": "blocking_gaps_named",
@@ -324,8 +344,8 @@
     },
     "trace": [
       {
-        "eventId": "evt_1778771648712_3cp3ut",
-        "timestamp": "2026-05-14T15:14:08.712Z",
+        "eventId": "evt_1778840616057_nm3xrk",
+        "timestamp": "2026-05-15T10:23:36.057Z",
         "agent": "runtime_router",
         "eventType": "runtime_selected",
         "parentEventId": "",
@@ -339,8 +359,8 @@
         }
       },
       {
-        "eventId": "evt_1778771648712_wtvcdk",
-        "timestamp": "2026-05-14T15:14:08.712Z",
+        "eventId": "evt_1778840616056_cs5u0w",
+        "timestamp": "2026-05-15T10:23:36.056Z",
         "agent": "intake_agent",
         "eventType": "case_loaded",
         "parentEventId": "",
@@ -352,11 +372,11 @@
         }
       },
       {
-        "eventId": "evt_1778771648712_w9x5o4",
-        "timestamp": "2026-05-14T15:14:08.712Z",
+        "eventId": "evt_1778840616057_cjynco",
+        "timestamp": "2026-05-15T10:23:36.057Z",
         "agent": "domain_scanner_agent",
         "eventType": "domains_scanned",
-        "parentEventId": "evt_1778771648712_wtvcdk",
+        "parentEventId": "evt_1778840616056_cs5u0w",
         "payload": {
           "matchedDomains": [
             {
@@ -430,11 +450,11 @@
         }
       },
       {
-        "eventId": "evt_1778771648712_kze83p",
-        "timestamp": "2026-05-14T15:14:08.712Z",
+        "eventId": "evt_1778840616057_c3mr1j",
+        "timestamp": "2026-05-15T10:23:36.057Z",
         "agent": "evidence_agent",
         "eventType": "evidence_mapped",
-        "parentEventId": "evt_1778771648712_wtvcdk",
+        "parentEventId": "evt_1778840616056_cs5u0w",
         "payload": {
           "evidenceIds": [
             "p42:ai-supplier-review-playbook",
@@ -448,28 +468,31 @@
             "p42:soc2-iso-evidence-map",
             "p42:vendor-risk-sop",
             "p42:approval-matrix",
-            "p42:contract-clause-pack"
+            "p42:contract-clause-pack",
+            "DOC-01"
           ],
+          "citationCount": 1,
+          "retrievalAugmented": false,
           "gapCount": 4
         }
       },
       {
-        "eventId": "evt_1778771648712_cq7976",
-        "timestamp": "2026-05-14T15:14:08.712Z",
+        "eventId": "evt_1778840616057_xp45tk",
+        "timestamp": "2026-05-15T10:23:36.057Z",
         "agent": "control_agent",
         "eventType": "controls_recommended",
-        "parentEventId": "evt_1778771648712_wtvcdk",
+        "parentEventId": "evt_1778840616056_cs5u0w",
         "payload": {
           "controlCount": 14,
           "highSeverityGaps": 3
         }
       },
       {
-        "eventId": "evt_1778771648712_epbfuk",
-        "timestamp": "2026-05-14T15:14:08.712Z",
+        "eventId": "evt_1778840616057_wfkgxx",
+        "timestamp": "2026-05-15T10:23:36.057Z",
         "agent": "output_review_agent",
         "eventType": "output_review_completed",
-        "parentEventId": "evt_1778771648712_wtvcdk",
+        "parentEventId": "evt_1778840616056_cs5u0w",
         "payload": {
           "status": "needs_revision",
           "finalOutputSafeForHumanReview": true,
@@ -477,6 +500,10 @@
             {
               "name": "evidence_attached",
               "status": "passed"
+            },
+            {
+              "name": "retrieval_citations",
+              "status": "not_applicable"
             },
             {
               "name": "blocking_gaps_named",
@@ -664,7 +691,7 @@
       "llm": {
         "requested": false,
         "enabled": false,
-        "model": "gpt-4o-mini",
+        "model": "gpt-5.1",
         "baseUrlConfigured": false,
         "providerEnv": "OPENAI_API_KEY",
         "apiKeyConfigured": true,
@@ -757,7 +784,7 @@
       "liveLlm": {
         "requested": false,
         "enabled": false,
-        "model": "gpt-4o-mini",
+        "model": "gpt-5.1",
         "baseUrlConfigured": false,
         "providerEnv": "OPENAI_API_KEY",
         "apiKeyConfigured": true,

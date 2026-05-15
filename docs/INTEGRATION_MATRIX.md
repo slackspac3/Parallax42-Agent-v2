@@ -10,7 +10,7 @@
 | Coupa/ServiceNow/Dynamics/GRC/SharePoint/SAP/Ariba/Oracle/Workday | Normalization API documented in Parallax42, with local sample payloads under `examples/integrations/`. | Add screenshots and live replay evidence. |
 | Microsoft Entra ID | Roadmap only. | Implement or clearly mark as planned enterprise hardening. |
 | PostgreSQL | Optional/scaffolded in Parallax42; this repo uses JSONL plus Vercel `/tmp` fallback. | Enable for durable run/audit records. |
-| Qdrant/vector memory | Optional/scaffolded in Parallax42. | Decide whether to keep scaffolded or activate retrieval. |
+| Qdrant/vector memory | Server-side vector-store boundary implemented with local-file demo fallback and Qdrant-compatible production configuration. | Configure managed vector DB credentials for enterprise retention and multi-instance Vercel deployments. |
 | AI assurance portal | Separate repo. | Use for Responsible AI benchmark evidence. |
 
 ## Priority Order

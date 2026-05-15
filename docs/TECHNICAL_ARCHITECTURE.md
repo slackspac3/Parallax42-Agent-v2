@@ -28,8 +28,23 @@ Submission deployment:
 GitHub Pages cockpit
   -> Vercel /api/health, /api/readiness, /api/benchmarks, /api/conversation, /api/agent/run
   -> Vercel /api/evidence/index and /api/evidence/search
+  -> Server-side vector store boundary
   -> Vercel /api/backend allowlisted relay
   -> Parallax42 backend health/demo endpoints
+```
+
+Evidence ingestion and retrieval:
+
+```text
+Browser
+  -> chunked evidence upload only
+  -> backend parser/OCR boundary
+  -> parsed document evidence IDs and summaries
+  -> Vercel /api/evidence/index
+  -> Parallax42 Compass embeddings gateway
+  -> server-side vector store (Qdrant in production, local file fallback for demo/dev)
+  -> Vercel /api/evidence/search retrieves by caseId
+  -> council receives citation-ready matches
 ```
 
 ## Components In This Repo
@@ -45,6 +60,7 @@ GitHub Pages cockpit
 | CrewAI Flow adapter | `crewai_adapter/compliance_flow.py` | Flow state/stage mapping and optional live Flow validation. |
 | Evidence layer | `lib/evidenceLibrary.js` | Initial compliance domain library and evidence IDs. |
 | Shared evidence gateway client | `lib/compassGatewayClient.js` | Server-side bridge to the reusable Parallax42 gateway for GPT-5.1, `text-embedding-3-large`, evidence chunking, and semantic search. |
+| Server-side evidence vector store | `lib/evidenceVectorStore.js` | Stores chunk embeddings behind the API, supports Qdrant-compatible production storage, strips vectors from browser responses, and retrieves evidence by `caseId`. |
 | Audit store | `lib/auditStore.js` | Hash-chained append-only JSONL audit with integrity verification; production should point `AGENT_AUDIT_DIR` at durable storage. |
 | Cockpit UI | `public/` | Chat-first operator workspace with advanced demo/live run modes. |
 | Evidence capture | `scripts/capture-evidence.js` | Generates health, benchmark, readiness, and sample trace artifacts. |
@@ -57,7 +73,7 @@ The production target should be extracted from Parallax42 rather than rewritten:
 - FastAPI backend for document parsing, OCR, live Compass boundary, and admin checks.
 - PostgreSQL for case, run, audit, reviewer, and configuration state.
 - Blob/object storage for uploaded evidence and exports.
-- Azure AI Search or approved retrieval service for indexed evidence.
+- Qdrant, Azure AI Search, or approved retrieval service for indexed evidence.
 - Shared Parallax42 gateway for Compass GPT-5.1 and `text-embedding-3-large`, reusable by other repositories through `workspaceId` and `projectId`.
 - Entra ID/JWT validation for identity and role-scoped access.
 - Compass gateway for sovereign LLM calls, with no browser-held production keys.
@@ -65,8 +81,10 @@ The production target should be extracted from Parallax42 rather than rewritten:
 ## Trust Boundaries
 
 - Browser is not trusted for model calls or authoritative compliance decisions.
+- Browser is not an evidence vector store: it keeps case IDs, evidence IDs, and sanitized metadata only.
 - Model access stays behind server-side gateway controls.
 - Embedding calls are token-protected server-to-server calls; the browser never receives Compass, Vercel AI Gateway, or embedding provider credentials.
+- Chunk embeddings are stored behind `/api/evidence/index` and retrieved behind `/api/evidence/search`; browser responses strip vectors and raw chunk payloads.
 - Output is never automatic approval; it is a human-review decision brief.
 - Raw private documents and secrets must not appear in admin or trace outputs.
 - Any write-capable future tool must use explicit approval and audit logging.

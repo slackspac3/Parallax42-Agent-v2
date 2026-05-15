@@ -8,12 +8,14 @@ const { URL } = require('node:url');
 const { runAgentWithRuntime, runtimeHealth } = require('./lib/agentRuntime');
 const { appendAuditRecord, auditStoreHealth, readRecentAuditRecords, verifyAuditChain } = require('./lib/auditStore');
 const { runBenchmark } = require('./lib/benchmarkSuite');
-const { gatewayHealth, indexEvidence, searchEvidence } = require('./lib/compassGatewayClient');
+const { gatewayHealth } = require('./lib/compassGatewayClient');
 const { getReadinessInventory } = require('./lib/complianceAgent');
 const { processConversation } = require('./lib/conversationAgent');
+const { evidenceVectorStoreHealth, indexEvidenceServerSide, searchEvidenceServerSide } = require('./lib/evidenceVectorStore');
 const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
 const { readJsonBody, writeJson } = require('./lib/http');
 const { authHealth, authorizeRequest } = require('./lib/rbac');
+const { enrichConversationWithServerRetrieval } = require('./lib/serverSideRetrieval');
 
 const PORT = Number(process.env.PORT || 3020);
 const PUBLIC_ROOT = path.join(__dirname, 'public');
@@ -62,6 +64,7 @@ const server = http.createServer(async (req, res) => {
           integrity: verifyAuditChain()
         },
         evidenceGateway: gatewayHealth(),
+        evidenceVectorStore: evidenceVectorStoreHealth(),
         linkedBackend: process.env.PARALLAX42_BACKEND_URL || 'https://api.parallax42.bhavukarora.com'
       });
       return;
@@ -116,7 +119,7 @@ const server = http.createServer(async (req, res) => {
         writeJson(res, auth.statusCode, auth.body);
         return;
       }
-      const body = await readJsonBody(req);
+      const body = await readJsonBody(req, { limitBytes: 5_000_000 });
       const result = runAgentWithRuntime(body, {
         runtime: req.headers['x-agent-runtime'] || body.runtime
       });
@@ -148,9 +151,10 @@ const server = http.createServer(async (req, res) => {
         writeJson(res, auth.statusCode, auth.body);
         return;
       }
-      const body = await readJsonBody(req);
-      const result = processConversation(body, {
-        runtime: req.headers['x-agent-runtime'] || body.runtime
+      const body = await readJsonBody(req, { limitBytes: 2_000_000 });
+      const enrichedBody = await enrichConversationWithServerRetrieval(body);
+      const result = processConversation(enrichedBody, {
+        runtime: req.headers['x-agent-runtime'] || enrichedBody.runtime
       });
       appendAuditRecord({
         actor: auth.actor,
@@ -181,8 +185,8 @@ const server = http.createServer(async (req, res) => {
         writeJson(res, auth.statusCode, auth.body);
         return;
       }
-      const body = await readJsonBody(req);
-      const result = await indexEvidence(body);
+      const body = await readJsonBody(req, { limitBytes: 5_000_000 });
+      const result = await indexEvidenceServerSide(body);
       appendAuditRecord({
         actor: auth.actor,
         caseId: result.context?.caseId || body.caseId || 'evidence-index',
@@ -198,7 +202,8 @@ const server = http.createServer(async (req, res) => {
           model: result.model,
           context: result.context,
           chunking: result.chunking,
-          evidenceIds: Array.from(new Set((result.chunks || []).map((chunk) => chunk.evidenceId).filter(Boolean)))
+          index: result.index,
+          evidenceIds: result.index?.evidenceIds || []
         }
       });
       writeJson(res, 200, result);
@@ -211,8 +216,8 @@ const server = http.createServer(async (req, res) => {
         writeJson(res, auth.statusCode, auth.body);
         return;
       }
-      const body = await readJsonBody(req);
-      const result = await searchEvidence(body);
+      const body = await readJsonBody(req, { limitBytes: 2_000_000 });
+      const result = await searchEvidenceServerSide(body);
       appendAuditRecord({
         actor: auth.actor,
         caseId: result.context?.caseId || body.caseId || 'evidence-search',
@@ -227,6 +232,7 @@ const server = http.createServer(async (req, res) => {
           route: 'evidence.search',
           model: result.model,
           context: result.context,
+          index: result.index,
           queryLength: String(body.query || '').length,
           matchIds: (result.matches || []).map((match) => match.chunkId).filter(Boolean)
         }

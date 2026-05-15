@@ -1,10 +1,11 @@
 {
-  "generatedAt": "2026-05-14T15:14:08.561Z",
+  "generatedAt": "2026-05-15T10:23:35.880Z",
   "submissionReadiness": {
     "productionDeployment": "partial_live",
     "sovereignLlmBoundary": "live_gateway_present",
     "auditTraceability": "hash_chained_append_only_audit_ready",
     "rbac": "rbac_policy_ready_needs_enforced_env",
+    "evidenceRetrieval": "server_side_vector_boundary_ready_needs_managed_store",
     "benchmarks": "parallax42_golden_evals_20_of_20_passed",
     "responsibleAi": "documented_controls_need_packaged_assurance_run",
     "videoDemo": "not_recorded"
@@ -69,6 +70,14 @@
       "hashChained": true,
       "durable": true,
       "durabilityNote": "Audit file is written to the configured filesystem path."
+    },
+    "evidenceVectorStore": {
+      "provider": "local_file",
+      "storage": "server_side_local_vector_store",
+      "durable": false,
+      "browserEmbeddingsRetained": false,
+      "localStorePath": "/var/folders/s7/ch8z1jd96p10gnt99khhwcdw0000gp/T/p42-compliance-intelligence-agent/evidence-vector-index.json",
+      "qdrantConfigured": false
     }
   },
   "linkedSystems": {

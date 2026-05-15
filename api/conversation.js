@@ -3,6 +3,7 @@
 const { appendAuditRecord } = require('../lib/auditStore');
 const { processConversation } = require('../lib/conversationAgent');
 const { authorizeRequest } = require('../lib/rbac');
+const { enrichConversationWithServerRetrieval } = require('../lib/serverSideRetrieval');
 const { methodGuard, readJsonRequest, sendJson } = require('./_http');
 
 module.exports = async function handler(req, res) {
@@ -14,8 +15,9 @@ module.exports = async function handler(req, res) {
       return;
     }
     const body = await readJsonRequest(req);
-    const result = processConversation(body, {
-      runtime: req.headers['x-agent-runtime'] || body.runtime
+    const enrichedBody = await enrichConversationWithServerRetrieval(body);
+    const result = processConversation(enrichedBody, {
+      runtime: req.headers['x-agent-runtime'] || enrichedBody.runtime
     });
     appendAuditRecord({
       actor: auth.actor,
