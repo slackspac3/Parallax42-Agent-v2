@@ -1,0 +1,117 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Type /Pages /Kids [6 0 R 8 0 R] /Count 2 >>
+endobj
+5 0 obj
+<< /Length 5600 >>
+stream
+q 1 1 1 rg 0 0 612 792 re f Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 764 Td (Data Processing Addendum And Cross-Border Transfer Terms) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 754 m 560 754 l S Q
+BT 0.08 0.55 0.43 rg /F2 20 Tf 52 738 Td (Data Processing Addendum And Cross-Border) Tj ET
+BT 0.08 0.55 0.43 rg /F2 20 Tf 52 715 Td (Transfer Terms) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 683 m 560 683 l S Q
+BT 0.28 0.34 0.32 rg /F1 11 Tf 52 680 Td (Apex DataWorks Ltd. processor terms for HR, CRM, marketing, support, and analytics data) Tj ET
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 651 Td (Synthetic legal-style test document for agent evaluation. Not legal advice. No real parties.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 622 Td (Processing Roles) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 605 m 560 605 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 602 Td (Customer acts as controller for personal data submitted to the services. Apex DataWorks Ltd. acts as) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 590 Td (processor except for account administration, billing, security monitoring, sanctions screening, and legal) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 578 Td (compliance records where it acts as independent controller.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 551 Td (Categories Of Data) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 534 m 560 534 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 531 Td (- Employee data: names, work email, department, manager, role, location, approval authority, support ticket) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 519 Td (  text, access logs, and training completion records.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 505 Td (- Customer and prospect data: names, email addresses, phone numbers, CRM opportunity notes, campaign) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 493 Td (  membership, website interaction events, consent status, and customer support history.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 479 Td (- Supplier data: vendor contacts, tax identifiers, onboarding questionnaires, insurance certificates, audit) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 467 Td (  findings, beneficial ownership declarations, and contract metadata.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 453 Td (- Sensitive data is not expected, but free-text ticket fields may accidentally include health, financial,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 441 Td (  or government identifier data. Provider must apply detection, redaction, and escalation procedures.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 415 Td (Processor Obligations) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 398 m 560 398 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 395 Td (- Provider shall process personal data only on documented instructions and shall immediately notify) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 383 Td (  Customer if an instruction appears unlawful.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 369 Td (- Provider shall ensure personnel confidentiality, minimum necessary access, background checks for) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 357 Td (  privileged operators, and annual privacy training.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 343 Td (- Provider shall support data subject requests by locating, exporting, deleting, or restricting personal) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 331 Td (  data within 15 business days of a verified request.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 305 Td (Subprocessors) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 288 m 560 288 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 285 Td (Provider may use the subprocessors listed in Schedule 2 for hosting, logging, support, backup, and email) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 273 Td (delivery. Provider must provide 30 days prior notice before adding or replacing a material subprocessor.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 261 Td (Customer may object on reasonable privacy, security, or regulatory grounds.) Tj ET
+BT 0.05 0.08 0.07 rg /F3 7 Tf 52 246 Td (Schedule 2: Cloud hosting - Ireland and United States - infrastructure operations - encrypted storage and compute.) Tj ET
+BT 0.05 0.08 0.07 rg /F3 7 Tf 52 235 Td (Schedule 2: Support desk - European Union - customer support tickets - access by named support staff only.) Tj ET
+BT 0.05 0.08 0.07 rg /F3 7 Tf 52 224 Td (Schedule 2: Email delivery - United States - transactional notifications - no message body analytics.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 201 Td (Cross-Border Transfers) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 184 m 560 184 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 181 Td (For transfers from jurisdictions requiring safeguards, the parties incorporate the applicable standard) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 169 Td (contractual clauses, UK addendum where applicable, and transfer impact assessment controls. Provider shall) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 157 Td (not transfer regulated data to a restricted jurisdiction without prior written approval.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 130 Td (Security Measures) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 113 m 560 113 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 110 Td (- Encryption at rest and in transit, vulnerability management, malware protection, centralized logging,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 98 Td (  production change control, and incident response playbooks are mandatory.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 84 Td (- Privileged access requires ticketed approval, time-bound elevation, MFA, session logging, and manager) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 72 Td (  review.) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 42 m 560 42 l S Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 28 Td (Synthetic test fixture - Page 1 of 2) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 4 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Length 1377 >>
+stream
+q 1 1 1 rg 0 0 612 792 re f Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 764 Td (Data Processing Addendum And Cross-Border Transfer Terms) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 754 m 560 754 l S Q
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 730 Td (Deletion And Return) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 713 m 560 713 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 710 Td (Upon termination or written instruction, Provider shall return data in JSON, CSV, and native attachment) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 698 Td (format, then delete active systems within 45 days and backups within 180 days. Provider shall certify) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 686 Td (deletion except for records retained by law.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 659 Td (AI And Automated Processing) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 642 m 560 642 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 639 Td (Customer personal data shall not be used for model training, fine-tuning, benchmark generation, or service) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 627 Td (improvement without a separate signed opt-in. Automated summaries remain assistive and may not be treated as) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 615 Td (final employment, credit, healthcare, or legal determinations.) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 42 m 560 42 l S Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 28 Td (Synthetic test fixture - Page 2 of 2) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 4 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 7 0 R >>
+endobj
+9 0 obj
+<< /Type /Catalog /Pages 4 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f
+0000000015 00000 n
+0000000085 00000 n
+0000000160 00000 n
+0000000228 00000 n
+0000000291 00000 n
+0000005942 00000 n
+0000006088 00000 n
+0000007516 00000 n
+0000007662 00000 n
+trailer
+<< /Size 10 /Root 9 0 R >>
+startxref
+7711
+%%EOF

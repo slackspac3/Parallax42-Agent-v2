@@ -1,0 +1,126 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Type /Pages /Kids [6 0 R 8 0 R] /Count 2 >>
+endobj
+5 0 obj
+<< /Length 5722 >>
+stream
+q 1 1 1 rg 0 0 612 792 re f Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 764 Td (Enterprise SaaS Master Services Agreement) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 754 m 560 754 l S Q
+BT 0.08 0.55 0.43 rg /F2 20 Tf 52 738 Td (Enterprise SaaS Master Services Agreement) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 706 m 560 706 l S Q
+BT 0.28 0.34 0.32 rg /F1 11 Tf 52 703 Td (VectorCloud Systems Inc. and Northstar Retail Holdings - analytics, workflow automation,) Tj ET
+BT 0.28 0.34 0.32 rg /F1 11 Tf 52 688 Td (CRM, and identity integrations) Tj ET
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 659 Td (Synthetic legal-style test document for agent evaluation. Not legal advice. No real parties.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 630 Td (Parties And Scope) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 613 m 560 613 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 610 Td (This Master Services Agreement is entered into between VectorCloud Systems Inc., a Delaware corporation, and) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 598 Td (Northstar Retail Holdings, a regional retail and logistics group. The services include hosted workflow) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 586 Td (automation, supplier analytics, marketing operations reporting, case management, and configurable AI-) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 574 Td (assisted summaries.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 559 Td (The platform will integrate with Microsoft Entra ID, Microsoft 365, Salesforce CRM, ServiceNow vendor risk,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 547 Td (Snowflake, SFTP drops, and a customer-managed SIEM. Provider will not receive direct payment card numbers) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 535 Td (but may process transaction metadata, customer identifiers, employee contact data, purchase order details,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 523 Td (support tickets, and supplier due diligence records.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 496 Td (Subscription Services) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 479 m 560 479 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 476 Td (- Provider shall deliver multi-tenant SaaS access with logical tenant isolation, regional hosting in) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 464 Td (  Ireland and the United States, and configurable data retention periods.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 450 Td (- Provider may use AI-assisted case summaries only inside the customer tenant. Customer content shall not) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 438 Td (  be used to train foundation models, improve shared models, or create external benchmarks.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 424 Td (- Provider shall support SAML 2.0 SSO, SCIM provisioning, IP allowlisting, API keys with rotation, webhook) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 412 Td (  signing, and role-based access control.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 386 Td (Commercial Terms) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 369 m 560 369 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 366 Td (The initial term is 36 months. Fees are based on named users, API events, and retained evidence volume.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 354 Td (Production use may not start until security onboarding, privacy review, and integration approval are) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 342 Td (completed.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 327 Td (Provider shall not materially change subprocessors, hosting regions, retention settings, or AI data-use) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 315 Td (terms without 60 days prior notice and customer opportunity to object.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 288 Td (Data Protection And Privacy) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 271 m 560 271 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 268 Td (- A signed Data Processing Addendum is incorporated by reference. Provider is a processor for customer) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 256 Td (  personal data and a controller only for billing, account, and fraud-prevention records.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 242 Td (- Personal data categories include business contact data, customer loyalty identifiers, employee names,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 230 Td (  approver emails, device identifiers, ticket narratives, and supplier contacts.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 216 Td (- Provider shall delete or return customer data within 45 days after termination, except for immutable) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 204 Td (  security logs retained for compliance and dispute defense.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 190 Td (- Provider shall maintain subprocessor due diligence, cross-border transfer safeguards, and documented) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 178 Td (  retention schedules.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 152 Td (Security Controls) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 135 m 560 135 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 132 Td (- Provider shall maintain ISO 27001 or SOC 2 Type II controls, annual penetration testing, vulnerability) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 120 Td (  remediation tracking, endpoint hardening, and centralized logging.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 106 Td (- Provider shall enforce least privilege, MFA, named accounts, privileged access review, break-glass) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 94 Td (  controls, and quarterly access recertification.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 80 Td (- Provider shall encrypt data in transit using TLS 1.2 or higher and encrypt data at rest using a) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 68 Td (  recognized key management service.) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 42 m 560 42 l S Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 28 Td (Synthetic test fixture - Page 1 of 2) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 4 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Length 2250 >>
+stream
+q 1 1 1 rg 0 0 612 792 re f Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 764 Td (Enterprise SaaS Master Services Agreement) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 754 m 560 754 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 742 Td (- Provider shall notify Customer of confirmed security incidents without undue delay and no later than 48) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 730 Td (  hours after confirmation.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 704 Td (Audit, Evidence, And Records) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 687 m 560 687 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 684 Td (- Provider shall preserve audit logs, integration logs, access approvals, configuration changes, incident) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 672 Td (  tickets, and data export records for at least 18 months.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 658 Td (- Customer may request security attestations, remediation summaries, subprocessor lists, continuity) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 646 Td (  evidence, and access reports during onboarding and annual review.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 620 Td (Continuity And Exit) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 603 m 560 603 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 600 Td (- Provider shall maintain business continuity and disaster recovery plans with annual tabletop testing and) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 588 Td (  target recovery time objective of 12 hours for the production control plane.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 574 Td (- Provider shall provide reasonable exit assistance for 90 days, including export of audit logs, evidence) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 562 Td (  attachments, configuration metadata, and integration mappings in CSV or JSON format.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 536 Td (Approval Gate) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 519 m 560 519 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 516 Td (This agreement is not sufficient for go-live without a completed access approval record, DPA confirmation,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 504 Td (security assurance packet, and integration architecture review.) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 42 m 560 42 l S Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 28 Td (Synthetic test fixture - Page 2 of 2) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 4 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 7 0 R >>
+endobj
+9 0 obj
+<< /Type /Catalog /Pages 4 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f
+0000000015 00000 n
+0000000085 00000 n
+0000000160 00000 n
+0000000228 00000 n
+0000000291 00000 n
+0000006064 00000 n
+0000006210 00000 n
+0000008511 00000 n
+0000008657 00000 n
+trailer
+<< /Size 10 /Root 9 0 R >>
+startxref
+8706
+%%EOF

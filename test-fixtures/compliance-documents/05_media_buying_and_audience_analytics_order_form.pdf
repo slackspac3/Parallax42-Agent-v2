@@ -1,0 +1,119 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Type /Pages /Kids [6 0 R 8 0 R] /Count 2 >>
+endobj
+5 0 obj
+<< /Length 5309 >>
+stream
+q 1 1 1 rg 0 0 612 792 re f Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 764 Td (Media Buying And Audience Analytics Order Form) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 754 m 560 754 l S Q
+BT 0.08 0.55 0.43 rg /F2 20 Tf 52 738 Td (Media Buying And Audience Analytics Order Form) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 706 m 560 706 l S Q
+BT 0.28 0.34 0.32 rg /F1 11 Tf 52 703 Td (CivicMedia Analytics platform order for campaign activation, consented audiences, CRM) Tj ET
+BT 0.28 0.34 0.32 rg /F1 11 Tf 52 688 Td (sync, and measurement reporting) Tj ET
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 659 Td (Synthetic legal-style test document for agent evaluation. Not legal advice. No real parties.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 630 Td (Order Scope) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 613 m 560 613 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 610 Td (CivicMedia Analytics will provide campaign planning, audience segmentation, media buying workflow, consented) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 598 Td (audience activation, attribution dashboards, creative approval routing, and post-campaign analytics for) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 586 Td (customer brands and corporate communications teams.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 559 Td (Integrations) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 542 m 560 542 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 539 Td (- CRM integration with Salesforce and Dynamics for account segmentation, consent status, sales stage,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 527 Td (  campaign membership, and suppression lists.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 513 Td (- Marketing automation integration with HubSpot or Adobe Marketo for email engagement, form submissions,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 501 Td (  landing page events, and consent updates.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 487 Td (- Data warehouse integration with Snowflake or BigQuery for aggregated performance data, hashed audience) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 475 Td (  identifiers, and BI reporting.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 461 Td (- Media platform integrations with search, social, programmatic display, and measurement partners through) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 449 Td (  customer-approved accounts only.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 423 Td (Data Use Restrictions) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 406 m 560 406 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 403 Td (- No sensitive categories, children's data, government identifiers, precise health data, or employee) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 391 Td (  disciplinary data may be uploaded.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 377 Td (- Audience lists must be consented, sourced from approved systems, and accompanied by retention and) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 365 Td (  suppression rules.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 351 Td (- Provider may process hashed email addresses, device identifiers, campaign events, clickstream data, lead) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 339 Td (  source, geography, language, and ad exposure metadata.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 325 Td (- Provider shall not sell, enrich, commingle, or independently retarget customer audience data.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 299 Td (AI And Optimization) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 282 m 560 282 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 279 Td (Provider may use automated bidding, anomaly detection, budget pacing, and creative fatigue alerts. Provider) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 267 Td (shall not use customer audience data to train shared audience models or external lookalike models without a) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 255 Td (separate written opt-in.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 228 Td (Reporting And Controls) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 211 m 560 211 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 208 Td (- Provider shall produce campaign reports showing spend, impressions, clicks, conversions, budget variance,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 196 Td (  audience sources, suppression logic, and data retention status.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 182 Td (- Provider shall maintain approval workflow evidence for campaign launch, audience upload, creative) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 170 Td (  approval, landing page approval, and budget change approvals.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 144 Td (Privacy And Consent) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 127 m 560 127 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 124 Td (Customer remains responsible for consent capture and lawful basis. Provider must enforce suppression lists,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 112 Td (retention limits, opt-out propagation, and deletion instructions within 10 business days.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 97 Td (No fully executed DPA is attached to this order form. This order form may not be used for production) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 85 Td (audience activation until the DPA, subprocessor schedule, cross-border transfer terms, and data retention) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 73 Td (schedule are complete.) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 42 m 560 42 l S Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 28 Td (Synthetic test fixture - Page 1 of 2) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 4 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Length 1323 >>
+stream
+q 1 1 1 rg 0 0 612 792 re f Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 764 Td (Media Buying And Audience Analytics Order Form) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 754 m 560 754 l S Q
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 730 Td (Security And Access) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 713 m 560 713 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 710 Td (- Provider access to media accounts and CRM systems must use named accounts, MFA, least privilege, and) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 698 Td (  customer-controlled revocation.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 684 Td (- Provider shall not create new ad accounts, pixels, tags, or data destinations without written customer) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 672 Td (  approval.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 646 Td (Known Gaps) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 629 m 560 629 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 626 Td (- DPA is not attached.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 612 Td (- Subprocessor list is pending.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 598 Td (- Data retention schedule is in draft.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 584 Td (- Audience upload approval workflow is not yet configured.) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 42 m 560 42 l S Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 28 Td (Synthetic test fixture - Page 2 of 2) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 4 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 7 0 R >>
+endobj
+9 0 obj
+<< /Type /Catalog /Pages 4 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f
+0000000015 00000 n
+0000000085 00000 n
+0000000160 00000 n
+0000000228 00000 n
+0000000291 00000 n
+0000005651 00000 n
+0000005797 00000 n
+0000007171 00000 n
+0000007317 00000 n
+trailer
+<< /Size 10 /Root 9 0 R >>
+startxref
+7366
+%%EOF

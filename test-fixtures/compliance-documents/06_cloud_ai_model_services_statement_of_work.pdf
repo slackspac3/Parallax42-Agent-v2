@@ -1,0 +1,118 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Type /Pages /Kids [6 0 R 8 0 R] /Count 2 >>
+endobj
+5 0 obj
+<< /Length 5339 >>
+stream
+q 1 1 1 rg 0 0 612 792 re f Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 764 Td (Cloud AI Model Services Statement Of Work) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 754 m 560 754 l S Q
+BT 0.08 0.55 0.43 rg /F2 20 Tf 52 738 Td (Cloud AI Model Services Statement Of Work) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 706 m 560 706 l S Q
+BT 0.28 0.34 0.32 rg /F1 11 Tf 52 703 Td (Aster Cognitive Cloud conversational assistant, document intelligence, retrieval, and) Tj ET
+BT 0.28 0.34 0.32 rg /F1 11 Tf 52 688 Td (model operations services) Tj ET
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 659 Td (Synthetic legal-style test document for agent evaluation. Not legal advice. No real parties.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 630 Td (Project Description) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 613 m 560 613 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 610 Td (Aster Cognitive Cloud will configure a private conversational assistant for enterprise knowledge retrieval,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 598 Td (policy question answering, document triage, meeting summary generation, and compliance evidence extraction.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 586 Td (The assistant will connect to SharePoint, Microsoft Teams exports, ServiceNow knowledge articles, Jira) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 574 Td (issues, Confluence spaces, Azure AI Search, and a customer data lake.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 547 Td (Data And Content) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 530 m 560 530 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 527 Td (- Input data may include policies, procedures, contracts, supplier questionnaires, meeting notes, service) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 515 Td (  tickets, architecture diagrams, audit findings, and selected email exports.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 501 Td (- Personal data may appear in documents, including employee names, email addresses, phone numbers, job) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 489 Td (  titles, issue narratives, approver names, and access logs.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 475 Td (- Highly confidential data, secrets, credentials, private keys, health records, and payment card data must) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 463 Td (  be excluded from indexing unless separately approved.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 437 Td (Model And Data-Use Commitments) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 420 m 560 420 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 417 Td (- Customer content shall not be used to train, fine-tune, improve, benchmark, or evaluate shared provider) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 405 Td (  models unless a separate opt-in is executed.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 391 Td (- Provider may use customer prompts and outputs only for tenant operations, abuse monitoring,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 379 Td (  troubleshooting, and quality review approved by customer.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 365 Td (- Provider shall support prompt and response logging controls, retention limits, redaction, and export of) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 353 Td (  model interaction records.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 327 Td (Responsible AI Controls) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 310 m 560 310 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 307 Td (- Provider shall document intended use, prohibited use, evaluation plan, human review boundary, fallback) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 295 Td (  behavior, hallucination mitigation, and bias-sensitive data handling.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 281 Td (- Provider shall implement retrieval citations, confidence notices, no automatic approval for high-impact) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 269 Td (  decisions, and escalation for legal, HR, finance, safety, or regulated advice.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 255 Td (- Provider shall run scenario-based tests for prompt injection, data exfiltration attempts, unsupported) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 243 Td (  certainty, privacy leakage, and unsafe action recommendations.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 217 Td (Security Architecture) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 200 m 560 200 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 197 Td (The service will use customer-managed identity provider SSO, tenant-scoped retrieval indexes, private) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 185 Td (network connectivity where available, key rotation, encrypted storage, API audit logs, and administrative) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 173 Td (access reviews.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 146 Td (Integrations) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 129 m 560 129 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 126 Td (- Microsoft Entra ID for authentication and group mapping.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 112 Td (- SharePoint and Teams exports for document retrieval.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 98 Td (- ServiceNow and Jira for ticket knowledge retrieval.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 84 Td (- Azure AI Search or approved equivalent for vector and keyword retrieval.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 70 Td (- SIEM export for audit logs and security monitoring.) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 42 m 560 42 l S Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 28 Td (Synthetic test fixture - Page 1 of 2) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 4 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Length 1415 >>
+stream
+q 1 1 1 rg 0 0 612 792 re f Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 764 Td (Cloud AI Model Services Statement Of Work) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 754 m 560 754 l S Q
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 730 Td (Operational Requirements) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 713 m 560 713 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 710 Td (- Provider shall provide uptime target of 99.5 percent for the assistant API after production acceptance.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 696 Td (- Provider shall support incident response, safety rollback, model version rollback, blocked prompt) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 684 Td (  categories, and emergency kill switch.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 658 Td (Open Preconditions) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 641 m 560 641 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 638 Td (- Independent bias and robustness test results are not attached.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 624 Td (- Final RAI assessment is pending customer approval.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 610 Td (- Production data retention period is still subject to privacy approval.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 596 Td (- No go-live may occur until human approval, security signoff, and data owner approval are recorded.) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 42 m 560 42 l S Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 28 Td (Synthetic test fixture - Page 2 of 2) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 4 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 7 0 R >>
+endobj
+9 0 obj
+<< /Type /Catalog /Pages 4 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f
+0000000015 00000 n
+0000000085 00000 n
+0000000160 00000 n
+0000000228 00000 n
+0000000291 00000 n
+0000005681 00000 n
+0000005827 00000 n
+0000007293 00000 n
+0000007439 00000 n
+trailer
+<< /Size 10 /Root 9 0 R >>
+startxref
+7488
+%%EOF

@@ -1,0 +1,134 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Type /Pages /Kids [6 0 R 8 0 R] /Count 2 >>
+endobj
+5 0 obj
+<< /Length 5349 >>
+stream
+q 1 1 1 rg 0 0 612 792 re f Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 764 Td (Managed Platform Integration Services Agreement) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 754 m 560 754 l S Q
+BT 0.08 0.55 0.43 rg /F2 20 Tf 52 738 Td (Managed Platform Integration Services Agreement) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 706 m 560 706 l S Q
+BT 0.28 0.34 0.32 rg /F1 11 Tf 52 703 Td (OmniBridge Services LLC implementation and managed operations across ERP, HRIS, CRM,) Tj ET
+BT 0.28 0.34 0.32 rg /F1 11 Tf 52 688 Td (ITSM, collaboration, and data platforms) Tj ET
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 659 Td (Synthetic legal-style test document for agent evaluation. Not legal advice. No real parties.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 630 Td (Services) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 613 m 560 613 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 610 Td (OmniBridge Services LLC will design, implement, and operate integrations across Oracle ERP, SAP S/4HANA,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 598 Td (Workday, ServiceNow, Salesforce, Microsoft 365, SharePoint, Power BI, Snowflake, Databricks, Jira, Okta, and) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 586 Td (customer-managed SFTP gateways.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 571 Td (The provider will build API connectors, data mappings, workflow automations, reconciliation reports,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 559 Td (exception queues, and support dashboards. Some integrations will move regulated data between finance, HR,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 547 Td (procurement, customer support, and compliance systems.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 520 Td (Data Categories) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 503 m 560 503 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 500 Td (- Finance: invoice metadata, payment approval status, supplier bank change requests, purchase orders,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 488 Td (  budget codes, ledger extracts, tax records, and audit evidence.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 474 Td (- HR: employee identifiers, work email, manager, department, job title, location, onboarding status, and) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 462 Td (  access request history.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 448 Td (- Customer operations: CRM notes, support case narratives, account identifiers, service entitlements,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 436 Td (  project milestones, and renewal data.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 422 Td (- Technical data: API tokens, integration logs, webhook payloads, IP addresses, device identifiers, error) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 410 Td (  traces, and privileged session metadata.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 384 Td (Access Model) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 367 m 560 367 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 364 Td (Provider requests temporary administrator access to ERP, ServiceNow, SharePoint, and integration middleware) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 352 Td (during implementation. Customer has not yet provided final privileged access approval, named account) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 340 Td (mapping, or production change-control signoff.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 325 Td (- All provider access must be named user access. Shared accounts, unmanaged API keys, and standing admin) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 313 Td (  rights are prohibited unless separately approved as an exception.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 299 Td (- Provider shall use customer-approved bastion or PAM tooling, time-bound elevation, ticket references,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 287 Td (  session recording, and monthly access review.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 261 Td (Deliverables) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 244 m 560 244 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 241 Td (- Integration inventory with system owner, data owner, source, target, data categories, transfer frequency,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 229 Td (  encryption method, and failure handling.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 215 Td (- Data mapping workbook showing field-level classification, transformation rules, retention needs, and) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 203 Td (  exception routing.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 189 Td (- Runbook for monitoring, incident response, rollback, replay, data correction, and integration shutdown.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 175 Td (- Control evidence pack including access approvals, architecture diagrams, test results, dependency list,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 163 Td (  continuity plan, and exit procedure.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 137 Td (Regulatory And Control Requirements) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 120 m 560 120 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 117 Td (Provider shall preserve segregation of duties in finance workflows, prevent unsupported payment authority) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 105 Td (changes, and route high-risk exceptions to customer finance control owners. Provider shall not approve its) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 93 Td (own changes or bypass customer release management.) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 42 m 560 42 l S Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 28 Td (Synthetic test fixture - Page 1 of 2) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 4 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Length 3247 >>
+stream
+q 1 1 1 rg 0 0 612 792 re f Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 764 Td (Managed Platform Integration Services Agreement) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 754 m 560 754 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 742 Td (Provider shall not copy production data into development or offshore support environments without masking,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 730 Td (approval, and data owner signoff.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 703 Td (Security Controls) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 686 m 560 686 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 683 Td (- Provider shall maintain ISO 27001 or SOC 2 Type II controls, annual penetration testing, vulnerability) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 671 Td (  remediation tracking, endpoint hardening, and centralized logging.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 657 Td (- Provider shall enforce least privilege, MFA, named accounts, privileged access review, break-glass) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 645 Td (  controls, and quarterly access recertification.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 631 Td (- Provider shall encrypt data in transit using TLS 1.2 or higher and encrypt data at rest using a) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 619 Td (  recognized key management service.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 605 Td (- Provider shall notify Customer of confirmed security incidents without undue delay and no later than 48) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 593 Td (  hours after confirmation.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 567 Td (Audit, Evidence, And Records) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 550 m 560 550 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 547 Td (- Provider shall preserve audit logs, integration logs, access approvals, configuration changes, incident) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 535 Td (  tickets, and data export records for at least 18 months.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 521 Td (- Customer may request security attestations, remediation summaries, subprocessor lists, continuity) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 509 Td (  evidence, and access reports during onboarding and annual review.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 483 Td (Continuity And Exit) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 466 m 560 466 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 463 Td (Provider shall support customer continuity planning by documenting failover, manual processing workarounds,) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 451 Td (data replay, queue draining, and integration disablement. Exit assistance must include connector source code) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 52 439 Td (handover, secrets rotation support, and knowledge transfer.) Tj ET
+BT 0.02 0.42 0.33 rg /F2 12 Tf 52 412 Td (Open Items) Tj ET
+q 0.70 0.76 0.73 RG 0.6 w 52 395 m 560 395 l S Q
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 392 Td (- Privileged access approval is not complete.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 378 Td (- Final data processing addendum is pending legal execution.) Tj ET
+BT 0.05 0.08 0.07 rg /F1 9 Tf 66 364 Td (- Business continuity test evidence has not been supplied.) Tj ET
+q 0.70 0.76 0.73 RG 0.4 w 52 42 m 560 42 l S Q
+BT 0.28 0.34 0.32 rg /F3 8 Tf 52 28 Td (Synthetic test fixture - Page 2 of 2) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 4 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 7 0 R >>
+endobj
+9 0 obj
+<< /Type /Catalog /Pages 4 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f
+0000000015 00000 n
+0000000085 00000 n
+0000000160 00000 n
+0000000228 00000 n
+0000000291 00000 n
+0000005691 00000 n
+0000005837 00000 n
+0000009135 00000 n
+0000009281 00000 n
+trailer
+<< /Size 10 /Root 9 0 R >>
+startxref
+9330
+%%EOF

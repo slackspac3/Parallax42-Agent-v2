@@ -1,0 +1,84 @@
+{
+  "documents": [
+    {
+      "filename": "01_enterprise_saas_master_services_agreement.pdf",
+      "title": "Enterprise SaaS Master Services Agreement",
+      "tags": [
+        "saas",
+        "msa",
+        "privacy",
+        "ai",
+        "azure-ad",
+        "salesforce",
+        "servicenow",
+        "snowflake"
+      ],
+      "path": "test-fixtures/compliance-documents/01_enterprise_saas_master_services_agreement.pdf"
+    },
+    {
+      "filename": "02_data_processing_addendum_and_cross_border_terms.pdf",
+      "title": "Data Processing Addendum And Cross-Border Transfer Terms",
+      "tags": [
+        "dpa",
+        "privacy",
+        "subprocessors",
+        "retention",
+        "transfer"
+      ],
+      "path": "test-fixtures/compliance-documents/02_data_processing_addendum_and_cross_border_terms.pdf"
+    },
+    {
+      "filename": "03_ai_accelerator_chip_import_export_control_agreement.pdf",
+      "title": "AI Accelerator Chip Import And Export Control Agreement",
+      "tags": [
+        "export-control",
+        "ai-chip",
+        "import",
+        "sanctions",
+        "third-party-risk",
+        "technical-risk"
+      ],
+      "path": "test-fixtures/compliance-documents/03_ai_accelerator_chip_import_export_control_agreement.pdf"
+    },
+    {
+      "filename": "04_managed_platform_integration_services_agreement.pdf",
+      "title": "Managed Platform Integration Services Agreement",
+      "tags": [
+        "service-provider",
+        "integrations",
+        "erp",
+        "workday",
+        "servicenow",
+        "sharepoint",
+        "privileged-access"
+      ],
+      "path": "test-fixtures/compliance-documents/04_managed_platform_integration_services_agreement.pdf"
+    },
+    {
+      "filename": "05_media_buying_and_audience_analytics_order_form.pdf",
+      "title": "Media Buying And Audience Analytics Order Form",
+      "tags": [
+        "marketing",
+        "audience-data",
+        "crm",
+        "media-buying",
+        "consent",
+        "analytics"
+      ],
+      "path": "test-fixtures/compliance-documents/05_media_buying_and_audience_analytics_order_form.pdf"
+    },
+    {
+      "filename": "06_cloud_ai_model_services_statement_of_work.pdf",
+      "title": "Cloud AI Model Services Statement Of Work",
+      "tags": [
+        "ai-service",
+        "llm",
+        "model-governance",
+        "document-intelligence",
+        "responsible-ai",
+        "azure"
+      ],
+      "path": "test-fixtures/compliance-documents/06_cloud_ai_model_services_statement_of_work.pdf"
+    }
+  ]
+}
