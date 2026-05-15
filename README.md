@@ -86,6 +86,7 @@ PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com
 COMPASS_GATEWAY_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
 COMPASS_GATEWAY_TOKEN=<server-side gateway token>
 EMBEDDINGS_MODEL=text-embedding-3-large
+P42_REQUIRE_DURABLE_STORAGE=0
 P42_VECTOR_STORE_PROVIDER=local_file
 # Production option:
 # P42_VECTOR_STORE_PROVIDER=qdrant
@@ -124,7 +125,9 @@ export CREWAI_LLM_API_KEY=$COMPASS_GATEWAY_TOKEN
 AGENT_RUNTIME=crewai_llm npm run dev
 ```
 
-Live LLM specialist output is attached under `orchestration.llmOutput`; the final decision remains guarded by the deterministic engine until eval gates are added. The evidence boundary uses server-side `POST /api/evidence/index` and `POST /api/evidence/search`, calls the reusable Parallax42 embedding boundary using `text-embedding-3-large`, stores chunk vectors behind the API, and keeps browser state limited to case IDs, evidence IDs, and sanitized index metadata.
+Live LLM specialist output is attached under `orchestration.llmOutput`; on Vercel this can use the Node-side Compass advisory adapter when `AGENT_RUNTIME=crewai_llm` and `CREWAI_ENABLE_LIVE_LLM=1` are set. The final decision remains guarded by the deterministic engine until eval gates are added. The evidence boundary uses server-side `POST /api/evidence/index` and `POST /api/evidence/search`, calls the reusable Parallax42 embedding boundary using `text-embedding-3-large`, stores chunk vectors behind the API, and keeps browser state limited to case IDs, evidence IDs, and sanitized index metadata.
+
+`POST /api/export/review-pack` creates the server-side executive review pack with digest, evidence quality, retrieval audit, citation manifest, and reviewer actions. The cockpit uses this endpoint for the Exec review pack button and falls back to client-side markdown only if the API is unavailable.
 
 ## Submission Dossier
 

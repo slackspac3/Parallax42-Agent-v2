@@ -234,6 +234,74 @@
       "metadata": {}
     }
   ],
+  "decisionReadiness": {
+    "status": "not_ready",
+    "score": 0.32,
+    "approvalEligible": false,
+    "humanApprovalRequired": true,
+    "blockingGaps": 4,
+    "highSeverityGaps": 3,
+    "mediumSeverityGaps": 1,
+    "requiredControls": [
+      "Require model-training exclusion or approved data-use terms before approval.",
+      "Require BCP/DR and exit-assistance evidence for critical operations.",
+      "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+      "Ask the domain owner whether finance and project compliance obligations apply."
+    ],
+    "evidenceQuality": "weak",
+    "rationale": "Multiple high-severity evidence or applicability gaps remain open."
+  },
+  "evidenceQuality": {
+    "status": "weak",
+    "score": 0.3,
+    "documents": 1,
+    "extractedDocuments": 1,
+    "metadataOnlyDocuments": 0,
+    "citations": 1,
+    "semanticMatches": 0,
+    "positiveSignals": [],
+    "requiresReviewerCaution": true
+  },
+  "retrievalAudit": {
+    "mode": "not_used",
+    "queryPresent": false,
+    "model": "",
+    "indexedChunkCount": 0,
+    "matchCount": 0,
+    "chunkIds": [],
+    "error": ""
+  },
+  "documentEvidenceImpact": {
+    "resolvedSignals": [],
+    "citedEvidenceIds": [
+      "DOC-01"
+    ],
+    "remainingGapActions": [
+      {
+        "severity": "high",
+        "gap": "AI/model governance is applicable but training-data handling is unclear.",
+        "action": "Require model-training exclusion or approved data-use terms before approval."
+      },
+      {
+        "severity": "high",
+        "gap": "Critical service indicators exist without continuity or exit evidence.",
+        "action": "Require BCP/DR and exit-assistance evidence for critical operations."
+      },
+      {
+        "severity": "high",
+        "gap": "Privacy/data governance is applicable but DPA evidence was not detected.",
+        "action": "Require DPA, subprocessors, retention, deletion, and transfer evidence."
+      },
+      {
+        "severity": "medium",
+        "gap": "Finance And Project Compliance applicability needs confirmation.",
+        "action": "Ask the domain owner whether finance and project compliance obligations apply."
+      }
+    ],
+    "summary": "No positive evidence signals were strong enough to clear controls."
+  },
+  "runStatus": "completed",
+  "runErrors": [],
   "retrievalContext": null,
   "outputReview": {
     "status": "needs_revision",
@@ -242,6 +310,10 @@
       {
         "name": "evidence_attached",
         "status": "passed"
+      },
+      {
+        "name": "evidence_quality",
+        "status": "needs_review"
       },
       {
         "name": "retrieval_citations",
@@ -263,8 +335,8 @@
   },
   "trace": [
     {
-      "eventId": "evt_1778840615968_ilvevy",
-      "timestamp": "2026-05-15T10:23:35.968Z",
+      "eventId": "evt_1778860635390_c6qldr",
+      "timestamp": "2026-05-15T15:57:15.390Z",
       "agent": "runtime_router",
       "eventType": "runtime_selected",
       "parentEventId": "",
@@ -278,8 +350,8 @@
       }
     },
     {
-      "eventId": "evt_1778840615967_fydp1q",
-      "timestamp": "2026-05-15T10:23:35.967Z",
+      "eventId": "evt_1778860635390_lkrkgf",
+      "timestamp": "2026-05-15T15:57:15.390Z",
       "agent": "intake_agent",
       "eventType": "case_loaded",
       "parentEventId": "",
@@ -291,11 +363,11 @@
       }
     },
     {
-      "eventId": "evt_1778840615967_on2pn2",
-      "timestamp": "2026-05-15T10:23:35.967Z",
+      "eventId": "evt_1778860635390_tedqlb",
+      "timestamp": "2026-05-15T15:57:15.390Z",
       "agent": "domain_scanner_agent",
       "eventType": "domains_scanned",
-      "parentEventId": "evt_1778840615967_fydp1q",
+      "parentEventId": "evt_1778860635390_lkrkgf",
       "payload": {
         "matchedDomains": [
           {
@@ -369,11 +441,11 @@
       }
     },
     {
-      "eventId": "evt_1778840615968_vy37rk",
-      "timestamp": "2026-05-15T10:23:35.968Z",
+      "eventId": "evt_1778860635390_8p71p5",
+      "timestamp": "2026-05-15T15:57:15.390Z",
       "agent": "evidence_agent",
       "eventType": "evidence_mapped",
-      "parentEventId": "evt_1778840615967_fydp1q",
+      "parentEventId": "evt_1778860635390_lkrkgf",
       "payload": {
         "evidenceIds": [
           "p42:ai-supplier-review-playbook",
@@ -396,22 +468,22 @@
       }
     },
     {
-      "eventId": "evt_1778840615968_7xr4zh",
-      "timestamp": "2026-05-15T10:23:35.968Z",
+      "eventId": "evt_1778860635390_cwt5ro",
+      "timestamp": "2026-05-15T15:57:15.390Z",
       "agent": "control_agent",
       "eventType": "controls_recommended",
-      "parentEventId": "evt_1778840615967_fydp1q",
+      "parentEventId": "evt_1778860635390_lkrkgf",
       "payload": {
         "controlCount": 14,
         "highSeverityGaps": 3
       }
     },
     {
-      "eventId": "evt_1778840615968_5p1437",
-      "timestamp": "2026-05-15T10:23:35.968Z",
+      "eventId": "evt_1778860635390_dc911g",
+      "timestamp": "2026-05-15T15:57:15.390Z",
       "agent": "output_review_agent",
       "eventType": "output_review_completed",
-      "parentEventId": "evt_1778840615967_fydp1q",
+      "parentEventId": "evt_1778860635390_lkrkgf",
       "payload": {
         "status": "needs_revision",
         "finalOutputSafeForHumanReview": true,
@@ -419,6 +491,10 @@
           {
             "name": "evidence_attached",
             "status": "passed"
+          },
+          {
+            "name": "evidence_quality",
+            "status": "needs_review"
           },
           {
             "name": "retrieval_citations",
@@ -611,7 +687,7 @@
       "requested": false,
       "enabled": false,
       "model": "gpt-5.1",
-      "baseUrlConfigured": false,
+      "baseUrlConfigured": true,
       "providerEnv": "OPENAI_API_KEY",
       "apiKeyConfigured": true,
       "outputAvailable": false
@@ -704,7 +780,7 @@
       "requested": false,
       "enabled": false,
       "model": "gpt-5.1",
-      "baseUrlConfigured": false,
+      "baseUrlConfigured": true,
       "providerEnv": "OPENAI_API_KEY",
       "apiKeyConfigured": true,
       "outputAvailable": false

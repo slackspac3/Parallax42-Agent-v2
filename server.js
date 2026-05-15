@@ -5,7 +5,7 @@ const http = require('node:http');
 const path = require('node:path');
 const { URL } = require('node:url');
 
-const { runAgentWithRuntime, runtimeHealth } = require('./lib/agentRuntime');
+const { attachGatewayAdvisoryIfEnabled, runAgentWithRuntimeAsync, runtimeHealth } = require('./lib/agentRuntime');
 const { appendAuditRecord, auditStoreHealth, readRecentAuditRecords, verifyAuditChain } = require('./lib/auditStore');
 const { runBenchmark } = require('./lib/benchmarkSuite');
 const { gatewayHealth } = require('./lib/compassGatewayClient');
@@ -15,6 +15,7 @@ const { evidenceVectorStoreHealth, indexEvidenceServerSide, searchEvidenceServer
 const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
 const { readJsonBody, writeJson } = require('./lib/http');
 const { authHealth, authorizeRequest } = require('./lib/rbac');
+const { buildReviewPack, buildReviewPackMarkdown } = require('./lib/reviewPack');
 const { enrichConversationWithServerRetrieval } = require('./lib/serverSideRetrieval');
 
 const PORT = Number(process.env.PORT || 3020);
@@ -120,7 +121,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       const body = await readJsonBody(req, { limitBytes: 5_000_000 });
-      const result = runAgentWithRuntime(body, {
+      const result = await runAgentWithRuntimeAsync(body, {
         runtime: req.headers['x-agent-runtime'] || body.runtime
       });
       appendAuditRecord({
@@ -153,9 +154,11 @@ const server = http.createServer(async (req, res) => {
       }
       const body = await readJsonBody(req, { limitBytes: 2_000_000 });
       const enrichedBody = await enrichConversationWithServerRetrieval(body);
-      const result = processConversation(enrichedBody, {
-        runtime: req.headers['x-agent-runtime'] || enrichedBody.runtime
-      });
+      const runtime = req.headers['x-agent-runtime'] || enrichedBody.runtime;
+      const result = processConversation(enrichedBody, { runtime });
+      if (result.run?.ok) {
+        result.run = await attachGatewayAdvisoryIfEnabled(result.run, { runtime });
+      }
       appendAuditRecord({
         actor: auth.actor,
         caseId: result.run?.case?.caseId || result.caseDraft?.supplierName || 'conversation',
@@ -238,6 +241,22 @@ const server = http.createServer(async (req, res) => {
         }
       });
       writeJson(res, 200, result);
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/export/review-pack') {
+      const auth = await authorizeRequest(req, 'agent:run');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
+      const body = await readJsonBody(req, { limitBytes: 3_000_000 });
+      const pack = buildReviewPack(body.run || body);
+      writeJson(res, 200, {
+        ok: true,
+        pack,
+        markdown: buildReviewPackMarkdown(pack)
+      });
       return;
     }
 

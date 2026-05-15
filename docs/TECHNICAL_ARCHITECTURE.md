@@ -45,6 +45,7 @@ Browser
   -> server-side vector store (Qdrant in production, local file fallback for demo/dev)
   -> Vercel /api/evidence/search retrieves by caseId
   -> council receives citation-ready matches
+  -> Vercel /api/export/review-pack packages decision, citations, evidence quality, and retrieval audit
 ```
 
 ## Components In This Repo
@@ -56,12 +57,14 @@ Browser
 | Conversation agent | `lib/conversationAgent.js` | NLP extraction, working case draft, contextual follow-up questions, and workflow handoff. |
 | Runtime router | `lib/agentRuntime.js` | Selects CrewAI Flow, deterministic fallback, and runtime metadata. |
 | Agent runtime | `lib/complianceAgent.js` | Intake normalization, domain scan, gaps, decision, controls, trace. |
+| Advisory council | `lib/advisoryCouncil.js` | Optional GPT-5.1 reviewer notes through the Compass gateway; advisory only and unable to mutate final decisions. |
 | RBAC policy | `lib/rbac.js` | Route policy, role normalization, bearer JWT validation, and Entra-compatible RS256/JWKS support. |
 | CrewAI Flow adapter | `crewai_adapter/compliance_flow.py` | Flow state/stage mapping and optional live Flow validation. |
 | Evidence layer | `lib/evidenceLibrary.js` | Initial compliance domain library and evidence IDs. |
 | Shared evidence gateway client | `lib/compassGatewayClient.js` | Server-side bridge to the reusable Parallax42 gateway for GPT-5.1, `text-embedding-3-large`, evidence chunking, and semantic search. |
 | Server-side evidence vector store | `lib/evidenceVectorStore.js` | Stores chunk embeddings behind the API, supports Qdrant-compatible production storage, strips vectors from browser responses, and retrieves evidence by `caseId`. |
 | Audit store | `lib/auditStore.js` | Hash-chained append-only JSONL audit with integrity verification; production should point `AGENT_AUDIT_DIR` at durable storage. |
+| Review pack builder | `lib/reviewPack.js` | Generates digest-backed executive review packs with evidence quality, retrieval audit, citations, and reviewer actions. |
 | Cockpit UI | `public/` | Chat-first operator workspace with advanced demo/live run modes. |
 | Evidence capture | `scripts/capture-evidence.js` | Generates health, benchmark, readiness, and sample trace artifacts. |
 | Dossier | `docs/` | Role-aligned submission evidence. |
@@ -86,6 +89,7 @@ The production target should be extracted from Parallax42 rather than rewritten:
 - Embedding calls are token-protected server-to-server calls; the browser never receives Compass, Vercel AI Gateway, or embedding provider credentials.
 - Chunk embeddings are stored behind `/api/evidence/index` and retrieved behind `/api/evidence/search`; browser responses strip vectors and raw chunk payloads.
 - Output is never automatic approval; it is a human-review decision brief.
+- Live LLM specialist output is advisory only; deterministic guardrails own decision status, approval eligibility, and blocker naming.
 - Raw private documents and secrets must not appear in admin or trace outputs.
 - Any write-capable future tool must use explicit approval and audit logging.
 - The Vercel backend relay forwards only explicit demo routes and blocks arbitrary backend access.

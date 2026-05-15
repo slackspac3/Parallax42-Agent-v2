@@ -49,6 +49,7 @@ CREWAI_LLM_API_KEY=<same-value-as-COMPASS_GATEWAY_TOKEN>
 COMPASS_GATEWAY_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
 COMPASS_GATEWAY_TOKEN=<server-side gateway token>
 EMBEDDINGS_MODEL=text-embedding-3-large
+P42_REQUIRE_DURABLE_STORAGE=0
 P42_VECTOR_STORE_PROVIDER=local_file
 # Enterprise production:
 # P42_VECTOR_STORE_PROVIDER=qdrant
@@ -59,7 +60,9 @@ P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020,http://lo
 AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
 ```
 
-Set `CREWAI_ENABLE_LIVE_LLM=1` only after approved provider credentials are configured in Vercel. Live LLM specialist output is advisory and remains behind deterministic decision guardrails.
+Set `CREWAI_ENABLE_LIVE_LLM=1` only after approved provider credentials are configured in Vercel. Live LLM specialist output is advisory and remains behind deterministic decision guardrails. On Vercel, `AGENT_RUNTIME=crewai_llm` uses the Node-side Compass advisory adapter when the Python CrewAI live adapter is unavailable.
+
+For enterprise production, set `P42_REQUIRE_DURABLE_STORAGE=1` only after managed vector and audit storage are configured. Otherwise health/readiness will correctly report that the browser boundary is safe but storage is not durable.
 
 Expected endpoints:
 
@@ -72,6 +75,7 @@ GET  /api/demo/golden
 POST /api/agent/run
 POST /api/evidence/index
 POST /api/evidence/search
+POST /api/export/review-pack
 GET  /api/backend?path=/health
 ```
 

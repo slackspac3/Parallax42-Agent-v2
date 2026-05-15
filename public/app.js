@@ -137,6 +137,7 @@ let playbackTimers = [];
 let uploadedEvidence = [];
 let evidenceIndexMeta = {};
 let chatCaseDraft = {};
+let chatRunReadiness = null;
 let workspaceView = 'chat';
 let chatMessages = [
   {
@@ -1236,11 +1237,29 @@ function contextCopy(score) {
 
 function renderContextStrength(draft = chatCaseDraft) {
   if (!contextStrengthBar || !contextStrengthLabel || !contextStrengthText) return;
-  const score = contextStrength(draft);
-  const [label, text] = contextCopy(score);
+  const readiness = draft === chatCaseDraft ? chatRunReadiness : null;
+  const score = Number.isFinite(readiness?.score) ? readiness.score : contextStrength(draft);
+  const runnable = readiness?.runnable;
+  const blockerCount = readiness?.executionBlockers?.length || 0;
+  const [label, text] = readiness
+    ? runnable
+      ? [
+        readiness.advisoryGaps?.length ? 'Runnable with open gaps' : 'Council ready',
+        readiness.advisoryGaps?.length
+          ? 'The council can run now and will preserve unresolved evidence or control gaps in the decision.'
+          : 'Required intake is present. The council can run with human approval still locked.'
+      ]
+      : [
+        blockerCount ? 'Blocked before council' : 'Building context',
+        blockerCount
+          ? `Add ${readiness.executionBlockers.map((item) => humanize(item)).join(', ')} before running council.`
+          : 'The advisor has context, but more detail is needed before execution.'
+      ]
+    : contextCopy(score);
   contextStrengthLabel.textContent = `${label} · ${score}%`;
   contextStrengthText.textContent = text;
   contextStrengthBar.style.width = `${score}%`;
+  chatRunNow.disabled = readiness ? !readiness.runnable : false;
 }
 
 function renderAgentActivity(items = defaultAgentActivity) {
@@ -1524,24 +1543,26 @@ function renderConversationState(result = {}) {
   const progress = actions.length ? Math.min(82, 18 + Math.round((completeActions / actions.length) * 62)) : 18;
   const questions = Array.isArray(result.questions) ? result.questions : [];
   const missing = Array.isArray(result.missingFields) ? result.missingFields : [];
+  const runReadiness = result.runReadiness || {};
+  chatRunReadiness = result.runReadiness || null;
   const draft = result.caseDraft || chatCaseDraft || {};
   const evidenceSignals = Array.isArray(draft.evidenceSignals) ? draft.evidenceSignals : [];
   const riskSignals = Array.isArray(draft.riskSignals) ? draft.riskSignals : [];
   const retrievalMatches = Array.isArray(draft.retrievalContext?.matches) ? draft.retrievalContext.matches : [];
 
-  decisionText.textContent = result.readyToRun ? 'Ready to execute' : 'Building case draft';
-  approvalStatus.textContent = result.readyToRun
-    ? 'The next chat turn can execute the CrewAI workflow under human approval.'
+  decisionText.textContent = runReadiness.runnable ? 'Ready to execute' : 'Building case draft';
+  approvalStatus.textContent = runReadiness.runnable
+    ? 'The council can execute now; unresolved evidence gaps will stay visible in the decision.'
     : 'The agent is collecting required context before producing a decision.';
   approvalButton.textContent = 'Approval locked';
   approvalButton.disabled = true;
   runtimeText.textContent = 'NLP case builder';
-  readinessScore.textContent = result.readyToRun ? 'ready' : 'draft';
+  readinessScore.textContent = runReadiness.runnable ? 'runnable' : 'draft';
   evidenceCount.textContent = String((draft.documents || []).length || evidenceSignals.length || 0);
   gapCount.textContent = String(missing.length);
   flowProgress.style.width = `${progress}%`;
   stageKicker.textContent = 'NLP intake';
-  stageStatus.textContent = result.readyToRun ? 'Ready for workflow' : 'Context gathering';
+  stageStatus.textContent = runReadiness.runnable ? 'Ready for workflow' : 'Context gathering';
   stageOutput.textContent = questions.length
     ? questions.join(' ')
     : 'The case draft has enough structure to run, or you can add more evidence first.';
@@ -1639,7 +1660,7 @@ function renderConversationState(result = {}) {
       <span>NLP intent</span><b>${escapeHtml(result.nlp?.intent || 'case context')}</b>
       <span>Confidence</span><b>${escapeHtml(result.nlp?.confidence || '--')}</b>
       <span>Missing</span><b>${escapeHtml(missing.length ? missing.join(', ') : 'none')}</b>
-      <span>Ready</span><b>${escapeHtml(result.readyToRun ? 'yes' : 'not yet')}</b>
+      <span>Ready</span><b>${escapeHtml(runReadiness.runnable ? 'yes' : 'not yet')}</b>
     </div>
     <pre>${escapeHtml(JSON.stringify({
       caseDraft: {
@@ -1652,6 +1673,7 @@ function renderConversationState(result = {}) {
         indexedEvidence: draft.indexedEvidence,
         retrievalMatches: retrievalMatches.length
       },
+      runReadiness,
       questions
     }, null, 2))}</pre>
   `;
@@ -1866,6 +1888,8 @@ function renderArtifactPreview(result, options = {}) {
   const documents = evidenceDocuments(result);
   const citations = Array.isArray(result.citations) ? result.citations : [];
   const retrieval = result.retrievalContext || {};
+  const evidenceQuality = result.evidenceQuality || {};
+  const llmOutput = result.orchestration?.llmOutput || result.runtime?.llmOutput || null;
   const liveUploadCount = documents.filter((doc) => /^UP-/i.test(doc.evidenceId || '')).length;
   const extractedCount = documents.filter((doc) => /text|pdf|manual/i.test(doc.extractionStatus || '')).length;
   const ready = options.finalVisible;
@@ -1882,6 +1906,8 @@ function renderArtifactPreview(result, options = {}) {
       <span>Evidence docs</span><b>${escapeHtml(documents.length)}</b>
       <span>Citations</span><b>${escapeHtml(citations.length)}</b>
       <span>Retrieved chunks</span><b>${escapeHtml(retrieval.matchCount || retrieval.matches?.length || 0)}</b>
+      <span>Evidence quality</span><b>${escapeHtml(evidenceQuality.status || 'not scored')}</b>
+      <span>Advisory LLM</span><b>${escapeHtml(llmOutput?.outputAvailable ? 'attached' : result.orchestration?.liveLlm?.requested ? 'unavailable' : 'not requested')}</b>
       <span>Live uploads</span><b>${escapeHtml(liveUploadCount)}</b>
       <span>Extracted docs</span><b>${escapeHtml(extractedCount)}</b>
       <span>Runtime</span><b>${escapeHtml(formatRuntime(result.runtime?.actualRuntime || result.mode || 'unknown'))}</b>
@@ -1889,8 +1915,10 @@ function renderArtifactPreview(result, options = {}) {
     <pre>{
   "humanApprovalRequired": true,
   "deterministicGuardrail": true,
+  "browserEmbeddingsRetained": false,
   "exportStatus": "${ready ? 'ready' : 'building'}"
 }</pre>
+    ${llmOutput?.summary ? `<div class="advisory-note"><span class="eyebrow">Advisory council</span><p>${escapeHtml(llmOutput.summary)}</p></div>` : ''}
   `;
 }
 
@@ -1902,6 +1930,8 @@ function buildExecReviewPack(result = lastRun) {
   const documents = evidenceDocuments(result);
   const citations = Array.isArray(result.citations) ? result.citations : [];
   const retrieval = result.retrievalContext || {};
+  const evidenceQuality = result.evidenceQuality || {};
+  const decisionReadiness = result.decisionReadiness || {};
   const trace = Array.isArray(result.trace) ? result.trace : [];
   const caseInfo = result.case || {};
   const decision = result.decision || {};
@@ -1921,6 +1951,8 @@ function buildExecReviewPack(result = lastRun) {
     `Readiness: ${readiness}`,
     `Human approval required: yes`,
     `Runtime: ${formatRuntime(runtime.actualRuntime || result.mode || 'unknown')}`,
+    `Evidence quality: ${evidenceQuality.status || 'not scored'} (${evidenceQuality.score ?? 'n/a'})`,
+    `Approval eligible: ${decisionReadiness.approvalEligible ? 'yes' : 'no'}`,
     '',
     '## Case Context',
     '',
@@ -2129,6 +2161,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
       })
     });
     chatCaseDraft = result.caseDraft || chatCaseDraft;
+    chatRunReadiness = result.runReadiness || null;
     pendingMessage.pending = false;
     pendingMessage.text = result.reply || 'The conversation step completed.';
     renderChatMessages();
@@ -2149,7 +2182,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     return null;
   } finally {
     sampleRun.disabled = false;
-    chatRunNow.disabled = false;
+    chatRunNow.disabled = chatRunReadiness ? !chatRunReadiness.runnable : false;
     chatForm.querySelector('button[type="submit"]').disabled = false;
     sampleRun.textContent = runModeCopy.chat.actionButton;
   }
@@ -2403,7 +2436,7 @@ exportRun.addEventListener('click', () => {
   });
 });
 
-execReviewPack?.addEventListener('click', () => {
+execReviewPack?.addEventListener('click', async () => {
   if (!lastRun?.ok) {
     execReviewPack.textContent = 'Run council first';
     window.setTimeout(() => {
@@ -2411,7 +2444,21 @@ execReviewPack?.addEventListener('click', () => {
     }, 1400);
     return;
   }
-  downloadText(`p42-exec-review-${lastRun.case?.caseId || 'case'}.md`, buildExecReviewPack(lastRun));
+  execReviewPack.disabled = true;
+  execReviewPack.textContent = 'Packaging';
+  try {
+    const response = await apiFetch('/api/export/review-pack', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ run: lastRun })
+    });
+    downloadText(`p42-exec-review-${lastRun.case?.caseId || 'case'}.md`, response.markdown || buildExecReviewPack(lastRun));
+  } catch {
+    downloadText(`p42-exec-review-${lastRun.case?.caseId || 'case'}.md`, buildExecReviewPack(lastRun));
+  } finally {
+    execReviewPack.disabled = false;
+    execReviewPack.textContent = 'Exec review pack';
+  }
 });
 
 function animateNetwork() {

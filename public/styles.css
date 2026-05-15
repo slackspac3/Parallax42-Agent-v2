@@ -1082,6 +1082,20 @@ body[data-run-mode="chat"] .specialist {
   font-weight: 780;
 }
 
+.advisory-note {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid rgba(117, 226, 255, 0.24);
+  border-radius: 8px;
+  background: rgba(117, 226, 255, 0.07);
+}
+
+.advisory-note p {
+  margin: 8px 0 0;
+  color: var(--text);
+  line-height: 1.5;
+}
+
 pre {
   margin: 18px 0 0;
   padding: 16px;

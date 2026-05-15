@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-15T10:23:36.057Z",
+  "generatedAt": "2026-05-15T15:57:15.457Z",
   "workflow": {
     "id": "golden-ai-saas-compliance-review",
     "title": "High-risk AI SaaS supplier compliance review",
@@ -315,6 +315,74 @@
         "metadata": {}
       }
     ],
+    "decisionReadiness": {
+      "status": "not_ready",
+      "score": 0.32,
+      "approvalEligible": false,
+      "humanApprovalRequired": true,
+      "blockingGaps": 4,
+      "highSeverityGaps": 3,
+      "mediumSeverityGaps": 1,
+      "requiredControls": [
+        "Require model-training exclusion or approved data-use terms before approval.",
+        "Require BCP/DR and exit-assistance evidence for critical operations.",
+        "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+        "Ask the domain owner whether finance and project compliance obligations apply."
+      ],
+      "evidenceQuality": "weak",
+      "rationale": "Multiple high-severity evidence or applicability gaps remain open."
+    },
+    "evidenceQuality": {
+      "status": "weak",
+      "score": 0.3,
+      "documents": 1,
+      "extractedDocuments": 1,
+      "metadataOnlyDocuments": 0,
+      "citations": 1,
+      "semanticMatches": 0,
+      "positiveSignals": [],
+      "requiresReviewerCaution": true
+    },
+    "retrievalAudit": {
+      "mode": "not_used",
+      "queryPresent": false,
+      "model": "",
+      "indexedChunkCount": 0,
+      "matchCount": 0,
+      "chunkIds": [],
+      "error": ""
+    },
+    "documentEvidenceImpact": {
+      "resolvedSignals": [],
+      "citedEvidenceIds": [
+        "DOC-01"
+      ],
+      "remainingGapActions": [
+        {
+          "severity": "high",
+          "gap": "AI/model governance is applicable but training-data handling is unclear.",
+          "action": "Require model-training exclusion or approved data-use terms before approval."
+        },
+        {
+          "severity": "high",
+          "gap": "Critical service indicators exist without continuity or exit evidence.",
+          "action": "Require BCP/DR and exit-assistance evidence for critical operations."
+        },
+        {
+          "severity": "high",
+          "gap": "Privacy/data governance is applicable but DPA evidence was not detected.",
+          "action": "Require DPA, subprocessors, retention, deletion, and transfer evidence."
+        },
+        {
+          "severity": "medium",
+          "gap": "Finance And Project Compliance applicability needs confirmation.",
+          "action": "Ask the domain owner whether finance and project compliance obligations apply."
+        }
+      ],
+      "summary": "No positive evidence signals were strong enough to clear controls."
+    },
+    "runStatus": "completed",
+    "runErrors": [],
     "retrievalContext": null,
     "outputReview": {
       "status": "needs_revision",
@@ -323,6 +391,10 @@
         {
           "name": "evidence_attached",
           "status": "passed"
+        },
+        {
+          "name": "evidence_quality",
+          "status": "needs_review"
         },
         {
           "name": "retrieval_citations",
@@ -344,8 +416,8 @@
     },
     "trace": [
       {
-        "eventId": "evt_1778840616057_nm3xrk",
-        "timestamp": "2026-05-15T10:23:36.057Z",
+        "eventId": "evt_1778860635457_aidzsf",
+        "timestamp": "2026-05-15T15:57:15.457Z",
         "agent": "runtime_router",
         "eventType": "runtime_selected",
         "parentEventId": "",
@@ -359,8 +431,8 @@
         }
       },
       {
-        "eventId": "evt_1778840616056_cs5u0w",
-        "timestamp": "2026-05-15T10:23:36.056Z",
+        "eventId": "evt_1778860635457_0ua8a0",
+        "timestamp": "2026-05-15T15:57:15.457Z",
         "agent": "intake_agent",
         "eventType": "case_loaded",
         "parentEventId": "",
@@ -372,11 +444,11 @@
         }
       },
       {
-        "eventId": "evt_1778840616057_cjynco",
-        "timestamp": "2026-05-15T10:23:36.057Z",
+        "eventId": "evt_1778860635457_1x7gfp",
+        "timestamp": "2026-05-15T15:57:15.457Z",
         "agent": "domain_scanner_agent",
         "eventType": "domains_scanned",
-        "parentEventId": "evt_1778840616056_cs5u0w",
+        "parentEventId": "evt_1778860635457_0ua8a0",
         "payload": {
           "matchedDomains": [
             {
@@ -450,11 +522,11 @@
         }
       },
       {
-        "eventId": "evt_1778840616057_c3mr1j",
-        "timestamp": "2026-05-15T10:23:36.057Z",
+        "eventId": "evt_1778860635457_uy8o2z",
+        "timestamp": "2026-05-15T15:57:15.457Z",
         "agent": "evidence_agent",
         "eventType": "evidence_mapped",
-        "parentEventId": "evt_1778840616056_cs5u0w",
+        "parentEventId": "evt_1778860635457_0ua8a0",
         "payload": {
           "evidenceIds": [
             "p42:ai-supplier-review-playbook",
@@ -477,22 +549,22 @@
         }
       },
       {
-        "eventId": "evt_1778840616057_xp45tk",
-        "timestamp": "2026-05-15T10:23:36.057Z",
+        "eventId": "evt_1778860635457_1upvao",
+        "timestamp": "2026-05-15T15:57:15.457Z",
         "agent": "control_agent",
         "eventType": "controls_recommended",
-        "parentEventId": "evt_1778840616056_cs5u0w",
+        "parentEventId": "evt_1778860635457_0ua8a0",
         "payload": {
           "controlCount": 14,
           "highSeverityGaps": 3
         }
       },
       {
-        "eventId": "evt_1778840616057_wfkgxx",
-        "timestamp": "2026-05-15T10:23:36.057Z",
+        "eventId": "evt_1778860635457_7qpad7",
+        "timestamp": "2026-05-15T15:57:15.457Z",
         "agent": "output_review_agent",
         "eventType": "output_review_completed",
-        "parentEventId": "evt_1778840616056_cs5u0w",
+        "parentEventId": "evt_1778860635457_0ua8a0",
         "payload": {
           "status": "needs_revision",
           "finalOutputSafeForHumanReview": true,
@@ -500,6 +572,10 @@
             {
               "name": "evidence_attached",
               "status": "passed"
+            },
+            {
+              "name": "evidence_quality",
+              "status": "needs_review"
             },
             {
               "name": "retrieval_citations",
@@ -692,7 +768,7 @@
         "requested": false,
         "enabled": false,
         "model": "gpt-5.1",
-        "baseUrlConfigured": false,
+        "baseUrlConfigured": true,
         "providerEnv": "OPENAI_API_KEY",
         "apiKeyConfigured": true,
         "outputAvailable": false
@@ -785,7 +861,7 @@
         "requested": false,
         "enabled": false,
         "model": "gpt-5.1",
-        "baseUrlConfigured": false,
+        "baseUrlConfigured": true,
         "providerEnv": "OPENAI_API_KEY",
         "apiKeyConfigured": true,
         "outputAvailable": false

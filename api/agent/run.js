@@ -1,7 +1,7 @@
 'use strict';
 
 const { appendAuditRecord } = require('../../lib/auditStore');
-const { runAgentWithRuntime } = require('../../lib/agentRuntime');
+const { runAgentWithRuntimeAsync } = require('../../lib/agentRuntime');
 const { authorizeRequest } = require('../../lib/rbac');
 const { methodGuard, readJsonRequest, sendJson } = require('../_http');
 
@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
     }
     const body = await readJsonRequest(req);
     const runtime = req.headers['x-agent-runtime'] || body.runtime;
-    const result = runAgentWithRuntime(body, { runtime });
+    const result = await runAgentWithRuntimeAsync(body, { runtime });
     appendAuditRecord({
       actor: auth.actor,
       caseId: result.case?.caseId,

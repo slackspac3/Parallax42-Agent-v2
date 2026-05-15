@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-05-15T10:23:35.145Z",
+  "generatedAt": "2026-05-15T15:57:14.715Z",
   "backendHealth": {
     "ok": true,
     "status": 200,
-    "durationMs": 628,
+    "durationMs": 591,
     "url": "https://api.parallax42.bhavukarora.com/health",
     "body": {
       "status": "ok",
@@ -83,7 +83,7 @@
   "gatewayHealth": {
     "ok": true,
     "status": 200,
-    "durationMs": 661,
+    "durationMs": 398,
     "url": "https://parallax42-compass-gateway.vercel.app/api/health",
     "body": {
       "ok": true,

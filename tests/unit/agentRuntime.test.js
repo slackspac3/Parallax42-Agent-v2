@@ -3,7 +3,23 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { runAgentWithRuntime, runtimeHealth } = require('../../lib/agentRuntime');
+const { runAgentWithRuntime, runAgentWithRuntimeAsync, runtimeHealth } = require('../../lib/agentRuntime');
+
+function withEnv(overrides, fn) {
+  const snapshot = {};
+  for (const key of Object.keys(overrides)) {
+    snapshot[key] = process.env[key];
+    process.env[key] = overrides[key];
+  }
+  return Promise.resolve()
+    .then(fn)
+    .finally(() => {
+      for (const key of Object.keys(overrides)) {
+        if (snapshot[key] === undefined) delete process.env[key];
+        else process.env[key] = snapshot[key];
+      }
+    });
+}
 
 test('CrewAI Flow runtime preserves compliance agent response contract', () => {
   const result = runAgentWithRuntime({
@@ -59,4 +75,48 @@ test('live CrewAI LLM runtime is wired but opt-in and degrades safely by default
   assert.equal(result.orchestration.liveLlm.requested, true);
   assert.equal(result.orchestration.liveLlm.outputAvailable, false);
   assert.equal(result.decision.status, 'not_ready');
+});
+
+test('async runtime can attach Compass advisory output without changing deterministic decision', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      CREWAI_ENABLE_LIVE_LLM: '1',
+      CREWAI_LLM_MODEL: 'gpt-5.1',
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token'
+    }, async () => {
+      global.fetch = async (url, options) => {
+        assert.equal(url, 'https://gateway.example/api/chat/completions');
+        assert.equal(options.headers.authorization, 'Bearer test-token');
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: 'Executive summary: evidence is usable. Reviewer should confirm final approval and keep missing controls open.'
+                }
+              }
+            ]
+          })
+        };
+      };
+
+      const result = await runAgentWithRuntimeAsync({
+        businessUnit: 'Trade Compliance',
+        geography: 'UAE',
+        brief: 'Review restricted accelerator import with firmware support.',
+        documents: [{ summary: 'Export classification and end-use certificate attached.' }]
+      }, { runtime: 'crewai_llm' });
+
+      assert.equal(result.ok, true);
+      assert.equal(result.orchestration.llmOutput.advisoryOnly, true);
+      assert.equal(result.orchestration.liveLlm.adapter, 'js_compass_gateway_advisory');
+      assert.equal(result.orchestration.deterministicDecisionEngine, true);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
 });

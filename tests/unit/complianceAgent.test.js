@@ -52,6 +52,8 @@ test('can return a ready decision when evidence is sufficient', () => {
   assert.equal(result.ok, true);
   assert.notEqual(result.decision.status, 'not_ready');
   assert.ok(result.trace.length >= 5);
+  assert.equal(result.decisionReadiness.humanApprovalRequired, true);
+  assert.ok(result.evidenceQuality.score > 0);
 });
 
 test('uploaded positive evidence clears training and continuity blockers', () => {
@@ -115,4 +117,30 @@ test('retrieval context becomes citation-ready evidence for the council', () => 
   assert.ok(result.citations.some((citation) => citation.citationId === 'chk_export_1'));
   assert.ok(result.evidenceIds.includes('DOC-IMPORT-01'));
   assert.ok(result.outputReview.checks.some((check) => check.name === 'retrieval_citations' && check.status === 'passed'));
+  assert.equal(result.retrievalAudit.mode, 'server_side_semantic_retrieval');
+  assert.ok(result.documentEvidenceImpact.citedEvidenceIds.includes('DOC-IMPORT-01'));
+});
+
+test('hardware import does not trigger AI model governance by the word AI alone', () => {
+  const result = runComplianceAgent({
+    businessUnit: 'Infrastructure Procurement',
+    geography: 'UAE',
+    supplierName: 'Zenith Compute',
+    brief: 'Review restricted AI accelerator import with firmware support, freight forwarding, customs broker access, and final end-use certificate attached.',
+    integrations: ['Firmware support channel', 'Freight forwarder portal'],
+    documents: [
+      {
+        evidenceId: 'DOC-01',
+        title: 'Import control pack',
+        summary: 'Export classification, end-use certificate, sanctions screening, import permit, delivery-site approval, MFA remote firmware support, session logging, and approved support window are attached.',
+        signals: ['export classification', 'end-use certificate', 'import permit', 'sanctions screening', 'remote support controls']
+      }
+    ]
+  });
+
+  assert.equal(result.ok, true);
+  assert.ok(!result.domains.some((domain) => domain.id === 'ai_model_governance'));
+  assert.ok(!result.gaps.some((gap) => /training-data handling/i.test(gap.gap)));
+  assert.ok(!result.gaps.some((gap) => /Physical Security And International Growth applicability/i.test(gap.gap)));
+  assert.equal(result.evidenceQuality.status, 'usable');
 });

@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-05-15T10:23:35.880Z",
+  "generatedAt": "2026-05-15T15:57:15.318Z",
   "submissionReadiness": {
     "productionDeployment": "partial_live",
     "sovereignLlmBoundary": "live_gateway_present",
-    "auditTraceability": "hash_chained_append_only_audit_ready",
+    "auditTraceability": "hash_chained_append_only_audit_needs_managed_store",
     "rbac": "rbac_policy_ready_needs_enforced_env",
     "evidenceRetrieval": "server_side_vector_boundary_ready_needs_managed_store",
     "benchmarks": "parallax42_golden_evals_20_of_20_passed",
@@ -65,19 +65,25 @@
     },
     "audit": {
       "mode": "hash_chained_jsonl",
+      "provider": "local_file",
       "path": "/Users/bhavuk.arora/Parallax42-Compliance-Intelligence-Agent/logs/agent_audit.jsonl",
       "appendOnly": true,
       "hashChained": true,
       "durable": true,
-      "durabilityNote": "Audit file is written to the configured filesystem path."
+      "durableRequired": false,
+      "enterpriseReady": false,
+      "durabilityNote": "Audit file is written to the configured filesystem path. Use managed append-only storage for multi-instance production."
     },
     "evidenceVectorStore": {
       "provider": "local_file",
       "storage": "server_side_local_vector_store",
       "durable": false,
+      "durableRequired": false,
+      "enterpriseReady": false,
       "browserEmbeddingsRetained": false,
       "localStorePath": "/var/folders/s7/ch8z1jd96p10gnt99khhwcdw0000gp/T/p42-compliance-intelligence-agent/evidence-vector-index.json",
-      "qdrantConfigured": false
+      "qdrantConfigured": false,
+      "durabilityNote": "Server-side local vector storage is acceptable for demos only; configure Qdrant or an approved managed store for production."
     }
   },
   "linkedSystems": {

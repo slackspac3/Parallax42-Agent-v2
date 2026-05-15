@@ -142,6 +142,20 @@ test('conversation NLP resolves short owner and geography follow-up answers', ()
   assert.match(result.reply, /Owner: Head of IT/i);
 });
 
+test('conversation NLP does not swallow geography label into accountable owner', () => {
+  const result = processConversation({
+    message: 'Review an AI chip import for Zenith Compute. The accountable owner is Infrastructure Procurement. Geography is UAE and KSA. The shipment includes accelerator cards, remote firmware support, freight forwarding, and no final end-use certificate yet.'
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.caseDraft.businessUnit, 'Infrastructure Procurement');
+  assert.equal(result.caseDraft.geography, 'UAE');
+  assert.ok(result.caseDraft.riskSignals.includes('export control'));
+  assert.ok(!result.caseDraft.riskSignals.includes('AI/model use'));
+  assert.equal(result.runReadiness.runnable, false);
+  assert.ok(result.runReadiness.executionBlockers.includes('evidence'));
+});
+
 test('conversation NLP handles export-control hardware import cases', () => {
   const result = processConversation({
     message: 'Review an AI accelerator import for UAE and Singapore. The supplier will ship restricted hardware, provide firmware support, and has no final end-use certificate.'
@@ -157,4 +171,18 @@ test('conversation NLP handles export-control hardware import cases', () => {
   assert.ok(!result.caseDraft.evidenceSignals.includes('end-use certificate'));
   assert.ok(result.missingFields.includes('export_control_evidence'));
   assert.ok(result.questions.some((question) => /classification|end-use|import permit|denied-party/i.test(question)));
+});
+
+test('conversation run readiness allows council with core intake while preserving advisory gaps', () => {
+  const result = processConversation({
+    message: 'Review an AI accelerator import for UAE. The accountable owner is Trade Compliance. Attached export classification, end-use certificate, import permit, MFA, session logging, and approved support window.',
+    caseDraft: {
+      supplierName: 'Zenith Compute'
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.runReadiness.runnable, true);
+  assert.deepEqual(result.runReadiness.executionBlockers, []);
+  assert.ok(!result.missingFields.includes('remote_support_controls'));
 });

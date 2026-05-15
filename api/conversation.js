@@ -1,6 +1,7 @@
 'use strict';
 
 const { appendAuditRecord } = require('../lib/auditStore');
+const { attachGatewayAdvisoryIfEnabled } = require('../lib/agentRuntime');
 const { processConversation } = require('../lib/conversationAgent');
 const { authorizeRequest } = require('../lib/rbac');
 const { enrichConversationWithServerRetrieval } = require('../lib/serverSideRetrieval');
@@ -16,9 +17,11 @@ module.exports = async function handler(req, res) {
     }
     const body = await readJsonRequest(req);
     const enrichedBody = await enrichConversationWithServerRetrieval(body);
-    const result = processConversation(enrichedBody, {
-      runtime: req.headers['x-agent-runtime'] || enrichedBody.runtime
-    });
+    const runtime = req.headers['x-agent-runtime'] || enrichedBody.runtime;
+    const result = processConversation(enrichedBody, { runtime });
+    if (result.run?.ok) {
+      result.run = await attachGatewayAdvisoryIfEnabled(result.run, { runtime });
+    }
     appendAuditRecord({
       actor: auth.actor,
       caseId: result.run?.case?.caseId || result.caseDraft?.supplierName || 'conversation',
