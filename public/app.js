@@ -142,8 +142,8 @@ const runModeCopy = {
   chat: {
     caseEyebrow: 'Conversation',
     caseTitle: 'Compliance advisor',
-    runwayTitle: 'Build the case through chat',
-    runwayDescription: 'Natural-language intake, contextual follow-up, and traceable CrewAI execution in one agent workspace.',
+    runwayTitle: 'Agent workflow',
+    runwayDescription: 'The case builder promotes ready context into a traced CrewAI run.',
     runButton: 'Ask agent',
     actionButton: 'Run chat',
     waitingDecision: 'Conversation ready',
@@ -648,6 +648,39 @@ function renderChatMessages() {
   chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 }
 
+function hasChatContext() {
+  return Boolean(
+    cleanEvidenceText(chatCaseDraft.brief)
+    || chatCaseDraft.riskSignals?.length
+    || chatCaseDraft.evidenceSignals?.length
+    || chatCaseDraft.integrations?.length
+  );
+}
+
+function renderIntakePromptState() {
+  decisionText.textContent = 'Waiting for intake';
+  approvalStatus.textContent = 'Describe the case before running the agent workflow.';
+  runtimeText.textContent = 'NLP case builder';
+  readinessScore.textContent = 'intake';
+  gapCount.textContent = '--';
+  stageKicker.textContent = 'Chat intake';
+  stageStatus.textContent = 'Describe the case';
+  stageOutput.textContent = 'Add supplier, owner, geography, data, integrations, and evidence in plain English.';
+}
+
+function promptForChatContext() {
+  setRunMode('chat', { skipRender: true });
+  const lastMessage = chatMessages.at(-1)?.text || '';
+  const guidance = 'Start with the supplier or workflow, geography, data handled, integrations, and evidence already available. I will ask only for the fields needed to run the workflow.';
+  if (lastMessage !== guidance) {
+    chatMessages.push({ role: 'assistant', text: guidance });
+  }
+  renderChatMessages();
+  renderIntakePromptState();
+  window.setTimeout(renderIntakePromptState, 0);
+  chatInput.focus();
+}
+
 function renderConversationState(result = {}) {
   const actions = Array.isArray(result.actions) ? result.actions : [];
   const completeActions = actions.filter((action) => action.status === 'complete' || action.status === 'not_required').length;
@@ -1040,7 +1073,14 @@ async function runAgent(payload, options = {}) {
 
 async function submitChatMessage(rawMessage = '', options = {}) {
   const message = cleanEvidenceText(rawMessage || (options.forceRun ? 'run it' : ''));
-  if (!message) return null;
+  if (!message) {
+    promptForChatContext();
+    return null;
+  }
+  if (options.forceRun && !hasChatContext() && /^run it$/i.test(message)) {
+    promptForChatContext();
+    return null;
+  }
   setRunMode('chat', { skipRender: true });
   clearPlaybackTimers();
   chatMessages.push({ role: 'user', text: message });
