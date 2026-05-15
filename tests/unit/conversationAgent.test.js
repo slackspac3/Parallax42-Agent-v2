@@ -114,6 +114,34 @@ test('conversation preserves indexed retrieval context through council execution
   assert.ok(result.run.citations.some((citation) => citation.citationId === 'chk_export_1'));
 });
 
+test('conversation NLP resolves short owner and geography follow-up answers', () => {
+  const result = processConversation({
+    message: 'The head of it is responsible. Its geography is UAE',
+    caseDraft: {
+      supplierName: 'Aster Cognitive Cloud',
+      brief: 'Review uploaded MSA, SOW, DPA, SaaS license, and service contract evidence for an enterprise platform.',
+      documents: [
+        {
+          evidenceId: 'UP-01',
+          title: 'Enterprise SaaS master services agreement',
+          extractionStatus: 'backend_parsed',
+          summary: 'Signed DPA, retention schedule, model-training exclusion, continuity and exit plan, and least-privilege access approval are available.',
+          signals: ['DPA', 'retention and deletion', 'model training terms', 'BCP/DR', 'identity and access']
+        }
+      ],
+      evidenceSignals: ['DPA', 'retention and deletion', 'model training terms', 'BCP/DR', 'identity and access'],
+      riskSignals: ['personal data', 'AI/model use', 'critical service', 'privileged access']
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.caseDraft.businessUnit, 'Head of IT');
+  assert.equal(result.caseDraft.geography, 'UAE');
+  assert.ok(!result.missingFields.includes('business_owner'));
+  assert.ok(!result.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
+  assert.match(result.reply, /Owner: Head of IT/i);
+});
+
 test('conversation NLP handles export-control hardware import cases', () => {
   const result = processConversation({
     message: 'Review an AI accelerator import for UAE and Singapore. The supplier will ship restricted hardware, provide firmware support, and has no final end-use certificate.'

@@ -520,6 +520,11 @@ function renderEvidencePipelineStatus({
         </div>
         <b>${escapeHtml(metric || `${boundedProgress}%`)}</b>
       </div>
+      <div class="pipeline-rail" aria-hidden="true">
+        <span style="--agent-lane: 0"></span>
+        <span style="--agent-lane: 1"></span>
+        <span style="--agent-lane: 2"></span>
+      </div>
       <div class="pipeline-meter" aria-hidden="true">
         <span style="width: ${boundedProgress}%"></span>
       </div>
@@ -537,6 +542,12 @@ function renderEvidencePipelineStatus({
           `).join('')}
         </div>
       ` : ''}
+      <div class="pipeline-telemetry" aria-hidden="true">
+        <span>parser session</span>
+        <span>clause map</span>
+        <span>embedding index</span>
+        <span>citation memory</span>
+      </div>
     </div>
   `;
 }
