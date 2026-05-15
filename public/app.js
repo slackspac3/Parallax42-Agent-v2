@@ -70,6 +70,7 @@ const form = document.querySelector('#agentForm');
 const runtimeConfig = document.querySelector('#runtimeConfig');
 const sampleRun = document.querySelector('#sampleRun');
 const exportRun = document.querySelector('#exportRun');
+const execReviewPack = document.querySelector('#execReviewPack');
 const formRunButton = document.querySelector('#formRunButton');
 const resetConfig = document.querySelector('#resetConfig');
 const apiMode = document.querySelector('#apiMode');
@@ -108,11 +109,19 @@ const readinessJsonLink = document.querySelector('#readinessJsonLink');
 const benchmarksJsonLink = document.querySelector('#benchmarksJsonLink');
 const goldenDemoLink = document.querySelector('#goldenDemoLink');
 const topHealth = document.querySelector('#topHealth');
+const councilOutputTab = document.querySelector('#councilOutputTab');
 const caseDraftPanel = document.querySelector('#caseDraftPanel');
 const chatMessagesEl = document.querySelector('#chatMessages');
 const chatForm = document.querySelector('#chatForm');
 const chatInput = document.querySelector('#chatInput');
 const chatRunNow = document.querySelector('#chatRunNow');
+const chatAttachButton = document.querySelector('#chatAttachButton');
+const chatEvidenceInput = document.querySelector('#chatEvidenceInput');
+const chatAttachmentList = document.querySelector('#chatAttachmentList');
+const agentActivity = document.querySelector('#agentActivity');
+const contextStrengthLabel = document.querySelector('#contextStrengthLabel');
+const contextStrengthBar = document.querySelector('#contextStrengthBar');
+const contextStrengthText = document.querySelector('#contextStrengthText');
 const chatPromptButtons = document.querySelectorAll('[data-chat-prompt]');
 let lastRun = null;
 const lastRuns = {
@@ -125,6 +134,7 @@ let currentScenarioKey = 'exportControl';
 let playbackTimers = [];
 let uploadedEvidence = [];
 let chatCaseDraft = {};
+let workspaceView = 'chat';
 let chatMessages = [
   {
     role: 'assistant',
@@ -159,11 +169,19 @@ const runModeCopy = {
     runwayTitle: 'Case command',
     runwayDescription: 'The advisor turns intake into a traceable agent run with explicit blockers and evidence IDs.',
     runButton: 'Ask agent',
-    actionButton: 'Run chat',
+    actionButton: 'Run council',
     waitingDecision: 'Conversation ready',
     waitingApproval: 'Ask a question to produce a traceable compliance answer.'
   }
 };
+
+const defaultAgentActivity = [
+  { id: 'intake', label: 'Intake', detail: 'listening', status: 'active' },
+  { id: 'obligations', label: 'Obligations', detail: 'queued', status: 'queued' },
+  { id: 'evidence', label: 'Evidence', detail: 'queued', status: 'queued' },
+  { id: 'controls', label: 'Controls', detail: 'queued', status: 'queued' },
+  { id: 'review', label: 'Reviewer', detail: 'queued', status: 'queued' }
+];
 
 const agentLabels = {
   runtime_router: 'Runtime Router',
@@ -229,11 +247,11 @@ const fallbackStages = [
 
 const readableEvidenceExtensions = new Set(['txt', 'md', 'markdown', 'json', 'csv', 'log']);
 const evidenceSignalPatterns = [
+  ['export control', /export control|classification|end[- ]use|end user|import permit|sanctions|restricted party|freight forwarder/i],
+  ['chain of custody', /chain[- ]of[- ]custody|serial number|asset inventory|firmware|remote access|warehouse|customs/i],
   ['DPA', /dpa|data processing agreement|subprocessor|retention|deletion|transfer/i],
   ['model training exclusion', /no\s+(customer\s+)?data\s+(is\s+)?used\s+for\s+(model\s+)?training|model[- ]training exclusion|training exclusion|no training/i],
   ['continuity', /continuity|business continuity|bcp|disaster recovery|dr plan|exit assistance|exit support/i],
-  ['export control', /export control|classification|end[- ]use|end user|import permit|sanctions|restricted party|freight forwarder/i],
-  ['chain of custody', /chain[- ]of[- ]custody|serial number|asset inventory|firmware|remote access|warehouse|customs/i],
   ['identity access', /azure ad|entra|sso|single sign[- ]on|privileged access|rbac|mfa/i],
   ['finance controls', /payment|finance|ledger|invoice|approval authority|project governance/i],
   ['security assurance', /soc\s*2|iso\s*27001|encryption|vulnerability|logging|audit/i]
@@ -362,6 +380,10 @@ function humanize(value = '') {
   return String(value || '').replaceAll('_', ' ');
 }
 
+function unique(values = []) {
+  return Array.from(new Set(values.map((value) => String(value || '').trim()).filter(Boolean)));
+}
+
 function titleCase(value = '') {
   return humanize(value)
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
@@ -383,6 +405,18 @@ function formatRuntime(value = '') {
 
 function downloadJson(filename, payload) {
   const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function downloadText(filename, text, type = 'text/markdown') {
+  const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -483,15 +517,33 @@ async function ingestEvidenceFiles(files = []) {
     }
     uploadedEvidence = [...uploadedEvidence, ...extracted].slice(0, 12);
     evidenceIngestionStatus.textContent = `${uploadedEvidence.length} uploaded evidence file${uploadedEvidence.length === 1 ? '' : 's'} attached to next run.`;
-    if (activeRunMode !== 'live') {
+    if (activeRunMode === 'chat') {
+      syncUploadedEvidenceIntoChatDraft();
+      const names = extracted.map((item) => item.title || item.fileName).join(', ');
+      chatMessages.push({
+        role: 'assistant',
+        text: `Attached ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. I extracted ${unique(extracted.flatMap((item) => item.signals || [])).length} signal${unique(extracted.flatMap((item) => item.signals || [])).length === 1 ? '' : 's'} for the case draft.`
+      });
+      renderChatMessages();
+      renderAgentActivity([
+        { label: 'Evidence', detail: 'attached', status: 'complete' },
+        { label: 'NLP Intake', detail: 'ready', status: 'complete' },
+        { label: 'Obligations', detail: 'queued', status: 'queued' },
+        { label: 'Controls', detail: 'queued', status: 'queued' },
+        { label: 'Council', detail: 'waiting', status: 'queued' }
+      ]);
+    } else if (activeRunMode !== 'live') {
       setRunMode('live', { skipRender: true });
     }
     renderEvidenceQueue();
-    runAgent(currentFormPayload(), { playback: true, mode: 'live' });
+    if (activeRunMode === 'live') {
+      runAgent(currentFormPayload(), { playback: true, mode: 'live' });
+    }
   } catch (error) {
     evidenceIngestionStatus.textContent = error instanceof Error ? error.message : 'Evidence extraction failed.';
   } finally {
-    evidenceInput.value = '';
+    if (evidenceInput) evidenceInput.value = '';
+    if (chatEvidenceInput) chatEvidenceInput.value = '';
   }
 }
 
@@ -502,6 +554,101 @@ function getStages(result) {
 function clearPlaybackTimers() {
   playbackTimers.forEach((timer) => window.clearTimeout(timer));
   playbackTimers = [];
+}
+
+function setWorkspaceView(view = 'chat') {
+  workspaceView = view === 'output' ? 'output' : 'chat';
+  document.body.dataset.workspaceView = workspaceView;
+  councilOutputTab?.classList.toggle('is-active', workspaceView === 'output');
+  if (workspaceView === 'output' && activeRunMode !== 'chat') {
+    setRunMode('chat', { skipRender: true });
+  }
+  if (workspaceView === 'output') {
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    });
+  }
+}
+
+function contextStrength(draft = chatCaseDraft) {
+  const documents = Array.isArray(draft.documents) ? draft.documents : [];
+  const evidenceSignals = Array.isArray(draft.evidenceSignals) ? draft.evidenceSignals : [];
+  const riskSignals = Array.isArray(draft.riskSignals) ? draft.riskSignals : [];
+  const integrations = Array.isArray(draft.integrations) ? draft.integrations : [];
+  let score = 0;
+  if (cleanEvidenceText(draft.brief).length > 32) score += 20;
+  if (cleanEvidenceText(draft.businessUnit)) score += 18;
+  if (cleanEvidenceText(draft.geography)) score += 16;
+  if (riskSignals.length) score += Math.min(18, 8 + riskSignals.length * 4);
+  if (integrations.length) score += Math.min(10, integrations.length * 5);
+  if (evidenceSignals.length || documents.length) score += Math.min(28, 12 + (evidenceSignals.length + documents.length) * 4);
+  return Math.min(100, score);
+}
+
+function contextCopy(score) {
+  if (score >= 82) return ['Council ready', 'Enough context is present to run the council. Extra evidence will improve citations.'];
+  if (score >= 58) return ['Nearly ready', 'A few more specifics or evidence files will make the council output stronger.'];
+  if (score >= 32) return ['Building context', 'The advisor has a usable case shape but still needs owner, geography, evidence, or risk detail.'];
+  return ['Needs intake', 'Add scope, owner, geography, evidence, and risk signals before running council.'];
+}
+
+function renderContextStrength(draft = chatCaseDraft) {
+  if (!contextStrengthBar || !contextStrengthLabel || !contextStrengthText) return;
+  const score = contextStrength(draft);
+  const [label, text] = contextCopy(score);
+  contextStrengthLabel.textContent = `${label} · ${score}%`;
+  contextStrengthText.textContent = text;
+  contextStrengthBar.style.width = `${score}%`;
+}
+
+function renderAgentActivity(items = defaultAgentActivity) {
+  if (!agentActivity) return;
+  agentActivity.innerHTML = `
+    <div class="agent-activity-header">
+      <span class="eyebrow">Agent council</span>
+      <strong>${items.some((item) => item.status === 'active') ? 'Working in the background' : 'Ready when context is strong'}</strong>
+    </div>
+    <div class="agent-orbit">
+      ${items.map((item, index) => `
+        <article class="agent-node is-${escapeHtml(item.status || 'queued')}" style="--node-index: ${index}">
+          <span></span>
+          <strong>${escapeHtml(item.label)}</strong>
+          <small>${escapeHtml(item.detail || item.status || 'queued')}</small>
+        </article>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderChatAttachments() {
+  if (!chatAttachmentList) return;
+  if (!uploadedEvidence.length) {
+    chatAttachmentList.innerHTML = '';
+    return;
+  }
+  chatAttachmentList.innerHTML = uploadedEvidence.slice(-5).map((item) => `
+    <span class="${item.extractionStatus === 'binary_registered' ? 'needs-extraction' : ''}">
+      <b>${escapeHtml(item.evidenceId)}</b>
+      ${escapeHtml(item.title || item.fileName || 'Attached evidence')}
+      ${item.signals?.length ? `<em>${escapeHtml(item.signals.slice(0, 2).join(', '))}</em>` : ''}
+    </span>
+  `).join('');
+}
+
+function syncUploadedEvidenceIntoChatDraft() {
+  if (!uploadedEvidence.length) return;
+  const existingDocuments = Array.isArray(chatCaseDraft.documents) ? chatCaseDraft.documents : [];
+  const byId = new Map(existingDocuments.map((doc) => [doc.evidenceId || doc.title, doc]));
+  uploadedEvidence.forEach((doc) => byId.set(doc.evidenceId || doc.title, doc));
+  const evidenceSignals = unique([
+    ...(chatCaseDraft.evidenceSignals || []),
+    ...uploadedEvidence.flatMap((doc) => doc.signals || [])
+  ]);
+  chatCaseDraft = {
+    ...chatCaseDraft,
+    documents: Array.from(byId.values()).slice(-12),
+    evidenceSignals
+  };
 }
 
 function renderModeIdle(mode = activeRunMode) {
@@ -544,12 +691,20 @@ function renderModeIdle(mode = activeRunMode) {
   "humanApprovalRequired": true
 }</pre>
   `;
-  if (mode === 'chat') renderChatMessages();
+  if (mode === 'chat') {
+    renderChatMessages();
+    renderContextStrength();
+    renderAgentActivity();
+    renderChatAttachments();
+  }
 }
 
 function setRunMode(mode = 'demo', options = {}) {
   activeRunMode = ['demo', 'live', 'chat'].includes(mode) ? mode : 'demo';
   const copy = runModeCopy[activeRunMode];
+  if (activeRunMode !== 'chat') {
+    setWorkspaceView('chat');
+  }
   document.body.dataset.runMode = activeRunMode;
   runModeButtons.forEach((button) => {
     const selected = button.dataset.runMode === activeRunMode;
@@ -563,7 +718,12 @@ function setRunMode(mode = 'demo', options = {}) {
   formRunButton.textContent = copy.runButton;
   sampleRun.textContent = copy.actionButton;
   renderEvidenceQueue();
-  if (activeRunMode === 'chat') renderChatMessages();
+  if (activeRunMode === 'chat') {
+    renderChatMessages();
+    renderContextStrength();
+    renderAgentActivity();
+    renderChatAttachments();
+  }
   if (!options.skipRender) {
     clearPlaybackTimers();
     renderModeIdle(activeRunMode);
@@ -655,6 +815,8 @@ function renderCaseDraft() {
 
 function renderChatMessages() {
   renderCaseDraft();
+  renderContextStrength();
+  renderChatAttachments();
   chatMessagesEl.innerHTML = chatMessages.map((message) => `
     <article class="chat-message is-${escapeHtml(message.role)} ${message.pending ? 'is-pending' : ''}">
       <strong>${message.role === 'user' ? 'You' : 'Agent'}</strong>
@@ -723,6 +885,13 @@ function renderConversationState(result = {}) {
   stageOutput.textContent = questions.length
     ? questions.join(' ')
     : 'The case draft has enough structure to run, or you can add more evidence first.';
+  renderContextStrength(draft);
+  renderAgentActivity(actions.map((action) => ({
+    id: action.id,
+    label: titleCase(action.id).replace(/^Nlp\b/, 'NLP'),
+    detail: humanize(action.status),
+    status: action.status === 'waiting' ? 'active' : action.status === 'complete' || action.status === 'not_required' ? 'complete' : 'queued'
+  })));
 
   specialistList.innerHTML = actions.map((action) => {
     const complete = action.status === 'complete' || action.status === 'not_required';
@@ -892,12 +1061,19 @@ function renderRun(result, options = {}) {
   stageKicker.textContent = finalVisible ? 'Audit pack ready' : `Stage ${Math.max(1, stageIndex + 1)} of ${stages.length}`;
   stageStatus.textContent = currentStage ? (agentLabels[currentStage.agent] || currentStage.role || titleCase(currentStage.id)) : 'Ready';
   stageOutput.textContent = currentStage ? stageNarrative(currentStage, result) : 'Select a scenario or run the golden compliance case.';
+  renderAgentActivity(stages.slice(0, 5).map((stage, index) => ({
+    id: stage.id,
+    label: agentLabels[stage.agent] || stage.role || titleCase(stage.id),
+    detail: finalVisible || index <= stageIndex ? 'complete' : index === activeIndex ? 'working' : 'queued',
+    status: finalVisible || index <= stageIndex ? 'complete' : index === activeIndex ? 'active' : 'queued'
+  })));
 
   renderSpecialists(result, { stageIndex, activeIndex, finalVisible });
   renderEvidence(result, { stageIndex, finalVisible });
   renderCitations(result, { stageIndex, finalVisible });
   renderTrace(trace, stages, { stageIndex, finalVisible });
   renderArtifactPreview(result, { finalVisible });
+  if (finalVisible && activeRunMode === 'chat') setWorkspaceView('output');
 }
 
 function renderSpecialists(result, options = {}) {
@@ -1029,6 +1205,92 @@ function renderArtifactPreview(result, options = {}) {
   `;
 }
 
+function buildExecReviewPack(result = lastRun) {
+  if (!result?.ok) return '';
+  const domains = Array.isArray(result.domains) ? result.domains : [];
+  const gaps = Array.isArray(result.gaps) ? result.gaps : [];
+  const evidenceIds = Array.isArray(result.evidenceIds) ? result.evidenceIds : [];
+  const documents = evidenceDocuments(result);
+  const trace = Array.isArray(result.trace) ? result.trace : [];
+  const caseInfo = result.case || {};
+  const decision = result.decision || {};
+  const runtime = result.runtime || {};
+  const readiness = Number.isFinite(decision.readinessScore)
+    ? `${Math.round(decision.readinessScore * 100)}%`
+    : 'Not reported';
+  const lines = [
+    '# Executive Review Pack',
+    '',
+    `Generated: ${new Date().toISOString()}`,
+    `Case ID: ${caseInfo.caseId || 'unassigned'}`,
+    '',
+    '## Decision',
+    '',
+    `Recommendation: ${decision.recommendation || 'Pending review'}`,
+    `Readiness: ${readiness}`,
+    `Human approval required: yes`,
+    `Runtime: ${formatRuntime(runtime.actualRuntime || result.mode || 'unknown')}`,
+    '',
+    '## Case Context',
+    '',
+    `Supplier or workflow: ${caseInfo.supplierName || 'Not provided'}`,
+    `Business unit: ${caseInfo.businessUnit || 'Not provided'}`,
+    `Geography: ${caseInfo.geography || 'Not provided'}`,
+    `Integrations: ${(caseInfo.integrations || []).join(', ') || 'Not provided'}`,
+    '',
+    '## Blocking Gaps',
+    ''
+  ];
+
+  if (gaps.length) {
+    gaps.forEach((gap, index) => {
+      lines.push(`${index + 1}. ${gap.gap || 'Unnamed gap'}`);
+      lines.push(`   Severity: ${gap.severity || 'unrated'}`);
+      lines.push(`   Required action: ${gap.action || 'Action not specified'}`);
+    });
+  } else {
+    lines.push('No blocking gaps returned by the council.');
+  }
+
+  lines.push('', '## Obligation Domains', '');
+  if (domains.length) {
+    domains.forEach((domain, index) => {
+      lines.push(`${index + 1}. ${domain.label || 'Unnamed domain'} - ${humanize(domain.status || 'unknown')} (${domain.score ?? 'n/a'})`);
+      if (domain.obligations?.length) {
+        lines.push(`   Primary obligation: ${domain.obligations[0]}`);
+      }
+    });
+  } else {
+    lines.push('No obligation domains returned.');
+  }
+
+  lines.push('', '## Evidence Manifest', '');
+  lines.push(`Evidence IDs: ${evidenceIds.join(', ') || 'none'}`);
+  if (documents.length) {
+    documents.forEach((doc, index) => {
+      lines.push(`${index + 1}. ${doc.evidenceId || `DOC-${index + 1}`} - ${doc.title || doc.fileName || 'Evidence document'}`);
+      lines.push(`   Extraction: ${doc.extractionStatus || 'attached'}`);
+      lines.push(`   Signals: ${(doc.signals || []).join(', ') || 'none detected'}`);
+    });
+  } else {
+    lines.push('No source documents were attached to the run.');
+  }
+
+  lines.push('', '## Audit Trace', '');
+  if (trace.length) {
+    trace.forEach((event, index) => {
+      lines.push(`${index + 1}. ${agentLabels[event.agent] || titleCase(event.agent)} - ${humanize(event.eventType)}`);
+    });
+  } else {
+    lines.push('No trace events returned.');
+  }
+
+  lines.push('', '## Reviewer Notes', '');
+  lines.push('This pack is a reviewer artifact. It does not grant operational approval. Final approval remains with the accountable human owner.');
+  lines.push('');
+  return `${lines.join('\n')}\n`;
+}
+
 function playResult(result) {
   clearPlaybackTimers();
   const stages = getStages(result);
@@ -1054,6 +1316,13 @@ async function runAgent(payload, options = {}) {
   stageStatus.textContent = 'Runtime Router';
   stageOutput.textContent = 'Selecting the configured orchestration path.';
   flowProgress.style.width = '4%';
+  renderAgentActivity([
+    { label: 'Router', detail: 'selecting runtime', status: 'active' },
+    { label: 'Intake', detail: 'queued', status: 'queued' },
+    { label: 'Obligations', detail: 'queued', status: 'queued' },
+    { label: 'Evidence', detail: 'queued', status: 'queued' },
+    { label: 'Review', detail: 'queued', status: 'queued' }
+  ]);
   try {
     const result = await apiFetch('/api/agent/run', {
       method: 'POST',
@@ -1099,6 +1368,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   }
   setRunMode('chat', { skipRender: true });
   clearPlaybackTimers();
+  syncUploadedEvidenceIntoChatDraft();
   chatMessages.push({ role: 'user', text: message });
   const pendingMessage = {
     role: 'assistant',
@@ -1117,6 +1387,13 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   stageKicker.textContent = 'NLP intake';
   stageStatus.textContent = 'Parsing message';
   stageOutput.textContent = 'Extracting case fields, risk signals, integrations, and evidence clues.';
+  renderAgentActivity([
+    { label: 'NLP Intake', detail: 'reading', status: 'active' },
+    { label: 'Context', detail: 'merging', status: 'active' },
+    { label: 'Obligations', detail: 'queued', status: 'queued' },
+    { label: 'Evidence', detail: uploadedEvidence.length ? 'attached' : 'queued', status: uploadedEvidence.length ? 'complete' : 'queued' },
+    { label: 'Council', detail: options.forceRun ? 'preparing' : 'waiting', status: options.forceRun ? 'active' : 'queued' }
+  ]);
 
   try {
     const result = await apiFetch('/api/conversation', {
@@ -1125,6 +1402,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
       body: JSON.stringify({
         message,
         caseDraft: chatCaseDraft,
+        uploadedEvidence,
         forceRun: Boolean(options.forceRun)
       })
     });
@@ -1273,8 +1551,17 @@ async function loadDeploymentStatus() {
 
 runModeButtons.forEach((button) => {
   button.addEventListener('click', () => {
+    if (button.dataset.runMode === 'chat') setWorkspaceView('chat');
     setRunMode(button.dataset.runMode);
   });
+});
+
+councilOutputTab?.addEventListener('click', () => {
+  setRunMode('chat', { skipRender: true });
+  setWorkspaceView('output');
+  if (lastRuns.chat?.ok) {
+    renderRun(lastRuns.chat);
+  }
 });
 
 document.querySelectorAll('[data-scenario]').forEach((button) => {
@@ -1286,6 +1573,14 @@ document.querySelectorAll('[data-scenario]').forEach((button) => {
 });
 
 evidenceInput.addEventListener('change', (event) => {
+  ingestEvidenceFiles(event.target.files);
+});
+
+chatAttachButton?.addEventListener('click', () => {
+  chatEvidenceInput?.click();
+});
+
+chatEvidenceInput?.addEventListener('change', (event) => {
   ingestEvidenceFiles(event.target.files);
 });
 
@@ -1368,6 +1663,17 @@ exportRun.addEventListener('click', () => {
     evidenceManifest: evidenceDocuments(lastRun),
     run: lastRun
   });
+});
+
+execReviewPack?.addEventListener('click', () => {
+  if (!lastRun?.ok) {
+    execReviewPack.textContent = 'Run council first';
+    window.setTimeout(() => {
+      execReviewPack.textContent = 'Exec review pack';
+    }, 1400);
+    return;
+  }
+  downloadText(`p42-exec-review-${lastRun.case?.caseId || 'case'}.md`, buildExecReviewPack(lastRun));
 });
 
 function animateNetwork() {

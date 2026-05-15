@@ -7,7 +7,7 @@
     <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="%2306110d"/><text x="5" y="22" fill="%2312d6a1" font-family="Arial" font-size="13" font-weight="700">P42</text></svg>' />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body data-run-mode="chat">
+  <body data-run-mode="chat" data-workspace-view="chat">
     <canvas id="networkCanvas" aria-hidden="true"></canvas>
     <header class="topbar">
       <div class="brand">
@@ -42,6 +42,10 @@
           <button id="liveModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="run" data-run-mode="live">
             <span>Evidence</span>
             <small>Upload and run</small>
+          </button>
+          <button id="councilOutputTab" type="button" class="mode-tab council-tab" aria-controls="workflow">
+            <span>Council Output</span>
+            <small>Decision and pack</small>
           </button>
         </div>
 
@@ -97,6 +101,7 @@
           </form>
 
           <section id="conversationPanel" class="conversation-panel mode-chat-only" aria-label="Conversational compliance advisor">
+            <div class="agent-activity" id="agentActivity" aria-live="polite"></div>
             <div id="caseDraftPanel" class="case-draft-panel" aria-live="polite"></div>
             <div class="chat-suggestions" aria-label="Suggested prompts">
               <button type="button" data-chat-prompt="Review an AI accelerator import for UAE and Singapore. The supplier will ship restricted hardware, provide firmware support, and has no final end-use certificate.">Export-control import</button>
@@ -104,14 +109,27 @@
               <button type="button" data-chat-prompt="Review a treasury workflow vendor with payment approval access, Microsoft 365 integration, finance reporting, and missing exit support.">Treasury workflow</button>
             </div>
             <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
+            <div class="context-strength" aria-live="polite">
+              <div>
+                <span class="eyebrow">Context strength</span>
+                <strong id="contextStrengthLabel">Needs intake</strong>
+              </div>
+              <div class="context-meter" aria-hidden="true">
+                <span id="contextStrengthBar"></span>
+              </div>
+              <p id="contextStrengthText">Add scope, owner, geography, evidence, and risk signals before running council.</p>
+            </div>
             <form id="chatForm" class="chat-form">
               <label>
                 Message
                 <textarea id="chatInput" rows="5" placeholder="Example: review a chip import agreement with export-control classification pending, remote firmware access, freight forwarding, and no final end-use certificate."></textarea>
               </label>
+              <input id="chatEvidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.doc,.docx,text/*,application/json,text/csv,application/pdf" />
+              <div id="chatAttachmentList" class="chat-attachment-list" aria-live="polite"></div>
               <div class="form-actions">
+                <button id="chatAttachButton" type="button" class="secondary-button">Attach files</button>
                 <button id="chatSubmit" type="submit" class="primary-action">Send</button>
-                <button id="chatRunNow" type="button" class="secondary-button">Run workflow</button>
+                <button id="chatRunNow" type="button" class="hero-run-button">Run council</button>
               </div>
             </form>
           </section>
@@ -125,7 +143,8 @@
               <p id="runwayDescription">The case builder promotes ready context into a traced CrewAI run.</p>
             </div>
             <div class="run-actions">
-              <button id="sampleRun" type="button" class="primary-action">Run chat</button>
+              <button id="sampleRun" type="button" class="primary-action">Run council</button>
+              <button id="execReviewPack" type="button" class="secondary-button">Exec review pack</button>
               <button id="exportRun" type="button" class="secondary-button">Export pack</button>
             </div>
           </div>
