@@ -4,7 +4,8 @@ const runtimeDefaults = window.P42_CONFIG || {};
 const storageKeys = {
   mode: 'p42:api-mode',
   relayUrl: 'p42:relay-url',
-  backendUrl: 'p42:backend-url'
+  backendUrl: 'p42:backend-url',
+  evidenceIndexMeta: 'p42:evidence-index-meta'
 };
 
 const scenarios = {
@@ -134,6 +135,8 @@ let activeRunMode = 'chat';
 let currentScenarioKey = 'exportControl';
 let playbackTimers = [];
 let uploadedEvidence = [];
+let indexedEvidenceChunks = [];
+let evidenceIndexMeta = {};
 let chatCaseDraft = {};
 let workspaceView = 'chat';
 let chatMessages = [
@@ -247,7 +250,11 @@ const fallbackStages = [
 ];
 
 const readableEvidenceExtensions = new Set(['txt', 'md', 'markdown', 'json', 'csv', 'log']);
+const backendParsedEvidenceExtensions = new Set(['pdf', 'docx']);
 const textEvidenceSampleBytes = 180 * 1024;
+const defaultUploadChunkBytes = 1024 * 1024;
+const evidenceDbName = 'p42-compliance-evidence-index';
+const evidenceDbVersion = 1;
 const evidenceSignalPatterns = [
   ['export control', /export control|classification|end[- ]use|end user|import permit|sanctions|restricted party|freight forwarder/i],
   ['chain of custody', /chain[- ]of[- ]custody|serial number|asset inventory|firmware|remote access|warehouse|customs/i],
@@ -372,6 +379,19 @@ function apiFetch(path, options = {}) {
   return fetchJson(apiUrl(path), options);
 }
 
+function backendApiUrl(path) {
+  const config = currentConfig();
+  const value = path.startsWith('/') ? path : `/${path}`;
+  if (config.resolvedMode === 'local') {
+    return `${config.backendUrl}${value}`;
+  }
+  return `${config.relayUrl}/api/backend?path=${encodeURIComponent(value)}`;
+}
+
+function backendApiFetch(path, options = {}) {
+  return fetchJson(backendApiUrl(path), options);
+}
+
 function statusClass(value = '') {
   if (/ready|passed|applicable|healthy|ok|configured|captured|complete/i.test(value)) return 'status-ready';
   if (/conditional|confirmation|review|partial|pending|queued/i.test(value)) return 'status-warning';
@@ -471,6 +491,441 @@ function detectEvidenceSignals(text = '') {
     .map(([label]) => label);
 }
 
+function compactJson(value) {
+  try {
+    return JSON.stringify(value || {});
+  } catch {
+    return '{}';
+  }
+}
+
+function readJsonStorage(key, fallback = {}) {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJsonStorage(key, value) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Retrieval metadata is useful but not required in private browsing modes.
+  }
+}
+
+function openEvidenceDb() {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) {
+      reject(new Error('IndexedDB is not available in this browser context.'));
+      return;
+    }
+    const request = window.indexedDB.open(evidenceDbName, evidenceDbVersion);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains('chunks')) {
+        const store = db.createObjectStore('chunks', { keyPath: 'chunkId' });
+        store.createIndex('caseId', 'caseId', { unique: false });
+        store.createIndex('evidenceId', 'evidenceId', { unique: false });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error('Could not open evidence index.'));
+  });
+}
+
+async function persistIndexedChunks(chunks = []) {
+  if (!chunks.length) return;
+  const db = await openEvidenceDb();
+  try {
+    const tx = db.transaction('chunks', 'readwrite');
+    const store = tx.objectStore('chunks');
+    chunks.forEach((chunk) => {
+      store.put({
+        ...chunk,
+        caseId: chunk.metadata?.caseId || chatCaseDraft.caseId || '',
+        evidenceId: chunk.evidenceId || '',
+        persistedAt: new Date().toISOString()
+      });
+    });
+    await new Promise((resolve, reject) => {
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error || new Error('Evidence index persistence failed.'));
+      tx.onabort = () => reject(tx.error || new Error('Evidence index persistence aborted.'));
+    });
+  } finally {
+    db.close();
+  }
+}
+
+async function restoreEvidenceIndexFromStorage() {
+  const meta = readJsonStorage(storageKeys.evidenceIndexMeta, {});
+  if (!meta.caseId) return;
+  evidenceIndexMeta = meta;
+  chatCaseDraft = {
+    ...chatCaseDraft,
+    caseId: meta.caseId,
+    indexedEvidence: meta
+  };
+  try {
+    const db = await openEvidenceDb();
+    try {
+      const tx = db.transaction('chunks', 'readonly');
+      const store = tx.objectStore('chunks').index('caseId');
+      const request = store.getAll(meta.caseId);
+      const chunks = await new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error || new Error('Evidence index restore failed.'));
+      });
+      indexedEvidenceChunks = chunks.filter((chunk) => Array.isArray(chunk.embedding)).slice(-256);
+      evidenceIndexMeta = {
+        ...meta,
+        chunkCount: indexedEvidenceChunks.length,
+        restoredAt: new Date().toISOString()
+      };
+      chatCaseDraft = {
+        ...chatCaseDraft,
+        indexedEvidence: evidenceIndexMeta
+      };
+    } finally {
+      db.close();
+    }
+  } catch {
+    // The active page can still index fresh evidence if persisted chunks are unavailable.
+  }
+}
+
+function ensureChatCaseId() {
+  if (!chatCaseDraft.caseId) {
+    chatCaseDraft = {
+      ...chatCaseDraft,
+      caseId: `case_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+    };
+  }
+  return chatCaseDraft.caseId;
+}
+
+function currentCaseForDocumentParser() {
+  return {
+    case_id: ensureChatCaseId(),
+    supplier_name: chatCaseDraft.supplierName || '',
+    business_unit: chatCaseDraft.businessUnit || '',
+    geography: chatCaseDraft.geography || '',
+    service_description: chatCaseDraft.brief || ''
+  };
+}
+
+function parsedDocumentText(document = {}) {
+  const semantic = document.semantic_parse || {};
+  return cleanEvidenceText([
+    document.summary,
+    semantic.semantic_summary,
+    compactJson(semantic.extracted_entities),
+    compactJson(semantic.clause_map),
+    compactJson(semantic.obligations),
+    compactJson(semantic.risks),
+    Array.isArray(semantic.missing_context) ? semantic.missing_context.join(' ') : '',
+    Array.isArray(document.signals) ? document.signals.join(' ') : '',
+    Array.isArray(document.document_evidence_ids) ? document.document_evidence_ids.join(' ') : ''
+  ].join(' '));
+}
+
+function signalsFromParsedDocument(document = {}) {
+  return unique([
+    ...(Array.isArray(document.signals) ? document.signals : []),
+    ...(Array.isArray(document.service_domain_signals) ? document.service_domain_signals : []),
+    ...detectEvidenceSignals(parsedDocumentText(document))
+  ]);
+}
+
+function uploadedDocumentToEvidence(document = {}, index = 0) {
+  const evidenceId = document.document_id || `UP-${String(index + 1).padStart(2, '0')}`;
+  const text = parsedDocumentText(document);
+  const signals = signalsFromParsedDocument(document);
+  const summary = document.summary || document.semantic_parse?.semantic_summary || 'Document parsed by the Parallax42 backend.';
+  return {
+    evidenceId,
+    title: document.file_name || evidenceId,
+    fileName: document.file_name || evidenceId,
+    sourceType: document.mime_type || document.document_type || 'backend_parsed_document',
+    sizeBytes: document.file_size_bytes || 0,
+    extractionStatus: document.extraction_status || 'backend_parsed',
+    summary,
+    text,
+    excerpt: summarizeEvidenceText(text || summary, 360),
+    signals,
+    documentType: document.document_type || 'unknown',
+    parserProvider: document.provider_name || 'backend_parser',
+    documentEvidenceIds: Array.isArray(document.document_evidence_ids) ? document.document_evidence_ids : [],
+    semanticParse: document.semantic_parse || null,
+    uploadedAt: new Date().toISOString()
+  };
+}
+
+function indexableEvidenceText(item = {}) {
+  return cleanEvidenceText([
+    item.text,
+    item.summary,
+    item.excerpt,
+    item.semanticParse?.semantic_summary,
+    compactJson(item.semanticParse?.extracted_entities),
+    compactJson(item.semanticParse?.clause_map),
+    compactJson(item.semanticParse?.obligations),
+    compactJson(item.semanticParse?.risks),
+    Array.isArray(item.documentEvidenceIds) ? item.documentEvidenceIds.join(' ') : '',
+    Array.isArray(item.signals) ? item.signals.join(' ') : ''
+  ].join(' '));
+}
+
+function mergeIndexedChunks(chunks = []) {
+  const byId = new Map(indexedEvidenceChunks.map((chunk) => [chunk.chunkId, chunk]));
+  chunks.forEach((chunk) => {
+    if (chunk?.chunkId && Array.isArray(chunk.embedding)) {
+      byId.set(chunk.chunkId, chunk);
+    }
+  });
+  indexedEvidenceChunks = Array.from(byId.values()).slice(-256);
+  evidenceIndexMeta = {
+    caseId: chatCaseDraft.caseId || '',
+    model: chunks[0]?.embeddingModel || evidenceIndexMeta.model || 'text-embedding-3-large',
+    chunkCount: indexedEvidenceChunks.length,
+    evidenceIds: unique(indexedEvidenceChunks.map((chunk) => chunk.evidenceId)),
+    updatedAt: new Date().toISOString(),
+    storage: 'browser_indexeddb_gateway_stateless'
+  };
+  writeJsonStorage(storageKeys.evidenceIndexMeta, evidenceIndexMeta);
+  persistIndexedChunks(indexedEvidenceChunks).catch(() => {
+    evidenceIndexMeta = {
+      ...evidenceIndexMeta,
+      storage: 'browser_session_gateway_stateless',
+      persistenceWarning: 'IndexedDB persistence failed; retrieval remains available for this page session.'
+    };
+    writeJsonStorage(storageKeys.evidenceIndexMeta, evidenceIndexMeta);
+  });
+  chatCaseDraft = {
+    ...chatCaseDraft,
+    indexedEvidence: evidenceIndexMeta
+  };
+}
+
+function buildEvidenceIndexDocuments(items = []) {
+  return items
+    .filter((item) => item && item.extractionStatus !== 'binary_registered')
+    .map((item) => ({
+      evidenceId: item.evidenceId,
+      title: item.title || item.fileName || item.evidenceId,
+      text: indexableEvidenceText(item),
+      metadata: {
+        sourceType: item.sourceType || '',
+        extractionStatus: item.extractionStatus || '',
+        fileName: item.fileName || item.title || '',
+        documentType: item.documentType || '',
+        signals: Array.isArray(item.signals) ? item.signals : [],
+        uploadedAt: item.uploadedAt || '',
+        parserProvider: item.parserProvider || '',
+        documentEvidenceIds: Array.isArray(item.documentEvidenceIds) ? item.documentEvidenceIds : []
+      }
+    }))
+    .filter((item) => cleanEvidenceText(item.text).length > 24);
+}
+
+async function indexEvidenceForRetrieval(items = []) {
+  const documents = buildEvidenceIndexDocuments(items);
+  if (!documents.length) return null;
+  const caseId = ensureChatCaseId();
+  const result = await apiFetch('/api/evidence/index', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      caseId,
+      workspaceId: 'parallax42',
+      projectId: 'compliance-intelligence-agent',
+      purpose: 'chat_evidence_index',
+      documents
+    })
+  });
+  mergeIndexedChunks(Array.isArray(result.chunks) ? result.chunks : []);
+  const indexedEvidenceIds = new Set(documents.map((document) => document.evidenceId));
+  items.forEach((item) => {
+    if (indexedEvidenceIds.has(item.evidenceId)) {
+      item.indexStatus = 'indexed';
+      item.embeddingModel = result.model || evidenceIndexMeta.model;
+      item.indexedAt = evidenceIndexMeta.updatedAt;
+      item.indexedChunkIds = indexedEvidenceChunks
+        .filter((chunk) => chunk.evidenceId === item.evidenceId)
+        .map((chunk) => chunk.chunkId);
+    }
+  });
+  return result;
+}
+
+function retrievalQueryFromDraft(draft = chatCaseDraft) {
+  return cleanEvidenceText([
+    draft.brief,
+    draft.supplierName,
+    draft.businessUnit,
+    draft.geography,
+    ...(Array.isArray(draft.integrations) ? draft.integrations : []),
+    ...(Array.isArray(draft.riskSignals) ? draft.riskSignals : []),
+    ...(Array.isArray(draft.evidenceSignals) ? draft.evidenceSignals : []),
+    'compliance obligations missing evidence controls DPA continuity export control access approvals risk blockers'
+  ].join(' ')).slice(0, 1800);
+}
+
+function retrievalDocumentsFromMatches(matches = []) {
+  return matches.map((match, index) => ({
+    evidenceId: `RET-${String(index + 1).padStart(2, '0')}`,
+    sourceEvidenceId: match.evidenceId,
+    title: match.title || `Retrieved evidence ${index + 1}`,
+    sourceType: 'semantic_retrieval',
+    extractionStatus: 'retrieved_chunk',
+    summary: match.text || '',
+    text: match.text || '',
+    excerpt: summarizeEvidenceText(match.text || '', 360),
+    signals: detectEvidenceSignals(`${match.title || ''} ${match.text || ''}`),
+    chunkId: match.chunkId,
+    score: Number(match.score || 0),
+    metadata: match.metadata || {},
+    uploadedAt: new Date().toISOString()
+  }));
+}
+
+async function retrieveIndexedEvidenceForCouncil() {
+  if (!indexedEvidenceChunks.length) return null;
+  const caseId = ensureChatCaseId();
+  const query = retrievalQueryFromDraft();
+  if (!query) return null;
+  const result = await apiFetch('/api/evidence/search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      caseId,
+      workspaceId: 'parallax42',
+      projectId: 'compliance-intelligence-agent',
+      purpose: 'council_evidence_retrieval',
+      query,
+      chunks: indexedEvidenceChunks,
+      topK: 8
+    })
+  });
+  const matches = Array.isArray(result.matches) ? result.matches : [];
+  const retrievedDocs = retrievalDocumentsFromMatches(matches);
+  const existingDocuments = Array.isArray(chatCaseDraft.documents) ? chatCaseDraft.documents : [];
+  const nonRetrieved = existingDocuments.filter((doc) => doc.extractionStatus !== 'retrieved_chunk');
+  chatCaseDraft = {
+    ...chatCaseDraft,
+    documents: [...nonRetrieved, ...retrievedDocs].slice(-18),
+    retrievalContext: {
+      query,
+      model: result.model || evidenceIndexMeta.model || 'text-embedding-3-large',
+      chunkCount: indexedEvidenceChunks.length,
+      matchCount: matches.length,
+      matches: matches.map((match) => ({
+        chunkId: match.chunkId,
+        evidenceId: match.evidenceId,
+        title: match.title,
+        score: Number(match.score || 0),
+        text: match.text,
+        metadata: match.metadata || {}
+      }))
+    }
+  };
+  return result;
+}
+
+function applyCaseAssistOutput(output = {}, offset = uploadedEvidence.length) {
+  const documents = Array.isArray(output.uploaded_documents) ? output.uploaded_documents : [];
+  const parsed = documents.map((document, index) => uploadedDocumentToEvidence(document, offset + index));
+  if (output.extracted_case) {
+    chatCaseDraft = {
+      ...chatCaseDraft,
+      supplierName: output.extracted_case.supplier_name || chatCaseDraft.supplierName,
+      businessUnit: output.extracted_case.business_unit || chatCaseDraft.businessUnit,
+      geography: output.extracted_case.geography || chatCaseDraft.geography,
+      brief: output.extracted_case.service_description || output.source_summary || chatCaseDraft.brief,
+      integrations: unique([
+        ...(chatCaseDraft.integrations || []),
+        ...(Array.isArray(output.extracted_case.integrations) ? output.extracted_case.integrations : [])
+      ]),
+      riskSignals: unique([
+        ...(chatCaseDraft.riskSignals || []),
+        ...(Array.isArray(output.evidence_checklist) ? output.evidence_checklist : []),
+        ...(Array.isArray(output.missing_inputs) ? output.missing_inputs : [])
+      ])
+    };
+  }
+  return parsed;
+}
+
+async function uploadEvidenceFilesToBackend(files = []) {
+  const selected = files.filter((file) => backendParsedEvidenceExtensions.has(fileExtension(file.name)));
+  if (!selected.length) return [];
+
+  const session = await backendApiFetch('/case/assist/upload/init', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text: chatCaseDraft.brief || 'Compliance chat evidence upload.',
+      current_case: currentCaseForDocumentParser(),
+      chunk_size_bytes: defaultUploadChunkBytes,
+      files: selected.map((file) => ({
+        file_name: file.name,
+        content_type: file.type || 'application/octet-stream',
+        file_size_bytes: file.size,
+        sha256: ''
+      }))
+    })
+  });
+
+  for (const [fileIndex, file] of selected.entries()) {
+    const fileSession = session.files?.[fileIndex];
+    if (!fileSession) {
+      throw new Error(`Document parser did not return an upload handle for ${file.name}.`);
+    }
+    for (let chunkIndex = 0; chunkIndex < fileSession.total_chunks; chunkIndex += 1) {
+      const start = chunkIndex * session.chunk_size_bytes;
+      const end = Math.min(file.size, start + session.chunk_size_bytes);
+      const form = new FormData();
+      form.append('upload_id', session.upload_id);
+      form.append('file_id', fileSession.file_id);
+      form.append('chunk_index', String(chunkIndex));
+      form.append('chunk', file.slice(start, end), `${file.name}.part-${chunkIndex}`);
+      const response = await fetch(backendApiUrl('/case/assist/upload/chunk'), {
+        method: 'POST',
+        headers: { accept: 'application/json' },
+        body: form
+      });
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(detail || `Chunk upload failed for ${file.name}.`);
+      }
+    }
+  }
+
+  await backendApiFetch('/case/assist/upload/complete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ upload_id: session.upload_id })
+  });
+
+  const startedAt = Date.now();
+  let lastStatus = null;
+  while (Date.now() - startedAt < 240000) {
+    await new Promise((resolve) => window.setTimeout(resolve, 2000));
+    lastStatus = await backendApiFetch(`/case/assist/upload/status?upload_id=${encodeURIComponent(session.upload_id)}`);
+    if (lastStatus.status === 'failed') {
+      throw new Error(lastStatus.error || 'Document parser failed.');
+    }
+    if (lastStatus.status === 'complete' && lastStatus.result_available) {
+      const output = await backendApiFetch(`/case/assist/upload/result?upload_id=${encodeURIComponent(session.upload_id)}`);
+      return applyCaseAssistOutput(output);
+    }
+  }
+  throw new Error(lastStatus?.status ? `Document parser is still ${lastStatus.status}. Try again shortly.` : 'Document parser timed out.');
+}
+
 async function extractEvidenceFile(file, index) {
   const extension = fileExtension(file.name);
   const evidenceId = `UP-${String(index + 1).padStart(2, '0')}`;
@@ -522,31 +977,95 @@ async function ingestEvidenceFiles(files = []) {
   try {
     const offset = uploadedEvidence.length;
     const extracted = [];
-    for (const [index, file] of selected.entries()) {
-      evidenceIngestionStatus.textContent = `Reading ${index + 1}/${selected.length}: ${file.name}`;
+    const backendFiles = selected.filter((file) => backendParsedEvidenceExtensions.has(fileExtension(file.name)));
+    const browserFiles = selected.filter((file) => !backendParsedEvidenceExtensions.has(fileExtension(file.name)));
+
+    if (backendFiles.length) {
+      evidenceIngestionStatus.textContent = `Uploading ${backendFiles.length} document${backendFiles.length === 1 ? '' : 's'} to backend parser...`;
       if (activeRunMode === 'chat') {
-        setAttachmentStatus(`Reading ${index + 1}/${selected.length}: ${file.name}`, 'working');
+        setAttachmentStatus('Uploading PDF/DOCX evidence to the backend document parser...', 'working');
+        renderAgentActivity([
+          { label: 'Evidence', detail: 'uploading', status: 'active' },
+          { label: 'Parser', detail: 'queued', status: 'queued' },
+          { label: 'NLP Intake', detail: 'waiting', status: 'queued' },
+          { label: 'Council', detail: 'waiting', status: 'queued' }
+        ]);
       }
       await yieldToBrowser();
-      extracted.push(await extractEvidenceFile(file, offset + index));
+      try {
+        const parsedEvidence = await uploadEvidenceFilesToBackend(backendFiles);
+        extracted.push(...parsedEvidence);
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : 'Backend parsing failed.';
+        chatMessages.push({
+          role: 'assistant',
+          text: `I could not parse the PDF/DOCX through the backend parser: ${detail} I registered the file metadata only, so please summarize the supplier/workflow and key clauses in chat before running council.`
+        });
+        for (const [index, file] of backendFiles.entries()) {
+          extracted.push(await extractEvidenceFile(file, offset + index));
+        }
+      }
+    }
+
+    for (const [index, file] of browserFiles.entries()) {
+      evidenceIngestionStatus.textContent = `Reading ${index + 1}/${browserFiles.length}: ${file.name}`;
+      if (activeRunMode === 'chat') {
+        setAttachmentStatus(`Reading ${index + 1}/${browserFiles.length}: ${file.name}`, 'working');
+      }
+      await yieldToBrowser();
+      extracted.push(await extractEvidenceFile(file, offset + extracted.length));
       await yieldToBrowser();
     }
+
+    let indexResult = null;
+    const indexableCount = buildEvidenceIndexDocuments(extracted).length;
+    if (indexableCount) {
+      evidenceIngestionStatus.textContent = `Embedding ${indexableCount} parsed evidence document${indexableCount === 1 ? '' : 's'} for retrieval...`;
+      if (activeRunMode === 'chat') {
+        setAttachmentStatus('Embedding parsed evidence through the shared gateway...', 'working');
+        renderAgentActivity([
+          { label: 'Evidence', detail: 'parsed', status: 'complete' },
+          { label: 'Embeddings', detail: 'indexing', status: 'active' },
+          { label: 'Retriever', detail: 'queued', status: 'queued' },
+          { label: 'Council', detail: 'waiting', status: 'queued' }
+        ]);
+      }
+      try {
+        indexResult = await indexEvidenceForRetrieval(extracted);
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : 'Evidence indexing failed.';
+        chatMessages.push({
+          role: 'assistant',
+          text: `I parsed the file, but could not index it for semantic retrieval: ${detail} I can still use the extracted summary in the case draft.`
+        });
+      }
+    }
+
     uploadedEvidence = [...uploadedEvidence, ...extracted].slice(0, 12);
     evidenceIngestionStatus.textContent = `${uploadedEvidence.length} uploaded evidence file${uploadedEvidence.length === 1 ? '' : 's'} attached to next run.`;
     if (activeRunMode === 'chat') {
       syncUploadedEvidenceIntoChatDraft();
       const names = extracted.map((item) => item.title || item.fileName).join(', ');
+      const parsedCount = extracted.filter((item) => item.extractionStatus !== 'binary_registered').length;
+      const binaryOnlyCount = extracted.length - parsedCount;
+      const signalCount = unique(extracted.flatMap((item) => item.signals || [])).length;
+      const indexedCount = extracted.filter((item) => item.indexStatus === 'indexed').length;
+      const chunkCount = indexResult?.chunking?.chunkCount || 0;
       chatMessages.push({
         role: 'assistant',
-        text: `Attached ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. I extracted ${unique(extracted.flatMap((item) => item.signals || [])).length} signal${unique(extracted.flatMap((item) => item.signals || [])).length === 1 ? '' : 's'} for the case draft.`
+        text: binaryOnlyCount
+          ? `Attached ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. ${parsedCount} parsed, ${binaryOnlyCount} registered as metadata only. Add a short description of the supplier/workflow and key clauses before running council.`
+          : indexedCount
+            ? `Attached, parsed, and indexed ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. I extracted ${signalCount} signal${signalCount === 1 ? '' : 's'} and embedded ${chunkCount || indexedEvidenceChunks.length} retrieval chunk${(chunkCount || indexedEvidenceChunks.length) === 1 ? '' : 's'} for council citations.`
+            : `Attached and parsed ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. I extracted ${signalCount} signal${signalCount === 1 ? '' : 's'}, but semantic retrieval is not indexed yet.`
       });
-      setAttachmentStatus(`${uploadedEvidence.length} file${uploadedEvidence.length === 1 ? '' : 's'} attached. Add another file or continue the case.`, 'ready');
+      setAttachmentStatus(`${uploadedEvidence.length} file${uploadedEvidence.length === 1 ? '' : 's'} attached. ${indexedCount ? `${indexedEvidenceChunks.length} indexed chunks ready. ` : ''}${binaryOnlyCount ? 'Describe the case before running council.' : 'Continue the case or run council.'}`, 'ready');
       renderChatMessages();
       renderAgentActivity([
-        { label: 'Evidence', detail: 'attached', status: 'complete' },
-        { label: 'NLP Intake', detail: 'ready', status: 'complete' },
+        { label: 'Evidence', detail: binaryOnlyCount ? 'registered' : 'parsed', status: 'complete' },
+        { label: 'Embeddings', detail: indexedCount ? 'indexed' : 'not ready', status: indexedCount ? 'complete' : 'queued' },
+        { label: 'Retriever', detail: indexedCount ? 'ready' : 'queued', status: indexedCount ? 'complete' : 'queued' },
         { label: 'Obligations', detail: 'queued', status: 'queued' },
-        { label: 'Controls', detail: 'queued', status: 'queued' },
         { label: 'Council', detail: 'waiting', status: 'queued' }
       ]);
     } else if (activeRunMode !== 'live') {
@@ -602,6 +1121,8 @@ function contextStrength(draft = chatCaseDraft) {
   if (riskSignals.length) score += Math.min(18, 8 + riskSignals.length * 4);
   if (integrations.length) score += Math.min(10, integrations.length * 5);
   if (evidenceSignals.length || documents.length) score += Math.min(28, 12 + (evidenceSignals.length + documents.length) * 4);
+  if (draft.indexedEvidence?.chunkCount) score += Math.min(12, 6 + Math.round(draft.indexedEvidence.chunkCount / 8));
+  if (draft.retrievalContext?.matches?.length) score += Math.min(10, 4 + draft.retrievalContext.matches.length);
   return Math.min(100, score);
 }
 
@@ -647,10 +1168,10 @@ function renderChatAttachments() {
     return;
   }
   chatAttachmentList.innerHTML = uploadedEvidence.slice(-5).map((item) => `
-    <span class="${item.extractionStatus === 'binary_registered' ? 'needs-extraction' : ''}">
+    <span class="${item.extractionStatus === 'binary_registered' ? 'needs-extraction' : ''} ${item.indexStatus === 'indexed' ? 'is-indexed' : ''}">
       <b>${escapeHtml(item.evidenceId)}</b>
       ${escapeHtml(item.title || item.fileName || 'Attached evidence')}
-      ${item.signals?.length ? `<em>${escapeHtml(item.signals.slice(0, 2).join(', '))}</em>` : ''}
+      ${item.indexStatus === 'indexed' ? '<em>indexed</em>' : item.signals?.length ? `<em>${escapeHtml(item.signals.slice(0, 2).join(', '))}</em>` : ''}
     </span>
   `).join('');
 }
@@ -802,10 +1323,10 @@ function renderEvidenceQueue(scenario = scenarios[currentScenarioKey]) {
     return;
   }
   evidenceQueue.innerHTML = items.map((item) => `
-    <span class="${item.extractionStatus === 'binary_registered' ? 'needs-extraction' : ''}">
+    <span class="${item.extractionStatus === 'binary_registered' ? 'needs-extraction' : ''} ${item.indexStatus === 'indexed' ? 'is-indexed' : ''}">
       <b>${escapeHtml(item.evidenceId)}</b>
       <span>${escapeHtml(item.title || item.fileName)}</span>
-      ${item.signals?.length ? `<em>${escapeHtml(item.signals.slice(0, 2).join(', '))}</em>` : ''}
+      ${item.indexStatus === 'indexed' ? '<em>indexed</em>' : item.signals?.length ? `<em>${escapeHtml(item.signals.slice(0, 2).join(', '))}</em>` : ''}
     </span>
   `).join('');
 }
@@ -816,6 +1337,9 @@ function renderCaseDraft() {
   const evidenceSignals = Array.isArray(draft.evidenceSignals) ? draft.evidenceSignals : [];
   const riskSignals = Array.isArray(draft.riskSignals) ? draft.riskSignals : [];
   const pills = [...riskSignals, ...evidenceSignals, ...integrations].slice(0, 8);
+  const indexedLabel = draft.indexedEvidence?.chunkCount
+    ? `${draft.indexedEvidence.chunkCount} indexed chunks`
+    : '';
   caseDraftPanel.innerHTML = `
     <div class="case-draft-header">
       <span class="eyebrow">working draft</span>
@@ -825,7 +1349,7 @@ function renderCaseDraft() {
       <span>Owner</span><b>${escapeHtml(draft.businessUnit || 'needed')}</b>
       <span>Geography</span><b>${escapeHtml(draft.geography || 'needed')}</b>
       <span>Integrations</span><b>${escapeHtml(integrations.length ? integrations.join(', ') : 'none yet')}</b>
-      <span>Evidence</span><b>${escapeHtml(evidenceSignals.length ? evidenceSignals.join(', ') : 'needed')}</b>
+      <span>Evidence</span><b>${escapeHtml([evidenceSignals.length ? evidenceSignals.join(', ') : '', indexedLabel].filter(Boolean).join(' · ') || 'needed')}</b>
     </div>
     <div class="draft-pills">
       ${pills.length ? pills.map((pill) => `<span>${escapeHtml(pill)}</span>`).join('') : '<span>awaiting context</span>'}
@@ -852,6 +1376,8 @@ function hasChatContext() {
     || chatCaseDraft.riskSignals?.length
     || chatCaseDraft.evidenceSignals?.length
     || chatCaseDraft.integrations?.length
+    || chatCaseDraft.documents?.length
+    || chatCaseDraft.indexedEvidence?.chunkCount
   );
 }
 
@@ -869,7 +1395,15 @@ function renderIntakePromptState() {
 function promptForChatContext() {
   setRunMode('chat', { skipRender: true });
   const lastMessage = chatMessages.at(-1)?.text || '';
-  const guidance = 'Start with the supplier or workflow, geography, data handled, integrations, and evidence already available. I will ask only for the fields needed to run the workflow.';
+  const hasBinaryOnlyEvidence = uploadedEvidence.some((item) => item.extractionStatus === 'binary_registered');
+  const hasIndexedEvidence = Boolean(chatCaseDraft.indexedEvidence?.chunkCount || indexedEvidenceChunks.length);
+  const guidance = uploadedEvidence.length
+    ? hasBinaryOnlyEvidence
+      ? 'I have the file registered, but I still need the case context because the document text was not parsed. Tell me the supplier or workflow, geography, data/assets, integrations, and the key clauses or missing evidence you want reviewed.'
+      : hasIndexedEvidence
+        ? 'I parsed and indexed the attached evidence. Tell me the supplier or workflow, geography, data/assets, integrations, and what decision you need, then I can retrieve citations and run council.'
+        : 'I parsed the attached evidence. Tell me the supplier or workflow, geography, data/assets, integrations, and what decision you need, then I can run council.'
+    : 'Start with the supplier or workflow, geography, data handled, integrations, and evidence already available. I will ask only for the fields needed to run the workflow.';
   if (lastMessage !== guidance) {
     chatMessages.push({ role: 'assistant', text: guidance });
   }
@@ -888,6 +1422,7 @@ function renderConversationState(result = {}) {
   const draft = result.caseDraft || chatCaseDraft || {};
   const evidenceSignals = Array.isArray(draft.evidenceSignals) ? draft.evidenceSignals : [];
   const riskSignals = Array.isArray(draft.riskSignals) ? draft.riskSignals : [];
+  const retrievalMatches = Array.isArray(draft.retrievalContext?.matches) ? draft.retrievalContext.matches : [];
 
   decisionText.textContent = result.readyToRun ? 'Ready to execute' : 'Building case draft';
   approvalStatus.textContent = result.readyToRun
@@ -938,6 +1473,14 @@ function renderConversationState(result = {}) {
         <p>${escapeHtml(missing.length ? `${missing.length} missing field${missing.length === 1 ? '' : 's'}` : 'case ready')}</p>
       </div>
     </li>
+    ${retrievalMatches.length ? `
+      <li>
+        <div>
+          <strong>Evidence Retriever</strong>
+          <p>${escapeHtml(`${retrievalMatches.length} semantic match${retrievalMatches.length === 1 ? '' : 'es'} ready`)}</p>
+        </div>
+      </li>
+    ` : ''}
   `;
   domainList.innerHTML = riskSignals.length
     ? riskSignals.map((signal) => `
@@ -959,8 +1502,19 @@ function renderConversationState(result = {}) {
       </article>
     `).join('')
     : '<article class="empty-row">No intake blockers remain. The workflow can run.</article>';
-  citationList.innerHTML = draft.documents?.length
-    ? draft.documents.map((doc) => `
+  citationList.innerHTML = retrievalMatches.length
+    ? retrievalMatches.map((match) => `
+      <article class="citation-row is-indexed">
+        <div>
+          <span>${escapeHtml(match.evidenceId || 'RET')} · ${escapeHtml(match.chunkId || 'retrieved chunk')}</span>
+          <strong>${escapeHtml(match.title || 'Retrieved evidence')}</strong>
+          <p>${escapeHtml(summarizeEvidenceText(match.text || '', 320))}</p>
+        </div>
+        <small>${escapeHtml(`score ${Number(match.score || 0).toFixed(2)}`)}</small>
+      </article>
+    `).join('')
+    : draft.documents?.length
+      ? draft.documents.map((doc) => `
       <article class="citation-row">
         <div>
           <span>${escapeHtml(doc.evidenceId || 'CHAT')} · ${escapeHtml(doc.extractionStatus || 'nlp')}</span>
@@ -970,7 +1524,7 @@ function renderConversationState(result = {}) {
         <small>${escapeHtml(doc.signals?.join(', ') || 'pending signal')}</small>
       </article>
     `).join('')
-    : '<article class="empty-row">Evidence citations appear as chat context is captured.</article>';
+      : '<article class="empty-row">Evidence citations appear as chat context is captured.</article>';
   artifactPreview.innerHTML = `
     <div class="artifact-header">
       <span class="eyebrow">conversation</span>
@@ -989,7 +1543,9 @@ function renderConversationState(result = {}) {
         geography: draft.geography,
         integrations: draft.integrations,
         evidenceSignals: draft.evidenceSignals,
-        riskSignals: draft.riskSignals
+        riskSignals: draft.riskSignals,
+        indexedEvidence: draft.indexedEvidence,
+        retrievalMatches: retrievalMatches.length
       },
       questions
     }, null, 2))}</pre>
@@ -1014,11 +1570,14 @@ function stageNarrative(stage, result) {
   const domains = Array.isArray(result.domains) ? result.domains : [];
   const gaps = Array.isArray(result.gaps) ? result.gaps : [];
   const evidenceIds = Array.isArray(result.evidenceIds) ? result.evidenceIds : [];
+  const retrieval = result.retrievalContext || {};
   const role = agentLabels[stage.agent] || stage.role || titleCase(stage.id);
   const narratives = {
     'Compliance Orchestrator': `Case scoped for ${result.case?.businessUnit || 'the requesting team'} across ${result.case?.geography || 'the selected geography'}.`,
     'Regulatory Obligation Mapper': `${domains.length} obligation domains mapped with applicability and owner evidence requirements.`,
-    'Evidence Examiner': `${evidenceIds.length} evidence identifiers linked; missing documents remain explicit blockers.`,
+    'Evidence Examiner': retrieval.matchCount || retrieval.matches?.length
+      ? `${retrieval.matchCount || retrieval.matches.length} semantic evidence chunks retrieved and ${evidenceIds.length} evidence identifiers linked.`
+      : `${evidenceIds.length} evidence identifiers linked; missing documents remain explicit blockers.`,
     'Risk And Control Analyst': `${gaps.length} blocking gaps converted into required controls and owner actions.`,
     'Responsible AI Reviewer': 'Output kept inside a human approval boundary with unsupported certainty removed.',
     'Audit Packager': 'Decision, trace, evidence IDs, gaps, runtime metadata, and readiness proof packaged for export.'
@@ -1151,7 +1710,8 @@ function evidenceDocuments(result = {}) {
 
 function renderCitations(result, options = {}) {
   const showCitations = options.finalVisible || options.stageIndex >= 2;
-  const documents = evidenceDocuments(result);
+  const citations = Array.isArray(result.citations) ? result.citations : [];
+  const documents = citations.length ? citations : evidenceDocuments(result);
   if (!showCitations) {
     citationList.innerHTML = '<article class="empty-row">Citations appear after the evidence examiner maps uploaded documents.</article>';
     return;
@@ -1161,16 +1721,16 @@ function renderCitations(result, options = {}) {
     return;
   }
   citationList.innerHTML = documents.map((doc, index) => {
-    const evidenceId = doc.evidenceId || `DOC-${String(index + 1).padStart(2, '0')}`;
+    const evidenceId = doc.evidenceId || doc.sourceEvidenceId || `DOC-${String(index + 1).padStart(2, '0')}`;
     const signals = Array.isArray(doc.signals) && doc.signals.length
       ? doc.signals.join(', ')
-      : 'No strong signal detected';
+      : doc.score ? `retrieval score ${Number(doc.score || 0).toFixed(2)}` : 'No strong signal detected';
     return `
-      <article class="citation-row ${doc.extractionStatus === 'binary_registered' ? 'needs-extraction' : ''}">
+      <article class="citation-row ${doc.extractionStatus === 'binary_registered' ? 'needs-extraction' : ''} ${doc.extractionStatus === 'retrieved_chunk' || doc.sourceType === 'semantic_retrieval' ? 'is-indexed' : ''}">
         <div>
-          <span>${escapeHtml(evidenceId)} · ${escapeHtml(doc.extractionStatus || 'attached')}</span>
+          <span>${escapeHtml(evidenceId)} · ${escapeHtml(doc.citationId || doc.chunkId || doc.extractionStatus || 'attached')}</span>
           <strong>${escapeHtml(doc.title || doc.fileName || `Evidence ${index + 1}`)}</strong>
-          <p>${escapeHtml(doc.excerpt || doc.summary || 'Evidence attached without extracted text.')}</p>
+          <p>${escapeHtml(doc.text || doc.excerpt || doc.summary || 'Evidence attached without extracted text.')}</p>
         </div>
         <small>${escapeHtml(signals)}</small>
       </article>
@@ -1199,6 +1759,8 @@ function renderArtifactPreview(result, options = {}) {
   const gaps = Array.isArray(result.gaps) ? result.gaps : [];
   const evidenceIds = Array.isArray(result.evidenceIds) ? result.evidenceIds : [];
   const documents = evidenceDocuments(result);
+  const citations = Array.isArray(result.citations) ? result.citations : [];
+  const retrieval = result.retrievalContext || {};
   const liveUploadCount = documents.filter((doc) => /^UP-/i.test(doc.evidenceId || '')).length;
   const extractedCount = documents.filter((doc) => /text|pdf|manual/i.test(doc.extractionStatus || '')).length;
   const ready = options.finalVisible;
@@ -1213,6 +1775,8 @@ function renderArtifactPreview(result, options = {}) {
       <span>Gaps</span><b>${escapeHtml(gaps.length)}</b>
       <span>Evidence IDs</span><b>${escapeHtml(evidenceIds.length)}</b>
       <span>Evidence docs</span><b>${escapeHtml(documents.length)}</b>
+      <span>Citations</span><b>${escapeHtml(citations.length)}</b>
+      <span>Retrieved chunks</span><b>${escapeHtml(retrieval.matchCount || retrieval.matches?.length || 0)}</b>
       <span>Live uploads</span><b>${escapeHtml(liveUploadCount)}</b>
       <span>Extracted docs</span><b>${escapeHtml(extractedCount)}</b>
       <span>Runtime</span><b>${escapeHtml(formatRuntime(result.runtime?.actualRuntime || result.mode || 'unknown'))}</b>
@@ -1231,6 +1795,8 @@ function buildExecReviewPack(result = lastRun) {
   const gaps = Array.isArray(result.gaps) ? result.gaps : [];
   const evidenceIds = Array.isArray(result.evidenceIds) ? result.evidenceIds : [];
   const documents = evidenceDocuments(result);
+  const citations = Array.isArray(result.citations) ? result.citations : [];
+  const retrieval = result.retrievalContext || {};
   const trace = Array.isArray(result.trace) ? result.trace : [];
   const caseInfo = result.case || {};
   const decision = result.decision || {};
@@ -1286,6 +1852,8 @@ function buildExecReviewPack(result = lastRun) {
 
   lines.push('', '## Evidence Manifest', '');
   lines.push(`Evidence IDs: ${evidenceIds.join(', ') || 'none'}`);
+  lines.push(`Indexed retrieval chunks searched: ${retrieval.chunkCount || 0}`);
+  lines.push(`Semantic matches used: ${retrieval.matchCount || retrieval.matches?.length || 0}`);
   if (documents.length) {
     documents.forEach((doc, index) => {
       lines.push(`${index + 1}. ${doc.evidenceId || `DOC-${index + 1}`} - ${doc.title || doc.fileName || 'Evidence document'}`);
@@ -1294,6 +1862,18 @@ function buildExecReviewPack(result = lastRun) {
     });
   } else {
     lines.push('No source documents were attached to the run.');
+  }
+
+  lines.push('', '## Evidence Citations', '');
+  if (citations.length) {
+    citations.forEach((citation, index) => {
+      lines.push(`${index + 1}. ${citation.evidenceId || `CITE-${index + 1}`} - ${citation.title || 'Evidence citation'}`);
+      lines.push(`   Source: ${citation.citationId || citation.sourceType || 'attached evidence'}`);
+      if (citation.score) lines.push(`   Retrieval score: ${Number(citation.score).toFixed(3)}`);
+      lines.push(`   Extract: ${citation.text || 'No extract available.'}`);
+    });
+  } else {
+    lines.push('No citation records returned.');
   }
 
   lines.push('', '## Audit Trace', '');
@@ -1416,6 +1996,44 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   ]);
 
   try {
+    if (options.forceRun && indexedEvidenceChunks.length) {
+      pendingMessage.text = 'Retrieving the most relevant evidence chunks before council execution...';
+      flowProgress.style.width = '24%';
+      stageKicker.textContent = 'Semantic retrieval';
+      stageStatus.textContent = 'Searching indexed evidence';
+      stageOutput.textContent = 'Using text-embedding-3-large through the shared gateway to select citation-ready clauses.';
+      renderChatMessages();
+      renderAgentActivity([
+        { label: 'NLP Intake', detail: 'ready', status: 'complete' },
+        { label: 'Embeddings', detail: `${indexedEvidenceChunks.length} chunks`, status: 'complete' },
+        { label: 'Retriever', detail: 'searching', status: 'active' },
+        { label: 'Council', detail: 'queued', status: 'queued' },
+        { label: 'Reviewer', detail: 'queued', status: 'queued' }
+      ]);
+      try {
+        const retrieval = await retrieveIndexedEvidenceForCouncil();
+        const matchCount = retrieval?.matches?.length || 0;
+        pendingMessage.text = matchCount
+          ? `Retrieved ${matchCount} evidence match${matchCount === 1 ? '' : 'es'}. Running the council with citations now...`
+          : 'No semantic evidence matches were returned. Running the council with parsed evidence summaries...';
+        renderChatMessages();
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : 'Evidence retrieval failed.';
+        chatCaseDraft = {
+          ...chatCaseDraft,
+          retrievalContext: {
+            query: retrievalQueryFromDraft(),
+            model: evidenceIndexMeta.model || 'text-embedding-3-large',
+            chunkCount: indexedEvidenceChunks.length,
+            matchCount: 0,
+            error: detail,
+            matches: []
+          }
+        };
+        pendingMessage.text = `Semantic retrieval failed: ${detail} Running the council with parsed evidence summaries.`;
+        renderChatMessages();
+      }
+    }
     const result = await apiFetch('/api/conversation', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1769,6 +2387,11 @@ function animateNetwork() {
 setRunMode('chat');
 applyScenario(currentScenarioKey);
 hydrateConfigForm();
+restoreEvidenceIndexFromStorage().then(() => {
+  renderChatMessages();
+  renderContextStrength();
+  renderChatAttachments();
+});
 loadDeploymentStatus();
 loadReadiness();
 loadBenchmarks();

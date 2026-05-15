@@ -63,6 +63,57 @@ test('conversation executes the agent workflow when the draft is complete', () =
   assert.match(result.reply, /Decision:/i);
 });
 
+test('conversation preserves indexed retrieval context through council execution', () => {
+  const result = processConversation({
+    forceRun: true,
+    message: 'run it',
+    caseDraft: {
+      caseId: 'case-retrieval-1',
+      supplierName: 'HelioChip Logistics',
+      businessUnit: 'Trade Compliance And Export Controls',
+      geography: 'UAE',
+      brief: 'Review restricted AI accelerator import with freight forwarding and remote firmware support.',
+      integrations: ['Firmware support channel'],
+      documents: [
+        {
+          evidenceId: 'DOC-IMPORT-01',
+          title: 'Chip import agreement',
+          extractionStatus: 'backend_parsed',
+          indexStatus: 'indexed',
+          summary: 'Classification pending and no final end-use certificate.'
+        }
+      ],
+      indexedEvidence: {
+        model: 'text-embedding-3-large',
+        chunkCount: 9
+      },
+      retrievalContext: {
+        query: 'export classification end-use certificate import permit firmware access',
+        model: 'text-embedding-3-large',
+        chunkCount: 9,
+        matchCount: 1,
+        matches: [
+          {
+            chunkId: 'chk_export_1',
+            evidenceId: 'DOC-IMPORT-01',
+            title: 'Chip import agreement',
+            score: 0.9,
+            text: 'End-use certificate is pending and import permit is not attached.'
+          }
+        ]
+      },
+      evidenceSignals: ['export classification'],
+      riskSignals: ['export control', 'remote support access']
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.run.ok, true);
+  assert.equal(result.nlp.retrieval.matches, 1);
+  assert.ok(result.actions.some((action) => action.id === 'evidence_retrieval' && action.status === 'complete'));
+  assert.ok(result.run.citations.some((citation) => citation.citationId === 'chk_export_1'));
+});
+
 test('conversation NLP handles export-control hardware import cases', () => {
   const result = processConversation({
     message: 'Review an AI accelerator import for UAE and Singapore. The supplier will ship restricted hardware, provide firmware support, and has no final end-use certificate.'

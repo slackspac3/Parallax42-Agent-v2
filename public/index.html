@@ -93,7 +93,7 @@
             <label class="upload-zone mode-live-only" id="evidenceDropzone">
               <input id="evidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.doc,.docx,text/*,application/json,text/csv,application/pdf" />
               <span>Drop or select evidence files</span>
-              <small>Text, Markdown, JSON, CSV, and logs are extracted in-browser. PDF/DOCX are registered for backend extraction.</small>
+              <small>Text files are sampled locally. PDF/DOCX stream to the backend parser, then index through the shared embeddings gateway.</small>
             </label>
             <div id="evidenceIngestionStatus" class="ingestion-status mode-live-only">No uploaded evidence yet.</div>
             <div id="evidenceQueue" class="evidence-queue" aria-live="polite"></div>
@@ -126,7 +126,7 @@
               </label>
               <label class="chat-evidence-picker">
                 Evidence files
-                <input id="chatEvidenceInput" type="file" multiple />
+                <input id="chatEvidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.docx,text/*,application/json,text/csv,application/pdf" />
               </label>
               <div id="chatAttachmentStatus" class="attachment-status" aria-live="polite">No files attached.</div>
               <div id="chatAttachmentList" class="chat-attachment-list" aria-live="polite"></div>

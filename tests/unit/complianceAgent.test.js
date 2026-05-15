@@ -78,3 +78,41 @@ test('uploaded positive evidence clears training and continuity blockers', () =>
   assert.ok(!result.gaps.some((gap) => /continuity or exit/i.test(gap.gap)));
   assert.ok(!result.gaps.some((gap) => /DPA evidence/i.test(gap.gap)));
 });
+
+test('retrieval context becomes citation-ready evidence for the council', () => {
+  const result = runComplianceAgent({
+    businessUnit: 'Trade Compliance And Export Controls',
+    geography: 'UAE',
+    supplierName: 'HelioChip Logistics',
+    brief: 'Review restricted AI accelerator import with firmware support and freight forwarding.',
+    documents: [
+      {
+        evidenceId: 'DOC-IMPORT-01',
+        title: 'Chip import agreement',
+        summary: 'Import permit is pending. End-use certificate is not final.'
+      }
+    ],
+    retrievalContext: {
+      query: 'export classification end-use certificate import permit firmware access',
+      model: 'text-embedding-3-large',
+      chunkCount: 14,
+      matchCount: 1,
+      matches: [
+        {
+          chunkId: 'chk_export_1',
+          evidenceId: 'DOC-IMPORT-01',
+          title: 'Chip import agreement',
+          score: 0.91,
+          text: 'Manufacturer export classification remains pending and final end-use certificate is not attached.'
+        }
+      ]
+    }
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.retrievalContext.matchCount, 1);
+  assert.ok(result.trace.some((event) => event.eventType === 'semantic_retrieval_completed'));
+  assert.ok(result.citations.some((citation) => citation.citationId === 'chk_export_1'));
+  assert.ok(result.evidenceIds.includes('DOC-IMPORT-01'));
+  assert.ok(result.outputReview.checks.some((check) => check.name === 'retrieval_citations' && check.status === 'passed'));
+});

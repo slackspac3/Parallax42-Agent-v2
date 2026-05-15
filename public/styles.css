@@ -627,6 +627,11 @@ select {
   color: var(--warning);
 }
 
+.is-indexed {
+  border-color: rgba(34, 227, 180, 0.42) !important;
+  background: linear-gradient(90deg, rgba(34, 227, 180, 0.09), rgba(126, 231, 255, 0.045)) !important;
+}
+
 .primary-action {
   background: var(--accent);
   color: #03110d;
@@ -2176,6 +2181,11 @@ body[data-run-mode="chat"] .form-actions .secondary-button,
 .chat-attachment-list em {
   color: var(--accent);
   font-style: normal;
+}
+
+.chat-attachment-list .is-indexed b,
+.evidence-queue .is-indexed b {
+  color: var(--accent);
 }
 
 body[data-run-mode="chat"] .chat-suggestions {
