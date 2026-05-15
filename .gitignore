@@ -9,6 +9,7 @@ logs/
 coverage/
 test-results/
 .playwright-cli/
+output/
 dist/
 build/
 *.local

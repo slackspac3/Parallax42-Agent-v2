@@ -94,15 +94,29 @@ const readinessJsonLink = document.querySelector('#readinessJsonLink');
 const benchmarksJsonLink = document.querySelector('#benchmarksJsonLink');
 const goldenDemoLink = document.querySelector('#goldenDemoLink');
 const topHealth = document.querySelector('#topHealth');
+const caseDraftPanel = document.querySelector('#caseDraftPanel');
+const chatMessagesEl = document.querySelector('#chatMessages');
+const chatForm = document.querySelector('#chatForm');
+const chatInput = document.querySelector('#chatInput');
+const chatRunNow = document.querySelector('#chatRunNow');
+const chatPromptButtons = document.querySelectorAll('[data-chat-prompt]');
 let lastRun = null;
 const lastRuns = {
   demo: null,
-  live: null
+  live: null,
+  chat: null
 };
-let activeRunMode = 'demo';
+let activeRunMode = 'chat';
 let currentScenarioKey = 'aiSaas';
 let playbackTimers = [];
 let uploadedEvidence = [];
+let chatCaseDraft = {};
+let chatMessages = [
+  {
+    role: 'assistant',
+    text: 'Tell me the supplier or workflow, geography, data handled, integrations, and any evidence you already have. I will build the case, ask what is missing, and run the workflow when ready.'
+  }
+];
 
 const runModeCopy = {
   demo: {
@@ -124,6 +138,16 @@ const runModeCopy = {
     actionButton: 'Run live',
     waitingDecision: 'Live run not started',
     waitingApproval: 'Attach evidence or edit the intake, then run the live case.'
+  },
+  chat: {
+    caseEyebrow: 'Conversation',
+    caseTitle: 'Compliance advisor',
+    runwayTitle: 'Build the case through chat',
+    runwayDescription: 'Natural-language intake, contextual follow-up, and traceable CrewAI execution in one agent workspace.',
+    runButton: 'Ask agent',
+    actionButton: 'Run chat',
+    waitingDecision: 'Conversation ready',
+    waitingApproval: 'Ask a question to produce a traceable compliance answer.'
   }
 };
 
@@ -469,6 +493,7 @@ function renderModeIdle(mode = activeRunMode) {
   lastRun = lastRuns[mode];
   if (lastRun?.ok) {
     renderRun(lastRun);
+    if (mode === 'chat') renderChatMessages();
     return;
   }
   decisionText.textContent = copy.waitingDecision;
@@ -480,11 +505,13 @@ function renderModeIdle(mode = activeRunMode) {
   evidenceCount.textContent = mode === 'live' && uploadedEvidence.length ? String(uploadedEvidence.length) : '--';
   gapCount.textContent = '--';
   flowProgress.style.width = '0%';
-  stageKicker.textContent = mode === 'demo' ? 'Demo ready' : 'Live ready';
-  stageStatus.textContent = mode === 'demo' ? 'Awaiting replay' : 'Awaiting intake run';
-  stageOutput.textContent = mode === 'demo'
-    ? 'Run a packaged scenario to inspect the agent trace and audit pack.'
-    : 'Upload evidence or edit the live intake, then submit it to the configured runtime.';
+  stageKicker.textContent = mode === 'chat' ? 'Chat ready' : mode === 'demo' ? 'Demo ready' : 'Live ready';
+  stageStatus.textContent = mode === 'chat' ? 'Awaiting prompt' : mode === 'demo' ? 'Awaiting replay' : 'Awaiting intake run';
+  stageOutput.textContent = mode === 'chat'
+    ? 'Describe a compliance case; the advisor will run it through the agent and summarize blockers.'
+    : mode === 'demo'
+      ? 'Run a packaged scenario to inspect the agent trace and audit pack.'
+      : 'Upload evidence or edit the live intake, then submit it to the configured runtime.';
   domainList.innerHTML = '<article class="empty-row">Domain coverage appears after the run starts.</article>';
   gapList.innerHTML = '<article class="empty-row">Blocking gaps appear after control analysis completes.</article>';
   traceList.innerHTML = '';
@@ -493,7 +520,7 @@ function renderModeIdle(mode = activeRunMode) {
   artifactPreview.innerHTML = `
     <div class="artifact-header">
       <span class="eyebrow">waiting</span>
-      <strong>${escapeHtml(mode === 'demo' ? 'demo replay' : 'live case')}</strong>
+      <strong>${escapeHtml(mode === 'chat' ? 'chat session' : mode === 'demo' ? 'demo replay' : 'live case')}</strong>
     </div>
     <pre>{
   "mode": "${escapeHtml(mode)}",
@@ -501,10 +528,11 @@ function renderModeIdle(mode = activeRunMode) {
   "humanApprovalRequired": true
 }</pre>
   `;
+  if (mode === 'chat') renderChatMessages();
 }
 
 function setRunMode(mode = 'demo', options = {}) {
-  activeRunMode = mode === 'live' ? 'live' : 'demo';
+  activeRunMode = ['demo', 'live', 'chat'].includes(mode) ? mode : 'demo';
   const copy = runModeCopy[activeRunMode];
   document.body.dataset.runMode = activeRunMode;
   runModeButtons.forEach((button) => {
@@ -519,6 +547,7 @@ function setRunMode(mode = 'demo', options = {}) {
   formRunButton.textContent = copy.runButton;
   sampleRun.textContent = copy.actionButton;
   renderEvidenceQueue();
+  if (activeRunMode === 'chat') renderChatMessages();
   if (!options.skipRender) {
     clearPlaybackTimers();
     renderModeIdle(activeRunMode);
@@ -567,7 +596,11 @@ function renderEvidenceQueue(scenario = scenarios[currentScenarioKey]) {
     extractionStatus: 'scenario_signal',
     signals: []
   }));
-  const items = activeRunMode === 'live' ? uploadedEvidence : scenarioItems;
+  const items = activeRunMode === 'live'
+    ? uploadedEvidence
+    : activeRunMode === 'chat' && uploadedEvidence.length
+      ? uploadedEvidence
+      : scenarioItems;
   if (!items.length) {
     evidenceQueue.innerHTML = '<span><b>UP-00</b><span>No live evidence uploaded yet.</span></span>';
     return;
@@ -579,6 +612,150 @@ function renderEvidenceQueue(scenario = scenarios[currentScenarioKey]) {
       ${item.signals?.length ? `<em>${escapeHtml(item.signals.slice(0, 2).join(', '))}</em>` : ''}
     </span>
   `).join('');
+}
+
+function renderCaseDraft() {
+  const draft = chatCaseDraft || {};
+  const integrations = Array.isArray(draft.integrations) ? draft.integrations : [];
+  const evidenceSignals = Array.isArray(draft.evidenceSignals) ? draft.evidenceSignals : [];
+  const riskSignals = Array.isArray(draft.riskSignals) ? draft.riskSignals : [];
+  const pills = [...riskSignals, ...evidenceSignals, ...integrations].slice(0, 8);
+  caseDraftPanel.innerHTML = `
+    <div class="case-draft-header">
+      <span class="eyebrow">working draft</span>
+      <strong>${escapeHtml(draft.supplierName || 'New compliance case')}</strong>
+    </div>
+    <div class="draft-grid">
+      <span>Owner</span><b>${escapeHtml(draft.businessUnit || 'needed')}</b>
+      <span>Geography</span><b>${escapeHtml(draft.geography || 'needed')}</b>
+      <span>Integrations</span><b>${escapeHtml(integrations.length ? integrations.join(', ') : 'none yet')}</b>
+      <span>Evidence</span><b>${escapeHtml(evidenceSignals.length ? evidenceSignals.join(', ') : 'needed')}</b>
+    </div>
+    <div class="draft-pills">
+      ${pills.length ? pills.map((pill) => `<span>${escapeHtml(pill)}</span>`).join('') : '<span>awaiting context</span>'}
+    </div>
+  `;
+}
+
+function renderChatMessages() {
+  renderCaseDraft();
+  chatMessagesEl.innerHTML = chatMessages.map((message) => `
+    <article class="chat-message is-${escapeHtml(message.role)} ${message.pending ? 'is-pending' : ''}">
+      <strong>${message.role === 'user' ? 'You' : 'Agent'}</strong>
+      <p>${escapeHtml(message.text)}</p>
+    </article>
+  `).join('');
+  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+}
+
+function renderConversationState(result = {}) {
+  const actions = Array.isArray(result.actions) ? result.actions : [];
+  const completeActions = actions.filter((action) => action.status === 'complete' || action.status === 'not_required').length;
+  const progress = actions.length ? Math.min(82, 18 + Math.round((completeActions / actions.length) * 62)) : 18;
+  const questions = Array.isArray(result.questions) ? result.questions : [];
+  const missing = Array.isArray(result.missingFields) ? result.missingFields : [];
+  const draft = result.caseDraft || chatCaseDraft || {};
+  const evidenceSignals = Array.isArray(draft.evidenceSignals) ? draft.evidenceSignals : [];
+  const riskSignals = Array.isArray(draft.riskSignals) ? draft.riskSignals : [];
+
+  decisionText.textContent = result.readyToRun ? 'Ready to execute' : 'Building case draft';
+  approvalStatus.textContent = result.readyToRun
+    ? 'The next chat turn can execute the CrewAI workflow under human approval.'
+    : 'The agent is collecting required context before producing a decision.';
+  approvalButton.textContent = 'Approval locked';
+  approvalButton.disabled = true;
+  runtimeText.textContent = 'NLP case builder';
+  readinessScore.textContent = result.readyToRun ? 'ready' : 'draft';
+  evidenceCount.textContent = String((draft.documents || []).length || evidenceSignals.length || 0);
+  gapCount.textContent = String(missing.length);
+  flowProgress.style.width = `${progress}%`;
+  stageKicker.textContent = 'NLP intake';
+  stageStatus.textContent = result.readyToRun ? 'Ready for workflow' : 'Context gathering';
+  stageOutput.textContent = questions.length
+    ? questions.join(' ')
+    : 'The case draft has enough structure to run, or you can add more evidence first.';
+
+  specialistList.innerHTML = actions.map((action) => {
+    const complete = action.status === 'complete' || action.status === 'not_required';
+    const active = action.status === 'waiting';
+    return `
+      <article class="specialist ${complete ? 'is-complete' : ''} ${active ? 'is-active' : ''}">
+        <span>${escapeHtml(humanize(action.status))}</span>
+        <strong>${escapeHtml(titleCase(action.id))}</strong>
+        <p>${escapeHtml(action.detail)}</p>
+      </article>
+    `;
+  }).join('');
+
+  traceList.innerHTML = `
+    <li>
+      <div>
+        <strong>NLP Case Builder</strong>
+        <p>${escapeHtml(humanize(result.nlp?.intent || 'case context'))}</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <strong>Context Planner</strong>
+        <p>${escapeHtml(missing.length ? `${missing.length} missing field${missing.length === 1 ? '' : 's'}` : 'case ready')}</p>
+      </div>
+    </li>
+  `;
+  domainList.innerHTML = riskSignals.length
+    ? riskSignals.map((signal) => `
+      <article class="domain-row">
+        <div>
+          <strong>${escapeHtml(signal)}</strong>
+          <p>Detected from natural-language intake and queued for obligation mapping.</p>
+        </div>
+        <span class="status-warning">draft</span>
+      </article>
+    `).join('')
+    : '<article class="empty-row">Risk signals appear as the case draft develops.</article>';
+  gapList.innerHTML = missing.length
+    ? missing.map((field) => `
+      <article class="gap-row">
+        <span class="status-warning">needed</span>
+        <strong>${escapeHtml(titleCase(field))}</strong>
+        <p>Answer the next question so the agent can execute with traceable context.</p>
+      </article>
+    `).join('')
+    : '<article class="empty-row">No intake blockers remain. The workflow can run.</article>';
+  citationList.innerHTML = draft.documents?.length
+    ? draft.documents.map((doc) => `
+      <article class="citation-row">
+        <div>
+          <span>${escapeHtml(doc.evidenceId || 'CHAT')} · ${escapeHtml(doc.extractionStatus || 'nlp')}</span>
+          <strong>${escapeHtml(doc.title || 'Conversational evidence')}</strong>
+          <p>${escapeHtml(doc.excerpt || doc.summary || 'Evidence captured from chat.')}</p>
+        </div>
+        <small>${escapeHtml(doc.signals?.join(', ') || 'pending signal')}</small>
+      </article>
+    `).join('')
+    : '<article class="empty-row">Evidence citations appear as chat context is captured.</article>';
+  artifactPreview.innerHTML = `
+    <div class="artifact-header">
+      <span class="eyebrow">conversation</span>
+      <strong>${escapeHtml(draft.supplierName || 'case draft')}</strong>
+    </div>
+    <div class="artifact-grid">
+      <span>NLP intent</span><b>${escapeHtml(result.nlp?.intent || 'case context')}</b>
+      <span>Confidence</span><b>${escapeHtml(result.nlp?.confidence || '--')}</b>
+      <span>Missing</span><b>${escapeHtml(missing.length ? missing.join(', ') : 'none')}</b>
+      <span>Ready</span><b>${escapeHtml(result.readyToRun ? 'yes' : 'not yet')}</b>
+    </div>
+    <pre>${escapeHtml(JSON.stringify({
+      caseDraft: {
+        supplierName: draft.supplierName,
+        businessUnit: draft.businessUnit,
+        geography: draft.geography,
+        integrations: draft.integrations,
+        evidenceSignals: draft.evidenceSignals,
+        riskSignals: draft.riskSignals
+      },
+      questions
+    }, null, 2))}</pre>
+  `;
 }
 
 function updateJsonLinks() {
@@ -836,13 +1013,14 @@ async function runAgent(payload, options = {}) {
     });
     if (runMode !== activeRunMode) {
       lastRuns[runMode] = result;
-      return;
+      return result;
     }
     if (options.playback) {
       playResult(result);
     } else {
       renderRun(result);
     }
+    return result;
   } catch (error) {
     const failure = {
       ok: false,
@@ -850,12 +1028,74 @@ async function runAgent(payload, options = {}) {
     };
     if (runMode !== activeRunMode) {
       lastRuns[runMode] = failure;
-      return;
+      return failure;
     }
     renderRun(failure);
+    return failure;
   } finally {
     sampleRun.disabled = false;
     sampleRun.textContent = runModeCopy[activeRunMode].actionButton;
+  }
+}
+
+async function submitChatMessage(rawMessage = '', options = {}) {
+  const message = cleanEvidenceText(rawMessage || (options.forceRun ? 'run it' : ''));
+  if (!message) return null;
+  setRunMode('chat', { skipRender: true });
+  clearPlaybackTimers();
+  chatMessages.push({ role: 'user', text: message });
+  const pendingMessage = {
+    role: 'assistant',
+    text: options.forceRun
+      ? 'Checking the case draft and executing the workflow if the required context is present...'
+      : 'Reading the request, updating the case draft, and planning the next agent step...',
+    pending: true
+  };
+  chatMessages.push(pendingMessage);
+  renderChatMessages();
+  chatInput.value = '';
+  sampleRun.disabled = true;
+  chatRunNow.disabled = true;
+  chatForm.querySelector('button[type="submit"]').disabled = true;
+  flowProgress.style.width = '12%';
+  stageKicker.textContent = 'NLP intake';
+  stageStatus.textContent = 'Parsing message';
+  stageOutput.textContent = 'Extracting case fields, risk signals, integrations, and evidence clues.';
+
+  try {
+    const result = await apiFetch('/api/conversation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        caseDraft: chatCaseDraft,
+        forceRun: Boolean(options.forceRun)
+      })
+    });
+    chatCaseDraft = result.caseDraft || chatCaseDraft;
+    pendingMessage.pending = false;
+    pendingMessage.text = result.reply || 'The conversation step completed.';
+    renderChatMessages();
+    if (result.run?.ok) {
+      lastRuns.chat = result.run;
+      lastRun = result.run;
+      playResult(result.run);
+    } else {
+      renderConversationState(result);
+    }
+    return result;
+  } catch (error) {
+    const messageText = error instanceof Error ? error.message : 'Conversation failed.';
+    pendingMessage.pending = false;
+    pendingMessage.text = `I could not process that turn: ${messageText}`;
+    renderChatMessages();
+    renderRun({ ok: false, message: messageText });
+    return null;
+  } finally {
+    sampleRun.disabled = false;
+    chatRunNow.disabled = false;
+    chatForm.querySelector('button[type="submit"]').disabled = false;
+    sampleRun.textContent = runModeCopy.chat.actionButton;
   }
 }
 
@@ -1016,6 +1256,21 @@ form.addEventListener('submit', (event) => {
   runAgent(currentFormPayload(), { playback: true, mode: activeRunMode });
 });
 
+chatForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  submitChatMessage(chatInput.value);
+});
+
+chatRunNow.addEventListener('click', () => {
+  submitChatMessage(chatInput.value || 'run it', { forceRun: true });
+});
+
+chatPromptButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    submitChatMessage(button.dataset.chatPrompt || '');
+  });
+});
+
 runtimeConfig.addEventListener('submit', (event) => {
   event.preventDefault();
   writeStorage(storageKeys.mode, apiMode.value);
@@ -1036,10 +1291,16 @@ resetConfig.addEventListener('click', () => {
   loadBenchmarks();
 });
 
-sampleRun.addEventListener('click', () => runAgent(currentFormPayload(), { playback: true, mode: activeRunMode }));
+sampleRun.addEventListener('click', () => {
+  if (activeRunMode === 'chat') {
+    submitChatMessage(chatInput.value || 'run it', { forceRun: true });
+    return;
+  }
+  runAgent(currentFormPayload(), { playback: true, mode: activeRunMode });
+});
 exportRun.addEventListener('click', () => {
   if (!lastRun?.ok) {
-    exportRun.textContent = activeRunMode === 'live' ? 'Run live first' : 'Run demo first';
+    exportRun.textContent = activeRunMode === 'chat' ? 'Run workflow first' : activeRunMode === 'live' ? 'Run live first' : 'Run demo first';
     window.setTimeout(() => {
       exportRun.textContent = 'Export pack';
     }, 1400);
@@ -1107,11 +1368,10 @@ function animateNetwork() {
   draw();
 }
 
-setRunMode('demo', { skipRender: true });
+setRunMode('chat');
 applyScenario(currentScenarioKey);
 hydrateConfigForm();
 loadDeploymentStatus();
 loadReadiness();
 loadBenchmarks();
-runAgent(currentFormPayload(), { playback: true, mode: 'demo' });
 animateNetwork();

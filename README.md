@@ -17,13 +17,14 @@ The implementation now defaults agent execution through a dependency-light CrewA
 
 Implemented in this repo:
 
+- `POST /api/conversation` NLP case-builder endpoint that asks follow-up questions and executes the agent workflow when ready
 - `POST /api/agent/run` CrewAI Flow-routed compliance-agent run with deterministic fallback
 - `GET /api/readiness` submission-readiness inventory
 - `GET /api/health` runtime and linked-platform status
 - Vercel-compatible serverless API functions under `api/`
 - allowlisted browser relay to the live Parallax42 backend at `GET/POST /api/backend`
-- GitHub Pages static cockpit with runtime mode controls
-- browser cockpit for running the agent and reviewing evidence, gaps, and trace events
+- GitHub Pages static cockpit with chat-first agent mode and advanced runtime controls
+- browser cockpit for conversational case building, agent execution, evidence, gaps, and trace events
 - CrewAI Flow adapter plus six role-specific agents and YAML task definitions
 - local benchmark endpoint and audit JSONL persistence
 - generated evidence capture under `evidence/`

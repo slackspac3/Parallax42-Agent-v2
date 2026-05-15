@@ -7,7 +7,7 @@
     <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="%2306110d"/><text x="5" y="22" fill="%2312d6a1" font-family="Arial" font-size="13" font-weight="700">P42</text></svg>' />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body data-run-mode="demo">
+  <body data-run-mode="chat">
     <canvas id="networkCanvas" aria-hidden="true"></canvas>
     <header class="topbar">
       <div class="brand">
@@ -18,7 +18,7 @@
         </div>
       </div>
       <nav aria-label="Primary">
-        <a href="#run">Workbench</a>
+        <a href="#run">Agent</a>
         <a href="#evidence">Evidence</a>
         <a href="#audit">Audit Pack</a>
         <a href="#hardening">Hardening</a>
@@ -31,20 +31,24 @@
     <main class="workbench">
       <section class="command-center" id="run">
         <div class="mode-tabs" role="tablist" aria-label="Run mode">
-          <button id="demoModeTab" type="button" class="mode-tab is-active" role="tab" aria-selected="true" aria-controls="run" data-run-mode="demo">
+          <button id="chatModeTab" type="button" class="mode-tab is-active" role="tab" aria-selected="true" aria-controls="run" data-run-mode="chat">
+            <span>Chat agent</span>
+            <small>Natural-language case builder</small>
+          </button>
+          <button id="demoModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="run" data-run-mode="demo">
             <span>Demo replay</span>
-            <small>Packaged reviewer walkthrough</small>
+            <small>Advanced walkthrough</small>
           </button>
           <button id="liveModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="run" data-run-mode="live">
             <span>Live run</span>
-            <small>Current intake and uploaded evidence</small>
+            <small>Advanced evidence form</small>
           </button>
         </div>
 
         <aside class="case-panel pane">
           <div class="pane-header">
-            <span id="casePanelEyebrow" class="eyebrow">Demo workspace</span>
-            <strong id="casePanelTitle">Golden review file</strong>
+            <span id="casePanelEyebrow" class="eyebrow">Conversation</span>
+            <strong id="casePanelTitle">Compliance advisor</strong>
           </div>
 
           <div class="mode-note mode-demo-only">
@@ -53,6 +57,9 @@
           <div class="mode-note mode-live-only">
             Live mode uses the edited intake fields and every uploaded evidence file.
           </div>
+          <div class="mode-note mode-chat-only">
+            Describe the workflow in plain English. The agent builds the case, asks for missing context, then executes the workflow.
+          </div>
 
           <div class="scenario-switcher mode-demo-only" aria-label="Case scenarios">
             <button type="button" class="scenario-button is-active" data-scenario="aiSaas">AI SaaS</button>
@@ -60,7 +67,7 @@
             <button type="button" class="scenario-button" data-scenario="lowRisk">Low risk</button>
           </div>
 
-          <form id="agentForm" class="case-form">
+          <form id="agentForm" class="case-form mode-form-only">
             <label>
               Compliance brief
               <textarea name="brief" rows="7">Procure a critical AI SaaS supplier that processes personal data, integrates with Azure AD and ServiceNow, and supports finance reporting across the UAE.</textarea>
@@ -88,17 +95,37 @@
             <div id="evidenceQueue" class="evidence-queue" aria-live="polite"></div>
             <button id="formRunButton" type="submit" class="primary-action">Run demo</button>
           </form>
+
+          <section id="conversationPanel" class="conversation-panel mode-chat-only" aria-label="Conversational compliance advisor">
+            <div id="caseDraftPanel" class="case-draft-panel" aria-live="polite"></div>
+            <div class="chat-suggestions" aria-label="Suggested prompts">
+              <button type="button" data-chat-prompt="Assess an AI SaaS supplier processing employee data with Azure AD access, SOC 2 evidence, no signed DPA, and no continuity plan.">Assess AI SaaS</button>
+              <button type="button" data-chat-prompt="What evidence would clear a model-training and DPA blocker for an AI vendor?">Evidence checklist</button>
+              <button type="button" data-chat-prompt="Review a finance workflow vendor with payment approval access, Microsoft 365 integration, and missing exit support.">Finance workflow</button>
+            </div>
+            <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
+            <form id="chatForm" class="chat-form">
+              <label>
+                Message
+                <textarea id="chatInput" rows="5" placeholder="Example: onboard an AI SaaS vendor in UAE with Azure AD access, employee data, SOC 2, but no signed DPA."></textarea>
+              </label>
+              <div class="form-actions">
+                <button id="chatSubmit" type="submit" class="primary-action">Send</button>
+                <button id="chatRunNow" type="button" class="secondary-button">Run workflow</button>
+              </div>
+            </form>
+          </section>
         </aside>
 
         <section class="runway pane" id="workflow">
           <div class="runway-top">
             <div>
               <span class="eyebrow">CrewAI Flow</span>
-              <h1 id="runwayTitle">Watch the agent work</h1>
+              <h1 id="runwayTitle">Build the case through chat</h1>
               <p id="runwayDescription">Specialists map obligations, inspect evidence, recommend controls, and package the approval file under a deterministic guardrail.</p>
             </div>
             <div class="run-actions">
-              <button id="sampleRun" type="button" class="primary-action">Watch demo</button>
+              <button id="sampleRun" type="button" class="primary-action">Run chat</button>
               <button id="exportRun" type="button" class="secondary-button">Export pack</button>
             </div>
           </div>
@@ -109,10 +136,10 @@
 
           <div class="stage-console">
             <div>
-              <span id="stageKicker" class="eyebrow">Ready</span>
-              <strong id="stageStatus">Awaiting run</strong>
+              <span id="stageKicker" class="eyebrow">Chat ready</span>
+              <strong id="stageStatus">Awaiting prompt</strong>
             </div>
-            <p id="stageOutput">Select a scenario or run the golden AI SaaS case.</p>
+            <p id="stageOutput">Describe a case and the agent will build the draft, ask follow-up questions, or execute the workflow.</p>
           </div>
 
           <div id="specialistList" class="specialist-list" aria-live="polite"></div>

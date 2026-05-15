@@ -9,6 +9,7 @@ const { runAgentWithRuntime, runtimeHealth } = require('./lib/agentRuntime');
 const { appendAuditRecord, auditStoreHealth, readRecentAuditRecords, verifyAuditChain } = require('./lib/auditStore');
 const { runBenchmark } = require('./lib/benchmarkSuite');
 const { getReadinessInventory } = require('./lib/complianceAgent');
+const { processConversation } = require('./lib/conversationAgent');
 const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
 const { readJsonBody, writeJson } = require('./lib/http');
 const { authHealth, authorizeRequest } = require('./lib/rbac');
@@ -136,6 +137,39 @@ const server = http.createServer(async (req, res) => {
         }
       });
       writeJson(res, result.ok ? 200 : 400, result);
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/conversation') {
+      const auth = await authorizeRequest(req, 'agent:run');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
+      const body = await readJsonBody(req);
+      const result = processConversation(body, {
+        runtime: req.headers['x-agent-runtime'] || body.runtime
+      });
+      appendAuditRecord({
+        actor: auth.actor,
+        caseId: result.run?.case?.caseId || result.caseDraft?.supplierName || 'conversation',
+        status: result.run?.ok ? 'completed' : 'conversation_waiting',
+        summary: result.run?.ok ? result.run.decision.recommendation : result.reply,
+        payload: {
+          auth: {
+            policy: auth.policy,
+            roles: auth.actor.roles,
+            authenticated: auth.actor.authenticated
+          },
+          nlp: result.nlp,
+          actions: result.actions,
+          missingFields: result.missingFields,
+          runDecision: result.run?.decision || null,
+          evidenceIds: result.run?.evidenceIds || [],
+          gapCount: result.run?.gaps?.length || 0
+        }
+      });
+      writeJson(res, 200, result);
       return;
     }
 
