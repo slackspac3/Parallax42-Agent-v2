@@ -8,6 +8,7 @@ const { URL } = require('node:url');
 const { runAgentWithRuntime, runtimeHealth } = require('./lib/agentRuntime');
 const { appendAuditRecord, auditStoreHealth, readRecentAuditRecords, verifyAuditChain } = require('./lib/auditStore');
 const { runBenchmark } = require('./lib/benchmarkSuite');
+const { gatewayHealth, indexEvidence, searchEvidence } = require('./lib/compassGatewayClient');
 const { getReadinessInventory } = require('./lib/complianceAgent');
 const { processConversation } = require('./lib/conversationAgent');
 const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
@@ -60,6 +61,7 @@ const server = http.createServer(async (req, res) => {
           store: auditStoreHealth(),
           integrity: verifyAuditChain()
         },
+        evidenceGateway: gatewayHealth(),
         linkedBackend: process.env.PARALLAX42_BACKEND_URL || 'https://api.parallax42.bhavukarora.com'
       });
       return;
@@ -167,6 +169,66 @@ const server = http.createServer(async (req, res) => {
           runDecision: result.run?.decision || null,
           evidenceIds: result.run?.evidenceIds || [],
           gapCount: result.run?.gaps?.length || 0
+        }
+      });
+      writeJson(res, 200, result);
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/evidence/index') {
+      const auth = await authorizeRequest(req, 'agent:run');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
+      const body = await readJsonBody(req);
+      const result = await indexEvidence(body);
+      appendAuditRecord({
+        actor: auth.actor,
+        caseId: result.context?.caseId || body.caseId || 'evidence-index',
+        status: 'evidence_indexed',
+        summary: `Indexed ${result.chunking?.chunkCount || 0} evidence chunks through the shared gateway.`,
+        payload: {
+          auth: {
+            policy: auth.policy,
+            roles: auth.actor.roles,
+            authenticated: auth.actor.authenticated
+          },
+          route: 'evidence.index',
+          model: result.model,
+          context: result.context,
+          chunking: result.chunking,
+          evidenceIds: Array.from(new Set((result.chunks || []).map((chunk) => chunk.evidenceId).filter(Boolean)))
+        }
+      });
+      writeJson(res, 200, result);
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/evidence/search') {
+      const auth = await authorizeRequest(req, 'agent:run');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
+      const body = await readJsonBody(req);
+      const result = await searchEvidence(body);
+      appendAuditRecord({
+        actor: auth.actor,
+        caseId: result.context?.caseId || body.caseId || 'evidence-search',
+        status: 'evidence_searched',
+        summary: `Searched shared evidence index for ${result.matches?.length || 0} matches.`,
+        payload: {
+          auth: {
+            policy: auth.policy,
+            roles: auth.actor.roles,
+            authenticated: auth.actor.authenticated
+          },
+          route: 'evidence.search',
+          model: result.model,
+          context: result.context,
+          queryLength: String(body.query || '').length,
+          matchIds: (result.matches || []).map((match) => match.chunkId).filter(Boolean)
         }
       });
       writeJson(res, 200, result);

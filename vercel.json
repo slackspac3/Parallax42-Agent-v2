@@ -5,6 +5,12 @@
     },
     "api/backend/[...path].js": {
       "maxDuration": 120
+    },
+    "api/evidence/index.js": {
+      "maxDuration": 60
+    },
+    "api/evidence/search.js": {
+      "maxDuration": 30
     }
   },
   "headers": [

@@ -134,7 +134,7 @@ def llm_config() -> dict[str, Any]:
         os.getenv("CREWAI_LLM_MODEL")
         or os.getenv("OPENAI_MODEL_NAME")
         or os.getenv("MODEL")
-        or "gpt-4o-mini"
+        or "gpt-5.1"
     )
     base_url = (
         os.getenv("CREWAI_LLM_BASE_URL")

@@ -19,6 +19,7 @@ Implemented in this repo:
 
 - `POST /api/conversation` NLP case-builder endpoint that asks follow-up questions and executes the agent workflow when ready
 - `POST /api/agent/run` CrewAI Flow-routed compliance-agent run with deterministic fallback
+- `POST /api/evidence/index` and `POST /api/evidence/search` server-side bridge to the reusable Parallax42 embeddings gateway
 - `GET /api/readiness` submission-readiness inventory
 - `GET /api/health` runtime and linked-platform status
 - Vercel-compatible serverless API functions under `api/`
@@ -78,8 +79,13 @@ Key environment variables:
 ```text
 AGENT_RUNTIME=crewai_flow
 CREWAI_ENABLE_LIVE_LLM=0
-CREWAI_LLM_MODEL=gpt-4o-mini
+CREWAI_LLM_MODEL=gpt-5.1
+CREWAI_LLM_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
+CREWAI_LLM_API_KEY=<same-value-as-COMPASS_GATEWAY_TOKEN>
 PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com
+COMPASS_GATEWAY_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
+COMPASS_GATEWAY_TOKEN=<server-side gateway token>
+EMBEDDINGS_MODEL=text-embedding-3-large
 P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020
 AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
 ```
@@ -106,12 +112,13 @@ Enable live LLM calls only with approved credentials:
 
 ```bash
 export CREWAI_ENABLE_LIVE_LLM=1
-export CREWAI_LLM_MODEL=gpt-4o-mini
-export OPENAI_API_KEY=...
+export CREWAI_LLM_MODEL=gpt-5.1
+export CREWAI_LLM_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
+export CREWAI_LLM_API_KEY=$COMPASS_GATEWAY_TOKEN
 AGENT_RUNTIME=crewai_llm npm run dev
 ```
 
-Live LLM specialist output is attached under `orchestration.llmOutput`; the final decision remains guarded by the deterministic engine until eval gates are added.
+Live LLM specialist output is attached under `orchestration.llmOutput`; the final decision remains guarded by the deterministic engine until eval gates are added. The gateway also exposes server-side `POST /api/evidence/index` and `POST /api/evidence/search`, which call the reusable Parallax42 embedding boundary using `text-embedding-3-large`.
 
 ## Submission Dossier
 

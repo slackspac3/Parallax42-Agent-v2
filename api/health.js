@@ -2,6 +2,7 @@
 
 const { auditStoreHealth, verifyAuditChain } = require('../lib/auditStore');
 const { runtimeHealth } = require('../lib/agentRuntime');
+const { gatewayHealth } = require('../lib/compassGatewayClient');
 const { authHealth } = require('../lib/rbac');
 const { methodGuard, sendJson } = require('./_http');
 
@@ -18,6 +19,7 @@ module.exports = async function handler(req, res) {
       store: auditStoreHealth(),
       integrity: verifyAuditChain()
     },
+    evidenceGateway: gatewayHealth(),
     linkedBackend: process.env.PARALLAX42_BACKEND_URL || 'https://api.parallax42.bhavukarora.com',
     pagesOrigin: process.env.P42_PAGES_ORIGIN || 'https://slackspac3.github.io'
   });

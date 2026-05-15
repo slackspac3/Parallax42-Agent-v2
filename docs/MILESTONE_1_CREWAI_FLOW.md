@@ -76,14 +76,15 @@ Required environment:
 
 ```text
 CREWAI_ENABLE_LIVE_LLM=1
-CREWAI_LLM_MODEL=gpt-4o-mini
-OPENAI_API_KEY=...
+CREWAI_LLM_MODEL=gpt-5.1
+CREWAI_LLM_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
+CREWAI_LLM_API_KEY=<same-value-as-COMPASS_GATEWAY_TOKEN>
 ```
 
 Optional OpenAI-compatible endpoint:
 
 ```text
-CREWAI_LLM_BASE_URL=https://api.your-provider.example/v1
+CREWAI_LLM_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
 CREWAI_LLM_API_KEY=...
 ```
 
@@ -95,7 +96,7 @@ When enabled, `crewai_adapter/compliance_flow.py --live-llm` creates CrewAI agen
     "liveLlm": {
       "requested": true,
       "enabled": true,
-      "model": "gpt-4o-mini",
+      "model": "gpt-5.1",
       "outputAvailable": true
     },
     "llmOutput": {

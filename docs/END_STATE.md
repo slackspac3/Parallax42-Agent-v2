@@ -74,7 +74,7 @@ The reviewer should be able to:
 | RBAC | Reviewer, approver, auditor, domain owner, admin, and read-only roles. |
 | Audit | Append-only database records with hash chaining or immutable object export. |
 | Evidence | Uploaded files parsed, classified, chunked, cited, and redacted before agent use. |
-| Retrieval | Hybrid semantic/keyword retrieval with metadata filters and source-level citations. |
+| Retrieval | Hybrid semantic/keyword retrieval with metadata filters and source-level citations, using the shared Parallax42 `text-embedding-3-large` gateway as the default semantic embedding boundary. |
 | Controls | Control recommendations are mapped to owner, due date, evidence requirement, and escalation path. |
 | Safety | No automatic approvals, no unsupported certainty, no hidden tool calls, no unapproved write actions. |
 | Observability | Trace dashboard, latency, cost, token use, tool calls, fallback rate, eval trend, and incident logs. |
@@ -100,7 +100,7 @@ The submission should include:
 | Gap | Why It Matters |
 | --- | --- |
 | Live LLM-backed CrewAI specialist output is opt-in and advisory. | The wiring exists, but provider credentials, eval gates, and approval policy must be enabled before live output can influence decisions. |
-| Evidence upload handles text-like files but needs production OCR/document parsing for PDF/DOCX. | The role expects robust evidence processing, not only browser text extraction. |
+| Evidence upload handles text-like files and can call the shared embedding/index gateway, but needs production OCR/document parsing for PDF/DOCX. | The role expects robust evidence processing, not only browser registration of binary files. |
 | Audit is hash-chained locally but Vercel uses ephemeral `/tmp` unless durable storage is configured. | Enterprise review needs retained records across deployments and function instances. |
 | RBAC middleware and JWT validation are implemented, but live Entra config is not set. | Secure authentication must be enabled in the target enterprise environment. |
 | Evals are local and deterministic only. | World-class agent delivery requires regression, adversarial, and trace-level evals. |

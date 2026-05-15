@@ -43,7 +43,12 @@ Recommended environment:
 PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com
 AGENT_RUNTIME=crewai_flow
 CREWAI_ENABLE_LIVE_LLM=0
-CREWAI_LLM_MODEL=gpt-4o-mini
+CREWAI_LLM_MODEL=gpt-5.1
+CREWAI_LLM_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
+CREWAI_LLM_API_KEY=<same-value-as-COMPASS_GATEWAY_TOKEN>
+COMPASS_GATEWAY_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
+COMPASS_GATEWAY_TOKEN=<server-side gateway token>
+EMBEDDINGS_MODEL=text-embedding-3-large
 P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020,http://localhost:3020
 AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
 ```
@@ -59,6 +64,8 @@ GET  /api/benchmarks
 GET  /api/audit/recent
 GET  /api/demo/golden
 POST /api/agent/run
+POST /api/evidence/index
+POST /api/evidence/search
 GET  /api/backend?path=/health
 ```
 

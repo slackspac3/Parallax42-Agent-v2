@@ -42,8 +42,9 @@ Run live specialist LLM calls only after configuring approved credentials:
 
 ```bash
 export CREWAI_ENABLE_LIVE_LLM=1
-export CREWAI_LLM_MODEL=gpt-4o-mini
-export OPENAI_API_KEY=...
+export CREWAI_LLM_MODEL=gpt-5.1
+export CREWAI_LLM_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
+export CREWAI_LLM_API_KEY=$COMPASS_GATEWAY_TOKEN
 python crewai_adapter/compliance_flow.py --live-llm --input examples/high_risk_ai_saas_case.json
 ```
 
