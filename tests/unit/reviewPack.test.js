@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { runComplianceAgent } = require('../../lib/complianceAgent');
-const { buildReviewPack, buildReviewPackMarkdown } = require('../../lib/reviewPack');
+const { buildReviewPack, buildReviewPackMarkdown, buildReviewPackPdf } = require('../../lib/reviewPack');
 
 test('review pack includes digest, evidence quality, retrieval audit, and human approval boundary', () => {
   const run = runComplianceAgent({
@@ -33,4 +33,9 @@ test('review pack includes digest, evidence quality, retrieval audit, and human 
   const markdown = buildReviewPackMarkdown(pack);
   assert.match(markdown, /Executive Review Pack/);
   assert.match(markdown, /Human approval required: yes/);
+
+  const pdf = buildReviewPackPdf(pack);
+  assert.ok(Buffer.isBuffer(pdf));
+  assert.match(pdf.subarray(0, 8).toString('latin1'), /%PDF-1\.4/);
+  assert.ok(pdf.length > 1500);
 });

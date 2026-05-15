@@ -459,6 +459,23 @@ function downloadText(filename, text, type = 'text/markdown') {
   URL.revokeObjectURL(url);
 }
 
+function downloadBase64(filename, base64, type = 'application/pdf') {
+  const binary = window.atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  const blob = new Blob([bytes], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 function fileExtension(fileName = '') {
   const parts = String(fileName).toLowerCase().split('.');
   return parts.length > 1 ? parts.pop() : '';
@@ -1712,6 +1729,112 @@ function stageNarrative(stage, result) {
   return narratives[role] || `${role} completed ${humanize(stage.method || 'review')}.`;
 }
 
+function businessDecisionTone(result = {}) {
+  const status = String(result.decision?.status || '').toLowerCase();
+  const recommendation = String(result.decision?.recommendation || '').toLowerCase();
+  if (/do not|block|reject|not approve/.test(recommendation) || status === 'not_ready') return 'danger';
+  if (/conditional|human approval|review/.test(recommendation) || status === 'conditional') return 'warning';
+  return 'success';
+}
+
+function businessDecisionHeadline(result = {}) {
+  const evidenceQuality = String(result.evidenceQuality?.status || '').toLowerCase();
+  const gaps = Array.isArray(result.gaps) ? result.gaps : [];
+  const recommendation = result.decision?.recommendation || 'Council output ready';
+  if (!gaps.length && (evidenceQuality === 'weak' || evidenceQuality === 'missing')) return 'Ready for review, evidence weak';
+  if (/human approval/i.test(recommendation)) return 'Ready for human approval';
+  if (/conditional/i.test(recommendation)) return 'Conditional path available';
+  if (/do not|not approve|block/i.test(recommendation)) return 'Do not proceed yet';
+  return recommendation;
+}
+
+function businessDecisionSummary(result = {}) {
+  const gaps = Array.isArray(result.gaps) ? result.gaps : [];
+  const evidenceQuality = result.evidenceQuality || {};
+  const readiness = Math.round(Number(result.decision?.readinessScore || 0) * 100);
+  if (gaps.length) {
+    return `${gaps.length} blocking item${gaps.length === 1 ? '' : 's'} must be closed before approval. Evidence confidence is ${humanize(evidenceQuality.status || 'not scored')} and the case is ${readiness}% ready.`;
+  }
+  if (evidenceQuality.status === 'weak' || evidenceQuality.status === 'missing') {
+    return `No blocking gaps remain, but evidence confidence is ${humanize(evidenceQuality.status)}. A reviewer should request stronger source documents before recording approval.`;
+  }
+  return `No blocking gaps remain in the current evidence set. The case is ${readiness}% ready and still requires accountable human approval before operational use.`;
+}
+
+function businessReviewerActions(result = {}) {
+  const readiness = result.decisionReadiness || {};
+  const evidenceQuality = result.evidenceQuality || {};
+  const controls = Array.isArray(readiness.requiredControls) ? readiness.requiredControls.filter(Boolean) : [];
+  if (controls.length) return controls.slice(0, 5);
+  if (evidenceQuality.status === 'weak' || evidenceQuality.status === 'missing') {
+    return [
+      'Attach stronger source evidence before approval, such as signed contract schedules, DPA, SOC report, and continuity plan.',
+      'Confirm the accountable human approver and approval authority.',
+      'Record the approval decision against this case ID only after evidence review.'
+    ];
+  }
+  return [
+    'Confirm the accountable human approver and approval authority.',
+    'Record the approval decision against this case ID.',
+    'Schedule evidence revalidation before production renewal or material scope change.'
+  ];
+}
+
+function renderBusinessOutcome(result = {}) {
+  const domains = Array.isArray(result.domains) ? result.domains : [];
+  const gaps = Array.isArray(result.gaps) ? result.gaps : [];
+  const evidenceIds = Array.isArray(result.evidenceIds) ? result.evidenceIds : [];
+  const citations = Array.isArray(result.citations) ? result.citations : [];
+  const evidenceQuality = result.evidenceQuality || {};
+  const retrieval = result.retrievalAudit || result.retrievalContext || {};
+  const documentImpact = result.documentEvidenceImpact || {};
+  const llmOutput = result.orchestration?.llmOutput || result.runtime?.llmOutput || null;
+  const tone = businessDecisionTone(result);
+  const readiness = Math.round(Number(result.decision?.readinessScore || 0) * 100);
+  const topDomains = domains.slice(0, 4);
+  specialistList.innerHTML = `
+    <section class="business-summary ${tone}">
+      <div class="business-hero">
+        <span class="eyebrow">Council decision</span>
+        <h2>${escapeHtml(businessDecisionHeadline(result))}</h2>
+        <p>${escapeHtml(businessDecisionSummary(result))}</p>
+      </div>
+      <div class="decision-metrics" aria-label="Decision metrics">
+        <article><span>Readiness</span><strong>${escapeHtml(readiness)}%</strong></article>
+        <article><span>Blocking items</span><strong>${escapeHtml(gaps.length)}</strong></article>
+        <article><span>Evidence IDs</span><strong>${escapeHtml(evidenceIds.length)}</strong></article>
+        <article><span>Confidence</span><strong>${escapeHtml(humanize(evidenceQuality.status || 'not scored'))}</strong></article>
+      </div>
+      <div class="business-columns">
+        <article>
+          <span class="eyebrow">Reviewer actions</span>
+          <ul>
+            ${businessReviewerActions(result).map((action) => `<li>${escapeHtml(action)}</li>`).join('')}
+          </ul>
+        </article>
+        <article>
+          <span class="eyebrow">Evidence used</span>
+          <p>${escapeHtml(documentImpact.summary || `${citations.length} citation${citations.length === 1 ? '' : 's'} mapped into the decision.`)}</p>
+          <div class="evidence-pill-row">
+            <span>${escapeHtml(citations.length)} citation${citations.length === 1 ? '' : 's'}</span>
+            <span>${escapeHtml(retrieval.matchCount || retrieval.matches?.length || 0)} retrieved chunk${(retrieval.matchCount || retrieval.matches?.length || 0) === 1 ? '' : 's'}</span>
+            <span>${escapeHtml(evidenceQuality.score ?? 'n/a')} score</span>
+          </div>
+        </article>
+      </div>
+      <div class="domain-snapshot">
+        ${topDomains.map((domain) => `
+          <article>
+            <span>${escapeHtml(humanize(domain.status || 'mapped'))}</span>
+            <strong>${escapeHtml(domain.label || 'Mapped domain')}</strong>
+          </article>
+        `).join('')}
+      </div>
+      ${llmOutput?.summary ? `<div class="advisory-note"><span class="eyebrow">Advisory council</span><p>${escapeHtml(llmOutput.summary)}</p></div>` : ''}
+    </section>
+  `;
+}
+
 function renderRun(result, options = {}) {
   const stages = getStages(result);
   const stageIndex = Number.isFinite(options.stageIndex) ? options.stageIndex : stages.length - 1;
@@ -1751,9 +1874,9 @@ function renderRun(result, options = {}) {
   const progress = Math.max(0, Math.min(100, Math.round(((stageIndex + 1) / stages.length) * 100)));
   const currentStage = stages[Math.max(0, Math.min(stages.length - 1, activeIndex ?? stageIndex))];
 
-  decisionText.textContent = finalVisible ? result.decision.recommendation : 'CrewAI review in progress';
+  decisionText.textContent = finalVisible ? businessDecisionHeadline(result) : 'CrewAI review in progress';
   approvalStatus.textContent = finalVisible
-    ? 'Human approval remains required before operational use.'
+    ? businessDecisionSummary(result)
     : 'Specialists are building the audit pack.';
   approvalButton.textContent = finalVisible ? 'Human approval required' : 'Review in progress';
   approvalButton.disabled = true;
@@ -1764,9 +1887,13 @@ function renderRun(result, options = {}) {
   evidenceCount.textContent = stageIndex >= 2 || finalVisible ? String(evidenceIds.length) : 'mapping';
   gapCount.textContent = stageIndex >= 3 || finalVisible ? String(gaps.length) : '--';
   flowProgress.style.width = `${progress}%`;
-  stageKicker.textContent = finalVisible ? 'Audit pack ready' : `Stage ${Math.max(1, stageIndex + 1)} of ${stages.length}`;
-  stageStatus.textContent = currentStage ? (agentLabels[currentStage.agent] || currentStage.role || titleCase(currentStage.id)) : 'Ready';
-  stageOutput.textContent = currentStage ? stageNarrative(currentStage, result) : 'Select a scenario or run the golden compliance case.';
+  stageKicker.textContent = finalVisible ? 'Decision memo' : `Stage ${Math.max(1, stageIndex + 1)} of ${stages.length}`;
+  stageStatus.textContent = finalVisible
+    ? businessDecisionHeadline(result)
+    : currentStage ? (agentLabels[currentStage.agent] || currentStage.role || titleCase(currentStage.id)) : 'Ready';
+  stageOutput.textContent = finalVisible
+    ? businessDecisionSummary(result)
+    : currentStage ? stageNarrative(currentStage, result) : 'Select a scenario or run the golden compliance case.';
   renderAgentActivity(stages.slice(0, 5).map((stage, index) => ({
     id: stage.id,
     label: agentLabels[stage.agent] || stage.role || titleCase(stage.id),
@@ -1783,6 +1910,10 @@ function renderRun(result, options = {}) {
 }
 
 function renderSpecialists(result, options = {}) {
+  if (options.finalVisible) {
+    renderBusinessOutcome(result);
+    return;
+  }
   const stages = getStages(result);
   const stageIndex = Number.isFinite(options.stageIndex) ? options.stageIndex : stages.length - 1;
   const activeIndex = Number.isFinite(options.activeIndex) ? options.activeIndex : null;
@@ -1893,6 +2024,47 @@ function renderArtifactPreview(result, options = {}) {
   const liveUploadCount = documents.filter((doc) => /^UP-/i.test(doc.evidenceId || '')).length;
   const extractedCount = documents.filter((doc) => /text|pdf|manual/i.test(doc.extractionStatus || '')).length;
   const ready = options.finalVisible;
+  if (ready) {
+    const reviewerActions = businessReviewerActions(result);
+    artifactPreview.innerHTML = `
+      <div class="artifact-header">
+        <span class="eyebrow">review package</span>
+        <strong>${escapeHtml(result.case?.caseId || 'case pending')}</strong>
+      </div>
+      <div class="review-package">
+        <article>
+          <span>Executive PDF</span>
+          <strong>Ready to generate</strong>
+          <p>Decision memo, reviewer actions, evidence confidence, citations, and integrity digest packaged for sign-off.</p>
+        </article>
+        <article>
+          <span>Audit JSON</span>
+          <strong>Available</strong>
+          <p>Full trace, runtime metadata, evidence IDs, document impact, and deterministic guardrail state remain exportable.</p>
+        </article>
+        <article>
+          <span>Control boundary</span>
+          <strong>Human approval required</strong>
+          <p>No automatic operational approval is granted by the council output.</p>
+        </article>
+      </div>
+      <div class="artifact-grid compact">
+        <span>Decision</span><b>${escapeHtml(businessDecisionHeadline(result))}</b>
+        <span>Blocking items</span><b>${escapeHtml(gaps.length)}</b>
+        <span>Citations</span><b>${escapeHtml(citations.length)}</b>
+        <span>Evidence quality</span><b>${escapeHtml(humanize(evidenceQuality.status || 'not scored'))}</b>
+        <span>Runtime</span><b>${escapeHtml(formatRuntime(result.runtime?.actualRuntime || result.mode || 'unknown'))}</b>
+      </div>
+      <div class="reviewer-next">
+        <span class="eyebrow">next reviewer steps</span>
+        <ol>
+          ${reviewerActions.slice(0, 4).map((action) => `<li>${escapeHtml(action)}</li>`).join('')}
+        </ol>
+      </div>
+      ${llmOutput?.summary ? `<div class="advisory-note"><span class="eyebrow">Advisory council</span><p>${escapeHtml(llmOutput.summary)}</p></div>` : ''}
+    `;
+    return;
+  }
   artifactPreview.innerHTML = `
     <div class="artifact-header">
       <span class="eyebrow">${ready ? 'export ready' : 'assembling'}</span>
@@ -2026,6 +2198,26 @@ function buildExecReviewPack(result = lastRun) {
   lines.push('This pack is a reviewer artifact. It does not grant operational approval. Final approval remains with the accountable human owner.');
   lines.push('');
   return `${lines.join('\n')}\n`;
+}
+
+function buildExecReviewHtml(result = lastRun) {
+  const text = buildExecReviewPack(result);
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Parallax42 Executive Review Pack</title>
+  <style>
+    body { margin: 48px; font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #101816; }
+    h1 { font-size: 28px; margin: 0 0 18px; }
+    pre { white-space: pre-wrap; font: inherit; }
+  </style>
+</head>
+<body>
+  <h1>Executive Review Pack</h1>
+  <pre>${escapeHtml(text)}</pre>
+</body>
+</html>`;
 }
 
 function playResult(result) {
@@ -2452,9 +2644,17 @@ execReviewPack?.addEventListener('click', async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ run: lastRun })
     });
-    downloadText(`p42-exec-review-${lastRun.case?.caseId || 'case'}.md`, response.markdown || buildExecReviewPack(lastRun));
+    if (response.pdfBase64) {
+      downloadBase64(
+        response.fileName || `p42-exec-review-${lastRun.case?.caseId || 'case'}.pdf`,
+        response.pdfBase64,
+        response.contentType || 'application/pdf'
+      );
+    } else {
+      downloadText(`p42-exec-review-${lastRun.case?.caseId || 'case'}.html`, buildExecReviewHtml(lastRun), 'text/html');
+    }
   } catch {
-    downloadText(`p42-exec-review-${lastRun.case?.caseId || 'case'}.md`, buildExecReviewPack(lastRun));
+    downloadText(`p42-exec-review-${lastRun.case?.caseId || 'case'}.html`, buildExecReviewHtml(lastRun), 'text/html');
   } finally {
     execReviewPack.disabled = false;
     execReviewPack.textContent = 'Exec review pack';

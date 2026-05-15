@@ -15,7 +15,7 @@ const { evidenceVectorStoreHealth, indexEvidenceServerSide, searchEvidenceServer
 const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
 const { readJsonBody, writeJson } = require('./lib/http');
 const { authHealth, authorizeRequest } = require('./lib/rbac');
-const { buildReviewPack, buildReviewPackMarkdown } = require('./lib/reviewPack');
+const { buildReviewPack, buildReviewPackPdf } = require('./lib/reviewPack');
 const { enrichConversationWithServerRetrieval } = require('./lib/serverSideRetrieval');
 
 const PORT = Number(process.env.PORT || 3020);
@@ -252,10 +252,14 @@ const server = http.createServer(async (req, res) => {
       }
       const body = await readJsonBody(req, { limitBytes: 3_000_000 });
       const pack = buildReviewPack(body.run || body);
+      const pdf = buildReviewPackPdf(pack);
+      const caseId = pack.case?.caseId || 'case';
       writeJson(res, 200, {
         ok: true,
         pack,
-        markdown: buildReviewPackMarkdown(pack)
+        fileName: `p42-exec-review-${caseId}.pdf`,
+        contentType: 'application/pdf',
+        pdfBase64: pdf.toString('base64')
       });
       return;
     }

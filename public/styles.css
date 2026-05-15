@@ -789,6 +789,133 @@ body[data-run-mode="chat"] .specialist {
   line-height: 1.45;
 }
 
+.business-summary {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  background:
+    linear-gradient(140deg, rgba(34, 227, 180, 0.12), rgba(117, 226, 255, 0.05) 42%, rgba(7, 18, 16, 0.92)),
+    rgba(5, 15, 13, 0.9);
+}
+
+.business-summary.warning {
+  background:
+    linear-gradient(140deg, rgba(245, 197, 92, 0.13), rgba(34, 227, 180, 0.06) 42%, rgba(7, 18, 16, 0.92)),
+    rgba(5, 15, 13, 0.9);
+}
+
+.business-summary.danger {
+  background:
+    linear-gradient(140deg, rgba(255, 117, 117, 0.13), rgba(245, 197, 92, 0.05) 42%, rgba(7, 18, 16, 0.92)),
+    rgba(5, 15, 13, 0.9);
+}
+
+.business-hero h2 {
+  margin-top: 10px;
+  max-width: 720px;
+  font-size: clamp(32px, 3.2vw, 54px);
+  line-height: 0.98;
+}
+
+.business-hero p {
+  max-width: 760px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.decision-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.decision-metrics article {
+  padding: 15px;
+  background: rgba(5, 15, 13, 0.86);
+}
+
+.decision-metrics span,
+.review-package span,
+.domain-snapshot span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.decision-metrics strong {
+  display: block;
+  margin-top: 7px;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.business-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.business-columns article,
+.review-package article,
+.domain-snapshot article {
+  padding: 16px;
+  background: rgba(8, 19, 17, 0.92);
+}
+
+.business-columns ul,
+.reviewer-next ol {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: var(--text);
+}
+
+.business-columns p {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.evidence-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.evidence-pill-row span {
+  padding: 7px 9px;
+  border: 1px solid rgba(117, 226, 255, 0.22);
+  border-radius: 999px;
+  color: var(--info);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.domain-snapshot {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.domain-snapshot strong {
+  display: block;
+  margin-top: 8px;
+  line-height: 1.25;
+}
+
 .trace-drawer {
   border-top: 1px solid var(--line);
   padding-top: 18px;
@@ -1080,6 +1207,45 @@ body[data-run-mode="chat"] .specialist {
 
 .artifact-grid b {
   font-weight: 780;
+}
+
+.artifact-grid.compact {
+  grid-template-columns: minmax(130px, 0.34fr) 1fr;
+}
+
+.review-package {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 18px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.review-package strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.review-package p {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.reviewer-next {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid rgba(34, 227, 180, 0.22);
+  background: rgba(34, 227, 180, 0.055);
+}
+
+.reviewer-next li {
+  color: var(--text);
+  line-height: 1.45;
 }
 
 .advisory-note {
@@ -2547,6 +2713,13 @@ body[data-run-mode="chat"][data-workspace-view="output"] .trace {
     border-left: 0;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
+
+  .decision-metrics,
+  .business-columns,
+  .domain-snapshot,
+  .review-package {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -2621,5 +2794,20 @@ body[data-run-mode="chat"][data-workspace-view="output"] .trace {
 
   .hero-run-button {
     grid-column: 1 / -1;
+  }
+
+  .business-summary {
+    padding: 16px;
+  }
+
+  .business-hero h2 {
+    font-size: 34px;
+  }
+
+  .decision-metrics,
+  .business-columns,
+  .domain-snapshot,
+  .review-package {
+    grid-template-columns: 1fr;
   }
 }
