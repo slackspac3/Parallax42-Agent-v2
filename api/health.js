@@ -1,6 +1,7 @@
 'use strict';
 
 const { auditStoreHealth, verifyAuditChain } = require('../lib/auditStore');
+const { buildFeatureStatus } = require('../lib/adminFeatureFlags');
 const { runtimeHealth } = require('../lib/agentRuntime');
 const { gatewayHealth } = require('../lib/compassGatewayClient');
 const { evidenceVectorStoreHealth } = require('../lib/evidenceVectorStore');
@@ -14,9 +15,10 @@ module.exports = async function handler(req, res) {
     ok: true,
     service: 'parallax42-compliance-intelligence-agent',
     runtime: 'vercel',
-    mode: process.env.AGENT_MODE || 'crewai_flow',
+    mode: process.env.AGENT_MODE || 'crewai_llm',
     agentRuntime: runtimeHealth(),
     auth: authHealth(),
+    adminFeatures: buildFeatureStatus(),
     audit: {
       store: auditStoreHealth(),
       integrity: verifyAuditChain()

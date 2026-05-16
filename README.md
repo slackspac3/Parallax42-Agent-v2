@@ -50,7 +50,7 @@ Suggested demo steps:
 
 - This repository is not a FastAPI backend.
 - This repository does not include Redis, Postgres, Celery, or durable queues.
-- The default runtime is deterministic decisioning plus CrewAI-shaped dry run.
+- Without the optional remote Python CrewAI service, the runtime degrades to deterministic decisioning plus CrewAI-shaped dry run.
 - Live LLM specialist output is optional and advisory.
 - Qdrant support exists only when configured; local-file vector storage is the demo default.
 - OCR/parser capability is integrated through external relay paths rather than implemented as a local parser service in this repo.
@@ -120,25 +120,35 @@ The generated files land in `evidence/` and are safe to include in a submission 
 Key environment variables:
 
 ```text
-AGENT_RUNTIME=crewai_flow
-CREWAI_ENABLE_LIVE_LLM=0
+AGENT_RUNTIME=crewai_llm
+CREWAI_ENABLE_LIVE_LLM=1
 CREWAI_LLM_MODEL=gpt-5.1
 CREWAI_LLM_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
 CREWAI_LLM_API_KEY=<same-value-as-COMPASS_GATEWAY_TOKEN>
+P42_CREWAI_SERVICE_URL=https://api.parallax42.bhavukarora.com/crewai
+P42_CREWAI_SERVICE_TOKEN=<server-side-service-token>
 PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com
 COMPASS_GATEWAY_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
 COMPASS_GATEWAY_TOKEN=<server-side gateway token>
 EMBEDDINGS_MODEL=text-embedding-3-large
 P42_REQUIRE_DURABLE_STORAGE=0
-P42_VECTOR_STORE_PROVIDER=local_file
-# Production option:
-# P42_VECTOR_STORE_PROVIDER=qdrant
+P42_VECTOR_STORE_PROVIDER=qdrant
+# Full RAG requires these Qdrant values. Without them the runtime falls back to local-file demo storage.
 # QDRANT_URL=https://<cluster>.cloud.qdrant.io
 # QDRANT_API_KEY=<server-side-vector-db-key>
 # QDRANT_COLLECTION=p42_compliance_evidence
+P42_FEATURE_COMPASS_LLM_CALLS=1
+P42_FEATURE_COMPASS_EMBEDDINGS=1
+P42_FEATURE_QDRANT_RAG=1
+P42_FEATURE_QDRANT_LEARNING_MEMORY=1
+P42_FEATURE_EXTERNAL_PARSER_RELAY=1
+P42_FEATURE_LIVE_ADVISORY_SPECIALISTS=1
+P42_FEATURE_LIVE_CREWAI=1
 P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020
 AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
 ```
+
+The advanced components are requested by default and can be switched off through `GET|PATCH /api/admin/features` or the cockpit's Advanced runtime settings panel. The admin response distinguishes `enabled`, `configured`, and `active`, so missing Compass tokens, Qdrant URLs, parser relay configuration, or optional CrewAI Python dependencies are shown as safe degradation rather than hidden failures.
 
 Full RAG and governed-learning demo setup:
 
@@ -153,10 +163,12 @@ QDRANT_COLLECTION=p42_compliance_evidence
 AGENT_RUNTIME=crewai_llm
 CREWAI_ENABLE_LIVE_LLM=1
 CREWAI_LLM_MODEL=gpt-5.1
+P42_CREWAI_SERVICE_URL=https://api.parallax42.bhavukarora.com/crewai
+P42_CREWAI_SERVICE_TOKEN=<server-side-service-token>
 P42_AUTH_MODE=audit
 ```
 
-Qdrant is required for the full RAG and governed learning memory demo. The local-file vector store remains a demo fallback only. Governed learning stores auditable reviewer memory and precedent patterns; it is not model retraining and never silently changes the deterministic council decision. Live LLM specialists are advisory only, and human approval remains required.
+Qdrant is required for the full RAG and governed learning memory demo. The local-file vector store remains a demo fallback only. The remote Python CrewAI service is required for live CrewAI execution from Vercel because Vercel's Node runtime does not install the Python CrewAI adapter. Governed learning stores auditable reviewer memory and precedent patterns; it is not model retraining and never silently changes the deterministic council decision. Live LLM specialists are advisory only, and human approval remains required.
 
 After configuring Qdrant and the Compass gateway, run:
 
@@ -193,6 +205,8 @@ AGENT_RUNTIME=crewai_llm npm run dev
 ```
 
 Live LLM specialist output is attached under `orchestration.llmOutput`; on Vercel this can use the Node-side Compass advisory adapter when `AGENT_RUNTIME=crewai_llm` and `CREWAI_ENABLE_LIVE_LLM=1` are set. The final decision remains guarded by the deterministic engine. The evidence boundary uses server-side `POST /api/evidence/index` and `POST /api/evidence/search`, calls the reusable Parallax42 embedding boundary using `text-embedding-3-large`, stores chunk vectors behind the API, and keeps browser state limited to case IDs, evidence IDs, and sanitized index metadata.
+
+For live CrewAI multi-agent execution from Vercel, configure `P42_CREWAI_SERVICE_URL` and `P42_CREWAI_SERVICE_TOKEN`. The Node runtime delegates the six-agent CrewAI council to that service, attaches its output under `orchestration.crewaiOutput`, then still applies the deterministic council as the final decision owner.
 
 Learning memory endpoints are advisory:
 

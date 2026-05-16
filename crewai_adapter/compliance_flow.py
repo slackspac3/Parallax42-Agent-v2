@@ -196,7 +196,7 @@ def build_llm() -> Any:
         "temperature": config["temperature"],
         "timeout": config["timeout"],
         "max_tokens": config["max_tokens"],
-        "response_format": {"type": "json"},
+        "response_format": {"type": "json_object"},
     }
     base_url = os.getenv("CREWAI_LLM_BASE_URL") or os.getenv("OPENAI_API_BASE") or os.getenv("OPENAI_BASE_URL")
     api_key = os.getenv("CREWAI_LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
@@ -231,6 +231,24 @@ def parse_jsonish(value: str) -> Any:
     return None
 
 
+def jsonable(value: Any) -> Any:
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, dict):
+        return {str(key): jsonable(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [jsonable(item) for item in value]
+    model_dump = getattr(value, "model_dump", None)
+    if callable(model_dump):
+        return jsonable(model_dump())
+    as_dict = getattr(value, "dict", None)
+    if callable(as_dict):
+        return jsonable(as_dict())
+    if hasattr(value, "__dict__"):
+        return jsonable(vars(value))
+    return str(value)
+
+
 def output_to_payload(output: Any) -> dict[str, Any]:
     raw = str(getattr(output, "raw", output))
     task_outputs = []
@@ -244,9 +262,9 @@ def output_to_payload(output: Any) -> dict[str, Any]:
         })
     return {
         "raw": raw,
-        "json": getattr(output, "json_dict", None) or parse_jsonish(raw),
+        "json": jsonable(getattr(output, "json_dict", None)) or parse_jsonish(raw),
         "tasks": task_outputs,
-        "token_usage": getattr(output, "token_usage", None),
+        "token_usage": jsonable(getattr(output, "token_usage", None)),
     }
 
 

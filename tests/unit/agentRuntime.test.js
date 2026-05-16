@@ -54,12 +54,14 @@ test('deterministic runtime remains available as explicit fallback mode', () => 
 
 test('runtime health exposes CrewAI Flow and deterministic fallback readiness', () => {
   const health = runtimeHealth();
-  assert.equal(health.defaultRuntime, 'crewai_flow');
+  assert.equal(health.defaultRuntime, 'crewai_llm');
   assert.equal(health.crewaiFlowDryRunAvailable, true);
   assert.equal(health.deterministicFallbackAvailable, true);
+  assert.equal(health.liveCrewAIEnabled, true);
+  assert.equal(health.liveAdvisorySpecialistsEnabled, true);
 });
 
-test('live CrewAI LLM runtime is wired but opt-in and degrades safely by default', () => {
+test('live CrewAI LLM runtime is requested by default and degrades safely without optional dependencies', () => {
   const result = runAgentWithRuntime({
     businessUnit: 'Group Technology Risk',
     geography: 'UAE',

@@ -110,6 +110,7 @@ const citationList = document.querySelector('#citationList');
 const benchmarkSummary = document.querySelector('#benchmarkSummary');
 const deploymentStatus = document.querySelector('#deploymentStatus');
 const capabilityFallbacks = document.querySelector('#capabilityFallbacks');
+const adminFeatureControls = document.querySelector('#adminFeatureControls');
 const readinessJsonLink = document.querySelector('#readinessJsonLink');
 const benchmarksJsonLink = document.querySelector('#benchmarksJsonLink');
 const goldenDemoLink = document.querySelector('#goldenDemoLink');
@@ -143,6 +144,7 @@ let currentScenarioKey = 'exportControl';
 let playbackTimers = [];
 let uploadedEvidence = [];
 let evidenceIndexMeta = {};
+let adminFeatureState = null;
 let chatCaseDraft = {};
 let chatRunReadiness = null;
 let workspaceView = 'chat';
@@ -3117,7 +3119,24 @@ function renderCapabilityFallbacks(results = []) {
   const backend = results.find((result) => /backend/i.test(result.label)) || {};
   const gateway = results.find((result) => /Compass gateway/i.test(result.label)) || {};
   const appBody = app.body || {};
+  const featureList = appBody.adminFeatures?.features || appBody.features || adminFeatureState?.features || [];
   const notes = [];
+  const disabledFeatures = featureList.filter((feature) => feature.enabled === false);
+  const inactiveRequested = featureList.filter((feature) => feature.enabled && feature.active === false && Array.isArray(feature.unmetRequirements) && feature.unmetRequirements.length);
+
+  if (disabledFeatures.length) {
+    notes.push({
+      label: 'Admin capability switch off',
+      detail: `${disabledFeatures.map((feature) => feature.label).join(', ')} disabled by admin controls. The deterministic council and human review boundary remain available.`
+    });
+  }
+
+  if (inactiveRequested.length) {
+    notes.push({
+      label: 'Requested capabilities need configuration',
+      detail: inactiveRequested.slice(0, 3).map((feature) => `${feature.label}: ${feature.unmetRequirements.join(', ')}`).join(' · ')
+    });
+  }
 
   if (appBody.evidenceGateway && !appBody.evidenceGateway.tokenConfigured) {
     notes.push({
@@ -3166,6 +3185,89 @@ function renderCapabilityFallbacks(results = []) {
       <p>${escapeHtml(note.detail)}</p>
     </article>
   `).join('');
+}
+
+function adminFeatureBadge(feature = {}) {
+  if (!feature.enabled) return 'off';
+  if (feature.active) return 'active';
+  if (feature.configured) return 'ready';
+  return 'needs config';
+}
+
+function renderAdminFeatureControls(status = adminFeatureState) {
+  if (!adminFeatureControls) return;
+  adminFeatureState = status;
+  const features = Array.isArray(status?.features) ? status.features : [];
+  if (!features.length) {
+    adminFeatureControls.innerHTML = '<article class="feature-toggle-row is-empty">Admin feature controls are not loaded yet.</article>';
+    return;
+  }
+  adminFeatureControls.innerHTML = features.map((feature) => {
+    const badge = adminFeatureBadge(feature);
+    const unmet = Array.isArray(feature.unmetRequirements) ? feature.unmetRequirements : [];
+    return `
+      <article class="feature-toggle-row" data-feature-row="${escapeHtml(feature.id)}">
+        <div>
+          <strong>${escapeHtml(feature.label)}</strong>
+          <p>${escapeHtml(feature.description || '')}</p>
+          ${unmet.length ? `<small>Needs: ${escapeHtml(unmet.join(', '))}</small>` : feature.note ? `<small>${escapeHtml(feature.note)}</small>` : ''}
+        </div>
+        <div class="feature-toggle-actions">
+          <span class="feature-state ${feature.active ? 'is-active' : feature.enabled ? 'is-waiting' : 'is-off'}">${escapeHtml(badge)}</span>
+          <button
+            type="button"
+            class="feature-toggle-button ${feature.enabled ? 'is-on' : ''}"
+            data-feature-toggle="${escapeHtml(feature.id)}"
+            aria-pressed="${feature.enabled ? 'true' : 'false'}">
+            ${feature.enabled ? 'On' : 'Off'}
+          </button>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+async function loadAdminFeatures() {
+  if (!adminFeatureControls) return null;
+  try {
+    const status = await apiFetch('/api/admin/features');
+    renderAdminFeatureControls(status);
+    return status;
+  } catch (error) {
+    adminFeatureControls.innerHTML = `
+      <article class="feature-toggle-row is-empty">
+        Admin feature controls unavailable: ${escapeHtml(error instanceof Error ? error.message : 'request failed')}
+      </article>
+    `;
+    return null;
+  }
+}
+
+async function setAdminFeature(featureId, enabled) {
+  if (!featureId) return;
+  const button = adminFeatureControls?.querySelector(`[data-feature-toggle="${CSS.escape(featureId)}"]`);
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Saving';
+  }
+  try {
+    const status = await apiFetch('/api/admin/features', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ features: { [featureId]: enabled } })
+    });
+    renderAdminFeatureControls(status);
+    await loadDeploymentStatus();
+  } catch (error) {
+    if (button) {
+      button.disabled = false;
+      button.textContent = enabled ? 'Off' : 'On';
+    }
+    const message = error instanceof Error ? error.message : 'feature update failed';
+    adminFeatureControls.insertAdjacentHTML('afterbegin', `
+      <article class="feature-toggle-row is-error">Could not update ${escapeHtml(featureId)}: ${escapeHtml(message)}</article>
+    `);
+  }
 }
 
 async function loadDeploymentStatus() {
@@ -3224,6 +3326,7 @@ async function loadDeploymentStatus() {
 
   renderStatusCards(results);
   renderCapabilityFallbacks(results);
+  loadAdminFeatures();
 }
 
 runModeButtons.forEach((button) => {
@@ -3351,6 +3454,14 @@ resetConfig.addEventListener('click', () => {
   loadDeploymentStatus();
   loadReadiness();
   loadBenchmarks();
+});
+
+adminFeatureControls?.addEventListener('click', (event) => {
+  const button = event.target?.closest?.('[data-feature-toggle]');
+  if (!button) return;
+  const featureId = button.dataset.featureToggle;
+  const current = adminFeatureState?.features?.find((feature) => feature.id === featureId);
+  setAdminFeature(featureId, !(current?.enabled));
 });
 
 sampleRun.addEventListener('click', () => {

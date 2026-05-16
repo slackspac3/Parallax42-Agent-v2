@@ -5,13 +5,14 @@ const http = require('node:http');
 const path = require('node:path');
 const { URL } = require('node:url');
 
-const { attachGatewayAdvisoryIfEnabled, runAgentWithRuntimeAsync, runtimeHealth } = require('./lib/agentRuntime');
+const { runAgentWithRuntimeAsync, runtimeHealth } = require('./lib/agentRuntime');
+const { buildFeatureStatus, updateFeatureFlags } = require('./lib/adminFeatureFlags');
 const { buildAdminStatus } = require('./lib/adminStatus');
 const { appendAuditRecord, auditStoreHealth, readRecentAuditRecords, verifyAuditChain } = require('./lib/auditStore');
 const { runBenchmark } = require('./lib/benchmarkSuite');
 const { gatewayHealth } = require('./lib/compassGatewayClient');
 const { getReadinessInventory } = require('./lib/complianceAgent');
-const { processConversation } = require('./lib/conversationAgent');
+const { casePayloadFromDraft, processConversation } = require('./lib/conversationAgent');
 const { evidenceVectorStoreHealth, indexEvidenceServerSide, runQdrantSmokeTest, searchEvidenceServerSide } = require('./lib/evidenceVectorStore');
 const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
 const { readJsonBody, writeJson } = require('./lib/http');
@@ -59,9 +60,10 @@ const server = http.createServer(async (req, res) => {
       writeJson(res, 200, {
         ok: true,
         service: 'parallax42-compliance-intelligence-agent',
-        mode: process.env.AGENT_MODE || 'crewai_flow',
+        mode: process.env.AGENT_MODE || 'crewai_llm',
         agentRuntime: runtimeHealth(),
         auth: authHealth(),
+        adminFeatures: buildFeatureStatus(),
         audit: {
           store: auditStoreHealth(),
           integrity: verifyAuditChain()
@@ -76,6 +78,37 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && url.pathname === '/api/admin/status') {
       writeJson(res, 200, buildAdminStatus());
+      return;
+    }
+
+    if ((req.method === 'GET' || req.method === 'PATCH' || req.method === 'POST') && url.pathname === '/api/admin/features') {
+      if (req.method === 'GET') {
+        writeJson(res, 200, buildFeatureStatus());
+        return;
+      }
+      const auth = await authorizeRequest(req, 'agent:run');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
+      const body = await readJsonBody(req, { limitBytes: 200_000 });
+      const result = updateFeatureFlags(body.features && typeof body.features === 'object' ? body.features : body, auth.actor);
+      appendAuditRecord({
+        actor: auth.actor,
+        caseId: 'admin-feature-controls',
+        status: 'admin_features_updated',
+        summary: `Updated admin feature controls: ${result.changed.join(', ') || 'none'}.`,
+        payload: {
+          changed: result.changed,
+          features: result.features.map((feature) => ({
+            id: feature.id,
+            enabled: feature.enabled,
+            active: feature.active,
+            source: feature.source
+          }))
+        }
+      });
+      writeJson(res, 200, result);
       return;
     }
 
@@ -198,7 +231,17 @@ const server = http.createServer(async (req, res) => {
       const runtime = req.headers['x-agent-runtime'] || enrichedBody.runtime;
       const result = processConversation(enrichedBody, { runtime });
       if (result.run?.ok) {
-        result.run = await attachGatewayAdvisoryIfEnabled(result.run, { runtime });
+        result.run = await runAgentWithRuntimeAsync(casePayloadFromDraft(result.caseDraft), { runtime });
+        result.actions = [
+          ...(Array.isArray(result.actions) ? result.actions.filter((action) => action.id !== 'agent_workflow') : []),
+          {
+            id: 'agent_workflow',
+            status: result.run.ok ? 'complete' : 'blocked',
+            detail: result.run.runtime?.manifestSource === 'remote_crewai_service_llm'
+              ? 'Executed deterministic council with live CrewAI specialist work from the remote Python service.'
+              : 'Executed the CrewAI-routed compliance agent workflow.'
+          }
+        ];
       }
       appendAuditRecord({
         actor: auth.actor,

@@ -1,5 +1,6 @@
 'use strict';
 
+const { isFeatureEnabled } = require('../lib/adminFeatureFlags');
 const { sendJson, setCors } = require('./_http');
 
 const REQUEST_TIMEOUT_MS = 120000;
@@ -132,6 +133,15 @@ async function backendRelayHandler(req, res) {
   }
 
   const pathWithSearch = relayPath(req);
+  if (!isFeatureEnabled('externalParserRelay')) {
+    sendJson(req, res, 503, {
+      error: 'parser_relay_disabled',
+      detail: 'External parser/OCR relay is disabled by admin feature controls.',
+      service: 'p42-compliance-backend-relay',
+      fallback: 'Typed case context, deterministic council execution, local metadata registration, audit trace, and PDF export remain available.'
+    });
+    return;
+  }
   if (!isRouteAllowed(req.method, pathWithSearch)) {
     sendJson(req, res, 404, {
       error: 'route_not_allowed',

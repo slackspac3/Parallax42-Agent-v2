@@ -1,8 +1,8 @@
 'use strict';
 
 const { appendAuditRecord } = require('../lib/auditStore');
-const { attachGatewayAdvisoryIfEnabled } = require('../lib/agentRuntime');
-const { processConversation } = require('../lib/conversationAgent');
+const { runAgentWithRuntimeAsync } = require('../lib/agentRuntime');
+const { casePayloadFromDraft, processConversation } = require('../lib/conversationAgent');
 const { authorizeRequest } = require('../lib/rbac');
 const { enrichConversationWithServerRetrieval } = require('../lib/serverSideRetrieval');
 const { methodGuard, readJsonRequest, sendJson } = require('./_http');
@@ -20,7 +20,17 @@ module.exports = async function handler(req, res) {
     const runtime = req.headers['x-agent-runtime'] || enrichedBody.runtime;
     const result = processConversation(enrichedBody, { runtime });
     if (result.run?.ok) {
-      result.run = await attachGatewayAdvisoryIfEnabled(result.run, { runtime });
+      result.run = await runAgentWithRuntimeAsync(casePayloadFromDraft(result.caseDraft), { runtime });
+      result.actions = [
+        ...(Array.isArray(result.actions) ? result.actions.filter((action) => action.id !== 'agent_workflow') : []),
+        {
+          id: 'agent_workflow',
+          status: result.run.ok ? 'complete' : 'blocked',
+          detail: result.run.runtime?.manifestSource === 'remote_crewai_service_llm'
+            ? 'Executed deterministic council with live CrewAI specialist work from the remote Python service.'
+            : 'Executed the CrewAI-routed compliance agent workflow.'
+        }
+      ];
     }
     appendAuditRecord({
       actor: auth.actor,
