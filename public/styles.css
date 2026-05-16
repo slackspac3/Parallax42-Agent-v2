@@ -3622,3 +3622,141 @@ body[data-run-mode="chat"] .chat-messages {
     grid-template-columns: 1fr;
   }
 }
+
+/* Focused advisor layout correction */
+body[data-run-mode="chat"][data-workspace-view="chat"] .command-center {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "tabs"
+    "case";
+  min-height: auto;
+  overflow: hidden;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .decision-rail {
+  display: none;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .case-panel {
+  min-height: auto;
+  padding: clamp(18px, 2vw, 30px);
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .conversation-panel {
+  grid-template-rows: auto auto auto;
+  align-content: start;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .mission-workspace {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+  align-items: start;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .chat-main-column {
+  grid-template-rows: auto auto auto auto auto;
+  align-content: start;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .chat-suggestions {
+  order: 0;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .chat-messages {
+  order: 1;
+  min-height: clamp(240px, 34svh, 410px);
+  max-height: clamp(300px, 44svh, 520px);
+  overflow-y: auto;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .context-strength {
+  order: 2;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .chat-form {
+  order: 3;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .case-intelligence-panel {
+  position: sticky;
+  top: 96px;
+  max-height: calc(100svh - 132px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .case-intelligence-panel::-webkit-scrollbar,
+body[data-run-mode="chat"][data-workspace-view="chat"] .chat-messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .case-intelligence-panel::-webkit-scrollbar-thumb,
+body[data-run-mode="chat"][data-workspace-view="chat"] .chat-messages::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(219, 232, 228, 0.18);
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .intel-grid {
+  border-radius: 14px;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .intel-grid span,
+body[data-run-mode="chat"][data-workspace-view="chat"] .intel-grid b,
+body[data-run-mode="chat"][data-workspace-view="chat"] .draft-grid span,
+body[data-run-mode="chat"][data-workspace-view="chat"] .draft-grid b {
+  overflow-wrap: anywhere;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .intel-grid b,
+body[data-run-mode="chat"][data-workspace-view="chat"] .draft-grid b {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .intel-chips span,
+body[data-run-mode="chat"][data-workspace-view="chat"] .draft-pills span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .case-draft-panel {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(5, 15, 13, 0.5);
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .memory-status-block {
+  padding: 12px;
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .memory-status-grid {
+  grid-template-columns: minmax(92px, 0.6fr) minmax(0, 1fr);
+}
+
+body[data-run-mode="chat"][data-workspace-view="chat"] .evidence-board,
+body[data-run-mode="chat"][data-workspace-view="chat"] .audit-section,
+body[data-run-mode="chat"][data-workspace-view="chat"] .hardening-section {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  body[data-run-mode="chat"][data-workspace-view="chat"] .mission-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-run-mode="chat"][data-workspace-view="chat"] .case-intelligence-panel {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (max-width: 760px) {
+  body[data-run-mode="chat"][data-workspace-view="chat"] .chat-messages {
+    min-height: 220px;
+    max-height: none;
+  }
+}

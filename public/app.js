@@ -1407,6 +1407,12 @@ function evidenceStatusSummary(draft = chatCaseDraft) {
   return 'No evidence attached yet';
 }
 
+function compactUiLabel(value = '', maxLength = 48) {
+  const text = cleanEvidenceText(value);
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, Math.max(0, maxLength - 3)).trim()}...`;
+}
+
 function retrievalContextFor(result = lastRuns.chat, draft = chatCaseDraft) {
   return result?.retrievalContext || result?.case?.retrievalContext || draft?.retrievalContext || {};
 }
@@ -1449,7 +1455,7 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
     : Number.isFinite(chatRunReadiness?.score) ? chatRunReadiness.score : contextStrength(draft);
   const risks = result?.ok
     ? (result.domains || []).filter((domain) => /applicable|needs|confirmation/i.test(domain.status || '')).map((domain) => domain.label)
-    : unique([...(draft.riskSignals || []), ...(draft.evidenceSignals || [])]);
+    : unique([...(draft.riskSignals || []), ...(draft.evidenceSignals || [])]).map((item) => compactUiLabel(item, 42));
   const missing = missingProofItems(draft, result);
   const supplier = draft.supplierName || result?.case?.supplierName || 'New compliance case';
   const owner = draft.businessUnit || result?.case?.businessUnit || 'needed';
@@ -1495,7 +1501,7 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
     <div class="intel-block">
       <span class="eyebrow">Detected risk domains</span>
       <div class="intel-chips">
-        ${risks.length ? risks.slice(0, 8).map((risk) => `<span>${escapeHtml(risk)}</span>`).join('') : '<span>awaiting signals</span>'}
+        ${risks.length ? risks.slice(0, 6).map((risk) => `<span>${escapeHtml(risk)}</span>`).join('') : '<span>awaiting signals</span>'}
       </div>
     </div>
     <div class="intel-block">
@@ -1757,7 +1763,7 @@ function renderCaseDraft() {
   const integrations = Array.isArray(draft.integrations) ? draft.integrations : [];
   const evidenceSignals = Array.isArray(draft.evidenceSignals) ? draft.evidenceSignals : [];
   const riskSignals = Array.isArray(draft.riskSignals) ? draft.riskSignals : [];
-  const pills = [...riskSignals, ...evidenceSignals, ...integrations].slice(0, 8);
+  const pills = [...riskSignals, ...evidenceSignals, ...integrations].map((item) => compactUiLabel(item, 34)).slice(0, 6);
   const indexedLabel = draft.indexedEvidence?.chunkCount
     ? `${draft.indexedEvidence.chunkCount} server-side chunks`
     : '';
@@ -1770,7 +1776,7 @@ function renderCaseDraft() {
       <span>Owner</span><b>${escapeHtml(draft.businessUnit || 'needed')}</b>
       <span>Geography</span><b>${escapeHtml(draft.geography || 'needed')}</b>
       <span>Integrations</span><b>${escapeHtml(integrations.length ? integrations.join(', ') : 'none yet')}</b>
-      <span>Evidence</span><b>${escapeHtml([evidenceSignals.length ? evidenceSignals.join(', ') : '', indexedLabel].filter(Boolean).join(' · ') || 'needed')}</b>
+      <span>Evidence</span><b>${escapeHtml([evidenceStatusSummary(draft), indexedLabel].filter(Boolean).join(' · ') || 'needed')}</b>
     </div>
     <div class="draft-pills">
       ${pills.length ? pills.map((pill) => `<span>${escapeHtml(pill)}</span>`).join('') : '<span>awaiting context</span>'}
