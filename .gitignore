@@ -6,6 +6,7 @@ __pycache__/
 .env.*
 !.env.example
 logs/
+audits/
 coverage/
 test-results/
 .playwright-cli/

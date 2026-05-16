@@ -1,0 +1,99 @@
+{
+  "artifact": "readiness_report",
+  "sample": false,
+  "source": "evidence/readiness.json",
+  "generatedAt": "2026-05-15T16:26:16.078Z",
+  "submissionReadiness": {
+    "productionDeployment": "partial_live",
+    "sovereignLlmBoundary": "live_gateway_present",
+    "auditTraceability": "hash_chained_append_only_audit_needs_managed_store",
+    "rbac": "rbac_policy_ready_needs_enforced_env",
+    "evidenceRetrieval": "server_side_vector_boundary_ready_needs_managed_store",
+    "benchmarks": "parallax42_golden_evals_20_of_20_passed",
+    "responsibleAi": "documented_controls_need_packaged_assurance_run",
+    "videoDemo": "not_recorded"
+  },
+  "linkedSystems": {
+    "parallax42Backend": "https://api.parallax42.bhavukarora.com",
+    "parallax42DemoUi": "https://slackspac3.github.io/Parallax42/",
+    "compassGateway": "https://parallax42-compass-gateway.vercel.app/api/compass"
+  },
+  "securityControls": {
+    "auth": {
+      "mode": "audit",
+      "enforced": false,
+      "jwt": {
+        "hs256Configured": false,
+        "jwksConfigured": false,
+        "audienceConfigured": false,
+        "issuerConfigured": false,
+        "tenantConfigured": false
+      },
+      "policies": {
+        "agent:run": [
+          "platform_admin",
+          "risk_admin",
+          "compliance_reviewer",
+          "legal_privacy_reviewer",
+          "security_reviewer",
+          "finance_project_reviewer",
+          "hse_bcm_reviewer"
+        ],
+        "readiness:read": [
+          "platform_admin",
+          "risk_admin",
+          "auditor"
+        ],
+        "benchmarks:read": [
+          "platform_admin",
+          "risk_admin",
+          "auditor"
+        ],
+        "audit:read": [
+          "platform_admin",
+          "auditor"
+        ],
+        "health:read": [
+          "platform_admin",
+          "risk_admin",
+          "auditor",
+          "compliance_reviewer",
+          "demo_user",
+          "read_only"
+        ],
+        "demo:read": [
+          "platform_admin",
+          "risk_admin",
+          "auditor",
+          "compliance_reviewer",
+          "demo_user",
+          "read_only"
+        ]
+      }
+    },
+    "audit": {
+      "mode": "hash_chained_jsonl",
+      "provider": "local_file",
+      "path": "/Users/bhavuk.arora/Parallax42-Compliance-Intelligence-Agent/logs/agent_audit.jsonl",
+      "appendOnly": true,
+      "hashChained": true,
+      "durable": true,
+      "durableRequired": false,
+      "enterpriseReady": false,
+      "durabilityNote": "Audit file is written to the configured filesystem path. Use managed append-only storage for multi-instance production."
+    },
+    "evidenceVectorStore": {
+      "provider": "local_file",
+      "storage": "server_side_local_vector_store",
+      "durable": false,
+      "durableRequired": false,
+      "enterpriseReady": false,
+      "browserEmbeddingsRetained": false,
+      "localStorePath": "/var/folders/s7/ch8z1jd96p10gnt99khhwcdw0000gp/T/p42-compliance-intelligence-agent/evidence-vector-index.json",
+      "qdrantConfigured": false,
+      "durabilityNote": "Server-side local vector storage is acceptable for demos only; configure Qdrant or an approved managed store for production."
+    }
+  },
+  "domainCount": 10,
+  "caveat": "This is a curated subset of the readiness inventory for judge review."
+}

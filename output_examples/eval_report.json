@@ -1,0 +1,54 @@
+{
+  "artifact": "eval_report",
+  "sample": false,
+  "source": "evidence/benchmark-report.json",
+  "generatedAt": "2026-05-15T16:26:16.078Z",
+  "scope": "local deterministic benchmark suite",
+  "summary": {
+    "cases": 4,
+    "passed": 4,
+    "failed": 0,
+    "passRate": 1,
+    "totalDurationMs": 8.11,
+    "p95DurationMs": 7.41
+  },
+  "results": [
+    {
+      "id": "bench-ai-privacy-critical",
+      "expected": "not_ready",
+      "actual": "not_ready",
+      "passed": true,
+      "durationMs": 7.41,
+      "evidenceCount": 12,
+      "gapCount": 3
+    },
+    {
+      "id": "bench-licensed-microsoft",
+      "expected": "conditionally_ready",
+      "actual": "conditionally_ready",
+      "passed": true,
+      "durationMs": 0.47,
+      "evidenceCount": 5,
+      "gapCount": 1
+    },
+    {
+      "id": "bench-hse-bcm",
+      "expected": "conditionally_ready",
+      "actual": "conditionally_ready",
+      "passed": true,
+      "durationMs": 0.14,
+      "evidenceCount": 8,
+      "gapCount": 2
+    },
+    {
+      "id": "bench-low-risk-consulting",
+      "expected": "ready",
+      "actual": "ready",
+      "passed": true,
+      "durationMs": 0.06,
+      "evidenceCount": 6,
+      "gapCount": 0
+    }
+  ],
+  "caveat": "This artifact reflects the existing benchmark evidence snapshot only; it does not claim live infrastructure health."
+}

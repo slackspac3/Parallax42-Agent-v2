@@ -1,0 +1,42 @@
+{
+  "artifact": "crewai_parity_report",
+  "sample": false,
+  "source": "generated from lib/agentRuntime.js using examples/high_risk_ai_saas_case.json",
+  "generatedAt": "2026-05-15T16:49:59.799Z",
+  "comparison": {
+    "deterministicStatus": "not_ready",
+    "crewaiFlowStatus": "not_ready",
+    "decisionStatusMatches": true,
+    "deterministicReadinessScore": 0.32,
+    "crewaiFlowReadinessScore": 0.32,
+    "gapCountMatches": true,
+    "evidenceIdCountMatches": true
+  },
+  "deterministic": {
+    "mode": "parity_deterministic",
+    "runtime": "deterministic",
+    "decision": {
+      "status": "not_ready",
+      "recommendation": "Do not approve yet",
+      "readinessScore": 0.32,
+      "rationale": "Multiple high-severity evidence or applicability gaps remain open."
+    },
+    "gapCount": 4,
+    "evidenceIdCount": 13
+  },
+  "crewaiFlow": {
+    "mode": "crewai_flow_dry_run",
+    "runtime": "crewai_flow_dry_run",
+    "manifestSource": "python_dry_run",
+    "degraded": false,
+    "decision": {
+      "status": "not_ready",
+      "recommendation": "Do not approve yet",
+      "readinessScore": 0.32,
+      "rationale": "Multiple high-severity evidence or applicability gaps remain open."
+    },
+    "gapCount": 4,
+    "evidenceIdCount": 13
+  },
+  "boundary": "CrewAI is dry-run/orchestration-shaped by default; deterministic compliance logic owns final decisions."
+}

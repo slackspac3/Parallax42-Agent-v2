@@ -3,6 +3,7 @@
 const { appendAuditRecord } = require('../../lib/auditStore');
 const { runAgentWithRuntimeAsync } = require('../../lib/agentRuntime');
 const { authorizeRequest } = require('../../lib/rbac');
+const { enrichConversationWithServerRetrieval } = require('../../lib/serverSideRetrieval');
 const { methodGuard, readJsonRequest, sendJson } = require('../_http');
 
 module.exports = async function handler(req, res) {
@@ -15,7 +16,14 @@ module.exports = async function handler(req, res) {
     }
     const body = await readJsonRequest(req);
     const runtime = req.headers['x-agent-runtime'] || body.runtime;
-    const result = await runAgentWithRuntimeAsync(body, { runtime });
+    const agentInput = body.caseDraft && typeof body.caseDraft === 'object' ? body.caseDraft : body;
+    const enrichedBody = await enrichConversationWithServerRetrieval({
+      ...body,
+      caseDraft: agentInput,
+      forceRun: true,
+      message: body.message || body.prompt || 'run it'
+    });
+    const result = await runAgentWithRuntimeAsync(enrichedBody.caseDraft || agentInput, { runtime });
     appendAuditRecord({
       actor: auth.actor,
       caseId: result.case?.caseId,

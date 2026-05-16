@@ -38,4 +38,9 @@ test('review pack includes digest, evidence quality, retrieval audit, and human 
   assert.ok(Buffer.isBuffer(pdf));
   assert.match(pdf.subarray(0, 8).toString('latin1'), /%PDF-1\.4/);
   assert.ok(pdf.length > 1500);
+  const pdfText = pdf.toString('latin1');
+  assert.match(pdfText, /Compliance Mission Control/);
+  assert.match(pdfText, /Decision Room/);
+  assert.match(pdfText, /Evidence Intelligence/);
+  assert.match(pdfText, /Council Trace/);
 });

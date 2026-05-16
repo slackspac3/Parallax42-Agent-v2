@@ -1,0 +1,300 @@
+{
+  "artifact": "golden_demo_run",
+  "sample": false,
+  "source": "evidence/golden-demo-run.json",
+  "generatedAt": "2026-05-15T16:26:16.211Z",
+  "workflow": {
+    "id": "golden-ai-saas-compliance-review",
+    "title": "High-risk AI SaaS supplier compliance review",
+    "reviewerNarrative": "A reviewer evaluates a critical AI SaaS supplier that touches personal data, Azure AD, ServiceNow, and finance reporting with missing DPA, model-training, and continuity evidence.",
+    "targetDecision": "not_ready",
+    "productionPromise": "The agent must produce a defensible no-approval-yet decision with cited domains, named gaps, controls, trace, audit record, and human approval boundary.",
+    "stages": [
+      {
+        "id": "intake",
+        "label": "Structured intake",
+        "proof": "case_id, business_unit, geography, supplier, integrations, supplied evidence summary",
+        "expectedTraceEvent": "case_loaded"
+      },
+      {
+        "id": "evidence_review",
+        "label": "Evidence review",
+        "proof": "detected available SOC 2 summary and missing DPA/model-training/continuity evidence",
+        "expectedTraceEvent": "evidence_mapped"
+      },
+      {
+        "id": "domain_scan",
+        "label": "Compliance domain scan",
+        "proof": "privacy, AI governance, continuity, third-party, technical, finance, and Microsoft governance domains",
+        "expectedTraceEvent": "domains_scanned"
+      },
+      {
+        "id": "gap_challenge",
+        "label": "Gap challenge",
+        "proof": "high-severity DPA, model-training, and continuity blockers plus finance/project confirmation",
+        "expectedTraceEvent": "controls_recommended"
+      },
+      {
+        "id": "responsible_ai_review",
+        "label": "Responsible AI review",
+        "proof": "human approval required, no automatic approval, unsupported certainty blocked",
+        "expectedTraceEvent": "output_review_completed"
+      },
+      {
+        "id": "audit_pack",
+        "label": "Audit pack",
+        "proof": "decision, evidence IDs, gaps, controls, and trace events exported as JSON",
+        "expectedTraceEvent": "output_review_completed"
+      }
+    ],
+    "acceptanceCriteria": [
+      "decision.status is not_ready",
+      "at least three high-severity gaps are named",
+      "privacy, AI governance, and business continuity domains are applicable",
+      "outputReview.finalOutputSafeForHumanReview is true",
+      "outputReview includes human_approval_required and no_automatic_approval checks",
+      "trace contains intake, domain scan, evidence mapping, control recommendation, and output review events"
+    ],
+    "stretchCriteria": [
+      "same case can run through CrewAI Flow with deterministic fallback",
+      "uploaded contract evidence can flip individual gaps from blocking to satisfied",
+      "trace can be graded by an eval suite and exported using OpenTelemetry GenAI conventions",
+      "reviewer can approve, reject, or request remediation with RBAC-backed audit"
+    ]
+  },
+  "input": {
+    "caseId": "g42-cia-demo-001",
+    "requester": "Group Technology Risk",
+    "businessUnit": "Group Technology Risk",
+    "geography": "UAE",
+    "supplierName": "Example AI SaaS",
+    "serviceDescription": "Critical AI workflow automation service for finance reporting and operational analytics.",
+    "brief": "Procure a critical AI SaaS supplier that processes personal data, integrates with Azure AD and ServiceNow, and supports finance reporting across the UAE.",
+    "integrations": [
+      "Azure AD",
+      "ServiceNow",
+      "Finance reporting"
+    ],
+    "documents": [
+      {
+        "title": "Supplier assurance summary",
+        "summary": "SOC 2 summary available. No signed DPA, model-training exclusion, or continuity plan attached."
+      }
+    ]
+  },
+  "decision": {
+    "status": "not_ready",
+    "recommendation": "Do not approve yet",
+    "readinessScore": 0.32,
+    "rationale": "Multiple high-severity evidence or applicability gaps remain open."
+  },
+  "evidenceChecklist": {
+    "decisionStatus": "not_ready",
+    "highSeverityGapCount": 3,
+    "applicableDomains": [
+      "ai_model_governance",
+      "business_continuity",
+      "privacy_data_governance",
+      "licensing_microsoft_governance",
+      "technical_risk",
+      "third_party_compliance"
+    ],
+    "traceComplete": true,
+    "humanApprovalRequired": true,
+    "automaticApprovalBlocked": true,
+    "acceptanceStatus": "passed"
+  },
+  "metrics": {
+    "domainCount": 7,
+    "gapCount": 4,
+    "evidenceIdCount": 13,
+    "citationCount": 1,
+    "traceEventCount": 6
+  },
+  "runtime": {
+    "requestedRuntime": "crewai_flow",
+    "actualRuntime": "crewai_flow_dry_run",
+    "actualMode": "crewai_flow_dry_run",
+    "manifestSource": "python_dry_run",
+    "degraded": false,
+    "fallbackReason": "",
+    "flowManifest": {
+      "caseId": "g42-cia-demo-001",
+      "crew": {
+        "agent_count": 6,
+        "agents": [
+          {
+            "goal": "Convert a messy enterprise request into a bounded compliance work plan with review checkpoints.",
+            "key": "compliance_orchestrator",
+            "role": "Compliance Orchestrator"
+          },
+          {
+            "goal": "Identify likely policies, regulations, standards, and internal obligations from the case context.",
+            "key": "regulatory_obligation_mapper",
+            "role": "Regulatory Obligation Mapper"
+          },
+          {
+            "goal": "Inspect supplied evidence summaries, document signals, and missing artifacts.",
+            "key": "evidence_examiner",
+            "role": "Evidence Examiner"
+          },
+          {
+            "goal": "Translate obligations and evidence gaps into controls, blockers, owners, and remediation actions.",
+            "key": "risk_control_analyst",
+            "role": "Risk And Control Analyst"
+          },
+          {
+            "goal": "Check the proposed output for unsupported certainty, bias-sensitive assumptions, unsafe automation, and missing human approval.",
+            "key": "responsible_ai_reviewer",
+            "role": "Responsible AI Reviewer"
+          },
+          {
+            "goal": "Produce an audit-ready decision brief with trace, evidence IDs, gaps, controls, and escalation path.",
+            "key": "audit_packager",
+            "role": "Audit Packager"
+          }
+        ],
+        "human_approval_required": true,
+        "input": "examples/high_risk_ai_saas_case.json",
+        "mode": "dry_run",
+        "process": "sequential",
+        "secrets_required": false,
+        "task_count": 6,
+        "tasks": [
+          {
+            "agent": "compliance_orchestrator",
+            "expected_output": "JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
+            "key": "triage_case"
+          },
+          {
+            "agent": "regulatory_obligation_mapper",
+            "expected_output": "JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
+            "key": "map_obligations"
+          },
+          {
+            "agent": "evidence_examiner",
+            "expected_output": "JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
+            "key": "examine_evidence"
+          },
+          {
+            "agent": "risk_control_analyst",
+            "expected_output": "JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
+            "key": "recommend_controls"
+          },
+          {
+            "agent": "responsible_ai_reviewer",
+            "expected_output": "JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
+            "key": "review_responsible_ai"
+          },
+          {
+            "agent": "audit_packager",
+            "expected_output": "JSON decision brief suitable for human approval and audit review.\n",
+            "key": "package_audit_brief"
+          }
+        ]
+      },
+      "flow": {
+        "class": "ComplianceIntelligenceFlow",
+        "control_model": "start/listen state machine",
+        "deterministic_fallback": true,
+        "entrypoint": "kickoff",
+        "human_approval_required": true,
+        "stages": [
+          {
+            "agent": "compliance_orchestrator",
+            "expectedTraceEvent": "case_loaded",
+            "expected_output": "JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
+            "id": "intake",
+            "kind": "start",
+            "method": "load_case",
+            "role": "Compliance Orchestrator",
+            "task": "triage_case"
+          },
+          {
+            "agent": "regulatory_obligation_mapper",
+            "expectedTraceEvent": "domains_scanned",
+            "expected_output": "JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
+            "id": "obligations",
+            "kind": "listen",
+            "method": "map_obligations",
+            "role": "Regulatory Obligation Mapper",
+            "task": "map_obligations"
+          },
+          {
+            "agent": "evidence_examiner",
+            "expectedTraceEvent": "evidence_mapped",
+            "expected_output": "JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
+            "id": "evidence",
+            "kind": "listen",
+            "method": "examine_evidence",
+            "role": "Evidence Examiner",
+            "task": "examine_evidence"
+          },
+          {
+            "agent": "risk_control_analyst",
+            "expectedTraceEvent": "controls_recommended",
+            "expected_output": "JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
+            "id": "controls",
+            "kind": "listen",
+            "method": "recommend_controls",
+            "role": "Risk And Control Analyst",
+            "task": "recommend_controls"
+          },
+          {
+            "agent": "responsible_ai_reviewer",
+            "expectedTraceEvent": "output_review_completed",
+            "expected_output": "JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
+            "id": "rai_review",
+            "kind": "listen",
+            "method": "review_responsible_ai",
+            "role": "Responsible AI Reviewer",
+            "task": "review_responsible_ai"
+          },
+          {
+            "agent": "audit_packager",
+            "expectedTraceEvent": "output_review_completed",
+            "expected_output": "JSON decision brief suitable for human approval and audit review.\n",
+            "id": "audit_pack",
+            "kind": "listen",
+            "method": "package_audit_brief",
+            "role": "Audit Packager",
+            "task": "package_audit_brief"
+          }
+        ]
+      },
+      "framework": "CrewAI Flow",
+      "input": "stdin",
+      "live_crewai": false,
+      "mode": "crewai_flow_dry_run",
+      "primary_runtime": true,
+      "secrets_required_for_dry_run": false,
+      "state_schema": {
+        "auditBrief": "final decision package",
+        "case": "original normalized compliance case",
+        "controlPlan": "controls, blockers, owners, remediation",
+        "evidenceReview": "supported and missing evidence",
+        "obligations": "mapped obligations and applicability",
+        "responsibleAiReview": "approval boundary and safety checks",
+        "workPlan": "triage and domain scope"
+      }
+    },
+    "llm": {
+      "requested": false,
+      "enabled": false,
+      "model": "gpt-5.1",
+      "baseUrlConfigured": true,
+      "providerEnv": "OPENAI_API_KEY",
+      "apiKeyConfigured": true,
+      "outputAvailable": false
+    },
+    "llmOutput": null
+  },
+  "orchestration": {
+    "framework": "CrewAI Flow",
+    "primaryRuntime": true,
+    "manifestSource": "python_dry_run",
+    "humanApprovalRequired": true,
+    "deterministicDecisionEngine": true
+  },
+  "caveat": "Curated from the golden demo evidence snapshot; raw full run remains in evidence/golden-demo-run.json."
+}

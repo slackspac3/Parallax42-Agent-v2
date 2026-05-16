@@ -77,9 +77,10 @@ const resetConfig = document.querySelector('#resetConfig');
 const apiMode = document.querySelector('#apiMode');
 const relayUrl = document.querySelector('#relayUrl');
 const backendUrl = document.querySelector('#backendUrl');
-const runModeButtons = document.querySelectorAll('[data-run-mode]');
+const runModeButtons = document.querySelectorAll('.mode-tab[data-run-mode]');
 const casePanelEyebrow = document.querySelector('#casePanelEyebrow');
 const casePanelTitle = document.querySelector('#casePanelTitle');
+const startNewCase = document.querySelector('#startNewCase');
 const runwayTitle = document.querySelector('#runwayTitle');
 const runwayDescription = document.querySelector('#runwayDescription');
 const decisionText = document.querySelector('#decisionText');
@@ -96,6 +97,8 @@ const stageOutput = document.querySelector('#stageOutput');
 const domainList = document.querySelector('#domainList');
 const gapList = document.querySelector('#gapList');
 const traceList = document.querySelector('#traceList');
+const rawRunDetails = document.querySelector('#rawRunDetails');
+const rawRunJson = document.querySelector('#rawRunJson');
 const readinessList = document.querySelector('#readinessList');
 const specialistList = document.querySelector('#specialistList');
 const artifactPreview = document.querySelector('#artifactPreview');
@@ -106,12 +109,16 @@ const evidenceIngestionStatus = document.querySelector('#evidenceIngestionStatus
 const citationList = document.querySelector('#citationList');
 const benchmarkSummary = document.querySelector('#benchmarkSummary');
 const deploymentStatus = document.querySelector('#deploymentStatus');
+const capabilityFallbacks = document.querySelector('#capabilityFallbacks');
 const readinessJsonLink = document.querySelector('#readinessJsonLink');
 const benchmarksJsonLink = document.querySelector('#benchmarksJsonLink');
 const goldenDemoLink = document.querySelector('#goldenDemoLink');
 const topHealth = document.querySelector('#topHealth');
 const councilOutputTab = document.querySelector('#councilOutputTab');
+const missionWelcome = document.querySelector('#missionWelcome');
 const caseDraftPanel = document.querySelector('#caseDraftPanel');
+const caseIntelReadiness = document.querySelector('#caseIntelReadiness');
+const caseIntelDetails = document.querySelector('#caseIntelDetails');
 const chatMessagesEl = document.querySelector('#chatMessages');
 const chatForm = document.querySelector('#chatForm');
 const chatInput = document.querySelector('#chatInput');
@@ -180,11 +187,12 @@ const runModeCopy = {
 };
 
 const defaultAgentActivity = [
-  { id: 'intake', label: 'Intake', detail: 'listening', status: 'active' },
-  { id: 'obligations', label: 'Obligations', detail: 'queued', status: 'queued' },
-  { id: 'evidence', label: 'Evidence', detail: 'queued', status: 'queued' },
-  { id: 'controls', label: 'Controls', detail: 'queued', status: 'queued' },
-  { id: 'review', label: 'Reviewer', detail: 'queued', status: 'queued' }
+  { id: 'intake', label: 'Intake Agent', detail: 'listening', status: 'active' },
+  { id: 'obligations', label: 'Obligation Mapper', detail: 'queued', status: 'queued' },
+  { id: 'evidence', label: 'Evidence Examiner', detail: 'queued', status: 'queued' },
+  { id: 'controls', label: 'Risk & Controls', detail: 'queued', status: 'queued' },
+  { id: 'review', label: 'Responsible AI', detail: 'queued', status: 'queued' },
+  { id: 'packager', label: 'Audit Packager', detail: 'queued', status: 'queued' }
 ];
 
 const agentLabels = {
@@ -510,7 +518,7 @@ function setAttachmentStatus(message = '', state = 'idle') {
 function pipelineStepStatus(stepId, phase) {
   const phaseIndex = evidencePipelineSteps.findIndex((step) => step.id === phase);
   const stepIndex = evidencePipelineSteps.findIndex((step) => step.id === stepId);
-  if (phase === 'error') return stepIndex <= Math.max(0, phaseIndex) ? 'error' : 'queued';
+  if (phase === 'error') return stepIndex <= evidencePipelineSteps.length - 2 ? 'error' : 'queued';
   if (stepIndex < phaseIndex) return 'complete';
   if (stepIndex === phaseIndex) return 'active';
   return 'queued';
@@ -606,6 +614,14 @@ function writeJsonStorage(key, value) {
     window.localStorage.setItem(key, JSON.stringify(value));
   } catch {
     // Retrieval metadata is useful but not required in private browsing modes.
+  }
+}
+
+function removeStorage(key) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Session cleanup should not fail when storage is unavailable.
   }
 }
 
@@ -1040,11 +1056,12 @@ async function ingestEvidenceFiles(files = []) {
       files: selected
     });
     renderAgentActivity([
-      { label: 'Evidence', detail: 'reading files', status: 'active' },
-      { label: 'NLP Intake', detail: 'waiting', status: 'queued' },
-      { label: 'Obligations', detail: 'queued', status: 'queued' },
-      { label: 'Controls', detail: 'queued', status: 'queued' },
-      { label: 'Council', detail: 'waiting', status: 'queued' }
+      { label: 'Intake Agent', detail: 'waiting', status: 'queued' },
+      { label: 'Obligation Mapper', detail: 'queued', status: 'queued' },
+      { label: 'Evidence Examiner', detail: 'reading files', status: 'active' },
+      { label: 'Risk & Controls', detail: 'queued', status: 'queued' },
+      { label: 'Responsible AI', detail: 'queued', status: 'queued' },
+      { label: 'Audit Packager', detail: 'waiting', status: 'queued' }
     ]);
   }
   try {
@@ -1064,10 +1081,12 @@ async function ingestEvidenceFiles(files = []) {
           files: backendFiles
         });
         renderAgentActivity([
-          { label: 'Evidence', detail: 'uploading', status: 'active' },
-          { label: 'Parser', detail: 'queued', status: 'queued' },
-          { label: 'NLP Intake', detail: 'waiting', status: 'queued' },
-          { label: 'Council', detail: 'waiting', status: 'queued' }
+          { label: 'Intake Agent', detail: 'waiting', status: 'queued' },
+          { label: 'Obligation Mapper', detail: 'queued', status: 'queued' },
+          { label: 'Evidence Examiner', detail: 'uploading', status: 'active' },
+          { label: 'Risk & Controls', detail: 'queued', status: 'queued' },
+          { label: 'Responsible AI', detail: 'queued', status: 'queued' },
+          { label: 'Audit Packager', detail: 'waiting', status: 'queued' }
         ]);
       }
       await yieldToBrowser();
@@ -1078,9 +1097,20 @@ async function ingestEvidenceFiles(files = []) {
         extracted.push(...parsedEvidence);
       } catch (error) {
         const detail = error instanceof Error ? error.message : 'Backend parsing failed.';
+        if (activeRunMode === 'chat') {
+          renderEvidencePipelineStatus({
+            phase: 'error',
+            progress: 28,
+            title: 'Parser relay unavailable',
+            detail: 'File parsing/OCR did not complete. Metadata is preserved; typed summaries still let the deterministic council run.',
+            metric: 'fallback',
+            files: backendFiles,
+            state: 'error'
+          });
+        }
         chatMessages.push({
           role: 'assistant',
-          text: `I could not parse the evidence through the backend parser: ${detail} I registered the file metadata only, so please summarize the supplier/workflow and key clauses in chat before running council.`
+          text: `Parser relay fallback: I could not parse the evidence through the backend parser (${detail}). I registered the file metadata only. Chat intake, deterministic council, audit trace, and PDF export still work; paste the supplier/workflow and key clauses before running council.`
         });
         for (const [index, file] of backendFiles.entries()) {
           extracted.push(await extractEvidenceFile(file, offset + index, { allowBrowserText: false }));
@@ -1119,10 +1149,12 @@ async function ingestEvidenceFiles(files = []) {
           files: extracted
         });
         renderAgentActivity([
-          { label: 'Evidence', detail: 'parsed', status: 'complete' },
-          { label: 'Embeddings', detail: 'indexing', status: 'active' },
-          { label: 'Retriever', detail: 'queued', status: 'queued' },
-          { label: 'Council', detail: 'waiting', status: 'queued' }
+          { label: 'Intake Agent', detail: 'ready', status: 'complete' },
+          { label: 'Obligation Mapper', detail: 'queued', status: 'queued' },
+          { label: 'Evidence Examiner', detail: 'indexing', status: 'active' },
+          { label: 'Risk & Controls', detail: 'queued', status: 'queued' },
+          { label: 'Responsible AI', detail: 'queued', status: 'queued' },
+          { label: 'Audit Packager', detail: 'waiting', status: 'queued' }
         ]);
       }
       try {
@@ -1140,9 +1172,20 @@ async function ingestEvidenceFiles(files = []) {
         }
       } catch (error) {
         const detail = error instanceof Error ? error.message : 'Evidence indexing failed.';
+        if (activeRunMode === 'chat') {
+          renderEvidencePipelineStatus({
+            phase: 'error',
+            progress: 92,
+            title: 'Embeddings gateway unavailable',
+            detail: 'Semantic retrieval was disabled for this evidence. The extracted summary remains available to the deterministic council.',
+            metric: 'fallback',
+            files: extracted,
+            state: 'error'
+          });
+        }
         chatMessages.push({
           role: 'assistant',
-          text: `I parsed the file, but could not index it for semantic retrieval: ${detail} I can still use the extracted summary in the case draft.`
+          text: `Gateway fallback: I parsed the file, but could not index it for semantic retrieval (${detail}). I can still use the extracted summary and typed context in the deterministic council; citation retrieval and embeddings search are disabled for this file.`
         });
       }
     }
@@ -1181,11 +1224,12 @@ async function ingestEvidenceFiles(files = []) {
       }
       renderChatMessages();
       renderAgentActivity([
-        { label: 'Evidence', detail: binaryOnlyCount ? 'registered' : 'parsed', status: 'complete' },
-        { label: 'Embeddings', detail: indexedCount ? 'indexed' : 'not ready', status: indexedCount ? 'complete' : 'queued' },
-        { label: 'Retriever', detail: indexedCount ? 'ready' : 'queued', status: indexedCount ? 'complete' : 'queued' },
-        { label: 'Obligations', detail: 'queued', status: 'queued' },
-        { label: 'Council', detail: 'waiting', status: 'queued' }
+        { label: 'Intake Agent', detail: 'ready', status: 'complete' },
+        { label: 'Obligation Mapper', detail: 'queued', status: 'queued' },
+        { label: 'Evidence Examiner', detail: indexedCount ? 'citation-ready' : binaryOnlyCount ? 'metadata-only' : 'parsed', status: indexedCount || !binaryOnlyCount ? 'complete' : 'queued' },
+        { label: 'Risk & Controls', detail: 'queued', status: 'queued' },
+        { label: 'Responsible AI', detail: 'queued', status: 'queued' },
+        { label: 'Audit Packager', detail: 'waiting', status: 'queued' }
       ]);
     } else if (activeRunMode !== 'live') {
       setRunMode('live', { skipRender: true });
@@ -1277,14 +1321,18 @@ function renderContextStrength(draft = chatCaseDraft) {
   contextStrengthText.textContent = text;
   contextStrengthBar.style.width = `${score}%`;
   chatRunNow.disabled = readiness ? !readiness.runnable : false;
+  renderCaseIntelligence(draft, lastRuns.chat);
 }
 
 function renderAgentActivity(items = defaultAgentActivity) {
   if (!agentActivity) return;
   agentActivity.innerHTML = `
     <div class="agent-activity-header">
-      <span class="eyebrow">Agent council</span>
-      <strong>${items.some((item) => item.status === 'active') ? 'Working in the background' : 'Ready when context is strong'}</strong>
+      <div>
+        <span class="eyebrow">Specialist validation trace</span>
+        <strong>${items.some((item) => item.status === 'active') ? 'Deterministic council is active' : 'Deterministic council trace'}</strong>
+      </div>
+      <small>Not live autonomous debate</small>
     </div>
     <div class="agent-orbit">
       ${items.map((item, index) => `
@@ -1308,9 +1356,198 @@ function renderChatAttachments() {
     <span class="${item.extractionStatus === 'binary_registered' ? 'needs-extraction' : ''} ${item.indexStatus === 'indexed' ? 'is-indexed' : ''}">
       <b>${escapeHtml(item.evidenceId)}</b>
       ${escapeHtml(item.title || item.fileName || 'Attached evidence')}
-      ${item.indexStatus === 'indexed' ? '<em>indexed</em>' : item.signals?.length ? `<em>${escapeHtml(item.signals.slice(0, 2).join(', '))}</em>` : ''}
+      <em>${escapeHtml(evidenceStatusLabel(item))}</em>
     </span>
   `).join('');
+}
+
+function evidenceStatusLabel(item = {}) {
+  if (item.indexStatus === 'indexed') return 'citation-ready';
+  if (item.extractionStatus === 'backend_parsed' || item.extractionStatus === 'text_extracted' || item.extractionStatus === 'sampled_text') return 'parsed';
+  if (item.extractionStatus === 'binary_registered') return 'metadata-only';
+  if (item.extractionStatus) return humanize(item.extractionStatus);
+  if (item.signals?.length) return item.signals.slice(0, 2).join(', ');
+  return 'attached';
+}
+
+function missingProofItems(draft = chatCaseDraft, result = lastRuns.chat) {
+  if (result?.ok && Array.isArray(result.gaps) && result.gaps.length) {
+    return result.gaps.map((gap) => gap.gap || gap.action || 'Reviewer confirmation required').slice(0, 4);
+  }
+  const readiness = draft === chatCaseDraft ? chatRunReadiness : null;
+  const blockers = readiness?.executionBlockers || readiness?.advisoryGaps || [];
+  if (blockers.length) return blockers.map((item) => titleCase(item)).slice(0, 4);
+  const missing = [];
+  if (!cleanEvidenceText(draft.businessUnit)) missing.push('Accountable owner');
+  if (!cleanEvidenceText(draft.geography)) missing.push('Geography');
+  if (!(draft.evidenceSignals?.length || draft.documents?.length || draft.indexedEvidence?.chunkCount)) missing.push('Evidence proof');
+  return missing.slice(0, 4);
+}
+
+function nextBestAction(draft = chatCaseDraft, result = lastRuns.chat) {
+  if (result?.ok) {
+    const gaps = Array.isArray(result.gaps) ? result.gaps : [];
+    if (gaps.length) return gaps[0].action || 'Assign the blocking gap to a human reviewer.';
+    return 'Export the review pack and record the accountable human approval decision.';
+  }
+  const missing = missingProofItems(draft);
+  if (missing.length) return `Add ${missing[0].toLowerCase()} to strengthen the case.`;
+  if (chatRunReadiness?.runnable) return 'Run council to produce the decision room.';
+  return 'Describe the supplier, owner, geography, data, integrations, and available evidence.';
+}
+
+function evidenceStatusSummary(draft = chatCaseDraft) {
+  const docCount = Array.isArray(draft.documents) ? draft.documents.length : 0;
+  const uploadedCount = uploadedEvidence.length;
+  const indexed = Number(draft.indexedEvidence?.chunkCount || evidenceIndexMeta.chunkCount || 0);
+  const metadataOnly = uploadedEvidence.filter((item) => item.extractionStatus === 'binary_registered').length;
+  if (indexed) return `${indexed} citation-ready chunk${indexed === 1 ? '' : 's'}`;
+  if (metadataOnly) return `${metadataOnly} metadata-only file${metadataOnly === 1 ? '' : 's'}`;
+  if (docCount || uploadedCount) return `${docCount || uploadedCount} evidence item${(docCount || uploadedCount) === 1 ? '' : 's'} captured`;
+  return 'No evidence attached yet';
+}
+
+function retrievalContextFor(result = lastRuns.chat, draft = chatCaseDraft) {
+  return result?.retrievalContext || result?.case?.retrievalContext || draft?.retrievalContext || {};
+}
+
+function evidenceMatchesFor(result = lastRuns.chat, draft = chatCaseDraft) {
+  const retrieval = retrievalContextFor(result, draft);
+  return Array.isArray(retrieval.evidenceMatches)
+    ? retrieval.evidenceMatches
+    : Array.isArray(retrieval.matches) ? retrieval.matches : [];
+}
+
+function learningSuggestionsFor(result = lastRuns.chat, draft = chatCaseDraft) {
+  const retrieval = retrievalContextFor(result, draft);
+  return {
+    similarCases: Array.isArray(retrieval.similarCases) ? retrieval.similarCases : [],
+    suggestions: retrieval.learningSuggestions || null,
+    missingEvidenceSignals: Array.isArray(retrieval.missingEvidenceSignals) ? retrieval.missingEvidenceSignals : []
+  };
+}
+
+function advisorySpecialistsFor(result = lastRuns.chat) {
+  const output = result?.orchestration?.llmOutput || result?.runtime?.llmOutput || null;
+  return Array.isArray(output?.specialists) ? output.specialists : [];
+}
+
+function memoryProviderLabel(draft = chatCaseDraft) {
+  return draft.indexedEvidence?.provider || evidenceIndexMeta.provider || 'local-file fallback';
+}
+
+function renderMissionWelcome() {
+  if (!missionWelcome) return;
+  const hasContext = hasChatContext() || chatMessages.length > 1 || lastRuns.chat?.ok;
+  missionWelcome.hidden = Boolean(hasContext);
+}
+
+function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
+  if (!caseIntelReadiness || !caseIntelDetails) return;
+  const score = result?.ok
+    ? Math.round(Number(result.decision?.readinessScore || 0) * 100)
+    : Number.isFinite(chatRunReadiness?.score) ? chatRunReadiness.score : contextStrength(draft);
+  const risks = result?.ok
+    ? (result.domains || []).filter((domain) => /applicable|needs|confirmation/i.test(domain.status || '')).map((domain) => domain.label)
+    : unique([...(draft.riskSignals || []), ...(draft.evidenceSignals || [])]);
+  const missing = missingProofItems(draft, result);
+  const supplier = draft.supplierName || result?.case?.supplierName || 'New compliance case';
+  const owner = draft.businessUnit || result?.case?.businessUnit || 'needed';
+  const geography = draft.geography || result?.case?.geography || 'needed';
+  const approvalRequired = result?.ok ? humanApprovalRequired(result) : true;
+  const evidenceMatches = evidenceMatchesFor(result, draft);
+  const learning = learningSuggestionsFor(result, draft);
+  const advisory = advisorySpecialistsFor(result);
+  const indexedChunks = Number(draft.indexedEvidence?.chunkCount || evidenceIndexMeta.chunkCount || retrievalContextFor(result, draft).chunkCount || 0);
+  caseIntelReadiness.textContent = `${Math.max(0, Math.min(100, Math.round(score)))}%`;
+  caseIntelDetails.innerHTML = `
+    <div class="intel-meter" aria-hidden="true"><span style="width: ${Math.max(0, Math.min(100, Math.round(score)))}%"></span></div>
+    <div class="intel-grid">
+      <span>Supplier / workflow</span><b>${escapeHtml(supplier)}</b>
+      <span>Owner</span><b>${escapeHtml(owner)}</b>
+      <span>Geography</span><b>${escapeHtml(geography)}</b>
+      <span>Evidence status</span><b>${escapeHtml(evidenceStatusSummary(draft))}</b>
+      <span>Human review</span><b>${escapeHtml(approvalRequired ? 'required' : 'check boundary')}</b>
+    </div>
+    <div class="intel-block memory-status-block">
+      <span class="eyebrow">RAG evidence memory</span>
+      <div class="memory-status-grid">
+        <span>Provider</span><b>${escapeHtml(memoryProviderLabel(draft))}</b>
+        <span>Indexed chunks</span><b>${escapeHtml(indexedChunks || 0)}</b>
+        <span>Retrieved matches</span><b>${escapeHtml(evidenceMatches.length)}</b>
+      </div>
+    </div>
+    <div class="intel-block memory-status-block">
+      <span class="eyebrow">Governed learning memory</span>
+      <div class="memory-status-grid">
+        <span>Similar cases</span><b>${escapeHtml(learning.similarCases.length)}</b>
+        <span>Reviewer patterns</span><b>${escapeHtml(learning.suggestions?.sourceMemoryIds?.length || 0)}</b>
+        <span>Control suggestions</span><b>${escapeHtml(learning.suggestions?.commonControlsReviewersAdded?.length || 0)}</b>
+      </div>
+    </div>
+    <div class="intel-block memory-status-block">
+      <span class="eyebrow">Advisory specialists</span>
+      <div class="memory-status-grid">
+        <span>Status</span><b>${escapeHtml(advisory.length ? 'attached' : result?.orchestration?.liveLlm?.requested ? 'unavailable' : 'not requested')}</b>
+        <span>Decision owner</span><b>deterministic engine</b>
+      </div>
+    </div>
+    <div class="intel-block">
+      <span class="eyebrow">Detected risk domains</span>
+      <div class="intel-chips">
+        ${risks.length ? risks.slice(0, 8).map((risk) => `<span>${escapeHtml(risk)}</span>`).join('') : '<span>awaiting signals</span>'}
+      </div>
+    </div>
+    <div class="intel-block">
+      <span class="eyebrow">Missing proof</span>
+      <ul>
+        ${missing.length ? missing.map((item) => `<li>${escapeHtml(item)}</li>`).join('') : '<li>No intake blockers detected; reviewer confirmation still required.</li>'}
+      </ul>
+    </div>
+    <div class="next-action">
+      <span class="eyebrow">Next best action</span>
+      <strong>${escapeHtml(nextBestAction(draft, result))}</strong>
+    </div>
+  `;
+}
+
+function assistantFactsForMessage() {
+  const draft = chatCaseDraft || {};
+  const facts = [
+    ['Owner', draft.businessUnit],
+    ['Geography', draft.geography],
+    ['Integrations', draft.integrations?.join(', ')],
+    ['Evidence', evidenceStatusSummary(draft)],
+    ['RAG matches', evidenceMatchesFor(lastRuns.chat, draft).length ? `${evidenceMatchesFor(lastRuns.chat, draft).length} retrieved` : 'none yet'],
+    ['Learning memory', learningSuggestionsFor(lastRuns.chat, draft).similarCases.length ? `${learningSuggestionsFor(lastRuns.chat, draft).similarCases.length} similar` : 'none yet']
+  ].filter(([, value]) => cleanEvidenceText(value));
+  return facts.slice(0, 6);
+}
+
+function renderAssistantMessageDetails() {
+  const missing = missingProofItems();
+  const facts = assistantFactsForMessage();
+  const canRun = Boolean(chatRunReadiness?.runnable);
+  return `
+    <div class="assistant-brief">
+      <div>
+        <span class="eyebrow">Case readout</span>
+        <strong>${escapeHtml(canRun ? 'Council-ready context' : 'Context being assembled')}</strong>
+      </div>
+      ${facts.length ? `
+        <dl>
+          ${facts.map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`).join('')}
+        </dl>
+      ` : ''}
+      <div class="assistant-chips">
+        ${missing.length ? missing.map((item) => `<span>${escapeHtml(item)}</span>`).join('') : '<span>no intake blockers</span>'}
+      </div>
+      <div class="assistant-next">
+        <span>${escapeHtml(nextBestAction())}</span>
+        ${canRun ? '<button type="button" data-chat-action="run-council">Run council</button>' : ''}
+      </div>
+    </div>
+  `;
 }
 
 function syncUploadedEvidenceIntoChatDraft() {
@@ -1336,7 +1573,7 @@ function indexedChunkCount() {
 function renderModeIdle(mode = activeRunMode) {
   const copy = runModeCopy[mode] || runModeCopy.demo;
   lastRun = lastRuns[mode];
-  if (lastRun?.ok) {
+  if (lastRun?.ok && !(mode === 'chat' && workspaceView === 'chat')) {
     renderRun(lastRun);
     if (mode === 'chat') renderChatMessages();
     return;
@@ -1360,6 +1597,11 @@ function renderModeIdle(mode = activeRunMode) {
   domainList.innerHTML = '<article class="empty-row">Domain coverage appears after the run starts.</article>';
   gapList.innerHTML = '<article class="empty-row">Blocking gaps appear after control analysis completes.</article>';
   traceList.innerHTML = '';
+  if (rawRunDetails) {
+    rawRunDetails.hidden = true;
+    rawRunDetails.open = false;
+  }
+  if (rawRunJson) rawRunJson.textContent = '{}';
   specialistList.innerHTML = '';
   citationList.innerHTML = '<article class="empty-row">Citations appear after evidence is mapped.</article>';
   artifactPreview.innerHTML = `
@@ -1379,6 +1621,44 @@ function renderModeIdle(mode = activeRunMode) {
     renderAgentActivity();
     renderChatAttachments();
   }
+}
+
+function resetChatCaseSession() {
+  clearPlaybackTimers();
+  lastRun = null;
+  lastRuns.chat = null;
+  uploadedEvidence = [];
+  evidenceIndexMeta = {};
+  chatCaseDraft = {};
+  chatRunReadiness = null;
+  chatMessages = [
+    {
+      role: 'assistant',
+      text: 'Start with the supplier or workflow, geography, regulated data or assets, integrations, and evidence you already have. I will build the case, ask only for missing context, and run the workflow when ready.'
+    }
+  ];
+  removeStorage(storageKeys.evidenceIndexMeta);
+  if (chatInput) chatInput.value = '';
+  if (chatEvidenceInput) chatEvidenceInput.value = '';
+  if (evidenceInput) evidenceInput.value = '';
+  if (evidenceIngestionStatus) evidenceIngestionStatus.textContent = 'No uploaded evidence yet.';
+  setAttachmentStatus('No files attached.', 'idle');
+  setRunMode('chat', { skipRender: true });
+  setWorkspaceView('chat');
+  renderModeIdle('chat');
+  if (sampleRun) {
+    sampleRun.disabled = false;
+    sampleRun.textContent = runModeCopy.chat.actionButton;
+  }
+  if (chatRunNow) {
+    chatRunNow.disabled = false;
+    chatRunNow.textContent = 'Run council';
+  }
+  if (chatForm) {
+    const submitButton = chatForm.querySelector('button[type="submit"]');
+    if (submitButton) submitButton.disabled = false;
+  }
+  chatInput?.focus();
 }
 
 function setRunMode(mode = 'demo', options = {}) {
@@ -1496,16 +1776,23 @@ function renderCaseDraft() {
       ${pills.length ? pills.map((pill) => `<span>${escapeHtml(pill)}</span>`).join('') : '<span>awaiting context</span>'}
     </div>
   `;
+  renderCaseIntelligence(draft, lastRuns.chat);
+  renderMissionWelcome();
 }
 
 function renderChatMessages() {
   renderCaseDraft();
   renderContextStrength();
   renderChatAttachments();
-  chatMessagesEl.innerHTML = chatMessages.map((message) => `
+  const latestAssistantIndex = chatMessages.map((message, index) => message.role === 'assistant' ? index : -1).filter((index) => index >= 0).pop();
+  chatMessagesEl.innerHTML = chatMessages.map((message, index) => `
     <article class="chat-message is-${escapeHtml(message.role)} ${message.pending ? 'is-pending' : ''}">
       <strong>${message.role === 'user' ? 'You' : 'Agent'}</strong>
-      <p>${escapeHtml(message.text)}</p>
+      <div class="message-body">
+        <p>${escapeHtml(message.text)}</p>
+        ${message.role === 'assistant' && !message.pending && index === latestAssistantIndex ? renderAssistantMessageDetails() : ''}
+        ${message.pending ? '<div class="typing-dots" aria-hidden="true"><span></span><span></span><span></span></div>' : ''}
+      </div>
     </article>
   `).join('');
   chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
@@ -1565,7 +1852,9 @@ function renderConversationState(result = {}) {
   const draft = result.caseDraft || chatCaseDraft || {};
   const evidenceSignals = Array.isArray(draft.evidenceSignals) ? draft.evidenceSignals : [];
   const riskSignals = Array.isArray(draft.riskSignals) ? draft.riskSignals : [];
-  const retrievalMatches = Array.isArray(draft.retrievalContext?.matches) ? draft.retrievalContext.matches : [];
+  const retrievalMatches = Array.isArray(draft.retrievalContext?.evidenceMatches)
+    ? draft.retrievalContext.evidenceMatches
+    : Array.isArray(draft.retrievalContext?.matches) ? draft.retrievalContext.matches : [];
 
   decisionText.textContent = runReadiness.runnable ? 'Ready to execute' : 'Building case draft';
   approvalStatus.textContent = runReadiness.runnable
@@ -1625,6 +1914,11 @@ function renderConversationState(result = {}) {
       </li>
     ` : ''}
   `;
+  if (rawRunDetails) {
+    rawRunDetails.hidden = true;
+    rawRunDetails.open = false;
+  }
+  if (rawRunJson) rawRunJson.textContent = '{}';
   domainList.innerHTML = riskSignals.length
     ? riskSignals.map((signal) => `
       <article class="domain-row">
@@ -1780,6 +2074,144 @@ function businessReviewerActions(result = {}) {
   ];
 }
 
+function humanApprovalRequired(result = {}) {
+  if (typeof result.humanApprovalRequired === 'boolean') return result.humanApprovalRequired;
+  if (typeof result.decision?.humanApprovalRequired === 'boolean') return result.decision.humanApprovalRequired;
+  if (typeof result.orchestration?.humanApprovalRequired === 'boolean') return result.orchestration.humanApprovalRequired;
+  return true;
+}
+
+function humanReviewReasons(result = {}) {
+  const gaps = Array.isArray(result.gaps) ? result.gaps : [];
+  const evidenceQuality = String(result.evidenceQuality?.status || '').toLowerCase();
+  const decisionReadiness = result.decisionReadiness || {};
+  const reasons = [];
+  if (humanApprovalRequired(result)) {
+    reasons.push('The council never grants operational approval automatically.');
+  }
+  if (gaps.length) {
+    reasons.push(`${gaps.length} blocking item${gaps.length === 1 ? '' : 's'} must be reviewed and assigned before approval.`);
+  }
+  if (['missing', 'weak', 'not scored'].includes(evidenceQuality || 'not scored')) {
+    reasons.push(`Evidence confidence is ${humanize(evidenceQuality || 'not scored')}; a reviewer must confirm source documents.`);
+  }
+  if (decisionReadiness.approvalEligible === false) {
+    reasons.push('The deterministic engine marked the case as not approval-eligible without reviewer action.');
+  }
+  if (!reasons.length) {
+    reasons.push('A named human owner must confirm scope, evidence, and risk acceptance before use.');
+  }
+  return unique(reasons).slice(0, 4);
+}
+
+function riskSummaryItems(result = {}) {
+  const gaps = Array.isArray(result.gaps) ? result.gaps : [];
+  if (gaps.length) {
+    return gaps.slice(0, 5).map((gap) => ({
+      label: gap.gap || 'Blocking risk',
+      severity: gap.severity || 'review',
+      detail: gap.action || 'Reviewer action required before approval.'
+    }));
+  }
+  const domains = Array.isArray(result.domains) ? result.domains : [];
+  return domains
+    .filter((domain) => /applicable|needs|confirmation/i.test(domain.status || ''))
+    .slice(0, 5)
+    .map((domain) => ({
+      label: domain.label || 'Mapped obligation',
+      severity: humanize(domain.status || 'mapped'),
+      detail: domain.obligations?.[0] || 'Mapped by the obligation mapper with no blocking gap returned.'
+    }));
+}
+
+function evidenceUsedItems(result = {}) {
+  const citations = Array.isArray(result.citations) ? result.citations : [];
+  const documents = evidenceDocuments(result);
+  const source = citations.length ? citations : documents;
+  return source.slice(0, 6).map((doc, index) => ({
+    id: doc.evidenceId || doc.sourceEvidenceId || doc.citationId || `DOC-${String(index + 1).padStart(2, '0')}`,
+    title: doc.title || doc.fileName || `Evidence ${index + 1}`,
+    detail: summarizeEvidenceText(doc.text || doc.excerpt || doc.summary || 'Evidence attached without extracted text.', 220),
+    signals: Array.isArray(doc.signals) && doc.signals.length
+      ? doc.signals.slice(0, 4).join(', ')
+      : doc.score ? `retrieval score ${Number(doc.score || 0).toFixed(2)}` : humanize(doc.extractionStatus || doc.sourceType || 'attached')
+  }));
+}
+
+function timelineAction(type, label, detail) {
+  return { type, label, detail };
+}
+
+function buildSpecialistTimeline(result = {}) {
+  const domains = Array.isArray(result.domains) ? result.domains : [];
+  const gaps = Array.isArray(result.gaps) ? result.gaps : [];
+  const evidenceIds = Array.isArray(result.evidenceIds) ? result.evidenceIds : [];
+  const citations = Array.isArray(result.citations) ? result.citations : [];
+  const documents = evidenceDocuments(result);
+  const trace = Array.isArray(result.trace) ? result.trace : [];
+  const evidenceQuality = result.evidenceQuality || {};
+  const retrieval = result.retrievalAudit || result.retrievalContext || {};
+  const approvalRequired = humanApprovalRequired(result);
+  return [
+    {
+      name: 'Intake Agent',
+      reviewed: `${result.case?.supplierName || 'Case'} · ${result.case?.businessUnit || 'owner pending'} · ${result.case?.geography || 'geography pending'}`,
+      found: `Built a normalized case brief with ${(result.case?.integrations || []).length} integration${(result.case?.integrations || []).length === 1 ? '' : 's'}.`,
+      action: result.case?.businessUnit && result.case?.geography
+        ? timelineAction('validated', 'Validated intake', 'Scope, owner, and geography were present enough to continue.')
+        : timelineAction('escalated', 'Escalated missing intake', 'Owner or geography remained weak and must be confirmed.'),
+      handoff: 'Handed normalized case context to the Obligation Mapper.'
+    },
+    {
+      name: 'Obligation Mapper',
+      reviewed: `${domains.length} compliance domain${domains.length === 1 ? '' : 's'} across the supplied scope.`,
+      found: `${domains.filter((domain) => /applicable/i.test(domain.status || '')).length} applicable domain${domains.filter((domain) => /applicable/i.test(domain.status || '')).length === 1 ? '' : 's'} and ${domains.filter((domain) => /confirmation|needs/i.test(domain.status || '')).length} confirmation item${domains.filter((domain) => /confirmation|needs/i.test(domain.status || '')).length === 1 ? '' : 's'}.`,
+      action: domains.some((domain) => /confirmation|needs/i.test(domain.status || ''))
+        ? timelineAction('challenged', 'Challenged scope', 'Some obligations need owner or evidence confirmation.')
+        : timelineAction('validated', 'Validated obligation map', 'Applicable domains were mapped without scope blockers.'),
+      handoff: 'Sent obligation requirements and evidence needs to the Evidence Examiner.'
+    },
+    {
+      name: 'Evidence Examiner',
+      reviewed: `${documents.length} source document${documents.length === 1 ? '' : 's'}, ${citations.length} citation${citations.length === 1 ? '' : 's'}, and ${retrieval.matchCount || retrieval.matches?.length || 0} retrieved chunk${(retrieval.matchCount || retrieval.matches?.length || 0) === 1 ? '' : 's'}.`,
+      found: `${evidenceIds.length} evidence identifier${evidenceIds.length === 1 ? '' : 's'} linked with ${humanize(evidenceQuality.status || 'unscored')} evidence quality.`,
+      action: /missing|weak/i.test(evidenceQuality.status || '')
+        ? timelineAction('challenged', 'Challenged evidence strength', 'The decision stays review-bound until stronger proof is confirmed.')
+        : timelineAction('validated', 'Validated evidence set', 'Evidence was sufficient for deterministic council analysis.'),
+      handoff: 'Passed supported and missing evidence to the Risk & Controls Analyst.'
+    },
+    {
+      name: 'Risk & Controls Analyst',
+      reviewed: `${gaps.length} blocking gap${gaps.length === 1 ? '' : 's'} and mapped domain risk.`,
+      found: gaps.length
+        ? `${gaps.length} required control/action item${gaps.length === 1 ? '' : 's'} must be closed.`
+        : 'No blocking gap remained after deterministic control mapping.',
+      action: gaps.length
+        ? timelineAction('escalated', 'Escalated controls', 'Blocking gaps were converted into owner actions.')
+        : timelineAction('validated', 'Validated controls', 'No control blocker changed the final recommendation.'),
+      handoff: 'Sent the controlled decision package to the Responsible AI Reviewer.'
+    },
+    {
+      name: 'Responsible AI Reviewer',
+      reviewed: 'Decision language, unsupported certainty, and the human approval boundary.',
+      found: approvalRequired
+        ? 'Human review remained required before any operational use.'
+        : 'No human approval flag was returned; this should be treated as a configuration risk.',
+      action: approvalRequired
+        ? timelineAction('changed', 'Enforced no auto-approval', 'The output is framed as reviewer-ready, not self-approving.')
+        : timelineAction('challenged', 'Approval boundary missing', 'Reviewer should block use until the approval boundary is restored.'),
+      handoff: 'Passed the reviewed output to the Audit Packager.'
+    },
+    {
+      name: 'Audit Packager',
+      reviewed: `${trace.length} trace event${trace.length === 1 ? '' : 's'}, runtime metadata, evidence IDs, and export fields.`,
+      found: 'Decision memo, trace, evidence, and reviewer actions are ready for export.',
+      action: timelineAction('validated', 'Packaged audit trail', 'The package preserves deterministic trace and raw JSON for inspection.'),
+      handoff: 'Ready for human reviewer inspection and PDF export.'
+    }
+  ];
+}
+
 function renderBusinessOutcome(result = {}) {
   const domains = Array.isArray(result.domains) ? result.domains : [];
   const gaps = Array.isArray(result.gaps) ? result.gaps : [];
@@ -1789,48 +2221,171 @@ function renderBusinessOutcome(result = {}) {
   const retrieval = result.retrievalAudit || result.retrievalContext || {};
   const documentImpact = result.documentEvidenceImpact || {};
   const llmOutput = result.orchestration?.llmOutput || result.runtime?.llmOutput || null;
+  const evidenceMatches = evidenceMatchesFor(result, chatCaseDraft);
+  const learning = learningSuggestionsFor(result, chatCaseDraft);
+  const advisorySpecialists = advisorySpecialistsFor(result);
   const tone = businessDecisionTone(result);
   const readiness = Math.round(Number(result.decision?.readinessScore || 0) * 100);
-  const topDomains = domains.slice(0, 4);
+  const riskItems = riskSummaryItems(result);
+  const evidenceItems = evidenceUsedItems(result);
+  const reviewerActions = businessReviewerActions(result);
+  const timeline = buildSpecialistTimeline(result);
+  const approvalRequired = humanApprovalRequired(result);
   specialistList.innerHTML = `
-    <section class="business-summary ${tone}">
-      <div class="business-hero">
-        <span class="eyebrow">Council decision</span>
-        <h2>${escapeHtml(businessDecisionHeadline(result))}</h2>
-        <p>${escapeHtml(businessDecisionSummary(result))}</p>
-      </div>
+    <section class="business-summary council-report ${tone}">
+      <article class="decision-memo report-section">
+        <div class="business-hero">
+          <span class="eyebrow">Decision Memo</span>
+          <h2>${escapeHtml(businessDecisionHeadline(result))}</h2>
+          <p>${escapeHtml(businessDecisionSummary(result))}</p>
+        </div>
+        <div class="human-boundary">
+          <div>
+            <span>humanApprovalRequired</span>
+            <strong>${escapeHtml(String(approvalRequired))}</strong>
+          </div>
+          <div>
+            <span>Final decision owner</span>
+            <strong>Deterministic compliance engine</strong>
+          </div>
+          <div>
+            <span>Approval mode</span>
+            <strong>No auto-approval</strong>
+          </div>
+          <ul>
+            ${humanReviewReasons(result).map((reason) => `<li>${escapeHtml(reason)}</li>`).join('')}
+          </ul>
+        </div>
+        <div class="decision-room-actions">
+          <button type="button" data-report-action="export-review-pack">Export review pack PDF</button>
+          <span>Reviewer artifact only; no operational approval is granted.</span>
+        </div>
+      </article>
       <div class="decision-metrics" aria-label="Decision metrics">
         <article><span>Readiness</span><strong>${escapeHtml(readiness)}%</strong></article>
         <article><span>Blocking items</span><strong>${escapeHtml(gaps.length)}</strong></article>
         <article><span>Evidence IDs</span><strong>${escapeHtml(evidenceIds.length)}</strong></article>
         <article><span>Confidence</span><strong>${escapeHtml(humanize(evidenceQuality.status || 'not scored'))}</strong></article>
       </div>
-      <div class="business-columns">
-        <article>
-          <span class="eyebrow">Reviewer actions</span>
-          <ul>
-            ${businessReviewerActions(result).map((action) => `<li>${escapeHtml(action)}</li>`).join('')}
-          </ul>
-        </article>
-        <article>
-          <span class="eyebrow">Evidence used</span>
-          <p>${escapeHtml(documentImpact.summary || `${citations.length} citation${citations.length === 1 ? '' : 's'} mapped into the decision.`)}</p>
+      <article class="report-section risk-summary-panel">
+        <span class="eyebrow">Risk Summary</span>
+        <div class="risk-list">
+          ${riskItems.length ? riskItems.map((item) => `
+            <div>
+              <span class="${/high|critical|escalated/i.test(item.severity) ? 'status-danger' : 'status-warning'}">${escapeHtml(item.severity)}</span>
+              <strong>${escapeHtml(item.label)}</strong>
+              <p>${escapeHtml(item.detail)}</p>
+            </div>
+          `).join('') : '<div><span class="status-ready">clear</span><strong>No blocking risk returned</strong><p>The current evidence set did not produce a blocking gap, but human review remains required.</p></div>'}
+        </div>
+      </article>
+      <article class="report-section required-actions-panel">
+        <span class="eyebrow">Required Actions</span>
+        <ol>
+          ${reviewerActions.map((action) => `<li>${escapeHtml(action)}</li>`).join('')}
+        </ol>
+      </article>
+      <article class="report-section evidence-used-panel">
+        <div class="report-section-header">
+          <div>
+            <span class="eyebrow">Evidence Used</span>
+            <p>${escapeHtml(documentImpact.summary || `${citations.length} citation${citations.length === 1 ? '' : 's'} mapped into the decision.`)}</p>
+          </div>
           <div class="evidence-pill-row">
             <span>${escapeHtml(citations.length)} citation${citations.length === 1 ? '' : 's'}</span>
             <span>${escapeHtml(retrieval.matchCount || retrieval.matches?.length || 0)} retrieved chunk${(retrieval.matchCount || retrieval.matches?.length || 0) === 1 ? '' : 's'}</span>
             <span>${escapeHtml(evidenceQuality.score ?? 'n/a')} score</span>
           </div>
-        </article>
-      </div>
-      <div class="domain-snapshot">
-        ${topDomains.map((domain) => `
-          <article>
-            <span>${escapeHtml(humanize(domain.status || 'mapped'))}</span>
-            <strong>${escapeHtml(domain.label || 'Mapped domain')}</strong>
-          </article>
-        `).join('')}
-      </div>
-      ${llmOutput?.summary ? `<div class="advisory-note"><span class="eyebrow">Advisory council</span><p>${escapeHtml(llmOutput.summary)}</p></div>` : ''}
+        </div>
+        <div class="evidence-used-list">
+          ${evidenceItems.length ? evidenceItems.map((item) => `
+            <div>
+              <span>${escapeHtml(item.id)}</span>
+              <strong>${escapeHtml(item.title)}</strong>
+              <p>${escapeHtml(item.detail)}</p>
+              <small>${escapeHtml(item.signals)}</small>
+            </div>
+          `).join('') : '<div><span>none</span><strong>No evidence attached</strong><p>The decision used case context only. Attach source documents before approval.</p><small>human review required</small></div>'}
+        </div>
+      </article>
+      <article class="report-section memory-panel">
+        <span class="eyebrow">RAG Evidence Memory</span>
+        <p class="timeline-disclosure">Server-side retrieval only. The browser receives citations and snippets, never raw embeddings.</p>
+        <div class="memory-card-grid">
+          <div><span>Provider</span><strong>${escapeHtml(result.retrievalAudit?.provider || retrieval.provider || result.retrievalContext?.provider || memoryProviderLabel(chatCaseDraft))}</strong></div>
+          <div><span>Indexed chunks</span><strong>${escapeHtml(retrieval.chunkCount || result.retrievalAudit?.chunkCount || chatCaseDraft.indexedEvidence?.chunkCount || 0)}</strong></div>
+          <div><span>Retrieved matches</span><strong>${escapeHtml(evidenceMatches.length || retrieval.matchCount || 0)}</strong></div>
+        </div>
+        <div class="memory-evidence-list">
+          ${evidenceMatches.length ? evidenceMatches.slice(0, 4).map((match) => `
+            <div>
+              <span>${escapeHtml(match.evidenceId || 'evidence')} · ${escapeHtml(Number(match.score || 0).toFixed(2))}</span>
+              <strong>${escapeHtml(match.title || 'Retrieved evidence')}</strong>
+              <p>${escapeHtml(match.snippet || match.text || '')}</p>
+            </div>
+          `).join('') : '<div><span>no matches</span><strong>No RAG citations retrieved</strong><p>The decision used typed and attached case context only.</p></div>'}
+        </div>
+      </article>
+      <article class="report-section memory-panel">
+        <span class="eyebrow">Governed Learning Memory</span>
+        <p class="timeline-disclosure">Advisory precedent memory only; this is not autonomous model training and does not alter the deterministic decision.</p>
+        <div class="memory-card-grid">
+          <div><span>Similar cases</span><strong>${escapeHtml(learning.similarCases.length)}</strong></div>
+          <div><span>Reviewer patterns</span><strong>${escapeHtml(learning.suggestions?.sourceMemoryIds?.length || 0)}</strong></div>
+          <div><span>Control suggestions</span><strong>${escapeHtml(learning.suggestions?.commonControlsReviewersAdded?.length || 0)}</strong></div>
+        </div>
+        <div class="memory-evidence-list">
+          ${learning.similarCases.length ? learning.similarCases.slice(0, 4).map((item) => `
+            <div>
+              <span>${escapeHtml(item.artifactType || 'memory')} · ${escapeHtml(item.createdAt || '')}</span>
+              <strong>${escapeHtml(item.finalOutcome || item.reviewerDecision || item.caseId || 'Prior reviewer memory')}</strong>
+              <p>${escapeHtml(item.reviewerNotes || item.missingEvidence?.join(', ') || 'Governed reviewer memory attached as advisory context.')}</p>
+            </div>
+          `).join('') : '<div><span>no precedents</span><strong>No similar cases found</strong><p>The council did not receive governed learning precedents for this run.</p></div>'}
+          ${learning.suggestions?.commonControlsReviewersAdded?.length ? `
+            <div>
+              <span>control suggestions</span>
+              <strong>${escapeHtml(learning.suggestions.commonControlsReviewersAdded.slice(0, 3).map((item) => item.control).join(', '))}</strong>
+              <p>Suggested for reviewer consideration only.</p>
+            </div>
+          ` : ''}
+        </div>
+      </article>
+      <article class="report-section advisory-specialists-panel">
+        <span class="eyebrow">Advisory Specialists</span>
+        <p class="timeline-disclosure">Live LLM specialists are advisory only when configured. The deterministic compliance engine remains the final decision owner.</p>
+        <div class="advisory-card-grid">
+          ${advisorySpecialists.length ? advisorySpecialists.map((specialist) => `
+            <div class="${specialist.advisoryUnavailable ? 'is-unavailable' : ''}">
+              <span>${escapeHtml(specialist.advisoryUnavailable ? 'unavailable' : 'advisory only')}</span>
+              <strong>${escapeHtml(specialist.specialist || 'Advisory specialist')}</strong>
+              <p>${escapeHtml(specialist.assessment || 'No advisory assessment returned.')}</p>
+              ${specialist.recommendedActions?.length ? `<small>${escapeHtml(specialist.recommendedActions.slice(0, 2).join(' · '))}</small>` : ''}
+            </div>
+          `).join('') : '<div><span>not requested</span><strong>Advisory specialists inactive</strong><p>Enable Compass token, CREWAI_ENABLE_LIVE_LLM=1, and AGENT_RUNTIME=crewai_llm to attach advisory specialists.</p></div>'}
+        </div>
+      </article>
+      <article class="report-section council-timeline-panel">
+        <span class="eyebrow">Agent Collaboration Timeline</span>
+        <p class="timeline-disclosure">Deterministic council trace / specialist validation. This is not a live multi-agent debate.</p>
+        <div class="council-timeline">
+          ${timeline.map((item, index) => `
+            <div class="timeline-item is-${escapeHtml(item.action.type)}">
+              <b>${String(index + 1).padStart(2, '0')}</b>
+              <div>
+                <strong>${escapeHtml(item.name)}</strong>
+                <dl>
+                  <dt>Reviewed</dt><dd>${escapeHtml(item.reviewed)}</dd>
+                  <dt>Found</dt><dd>${escapeHtml(item.found)}</dd>
+                  <dt>${escapeHtml(titleCase(item.action.type))}</dt><dd><span>${escapeHtml(item.action.label)}:</span> ${escapeHtml(item.action.detail)}</dd>
+                  <dt>Handoff</dt><dd>${escapeHtml(item.handoff)}</dd>
+                </dl>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </article>
+      ${llmOutput?.summary ? `<div class="advisory-note"><span class="eyebrow">Advisory council summary</span><p>${escapeHtml(llmOutput.summary)}</p></div>` : ''}
     </section>
   `;
 }
@@ -1855,6 +2410,7 @@ function renderRun(result, options = {}) {
     domainList.innerHTML = '';
     gapList.innerHTML = '';
     traceList.innerHTML = '';
+    renderRawRunDetails(result, { finalVisible: false });
     specialistList.innerHTML = '';
     artifactPreview.innerHTML = '';
     citationList.innerHTML = '';
@@ -1865,6 +2421,10 @@ function renderRun(result, options = {}) {
   if (finalVisible) {
     lastRun = result;
     lastRuns[activeRunMode] = result;
+  }
+  if (finalVisible && activeRunMode === 'chat') {
+    runwayTitle.textContent = 'Decision Room';
+    runwayDescription.textContent = 'Business-first council output with deterministic specialist validation, human review boundary, and exportable evidence pack.';
   }
 
   const domains = Array.isArray(result.domains) ? result.domains : [];
@@ -1894,7 +2454,7 @@ function renderRun(result, options = {}) {
   stageOutput.textContent = finalVisible
     ? businessDecisionSummary(result)
     : currentStage ? stageNarrative(currentStage, result) : 'Select a scenario or run the golden compliance case.';
-  renderAgentActivity(stages.slice(0, 5).map((stage, index) => ({
+  renderAgentActivity(stages.map((stage, index) => ({
     id: stage.id,
     label: agentLabels[stage.agent] || stage.role || titleCase(stage.id),
     detail: finalVisible || index <= stageIndex ? 'complete' : index === activeIndex ? 'working' : 'queued',
@@ -1905,7 +2465,10 @@ function renderRun(result, options = {}) {
   renderEvidence(result, { stageIndex, finalVisible });
   renderCitations(result, { stageIndex, finalVisible });
   renderTrace(trace, stages, { stageIndex, finalVisible });
+  renderRawRunDetails(result, { finalVisible });
   renderArtifactPreview(result, { finalVisible });
+  renderCaseIntelligence(chatCaseDraft, result);
+  renderMissionWelcome();
   if (finalVisible && activeRunMode === 'chat') setWorkspaceView('output');
 }
 
@@ -2012,6 +2575,24 @@ function renderTrace(trace, stages, options = {}) {
   `).join('');
 }
 
+function renderRawRunDetails(result = {}, options = {}) {
+  if (!rawRunDetails || !rawRunJson) return;
+  if (!result?.ok) {
+    rawRunDetails.hidden = true;
+    rawRunDetails.open = false;
+    rawRunJson.textContent = '{}';
+    return;
+  }
+  rawRunDetails.hidden = false;
+  const summary = rawRunDetails.querySelector('summary');
+  if (summary) {
+    summary.textContent = options.finalVisible
+      ? 'Advanced raw JSON'
+      : 'Advanced raw JSON (building)';
+  }
+  rawRunJson.textContent = JSON.stringify(result, null, 2);
+}
+
 function renderArtifactPreview(result, options = {}) {
   const domains = Array.isArray(result.domains) ? result.domains : [];
   const gaps = Array.isArray(result.gaps) ? result.gaps : [];
@@ -2021,6 +2602,8 @@ function renderArtifactPreview(result, options = {}) {
   const retrieval = result.retrievalContext || {};
   const evidenceQuality = result.evidenceQuality || {};
   const llmOutput = result.orchestration?.llmOutput || result.runtime?.llmOutput || null;
+  const learning = learningSuggestionsFor(result, chatCaseDraft);
+  const advisorySpecialists = advisorySpecialistsFor(result);
   const liveUploadCount = documents.filter((doc) => /^UP-/i.test(doc.evidenceId || '')).length;
   const extractedCount = documents.filter((doc) => /text|pdf|manual/i.test(doc.extractionStatus || '')).length;
   const ready = options.finalVisible;
@@ -2052,6 +2635,9 @@ function renderArtifactPreview(result, options = {}) {
         <span>Decision</span><b>${escapeHtml(businessDecisionHeadline(result))}</b>
         <span>Blocking items</span><b>${escapeHtml(gaps.length)}</b>
         <span>Citations</span><b>${escapeHtml(citations.length)}</b>
+        <span>RAG matches</span><b>${escapeHtml(evidenceMatchesFor(result, chatCaseDraft).length || retrieval.matchCount || retrieval.matches?.length || 0)}</b>
+        <span>Similar cases</span><b>${escapeHtml(learning.similarCases.length)}</b>
+        <span>Advisory specialists</span><b>${escapeHtml(advisorySpecialists.length ? `${advisorySpecialists.length} attached` : llmOutput?.outputAvailable ? 'attached' : 'not requested')}</b>
         <span>Evidence quality</span><b>${escapeHtml(humanize(evidenceQuality.status || 'not scored'))}</b>
         <span>Runtime</span><b>${escapeHtml(formatRuntime(result.runtime?.actualRuntime || result.mode || 'unknown'))}</b>
       </div>
@@ -2201,21 +2787,97 @@ function buildExecReviewPack(result = lastRun) {
 }
 
 function buildExecReviewHtml(result = lastRun) {
-  const text = buildExecReviewPack(result);
+  if (!result?.ok) return '';
+  const caseInfo = result.case || {};
+  const decision = result.decision || {};
+  const gaps = Array.isArray(result.gaps) ? result.gaps : [];
+  const domains = Array.isArray(result.domains) ? result.domains : [];
+  const citations = Array.isArray(result.citations) ? result.citations : [];
+  const evidenceQuality = result.evidenceQuality || {};
+  const retrieval = result.retrievalContext || {};
+  const readiness = Number.isFinite(decision.readinessScore) ? Math.round(decision.readinessScore * 100) : 0;
+  const memo = gaps.length
+    ? `${decision.recommendation || 'Pending review'} The council found ${gaps.length} blocking item${gaps.length === 1 ? '' : 's'} that must be confirmed by a human reviewer before approval.`
+    : `${decision.recommendation || 'Pending review'} No blocking gaps remain in the current evidence set, but accountable human approval is still required.`;
   return `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <title>Parallax42 Executive Review Pack</title>
   <style>
-    body { margin: 48px; font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #101816; }
-    h1 { font-size: 28px; margin: 0 0 18px; }
-    pre { white-space: pre-wrap; font: inherit; }
+    :root { color-scheme: dark; --bg: #061512; --panel: #0c211c; --line: #245448; --mint: #18e0b7; --cyan: #8fe8f2; --amber: #f4c95d; --red: #ff7a7a; --text: #f4fff9; --muted: #a9bbb4; }
+    body { margin: 0; font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at 20% 0%, rgba(24,224,183,.18), transparent 30%), var(--bg); }
+    main { width: min(1120px, calc(100% - 48px)); margin: 32px auto; display: grid; gap: 22px; }
+    section { border: 1px solid var(--line); background: linear-gradient(145deg, rgba(12,33,28,.96), rgba(5,18,15,.98)); border-radius: 18px; padding: 28px; box-shadow: 0 24px 80px rgba(0,0,0,.28); }
+    h1 { font-size: clamp(36px, 6vw, 72px); line-height: .92; margin: 0 0 18px; max-width: 760px; }
+    h2 { margin: 0 0 16px; font-size: 24px; }
+    p { color: var(--muted); max-width: 780px; }
+    .eyebrow { color: var(--mint); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .tile, .card { border: 1px solid var(--line); background: rgba(255,255,255,.035); border-radius: 14px; padding: 18px; }
+    .tile span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+    .tile strong { display: block; margin-top: 10px; font-size: 30px; }
+    .memo { font-size: 18px; color: var(--text); }
+    .risk-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .risk { border-color: rgba(255,122,122,.35); }
+    .risk small { color: var(--amber); font-weight: 800; text-transform: uppercase; }
+    .two { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; }
+    .list { display: grid; gap: 10px; }
+    .item { border-left: 3px solid var(--mint); padding: 8px 0 8px 14px; color: var(--muted); }
+    .boundary { border-color: rgba(244,201,93,.5); background: rgba(244,201,93,.08); }
+    @media (max-width: 800px) { .grid, .risk-grid, .two { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-  <h1>Executive Review Pack</h1>
-  <pre>${escapeHtml(text)}</pre>
+  <main>
+    <section>
+      <span class="eyebrow">Executive review pack</span>
+      <h1>Compliance Mission Control</h1>
+      <p class="memo">${escapeHtml(memo)}</p>
+      <div class="grid">
+        <div class="tile"><span>Readiness</span><strong>${escapeHtml(readiness)}%</strong></div>
+        <div class="tile"><span>Blocking gaps</span><strong>${escapeHtml(gaps.length)}</strong></div>
+        <div class="tile"><span>Citations</span><strong>${escapeHtml(citations.length)}</strong></div>
+        <div class="tile"><span>Domains</span><strong>${escapeHtml(domains.length)}</strong></div>
+      </div>
+    </section>
+    <section class="two">
+      <div>
+        <span class="eyebrow">Decision room</span>
+        <h2>${escapeHtml(decision.recommendation || 'Pending review')}</h2>
+        <p>${escapeHtml(decision.rationale || 'The deterministic council produced this pack for accountable human review.')}</p>
+      </div>
+      <div class="card boundary">
+        <span class="eyebrow">Human approval required</span>
+        <p>Final approval remains with the accountable human owner. Advisory output and learning memory do not override the deterministic decision.</p>
+      </div>
+    </section>
+    <section>
+      <span class="eyebrow">Risk summary</span>
+      <h2>Required reviewer actions</h2>
+      <div class="risk-grid">
+        ${(gaps.length ? gaps : [{ severity: 'none', gap: 'No blocking gaps returned by the council.', action: 'Confirm accountable human approval before operational use.' }]).slice(0, 3).map((gap) => `
+          <div class="card risk">
+            <small>${escapeHtml(gap.severity || 'review')}</small>
+            <h3>${escapeHtml(gap.gap || 'Review item')}</h3>
+            <p>${escapeHtml(gap.action || 'Record reviewer disposition.')}</p>
+          </div>
+        `).join('')}
+      </div>
+    </section>
+    <section class="two">
+      <div>
+        <span class="eyebrow">Evidence intelligence</span>
+        <h2>${escapeHtml(humanize(evidenceQuality.status || 'not scored'))}</h2>
+        <p>Semantic matches: ${escapeHtml(retrieval.matchCount || retrieval.matches?.length || 0)}. Retrieval stays behind server-side APIs; browser export contains only safe citations and metadata.</p>
+      </div>
+      <div class="list">
+        ${(citations.length ? citations : [{ title: 'No citation records returned.', text: 'Run with indexed evidence to populate citation-ready extracts.' }]).slice(0, 4).map((citation) => `
+          <div class="item"><strong>${escapeHtml(citation.evidenceId || citation.citationId || 'Evidence')}</strong> ${escapeHtml(citation.title || 'Citation')}<br>${escapeHtml(citation.text || '')}</div>
+        `).join('')}
+      </div>
+    </section>
+  </main>
 </body>
 </html>`;
 }
@@ -2247,10 +2909,11 @@ async function runAgent(payload, options = {}) {
   flowProgress.style.width = '4%';
   renderAgentActivity([
     { label: 'Router', detail: 'selecting runtime', status: 'active' },
-    { label: 'Intake', detail: 'queued', status: 'queued' },
-    { label: 'Obligations', detail: 'queued', status: 'queued' },
-    { label: 'Evidence', detail: 'queued', status: 'queued' },
-    { label: 'Review', detail: 'queued', status: 'queued' }
+    { label: 'Intake Agent', detail: 'queued', status: 'queued' },
+    { label: 'Obligation Mapper', detail: 'queued', status: 'queued' },
+    { label: 'Evidence Examiner', detail: 'queued', status: 'queued' },
+    { label: 'Risk & Controls', detail: 'queued', status: 'queued' },
+    { label: 'Responsible AI', detail: 'queued', status: 'queued' }
   ]);
   try {
     const result = await apiFetch('/api/agent/run', {
@@ -2317,11 +2980,12 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   stageStatus.textContent = 'Parsing message';
   stageOutput.textContent = 'Extracting case fields, risk signals, integrations, and evidence clues.';
   renderAgentActivity([
-    { label: 'NLP Intake', detail: 'reading', status: 'active' },
-    { label: 'Context', detail: 'merging', status: 'active' },
-    { label: 'Obligations', detail: 'queued', status: 'queued' },
-    { label: 'Evidence', detail: uploadedEvidence.length ? 'attached' : 'queued', status: uploadedEvidence.length ? 'complete' : 'queued' },
-    { label: 'Council', detail: options.forceRun ? 'preparing' : 'waiting', status: options.forceRun ? 'active' : 'queued' }
+    { label: 'Intake Agent', detail: 'reading', status: 'active' },
+    { label: 'Obligation Mapper', detail: options.forceRun ? 'preparing' : 'queued', status: options.forceRun ? 'active' : 'queued' },
+    { label: 'Evidence Examiner', detail: uploadedEvidence.length ? 'attached' : 'queued', status: uploadedEvidence.length ? 'complete' : 'queued' },
+    { label: 'Risk & Controls', detail: 'queued', status: 'queued' },
+    { label: 'Responsible AI', detail: 'queued', status: 'queued' },
+    { label: 'Audit Packager', detail: 'queued', status: 'queued' }
   ]);
 
   try {
@@ -2334,11 +2998,12 @@ async function submitChatMessage(rawMessage = '', options = {}) {
       stageOutput.textContent = 'The API will retrieve citation-ready evidence from the server-side vector index during the council run.';
       renderChatMessages();
       renderAgentActivity([
-        { label: 'NLP Intake', detail: 'ready', status: 'complete' },
-        { label: 'Embeddings', detail: `${serverChunkCount} chunks`, status: 'complete' },
-        { label: 'Retriever', detail: 'server-side', status: 'active' },
-        { label: 'Council', detail: 'queued', status: 'queued' },
-        { label: 'Reviewer', detail: 'queued', status: 'queued' }
+        { label: 'Intake Agent', detail: 'ready', status: 'complete' },
+        { label: 'Obligation Mapper', detail: 'ready', status: 'complete' },
+        { label: 'Evidence Examiner', detail: 'retrieving', status: 'active' },
+        { label: 'Risk & Controls', detail: 'queued', status: 'queued' },
+        { label: 'Responsible AI', detail: 'queued', status: 'queued' },
+        { label: 'Audit Packager', detail: 'queued', status: 'queued' }
       ]);
     }
     const result = await apiFetch('/api/conversation', {
@@ -2440,6 +3105,63 @@ function renderStatusCards(results) {
   topHealth.className = unhealthy ? 'status-warning' : 'status-ready';
 }
 
+function renderCapabilityFallbacks(results = []) {
+  if (!capabilityFallbacks) return;
+  const app = results.find((result) => /Compliance API/i.test(result.label)) || {};
+  const backend = results.find((result) => /backend/i.test(result.label)) || {};
+  const gateway = results.find((result) => /Compass gateway/i.test(result.label)) || {};
+  const appBody = app.body || {};
+  const notes = [];
+
+  if (appBody.evidenceGateway && !appBody.evidenceGateway.tokenConfigured) {
+    notes.push({
+      label: 'Compass gateway token absent',
+      detail: 'Chat intake, deterministic council, audit trace, and PDF export still work. Semantic evidence indexing, embeddings retrieval, and live LLM advisory are disabled in this runtime.'
+    });
+  } else if (gateway.status === 'unavailable') {
+    notes.push({
+      label: 'Compass gateway unavailable',
+      detail: 'The council can still run from typed context and attached metadata. Evidence embedding/search and advisory model calls should be treated as unavailable for this demo run.'
+    });
+  }
+
+  if (backend.status === 'unavailable') {
+    notes.push({
+      label: 'Parser relay unavailable',
+      detail: 'Document OCR/parser extraction is disabled. The UI will register file metadata only; paste the key contract clauses or evidence summary into chat before running council.'
+    });
+  } else if (backend.status === 'captured') {
+    notes.push({
+      label: 'Parser relay not verified in local mode',
+      detail: 'Local mode uses captured backend proof unless relay mode is selected. If upload parsing fails, typed case context and deterministic council execution remain available.'
+    });
+  }
+
+  if (/local_file/i.test(appBody.evidenceVectorStore?.provider || appBody.vector?.provider || '')) {
+    notes.push({
+      label: 'Local vector fallback active',
+      detail: 'Evidence chunks stay behind server-side APIs, but the default local-file vector store is demo-grade and not durable enterprise storage.'
+    });
+  }
+
+  if (!notes.length) {
+    capabilityFallbacks.innerHTML = `
+      <article class="capability-note is-ready">
+        <strong>Core demo path available</strong>
+        <p>Chat intake, deterministic council, evidence status, audit trace, and export controls are ready for a judge walkthrough.</p>
+      </article>
+    `;
+    return;
+  }
+
+  capabilityFallbacks.innerHTML = notes.map((note) => `
+    <article class="capability-note">
+      <strong>${escapeHtml(note.label)}</strong>
+      <p>${escapeHtml(note.detail)}</p>
+    </article>
+  `).join('');
+}
+
 async function loadDeploymentStatus() {
   const config = currentConfig();
   const backendCheck = backendStatusCheck(config);
@@ -2481,7 +3203,8 @@ async function loadDeploymentStatus() {
         label: check.label,
         url: check.url,
         status: 'healthy',
-        detail: check.detail(body)
+        detail: check.detail(body),
+        body
       };
     } catch (error) {
       return {
@@ -2494,6 +3217,7 @@ async function loadDeploymentStatus() {
   }));
 
   renderStatusCards(results);
+  renderCapabilityFallbacks(results);
 }
 
 runModeButtons.forEach((button) => {
@@ -2508,6 +3232,13 @@ councilOutputTab?.addEventListener('click', () => {
   setWorkspaceView('output');
   if (lastRuns.chat?.ok) {
     renderRun(lastRuns.chat);
+  }
+});
+
+specialistList?.addEventListener('click', (event) => {
+  const action = event.target?.closest?.('[data-report-action]')?.dataset?.reportAction;
+  if (action === 'export-review-pack') {
+    execReviewPack?.click();
   }
 });
 
@@ -2579,10 +3310,21 @@ chatRunNow.addEventListener('click', () => {
   submitChatMessage(chatInput.value || 'run it', { forceRun: true });
 });
 
+chatMessagesEl?.addEventListener('click', (event) => {
+  const action = event.target?.closest?.('[data-chat-action]')?.dataset?.chatAction;
+  if (action === 'run-council') {
+    submitChatMessage(chatInput.value || 'run it', { forceRun: true });
+  }
+});
+
 chatPromptButtons.forEach((button) => {
   button.addEventListener('click', () => {
     submitChatMessage(button.dataset.chatPrompt || '');
   });
+});
+
+startNewCase?.addEventListener('click', () => {
+  resetChatCaseSession();
 });
 
 runtimeConfig.addEventListener('submit', (event) => {

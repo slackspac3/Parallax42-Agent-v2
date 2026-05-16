@@ -6,14 +6,16 @@ const path = require('node:path');
 const { URL } = require('node:url');
 
 const { attachGatewayAdvisoryIfEnabled, runAgentWithRuntimeAsync, runtimeHealth } = require('./lib/agentRuntime');
+const { buildAdminStatus } = require('./lib/adminStatus');
 const { appendAuditRecord, auditStoreHealth, readRecentAuditRecords, verifyAuditChain } = require('./lib/auditStore');
 const { runBenchmark } = require('./lib/benchmarkSuite');
 const { gatewayHealth } = require('./lib/compassGatewayClient');
 const { getReadinessInventory } = require('./lib/complianceAgent');
 const { processConversation } = require('./lib/conversationAgent');
-const { evidenceVectorStoreHealth, indexEvidenceServerSide, searchEvidenceServerSide } = require('./lib/evidenceVectorStore');
+const { evidenceVectorStoreHealth, indexEvidenceServerSide, runQdrantSmokeTest, searchEvidenceServerSide } = require('./lib/evidenceVectorStore');
 const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
 const { readJsonBody, writeJson } = require('./lib/http');
+const { findSimilarCases, getControlSuggestions, learningMemoryHealth, recordReviewerFeedback } = require('./lib/learningMemory');
 const { authHealth, authorizeRequest } = require('./lib/rbac');
 const { buildReviewPack, buildReviewPackPdf } = require('./lib/reviewPack');
 const { enrichConversationWithServerRetrieval } = require('./lib/serverSideRetrieval');
@@ -66,8 +68,40 @@ const server = http.createServer(async (req, res) => {
         },
         evidenceGateway: gatewayHealth(),
         evidenceVectorStore: evidenceVectorStoreHealth(),
+        learningMemory: learningMemoryHealth(),
         linkedBackend: process.env.PARALLAX42_BACKEND_URL || 'https://api.parallax42.bhavukarora.com'
       });
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/admin/status') {
+      writeJson(res, 200, buildAdminStatus());
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/admin/qdrant-smoke') {
+      const auth = await authorizeRequest(req, 'agent:run');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
+      const result = await runQdrantSmokeTest();
+      appendAuditRecord({
+        actor: auth.actor,
+        caseId: result.caseId || 'qdrant-smoke',
+        status: result.ok ? 'qdrant_smoke_passed' : result.skipped ? 'qdrant_smoke_skipped' : 'qdrant_smoke_failed',
+        summary: result.ok
+          ? `Qdrant smoke indexed ${result.indexedChunkCount || 0} chunks and found ${result.matchCount || 0} matches.`
+          : result.reason || result.error || 'Qdrant smoke did not pass.',
+        payload: {
+          provider: result.provider,
+          collection: result.collection,
+          qdrantConfigured: result.qdrantConfigured,
+          indexedChunkCount: result.indexedChunkCount || 0,
+          matchCount: result.matchCount || 0
+        }
+      });
+      writeJson(res, result.skipped ? 200 : result.ok ? 200 : 502, result);
       return;
     }
 
@@ -121,7 +155,14 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       const body = await readJsonBody(req, { limitBytes: 5_000_000 });
-      const result = await runAgentWithRuntimeAsync(body, {
+      const agentInput = body.caseDraft && typeof body.caseDraft === 'object' ? body.caseDraft : body;
+      const enrichedBody = await enrichConversationWithServerRetrieval({
+        ...body,
+        caseDraft: agentInput,
+        forceRun: true,
+        message: body.message || body.prompt || 'run it'
+      });
+      const result = await runAgentWithRuntimeAsync(enrichedBody.caseDraft || agentInput, {
         runtime: req.headers['x-agent-runtime'] || body.runtime
       });
       appendAuditRecord({
@@ -241,6 +282,53 @@ const server = http.createServer(async (req, res) => {
         }
       });
       writeJson(res, 200, result);
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/learning/feedback') {
+      const auth = await authorizeRequest(req, 'agent:run');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
+      const body = await readJsonBody(req, { limitBytes: 1_000_000 });
+      const result = await recordReviewerFeedback(body, { actor: auth.actor });
+      appendAuditRecord({
+        actor: auth.actor,
+        caseId: body.caseId || 'learning-feedback',
+        status: 'learning_feedback_recorded',
+        summary: `Recorded ${result.artifacts.length} governed learning artifact(s).`,
+        payload: {
+          route: 'learning.feedback',
+          provider: result.provider,
+          artifactTypes: result.artifacts.map((artifact) => artifact.artifactType),
+          advisoryOnly: true,
+          trainingUse: 'not_model_training'
+        }
+      });
+      writeJson(res, 200, result);
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/learning/similar-cases') {
+      const auth = await authorizeRequest(req, 'agent:run');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
+      const body = await readJsonBody(req, { limitBytes: 1_000_000 });
+      writeJson(res, 200, await findSimilarCases(body));
+      return;
+    }
+
+    if ((req.method === 'GET' || req.method === 'POST') && url.pathname === '/api/learning/control-suggestions') {
+      const auth = await authorizeRequest(req, 'agent:run');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
+      const body = req.method === 'POST' ? await readJsonBody(req, { limitBytes: 1_000_000 }) : {};
+      writeJson(res, 200, await getControlSuggestions(body));
       return;
     }
 

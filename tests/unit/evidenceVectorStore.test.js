@@ -9,6 +9,7 @@ const assert = require('node:assert/strict');
 const {
   evidenceVectorStoreHealth,
   indexEvidenceServerSide,
+  runQdrantSmokeTest,
   searchEvidenceServerSide
 } = require('../../lib/evidenceVectorStore');
 const { enrichConversationWithServerRetrieval } = require('../../lib/serverSideRetrieval');
@@ -234,4 +235,160 @@ test('conversation force-run enrichment performs retrieval server-side by case i
     global.fetch = originalFetch;
     fs.rmSync(storeDir, { recursive: true, force: true });
   }
+});
+
+test('qdrant provider stores governed evidence payloads without returning vectors', async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+  try {
+    await withEnv({
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      P42_VECTOR_STORE_PROVIDER: 'qdrant',
+      QDRANT_URL: 'https://qdrant.example',
+      QDRANT_API_KEY: 'qdrant-key',
+      QDRANT_COLLECTION: 'p42_test_collection'
+    }, async () => {
+      global.fetch = async (url, options = {}) => {
+        calls.push({ url, options, body: options.body ? JSON.parse(options.body) : null });
+        if (url === 'https://gateway.example/api/evidence/index') {
+          const body = JSON.parse(options.body);
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              ok: true,
+              model: 'text-embedding-3-large',
+              context: { caseId: body.caseId, workspaceId: body.workspaceId, projectId: body.projectId },
+              chunking: { chunkCount: 1 },
+              chunks: [{
+                chunkId: 'chk_dpa_1',
+                chunkIndex: 0,
+                evidenceId: 'DOC-DPA',
+                documentId: 'DPA-001',
+                title: 'DPA Clause',
+                fileName: 'dpa.pdf',
+                text: 'Signed DPA and retention schedule are present.',
+                embedding: [0.1, 0.2, 0.3],
+                metadata: { sourceType: 'backend_parsed', documentType: 'dpa' },
+                tags: ['DPA'],
+                domains: ['Privacy And Data Governance']
+              }]
+            })
+          };
+        }
+        if (url === 'https://qdrant.example/collections/p42_test_collection' && options.method === 'GET') {
+          return { ok: false, status: 404, text: async () => JSON.stringify({ status: { error: 'not found' } }) };
+        }
+        if (url === 'https://qdrant.example/collections/p42_test_collection' && options.method === 'PUT') {
+          return { ok: true, status: 200, text: async () => JSON.stringify({ result: true }) };
+        }
+        if (url === 'https://qdrant.example/collections/p42_test_collection/points?wait=true') {
+          assert.equal(options.headers['api-key'], 'qdrant-key');
+          assert.equal(calls.at(-1).body.points[0].payload.type, 'evidence_chunk');
+          assert.equal(calls.at(-1).body.points[0].payload.caseId, 'case-qdrant');
+          assert.equal(calls.at(-1).body.points[0].payload.workspaceId, 'parallax42');
+          assert.equal(calls.at(-1).body.points[0].payload.projectId, 'compliance-intelligence-agent');
+          assert.equal(calls.at(-1).body.points[0].payload.documentId, 'DPA-001');
+          assert.equal(calls.at(-1).body.points[0].payload.evidenceId, 'DOC-DPA');
+          assert.equal(calls.at(-1).body.points[0].payload.embedding, undefined);
+          return { ok: true, status: 200, text: async () => JSON.stringify({ result: true }) };
+        }
+        throw new Error(`Unexpected fetch ${url}`);
+      };
+
+      const result = await indexEvidenceServerSide({
+        caseId: 'case-qdrant',
+        documents: [{ evidenceId: 'DOC-DPA', text: 'Signed DPA and retention schedule are present.' }]
+      });
+
+      assert.equal(result.index.provider, 'qdrant');
+      assert.equal(result.index.browserEmbeddingsRetained, false);
+      assert.equal(result.chunks[0].embedding, undefined);
+      assert.equal(result.chunks[0].snippet, 'Signed DPA and retention schedule are present.');
+      assert.equal(evidenceVectorStoreHealth().collection, 'p42_test_collection');
+      assert.equal(evidenceVectorStoreHealth().qdrantConfigured, true);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('qdrant search embeds the query and returns sanitized citations only', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      P42_VECTOR_STORE_PROVIDER: 'qdrant',
+      QDRANT_URL: 'https://qdrant.example',
+      QDRANT_COLLECTION: 'p42_test_collection'
+    }, async () => {
+      global.fetch = async (url, options = {}) => {
+        if (url === 'https://gateway.example/api/embeddings') {
+          const body = JSON.parse(options.body);
+          assert.equal(body.purpose, 'qdrant_evidence_search');
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              model: 'text-embedding-3-large',
+              data: [{ embedding: [0.3, 0.2, 0.1] }]
+            })
+          };
+        }
+        if (url === 'https://qdrant.example/collections/p42_test_collection/points/search') {
+          const body = JSON.parse(options.body);
+          assert.deepEqual(body.vector, [0.3, 0.2, 0.1]);
+          assert.equal(body.with_vector, false);
+          assert.ok(body.filter.must.some((item) => item.key === 'caseId' && item.match.value === 'case-qdrant'));
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              result: [{
+                score: 0.93,
+                payload: {
+                  type: 'evidence_chunk',
+                  caseId: 'case-qdrant',
+                  evidenceId: 'DOC-DPA',
+                  chunkId: 'chk_dpa_1',
+                  title: 'DPA Clause',
+                  text: 'Signed DPA, retention, and deletion assistance are present.',
+                  metadata: { sourceType: 'backend_parsed' }
+                }
+              }]
+            })
+          };
+        }
+        throw new Error(`Unexpected fetch ${url}`);
+      };
+
+      const result = await searchEvidenceServerSide({
+        caseId: 'case-qdrant',
+        query: 'DPA retention',
+        topK: 3
+      });
+
+      assert.equal(result.index.provider, 'qdrant');
+      assert.equal(result.index.browserEmbeddingsRetained, false);
+      assert.equal(result.matches.length, 1);
+      assert.equal(result.matches[0].text, 'Signed DPA, retention, and deletion assistance are present.');
+      assert.equal(result.matches[0].embedding, undefined);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('qdrant smoke script reports skipped when qdrant is not configured', async () => {
+  await withEnv({
+    P42_VECTOR_STORE_PROVIDER: 'local_file',
+    QDRANT_URL: '',
+    P42_VECTOR_DB_URL: ''
+  }, async () => {
+    const result = await runQdrantSmokeTest();
+    assert.equal(result.skipped, true);
+    assert.equal(result.ok, false);
+  });
 });

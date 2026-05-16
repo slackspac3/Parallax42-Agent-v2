@@ -13,6 +13,49 @@ This repo is the clean build surface for packaging the existing Parallax42 work 
 
 The implementation now defaults agent execution through a dependency-light CrewAI Flow orchestration path with deterministic compliance decisions as the stable fallback. The stronger Parallax42 assets remain the source of truth for the live supplier-risk backend and are referenced in the submission dossier.
 
+## Judge Quick Start
+
+```bash
+npm install
+npm run qa
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+The local server defaults to `http://127.0.0.1:3020`. If the judging environment expects port `3000`, start it with:
+
+```bash
+PORT=3000 npm run dev
+```
+
+Suggested demo prompt:
+
+```text
+Assess whether we can onboard a UAE healthcare analytics vendor using patient data, Microsoft 365, and cross-border cloud processing.
+```
+
+Suggested demo steps:
+
+1. Attach a synthetic compliance document from `test-fixtures/compliance-documents/`, for example `02_data_processing_addendum_and_cross_border_terms.pdf`.
+2. Run Council.
+3. Review the decision memo.
+4. Export Executive Review Pack PDF.
+
+## What This Demo Does Not Claim
+
+- This repository is not a FastAPI backend.
+- This repository does not include Redis, Postgres, Celery, or durable queues.
+- The default runtime is deterministic decisioning plus CrewAI-shaped dry run.
+- Live LLM specialist output is optional and advisory.
+- Qdrant support exists only when configured; local-file vector storage is the demo default.
+- OCR/parser capability is integrated through external relay paths rather than implemented as a local parser service in this repo.
+- OpenClaw is not implemented and should not be claimed.
+
 ## Current Status
 
 Implemented in this repo:
@@ -36,7 +79,7 @@ Implemented in this repo:
 Linked live assets already in place:
 
 - Parallax42 demo UI: `https://slackspac3.github.io/Parallax42/`
-- Parallax42 FastAPI backend: `https://api.parallax42.bhavukarora.com/health`
+- External Parallax42 backend health: `https://api.parallax42.bhavukarora.com/health`
 - Compass gateway: `https://parallax42-compass-gateway.vercel.app/api/health`
 - Compliance Intelligence Agent API: `https://parallax42-compliance-intelligence.vercel.app`
 
@@ -97,6 +140,30 @@ P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020
 AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
 ```
 
+Full RAG and governed-learning demo setup:
+
+```text
+COMPASS_GATEWAY_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
+COMPASS_GATEWAY_TOKEN=<server-side gateway token>
+EMBEDDINGS_MODEL=text-embedding-3-large
+P42_VECTOR_STORE_PROVIDER=qdrant
+QDRANT_URL=https://<cluster>.cloud.qdrant.io
+QDRANT_API_KEY=<server-side qdrant key>
+QDRANT_COLLECTION=p42_compliance_evidence
+AGENT_RUNTIME=crewai_llm
+CREWAI_ENABLE_LIVE_LLM=1
+CREWAI_LLM_MODEL=gpt-5.1
+P42_AUTH_MODE=audit
+```
+
+Qdrant is required for the full RAG and governed learning memory demo. The local-file vector store remains a demo fallback only. Governed learning stores auditable reviewer memory and precedent patterns; it is not model retraining and never silently changes the deterministic council decision. Live LLM specialists are advisory only, and human approval remains required.
+
+After configuring Qdrant and the Compass gateway, run:
+
+```bash
+npm run qdrant:smoke
+```
+
 ## CrewAI
 
 Validate the CrewAI crew design without installing optional dependencies:
@@ -125,7 +192,13 @@ export CREWAI_LLM_API_KEY=$COMPASS_GATEWAY_TOKEN
 AGENT_RUNTIME=crewai_llm npm run dev
 ```
 
-Live LLM specialist output is attached under `orchestration.llmOutput`; on Vercel this can use the Node-side Compass advisory adapter when `AGENT_RUNTIME=crewai_llm` and `CREWAI_ENABLE_LIVE_LLM=1` are set. The final decision remains guarded by the deterministic engine until eval gates are added. The evidence boundary uses server-side `POST /api/evidence/index` and `POST /api/evidence/search`, calls the reusable Parallax42 embedding boundary using `text-embedding-3-large`, stores chunk vectors behind the API, and keeps browser state limited to case IDs, evidence IDs, and sanitized index metadata.
+Live LLM specialist output is attached under `orchestration.llmOutput`; on Vercel this can use the Node-side Compass advisory adapter when `AGENT_RUNTIME=crewai_llm` and `CREWAI_ENABLE_LIVE_LLM=1` are set. The final decision remains guarded by the deterministic engine. The evidence boundary uses server-side `POST /api/evidence/index` and `POST /api/evidence/search`, calls the reusable Parallax42 embedding boundary using `text-embedding-3-large`, stores chunk vectors behind the API, and keeps browser state limited to case IDs, evidence IDs, and sanitized index metadata.
+
+Learning memory endpoints are advisory:
+
+- `POST /api/learning/feedback` records reviewer feedback, outcomes, controls, rejected evidence, and missing evidence as auditable learning artifacts.
+- `POST /api/learning/similar-cases` returns similar prior cases.
+- `GET|POST /api/learning/control-suggestions` returns common reviewer-added controls and repeated missing evidence patterns.
 
 `POST /api/export/review-pack` creates the server-side executive review pack with digest, evidence quality, retrieval audit, citation manifest, reviewer actions, and a PDF payload. The cockpit uses this endpoint for the Exec review pack button and falls back to a local HTML report only if the API is unavailable.
 
