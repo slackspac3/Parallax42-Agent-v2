@@ -835,18 +835,52 @@ body[data-run-mode="chat"] .runway { align-content: start; gap: 16px; }
   align-items: start;
 }
 
-/* Chat form */
-.chat-form {
-  position: sticky;
-  bottom: 0;
-  order: 2;
-  display: grid;
+/* ── Chat main column ─────────────────────────────────────────
+   Flex column so order properties actually work.
+   Visual order (top→bottom): messages → suggestions → input
+   ──────────────────────────────────────────────────────────── */
+.chat-main-column {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  padding-top: 4px;
-  background: linear-gradient(180deg, transparent, rgba(8,15,26,0.98) 18%);
+  min-height: 0;
 }
 
-.chat-form textarea { min-height: 110px; border-radius: var(--r-md); }
+/* Chat messages — top, scrollable, grows to fill space */
+.chat-messages {
+  order: 1;
+  flex: 1 1 auto;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 220px;
+  padding: 16px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01)),
+    rgba(4,8,16,0.7);
+  overflow-y: auto;
+}
+
+/* Suggestions — below messages, above input */
+/* (overrides the later .chat-suggestions rule's order) */
+
+/* Context strength — above input */
+.context-strength { order: 3; }
+
+/* Chat form — always at bottom */
+.chat-form {
+  order: 4;
+  flex-shrink: 0;
+  display: grid;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+  background: transparent;
+}
+
+.chat-form textarea { min-height: 100px; border-radius: var(--r-md); }
 
 .form-actions {
   display: flex;
@@ -856,23 +890,6 @@ body[data-run-mode="chat"] .runway { align-content: start; gap: 16px; }
 
 .attachment-status { color: var(--muted); font-size: 12px; }
 .chat-attachment-list { display: flex; flex-wrap: wrap; gap: 6px; }
-
-/* Chat messages */
-.chat-messages {
-  order: 3;
-  display: grid;
-  align-content: start;
-  gap: 10px;
-  min-height: clamp(200px, 28svh, 340px);
-  max-height: 42svh;
-  padding: 16px;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--line);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01)),
-    rgba(4,8,16,0.7);
-  overflow-y: auto;
-}
 
 .chat-messages::-webkit-scrollbar { width: 4px; }
 .chat-messages::-webkit-scrollbar-track { background: transparent; }
@@ -927,12 +944,13 @@ body[data-run-mode="chat"] .runway { align-content: start; gap: 16px; }
   animation: typing-bar 800ms ease-in-out infinite alternate;
 }
 
-/* Suggestions */
+/* Suggestions — below messages, above form */
 .chat-suggestions {
-  order: 1;
+  order: 2;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .chat-suggestions button {
@@ -2309,10 +2327,10 @@ pre {
   .mode-tab { flex: 1 1 130px; min-width: 0; }
 
   .chat-suggestions { grid-template-columns: 1fr; }
-  .chat-form { order: -1; }
-  .case-draft-panel { order: 1; }
+  /* on mobile keep the same logical order — input at bottom */
+  .chat-form { order: 4; }
   .chat-suggestions { order: 2; }
-  .chat-messages { order: 3; }
+  .chat-messages { order: 1; min-height: 180px; }
 
   .field-grid,
   .metric-stack,
