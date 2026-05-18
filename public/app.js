@@ -3145,88 +3145,185 @@ function buildExecReviewHtml(result = lastRun) {
   const domains = Array.isArray(result.domains) ? result.domains : [];
   const citations = Array.isArray(result.citations) ? result.citations : [];
   const evidenceQuality = result.evidenceQuality || {};
-  const retrieval = result.retrievalContext || {};
+  const retrieval = result.retrievalContext || result.retrievalAudit || {};
+  const timeline = buildSpecialistTimeline(result);
+  const reviewerActions = businessReviewerActions(result);
   const readiness = Number.isFinite(decision.readinessScore) ? Math.round(decision.readinessScore * 100) : 0;
   const memo = gaps.length
-    ? `${decision.recommendation || 'Pending review'} The council found ${gaps.length} blocking item${gaps.length === 1 ? '' : 's'} that must be confirmed by a human reviewer before approval.`
+    ? `${decision.recommendation || 'Pending review'} The council identified ${gaps.length} blocking item${gaps.length === 1 ? '' : 's'} that must be confirmed by a human reviewer before approval.`
     : `${decision.recommendation || 'Pending review'} No blocking gaps remain in the current evidence set, but accountable human approval is still required.`;
+
+  const domainStatusColor = (s = '') => /applicable/i.test(s) && !/not/i.test(s) ? '#22e3b4' : /confirmation|needs/i.test(s) ? '#f4c95d' : /not.applicable/i.test(s) ? '#4a6080' : '#60a5fa';
+  const gapCls = (s = '') => /high|critical/i.test(s) ? '' : /medium|moderate/i.test(s) ? 'medium' : 'low';
+  const tlColor = (t = '') => /escalated|challenged/i.test(t) ? '#ff7a7a' : /changed/i.test(t) ? '#f4c95d' : '#22e3b4';
+  const caseRows = [
+    ['Business unit', caseInfo.businessUnit], ['Geography', caseInfo.geography],
+    ['Integrations', (caseInfo.integrations || []).join(', ')], ['Case ID', caseInfo.caseId],
+    ['Evidence quality', humanize(evidenceQuality.status)], ['RAG chunks searched', retrieval.chunkCount || 0],
+    ['Semantic matches', retrieval.matchCount || retrieval.matches?.length || 0],
+    ['Runtime', formatRuntime(result.runtime?.actualRuntime || result.mode || 'unknown')],
+  ].filter(([, v]) => v);
+  const generatedAt = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
   return `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Parallax42 Executive Review Pack</title>
+  <title>P42 Executive Review Pack — ${escapeHtml(caseInfo.caseId || 'case')}</title>
   <style>
-    :root { color-scheme: dark; --bg: #061512; --panel: #0c211c; --line: #245448; --mint: #18e0b7; --cyan: #8fe8f2; --amber: #f4c95d; --red: #ff7a7a; --text: #f4fff9; --muted: #a9bbb4; }
-    body { margin: 0; font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at 20% 0%, rgba(24,224,183,.18), transparent 30%), var(--bg); }
-    main { width: min(1120px, calc(100% - 48px)); margin: 32px auto; display: grid; gap: 22px; }
-    section { border: 1px solid var(--line); background: linear-gradient(145deg, rgba(12,33,28,.96), rgba(5,18,15,.98)); border-radius: 18px; padding: 28px; box-shadow: 0 24px 80px rgba(0,0,0,.28); }
-    h1 { font-size: clamp(36px, 6vw, 72px); line-height: .92; margin: 0 0 18px; max-width: 760px; }
-    h2 { margin: 0 0 16px; font-size: 24px; }
-    p { color: var(--muted); max-width: 780px; }
-    .eyebrow { color: var(--mint); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
-    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-    .tile, .card { border: 1px solid var(--line); background: rgba(255,255,255,.035); border-radius: 14px; padding: 18px; }
-    .tile span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
-    .tile strong { display: block; margin-top: 10px; font-size: 30px; }
-    .memo { font-size: 18px; color: var(--text); }
-    .risk-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .risk { border-color: rgba(255,122,122,.35); }
-    .risk small { color: var(--amber); font-weight: 800; text-transform: uppercase; }
-    .two { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; }
-    .list { display: grid; gap: 10px; }
-    .item { border-left: 3px solid var(--mint); padding: 8px 0 8px 14px; color: var(--muted); }
-    .boundary { border-color: rgba(244,201,93,.5); background: rgba(244,201,93,.08); }
-    @media (max-width: 800px) { .grid, .risk-grid, .two { grid-template-columns: 1fr; } }
+    :root{color-scheme:dark;--bg:#040810;--panel:#0a1628;--line:#1a2840;--ls:#243652;--mint:#22e3b4;--blue:#60a5fa;--amber:#f4c95d;--red:#ff7a7a;--text:#f0f4ff;--muted:#8ba0c4;--subtle:#4a6080}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;color:var(--text);background:radial-gradient(ellipse 120% 60% at 20% -10%,rgba(34,227,180,.12),transparent 45%),var(--bg);min-height:100vh}
+    main{width:min(1160px,calc(100% - 48px));margin:40px auto 80px;display:grid;gap:20px}
+    section{border:1px solid var(--line);background:linear-gradient(160deg,rgba(10,22,40,.96),rgba(4,8,16,.98));border-radius:20px;padding:32px}
+    section.hero{border-color:rgba(34,227,180,.28);background:linear-gradient(140deg,rgba(34,227,180,.1),rgba(96,165,250,.04) 44%,rgba(4,8,16,.96))}
+    section.bnd{border-color:rgba(244,201,93,.36);background:rgba(244,201,93,.06)}
+    section.clear{border-color:rgba(34,227,180,.22);background:rgba(34,227,180,.04)}
+    h1{font-size:clamp(28px,4vw,52px);font-weight:900;line-height:1;margin:12px 0 0}
+    h2{font-size:21px;font-weight:800;line-height:1.2;margin:0 0 14px}
+    h3{font-size:15px;font-weight:700;margin:8px 0 5px;line-height:1.3}
+    p{color:var(--muted);line-height:1.6;margin-top:10px}
+    ol{padding-left:18px;display:grid;gap:6px}
+    li{color:var(--muted);font-size:13px;line-height:1.5}
+    .ey{display:block;color:var(--mint);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+    .memo{font-size:17px;color:var(--text);line-height:1.55;max-width:840px;margin:14px 0 22px}
+    .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
+    .tile{border:1px solid var(--ls);background:rgba(255,255,255,.04);border-radius:14px;padding:18px 20px}
+    .tile .lbl{color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+    .tile .val{display:block;margin-top:10px;font-size:32px;font-weight:900;line-height:1}
+    .two{display:grid;grid-template-columns:1.2fr .8fr;gap:20px}
+    .card{border:1px solid var(--ls);background:rgba(255,255,255,.03);border-radius:14px;padding:22px}
+    .kv{display:grid;gap:0;margin-top:8px}
+    .kv-row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);gap:16px}
+    .kv-k{color:var(--subtle);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+    .kv-v{font-size:13px;font-weight:700;text-align:right}
+    .gap-list{display:grid;gap:12px;margin-top:16px}
+    .gc{border-left:3px solid var(--red);background:rgba(255,122,122,.06);border-radius:0 12px 12px 0;padding:14px 18px}
+    .gc.m{border-color:var(--amber);background:rgba(244,201,93,.06)}
+    .gc.l{border-color:var(--blue);background:rgba(96,165,250,.06)}
+    .gbadge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.07em;background:rgba(255,122,122,.18);color:var(--red);margin-bottom:8px}
+    .gbadge.m{background:rgba(244,201,93,.18);color:var(--amber)}
+    .gbadge.l{background:rgba(96,165,250,.18);color:var(--blue)}
+    .domain-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:16px}
+    .dc{border:1px solid var(--ls);border-radius:12px;padding:14px 16px}
+    .ds{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.07em}
+    .dl{display:block;font-weight:700;font-size:14px;margin:6px 0 4px}
+    .dsc{font-size:11px;color:var(--muted)}
+    .cite-list{display:grid;gap:10px;margin-top:16px}
+    .cite{border-left:3px solid var(--blue);padding:10px 0 10px 14px}
+    .cite-id{color:var(--mint);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.07em}
+    .cite-title{display:block;font-weight:700;font-size:14px;margin:4px 0}
+    .cite-text{color:var(--muted);font-size:13px;line-height:1.5}
+    .tl{display:grid;gap:0;margin-top:16px}
+    .tl-item{display:grid;grid-template-columns:40px 1fr;gap:16px;padding:16px 0;border-top:1px solid var(--line)}
+    .tl-item:first-child{border-top:none}
+    .tl-n{font-size:13px;font-weight:900;color:var(--mint);padding-top:2px}
+    .tl-name{font-weight:700;font-size:15px;margin-bottom:8px}
+    .tl-dl{display:grid;grid-template-columns:90px 1fr;gap:4px 12px}
+    .tl-dt{color:var(--subtle);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.07em;padding-top:2px}
+    .tl-dd{color:var(--muted);font-size:13px;line-height:1.45}
+    .tl-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+    .act-list{display:grid;gap:8px;margin-top:16px}
+    .act{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-radius:10px;border:1px solid var(--ls);background:rgba(255,255,255,.03)}
+    .act-n{color:var(--mint);font-size:11px;font-weight:900;min-width:22px;padding-top:1px}
+    .ft{border-color:var(--ls);background:rgba(255,255,255,.02);text-align:center}
+    .ft p{margin:0 auto;color:var(--subtle);font-size:12px;text-align:center;max-width:100%}
+    .ft strong{color:var(--text)}
+    @media(max-width:820px){.tiles{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.domain-grid{grid-template-columns:repeat(2,1fr)}.tl-dl{grid-template-columns:80px 1fr}}
   </style>
 </head>
 <body>
   <main>
-    <section>
-      <span class="eyebrow">Executive review pack</span>
-      <h1>Compliance Mission Control</h1>
+    <section class="hero">
+      <span class="ey">Executive review pack · ${escapeHtml(generatedAt)}</span>
+      <h1>${escapeHtml(decision.recommendation || 'Compliance Review')}</h1>
       <p class="memo">${escapeHtml(memo)}</p>
-      <div class="grid">
-        <div class="tile"><span>Readiness</span><strong>${escapeHtml(readiness)}%</strong></div>
-        <div class="tile"><span>Blocking gaps</span><strong>${escapeHtml(gaps.length)}</strong></div>
-        <div class="tile"><span>Citations</span><strong>${escapeHtml(citations.length)}</strong></div>
-        <div class="tile"><span>Domains</span><strong>${escapeHtml(domains.length)}</strong></div>
+      <div class="tiles">
+        <div class="tile"><div class="lbl">Readiness</div><span class="val">${escapeHtml(readiness)}%</span></div>
+        <div class="tile"><div class="lbl">Blocking gaps</div><span class="val">${escapeHtml(gaps.length)}</span></div>
+        <div class="tile"><div class="lbl">Citations</div><span class="val">${escapeHtml(citations.length)}</span></div>
+        <div class="tile"><div class="lbl">Domains</div><span class="val">${escapeHtml(domains.length)}</span></div>
       </div>
     </section>
-    <section class="two">
-      <div>
-        <span class="eyebrow">Decision room</span>
-        <h2>${escapeHtml(decision.recommendation || 'Pending review')}</h2>
-        <p>${escapeHtml(decision.rationale || 'The deterministic council produced this pack for accountable human review.')}</p>
-      </div>
-      <div class="card boundary">
-        <span class="eyebrow">Human approval required</span>
-        <p>Final approval remains with the accountable human owner. Advisory output and learning memory do not override the deterministic decision.</p>
-      </div>
-    </section>
+
+    <div class="two">
+      <section>
+        <span class="ey">Case context</span>
+        <h2>${escapeHtml(caseInfo.supplierName || 'Supplier pending')}</h2>
+        <div class="kv">${caseRows.map(([k, v]) => `<div class="kv-row"><span class="kv-k">${escapeHtml(k)}</span><b class="kv-v">${escapeHtml(String(v))}</b></div>`).join('')}</div>
+      </section>
+      <section class="bnd">
+        <span class="ey">Human approval required</span>
+        <h2 style="margin-top:10px;">No auto-approval</h2>
+        <p>Final authority remains with the accountable human owner. The deterministic council provides reviewer-ready output only.</p>
+        ${reviewerActions.length ? `<div style="margin-top:18px;"><span class="ey">Next reviewer steps</span><ol style="margin-top:10px;">${reviewerActions.map((a) => `<li>${escapeHtml(a)}</li>`).join('')}</ol></div>` : ''}
+      </section>
+    </div>
+
+    ${gaps.length ? `
     <section>
-      <span class="eyebrow">Risk summary</span>
-      <h2>Required reviewer actions</h2>
-      <div class="risk-grid">
-        ${(gaps.length ? gaps : [{ severity: 'none', gap: 'No blocking gaps returned by the council.', action: 'Confirm accountable human approval before operational use.' }]).slice(0, 3).map((gap) => `
-          <div class="card risk">
-            <small>${escapeHtml(gap.severity || 'review')}</small>
-            <h3>${escapeHtml(gap.gap || 'Review item')}</h3>
-            <p>${escapeHtml(gap.action || 'Record reviewer disposition.')}</p>
-          </div>
-        `).join('')}
+      <span class="ey">Blocking gaps · ${gaps.length} item${gaps.length === 1 ? '' : 's'} requiring action</span>
+      <h2>Reviewer must confirm before approval</h2>
+      <div class="gap-list">
+        ${gaps.map((gap) => {
+          const c = gapCls(gap.severity);
+          return `<div class="gc ${c}"><div class="gbadge ${c}">${escapeHtml(gap.severity || 'review')}</div><h3>${escapeHtml(gap.gap || 'Review item')}</h3><p style="margin-top:4px;">${escapeHtml(gap.action || 'Record reviewer disposition.')}</p></div>`;
+        }).join('')}
+      </div>
+    </section>` : `
+    <section class="clear">
+      <span class="ey">Gap assessment</span>
+      <h2>No blocking gaps returned</h2>
+      <p>The evidence set did not produce a blocking gap. Human review and accountable approval remain required before operational use.</p>
+    </section>`}
+
+    ${domains.length ? `
+    <section>
+      <span class="ey">Obligation domains · ${domains.length} mapped</span>
+      <h2>Compliance coverage</h2>
+      <div class="domain-grid">
+        ${domains.map((d) => {
+          const col = domainStatusColor(d.status);
+          return `<div class="dc" style="border-color:${col}30;"><span class="ds" style="color:${col};">${escapeHtml(humanize(d.status || 'unknown'))}</span><span class="dl">${escapeHtml(d.label || 'Domain')}</span><span class="dsc">Score: ${escapeHtml(String(d.score ?? 'n/a'))} · ${escapeHtml((d.obligations || []).length)} obligation${(d.obligations || []).length === 1 ? '' : 's'}</span></div>`;
+        }).join('')}
+      </div>
+    </section>` : ''}
+
+    <section>
+      <span class="ey">Evidence intelligence · ${citations.length} citation${citations.length === 1 ? '' : 's'}</span>
+      <h2>${escapeHtml(humanize(evidenceQuality.status || 'Evidence review'))}</h2>
+      <p>Retrieval stays server-side. This export contains safe citations and metadata only — raw embeddings and vector chunks are not included.</p>
+      <div class="cite-list">
+        ${(citations.length ? citations : [{ title: 'No citation records returned.', text: 'Run with indexed evidence to populate citation-ready extracts.' }]).map((c) => `
+          <div class="cite"><span class="cite-id">${escapeHtml(c.evidenceId || c.citationId || 'evidence')}</span><span class="cite-title">${escapeHtml(c.title || 'Citation')}</span><span class="cite-text">${escapeHtml(c.text || 'No extract available.')}</span></div>`).join('')}
       </div>
     </section>
-    <section class="two">
-      <div>
-        <span class="eyebrow">Evidence intelligence</span>
-        <h2>${escapeHtml(humanize(evidenceQuality.status || 'not scored'))}</h2>
-        <p>Semantic matches: ${escapeHtml(retrieval.matchCount || retrieval.matches?.length || 0)}. Retrieval stays behind server-side APIs; browser export contains only safe citations and metadata.</p>
+
+    <section>
+      <span class="ey">Agent collaboration timeline · 6 specialists</span>
+      <h2>Deterministic council trace</h2>
+      <p style="margin-bottom:4px;">Visible specialist validation, not live autonomous debate. Each step records what it reviewed and how it changed the handoff.</p>
+      <div class="tl">
+        ${timeline.map((item, i) => {
+          const col = tlColor(item.action.type);
+          return `<div class="tl-item"><div class="tl-n">0${i + 1}</div><div><div class="tl-badge" style="background:${col}20;color:${col};">${escapeHtml(item.action.label)}</div><div class="tl-name">${escapeHtml(item.name)}</div><div class="tl-dl"><div class="tl-dt">Reviewed</div><div class="tl-dd">${escapeHtml(item.reviewed)}</div><div class="tl-dt">Found</div><div class="tl-dd">${escapeHtml(item.found)}</div><div class="tl-dt">Action</div><div class="tl-dd">${escapeHtml(item.action.detail)}</div><div class="tl-dt">Handoff</div><div class="tl-dd">${escapeHtml(item.handoff)}</div></div></div></div>`;
+        }).join('')}
       </div>
-      <div class="list">
-        ${(citations.length ? citations : [{ title: 'No citation records returned.', text: 'Run with indexed evidence to populate citation-ready extracts.' }]).slice(0, 4).map((citation) => `
-          <div class="item"><strong>${escapeHtml(citation.evidenceId || citation.citationId || 'Evidence')}</strong> ${escapeHtml(citation.title || 'Citation')}<br>${escapeHtml(citation.text || '')}</div>
-        `).join('')}
+    </section>
+
+    ${reviewerActions.length ? `
+    <section>
+      <span class="ey">Required human actions · ${reviewerActions.length} step${reviewerActions.length === 1 ? '' : 's'}</span>
+      <h2>Reviewer must confirm before approval</h2>
+      <div class="act-list">
+        ${reviewerActions.map((a, i) => `<div class="act"><span class="act-n">${String(i + 1).padStart(2, '0')}</span><span>${escapeHtml(a)}</span></div>`).join('')}
       </div>
+    </section>` : ''}
+
+    <section class="ft">
+      <p><strong>Parallax42 Compliance Intelligence Agent</strong> · Reviewer artifact only</p>
+      <p style="margin-top:8px;">Case: <strong>${escapeHtml(caseInfo.caseId || 'unassigned')}</strong> · Generated: <strong>${escapeHtml(new Date().toISOString())}</strong></p>
+      <p style="margin-top:8px;">This document does not grant operational approval. Final authority remains with the accountable human owner. Advisory specialists and learning memory are advisory only and do not alter the deterministic decision.</p>
     </section>
   </main>
 </body>
