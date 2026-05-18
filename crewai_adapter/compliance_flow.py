@@ -157,8 +157,8 @@ def llm_config() -> dict[str, Any]:
         "base_url_configured": bool(base_url),
         "api_key_configured": bool(api_key),
         "temperature": float(os.getenv("CREWAI_LLM_TEMPERATURE", "0.1")),
-        "timeout": float(os.getenv("CREWAI_LLM_TIMEOUT", "120")),
-        "max_tokens": int(os.getenv("CREWAI_LLM_MAX_TOKENS", "1800")),
+        "timeout": float(os.getenv("CREWAI_LLM_TIMEOUT", "75")),
+        "max_tokens": int(os.getenv("CREWAI_LLM_MAX_TOKENS", "900")),
         "provider_env": configured_provider_env(),
     }
 
@@ -270,10 +270,40 @@ def output_to_payload(output: Any) -> dict[str, Any]:
 
 def live_llm_system_note() -> str:
     return (
-        "Return strict JSON only. Do not approve the case automatically. "
-        "Treat your output as specialist analysis for a human reviewer and deterministic guardrail engine. "
-        "Name missing evidence, uncertainty, and required human approvals."
+        "Return compact strict JSON only. Advisory analysis only; never approve. "
+        "List missing evidence, uncertainty, reviewer questions, and required human approvals."
     )
+
+
+def compact_case_for_prompt(case: dict[str, Any]) -> str:
+    max_chars = int(os.getenv("CREWAI_TASK_CASE_MAX_CHARS", "5000"))
+    payload = {
+        "caseId": case.get("caseId"),
+        "supplierName": case.get("supplierName"),
+        "businessUnit": case.get("businessUnit"),
+        "geography": case.get("geography"),
+        "brief": case.get("brief"),
+        "integrations": (case.get("integrations") or [])[:8],
+        "riskSignals": (case.get("riskSignals") or [])[:12],
+        "evidenceSignals": (case.get("evidenceSignals") or [])[:12],
+        "retrievalContext": {
+            "evidenceMatches": ((case.get("retrievalContext") or {}).get("evidenceMatches") or [])[:4],
+            "similarCases": ((case.get("retrievalContext") or {}).get("similarCases") or [])[:3],
+            "missingEvidenceSignals": ((case.get("retrievalContext") or {}).get("missingEvidenceSignals") or [])[:8],
+        },
+        "documents": [
+            {
+                "evidenceId": item.get("evidenceId"),
+                "title": item.get("title") or item.get("fileName"),
+                "signals": (item.get("signals") or [])[:8],
+                "summary": str(item.get("summary") or item.get("text") or "")[:600],
+            }
+            for item in (case.get("documents") or [])[:5]
+            if isinstance(item, dict)
+        ],
+    }
+    text = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+    return text[:max_chars]
 
 
 def run_live_llm_review(case: dict[str, Any], input_label: str) -> dict[str, Any]:
@@ -287,6 +317,7 @@ def run_live_llm_review(case: dict[str, Any], input_label: str) -> dict[str, Any
     llm = build_llm()
     agents_config = load_yaml(CONFIG_DIR / "agents.yaml")
     tasks_config = load_yaml(CONFIG_DIR / "tasks.yaml")
+    compact_case = compact_case_for_prompt(case)
     agents = {
         key: Agent(
             role=config.get("role", key),
@@ -295,8 +326,8 @@ def run_live_llm_review(case: dict[str, Any], input_label: str) -> dict[str, Any
             allow_delegation=False,
             verbose=truthy_env("CREWAI_VERBOSE"),
             llm=llm,
-            max_iter=int(os.getenv("CREWAI_AGENT_MAX_ITER", "2")),
-            max_execution_time=int(os.getenv("CREWAI_AGENT_MAX_SECONDS", "120")),
+            max_iter=int(os.getenv("CREWAI_AGENT_MAX_ITER", "1")),
+            max_execution_time=int(os.getenv("CREWAI_AGENT_MAX_SECONDS", "75")),
         )
         for key, config in agents_config.items()
     }
@@ -310,9 +341,9 @@ def run_live_llm_review(case: dict[str, Any], input_label: str) -> dict[str, Any
             description=(
                 f"{config.get('description', '')}\n\n"
                 f"{live_llm_system_note()}\n\n"
-                f"Case input:\n{json.dumps(case, indent=2)}"
+                f"Compact case JSON:\n{compact_case}"
             ),
-            expected_output=f"{config.get('expected_output', '')}\nReturn valid JSON only.",
+            expected_output=f"{config.get('expected_output', '')}\nReturn valid compact JSON only. Max 6 bullets per array.",
             agent=agents[agent_key],
         ))
 

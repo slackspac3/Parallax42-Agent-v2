@@ -1,47 +1,47 @@
 triage_case:
   description: >
-    Read the case input and produce a bounded compliance work plan. Identify business owner, geography,
-    key systems, service type, and likely review domains.
+    Produce a compact work plan from the case input. Identify owner, geography, key systems,
+    service type, review domains, and missing intake only.
   expected_output: >
-    JSON with case_summary, review_domains, assumptions, and missing_intake_fields.
+    Compact JSON with case_summary, review_domains, assumptions, and missing_intake_fields.
   agent: compliance_orchestrator
 
 map_obligations:
   description: >
-    Map the case to likely regulatory, policy, contractual, AI, privacy, continuity, technical, finance,
-    ESG/HSE, and licensing obligations.
+    Map only likely material obligations: privacy, AI/model, continuity, technical, finance,
+    third-party, licensing, ESG/HSE, and regulatory controls.
   expected_output: >
-    JSON with obligations, applicability_status, evidence_required, and domain_owner.
+    Compact JSON with obligations, applicability_status, evidence_required, and domain_owner.
   agent: regulatory_obligation_mapper
 
 examine_evidence:
   description: >
-    Examine the available evidence summaries and identify supported claims, unsupported claims,
-    stale evidence, missing artifacts, and required confirmations.
+    Examine evidence summaries. Separate supported claims, unsupported claims, stale evidence,
+    missing artifacts, and required confirmations.
   expected_output: >
-    JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.
+    Compact JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.
   agent: evidence_examiner
 
 recommend_controls:
   description: >
-    Convert obligations and evidence gaps into actionable controls, blockers, remediation steps,
+    Convert material obligations and evidence gaps into controls, blockers, remediation steps,
     and escalation owners.
   expected_output: >
-    JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.
+    Compact JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.
   agent: risk_control_analyst
 
 review_responsible_ai:
   description: >
-    Review the draft decision for unsupported automatic approval, hallucinated obligations,
-    bias-sensitive assumptions, missing human approval, and poor fallback labeling.
+    Review for unsupported approval, invented obligations, bias-sensitive assumptions,
+    missing human approval, and poor fallback labeling.
   expected_output: >
-    JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.
+    Compact JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.
   agent: responsible_ai_reviewer
 
 package_audit_brief:
   description: >
-    Package the final decision into an audit-ready brief with trace, evidence IDs, recommendation,
-    readiness score, controls, gaps, escalation path, and residual risks.
+    Package an audit-ready brief with trace, evidence IDs, recommendation, readiness score,
+    controls, gaps, escalation path, and residual risks.
   expected_output: >
-    JSON decision brief suitable for human approval and audit review.
+    Compact JSON decision brief suitable for human approval and audit review.
   agent: audit_packager

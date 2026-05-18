@@ -1506,28 +1506,6 @@ function renderAgentActivity(items = defaultAgentActivity) {
   `;
 }
 
-function renderLegacyAgentActivity(items = defaultAgentActivity) {
-  if (!agentActivity) return;
-  agentActivity.innerHTML = `
-    <div class="agent-activity-header">
-      <div>
-        <span class="eyebrow">Specialist validation trace</span>
-        <strong>${items.some((item) => item.status === 'active') ? 'Deterministic council is active' : 'Deterministic council trace'}</strong>
-      </div>
-      <small>Not live autonomous debate</small>
-    </div>
-    <div class="agent-orbit">
-      ${items.map((item, index) => `
-        <article class="agent-node is-${escapeHtml(item.status || 'queued')}" style="--node-index: ${index}">
-          <span></span>
-          <strong>${escapeHtml(item.label)}</strong>
-          <small>${escapeHtml(item.detail || item.status || 'queued')}</small>
-        </article>
-      `).join('')}
-    </div>
-  `;
-}
-
 function renderChatAttachments() {
   if (!chatAttachmentList) return;
   if (!uploadedEvidence.length) {
@@ -1556,13 +1534,14 @@ function missingProofItems(draft = chatCaseDraft, result = lastRuns.chat) {
   if (result?.ok && Array.isArray(result.gaps) && result.gaps.length) {
     return result.gaps.map((gap) => gap.gap || gap.action || 'Reviewer confirmation required').slice(0, 4);
   }
+  const source = result?.ok ? { ...(draft || {}), ...(result.case || {}) } : (draft || {});
   const readiness = draft === chatCaseDraft ? chatRunReadiness : null;
   const blockers = readiness?.executionBlockers || readiness?.advisoryGaps || [];
   if (blockers.length) return blockers.map((item) => titleCase(item)).slice(0, 4);
   const missing = [];
-  if (!cleanEvidenceText(draft.businessUnit)) missing.push('Accountable owner');
-  if (!cleanEvidenceText(draft.geography)) missing.push('Geography');
-  if (!(draft.evidenceSignals?.length || draft.documents?.length || draft.indexedEvidence?.chunkCount)) missing.push('Evidence proof');
+  if (!cleanEvidenceText(source.businessUnit)) missing.push('Accountable owner');
+  if (!cleanEvidenceText(source.geography)) missing.push('Geography');
+  if (!(source.evidenceSignals?.length || source.documents?.length || source.indexedEvidence?.chunkCount || result?.evidenceIds?.length || result?.citations?.length)) missing.push('Evidence proof');
   return missing.slice(0, 4);
 }
 
@@ -1639,14 +1618,23 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
     ? (result.domains || []).filter((domain) => /applicable|needs|confirmation/i.test(domain.status || '')).map((domain) => domain.label)
     : unique([...(draft.riskSignals || []), ...(draft.evidenceSignals || [])]).map((item) => compactUiLabel(item, 42));
   const missing = missingProofItems(draft, result);
-  const supplier = draft.supplierName || result?.case?.supplierName || 'New compliance case';
-  const owner = draft.businessUnit || result?.case?.businessUnit || 'needed';
-  const geography = draft.geography || result?.case?.geography || 'needed';
+  const supplier = result?.ok
+    ? (result?.case?.supplierName || draft.supplierName || 'Completed review')
+    : (draft.supplierName || result?.case?.supplierName || 'New compliance case');
+  const owner = result?.ok
+    ? (result?.case?.businessUnit || draft.businessUnit || 'needed')
+    : (draft.businessUnit || result?.case?.businessUnit || 'needed');
+  const geography = result?.ok
+    ? (result?.case?.geography || draft.geography || 'needed')
+    : (draft.geography || result?.case?.geography || 'needed');
   const approvalRequired = result?.ok ? humanApprovalRequired(result) : true;
   const evidenceMatches = evidenceMatchesFor(result, draft);
   const learning = learningSuggestionsFor(result, draft);
   const advisory = advisorySpecialistsFor(result);
   const indexedChunks = Number(draft.indexedEvidence?.chunkCount || evidenceIndexMeta.chunkCount || retrievalContextFor(result, draft).chunkCount || 0);
+  const evidenceSummary = result?.ok
+    ? `${(result.evidenceIds || []).length || result.citations?.length || 0} evidence ID${((result.evidenceIds || []).length || result.citations?.length || 0) === 1 ? '' : 's'} · ${humanize(result.evidenceQuality?.status || 'not scored')}`
+    : evidenceStatusSummary(draft);
   caseIntelReadiness.textContent = `${Math.max(0, Math.min(100, Math.round(score)))}%`;
   caseIntelDetails.innerHTML = `
     <div class="intel-meter" aria-hidden="true"><span style="width: ${Math.max(0, Math.min(100, Math.round(score)))}%"></span></div>
@@ -1665,7 +1653,7 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
       </article>
       <article>
         <span>Evidence confidence</span>
-        <strong>${escapeHtml(evidenceStatusSummary(draft))}</strong>
+        <strong>${escapeHtml(evidenceSummary)}</strong>
       </article>
     </div>
     <div class="intel-block risk-domain-block">
@@ -1722,7 +1710,7 @@ function assistantRawSummary(text = '') {
   if (!clean) return 'I am updating the case draft.';
   if (/could not|failed|error/i.test(clean)) return clean;
   if (/what i understood|next questions?|missing/i.test(clean)) {
-    return 'I captured the current facts and identified the next proof needed before the council can run cleanly.';
+    return 'I captured the current facts and identified the proof needed before this is ready for review.';
   }
   if (/ran|decision|approval|blocking|readiness/i.test(clean)) {
     return clean.split(/Next questions?:/i)[0].trim().slice(0, 260);
@@ -1763,10 +1751,10 @@ function assistantQuestionFromText(text = '') {
 function assistantAcknowledgement(text = '') {
   if (/could not|failed|error/i.test(text)) return 'I hit a processing issue, but the case state is still safe.';
   if (lastRuns.chat?.ok) return 'Council run complete. I kept the decision review-bound.';
-  if (chatRunReadiness?.runnable) return 'Good, I have enough to run the council.';
-  if (indexedChunkCount()) return 'I found indexed evidence and I am building the case around it.';
-  if (hasChatContext()) return 'Got it. I am turning that into a reviewable compliance case.';
-  return 'I can help build the case from plain English.';
+  if (chatRunReadiness?.runnable) return 'I have enough to prepare the decision room.';
+  if (indexedChunkCount()) return 'I found indexed evidence and added it to the case.';
+  if (hasChatContext()) return 'That helps. I updated the working case.';
+  return 'Tell me the workflow in plain English.';
 }
 
 function renderThinkingLoader(message = {}) {
@@ -1812,14 +1800,21 @@ function renderAssistantTurn(message = {}) {
   return `
     <div class="advisor-response-card advisor-natural-response">
       <div class="advisor-response-head">
-        <span class="eyebrow">Advisor</span>
         <strong>${escapeHtml(acknowledgement)}</strong>
         <p>${escapeHtml(summary)}</p>
       </div>
+      <div class="advisor-fact-strip" aria-label="Case facts captured">
+        ${facts.slice(0, 4).map(([label, value]) => `
+          <span>
+            <small>${escapeHtml(label)}</small>
+            <b>${escapeHtml(value)}</b>
+          </span>
+        `).join('')}
+      </div>
       <div class="advisor-next-question">
-        <span class="eyebrow">${escapeHtml(canRun ? 'Ready when you are' : 'Next question')}</span>
+        <span class="eyebrow">${escapeHtml(canRun ? 'Ready when you are' : 'One thing I need')}</span>
         <strong>${escapeHtml(canRun ? nextBestAction() : question)}</strong>
-        <p>${escapeHtml(canRun ? 'I can now produce the decision room. Human approval will still remain required.' : 'A short answer is enough. If this is pending, say “unknown” and I will record it as a gap.')}</p>
+        <p>${escapeHtml(canRun ? 'I can produce the decision room now. Human approval will still remain required.' : 'Reply naturally. A short answer is fine; if it is pending, say “unknown” and I will record it as a gap.')}</p>
         <div class="assistant-next">
           ${canRun ? '<button type="button" data-chat-action="run-council">Run council</button>' : '<span>Reply in plain English.</span>'}
         </div>
@@ -1866,6 +1861,7 @@ function renderModeIdle(mode = activeRunMode) {
     return;
   }
   document.body.classList.remove('has-decision-output');
+  document.body.dataset.runComplete = 'false';
   decisionText.textContent = copy.waitingDecision;
   approvalStatus.textContent = copy.waitingApproval;
   approvalButton.textContent = 'Approval locked';
@@ -1957,6 +1953,7 @@ function setRunMode(mode = 'demo', options = {}) {
     setWorkspaceView('chat');
   }
   document.body.dataset.runMode = activeRunMode;
+  document.body.dataset.runComplete = 'false';
   runModeButtons.forEach((button) => {
     const selected = button.dataset.runMode === activeRunMode;
     button.classList.toggle('is-active', selected);
@@ -2551,11 +2548,25 @@ function renderBusinessOutcome(result = {}) {
   const approvalRequired = humanApprovalRequired(result);
   specialistList.innerHTML = `
     <section class="business-summary council-report decision-room-shell ${tone}">
-      <article class="decision-memo report-section">
-        <div class="business-hero">
+      <article class="decision-room-hero report-section">
+        <div class="decision-room-kicker">
           <span class="eyebrow">Executive decision room</span>
-          <h2>${escapeHtml(businessDecisionHeadline(result))}</h2>
-          <p>${escapeHtml(businessDecisionSummary(result))}</p>
+          <b>${escapeHtml(approvalRequired ? 'Human approval required' : 'Reviewer confirmation required')}</b>
+        </div>
+        <div class="decision-room-hero-grid">
+          <div class="business-hero">
+            <h2>${escapeHtml(businessDecisionHeadline(result))}</h2>
+            <p>${escapeHtml(businessDecisionSummary(result))}</p>
+            <div class="decision-room-actions">
+              <button type="button" data-report-action="export-review-pack">Export review pack PDF</button>
+              <span>Reviewer artifact only; no operational approval is granted.</span>
+            </div>
+          </div>
+          <aside class="decision-owner-card">
+            <span>Final decision owner</span>
+            <strong>Deterministic compliance engine</strong>
+            <p>Advisory specialists, retrieval memory, and reviewer learning can inform the pack, but cannot override the deterministic recommendation.</p>
+          </aside>
         </div>
         <div class="human-boundary">
           <div>
@@ -2563,20 +2574,16 @@ function renderBusinessOutcome(result = {}) {
             <strong>${escapeHtml(approvalRequired ? 'Required' : 'Review required')}</strong>
           </div>
           <div>
-            <span>Final decision owner</span>
-            <strong>Deterministic compliance engine</strong>
-          </div>
-          <div>
             <span>Approval mode</span>
             <strong>No auto-approval</strong>
+          </div>
+          <div>
+            <span>Reviewer focus</span>
+            <strong>${escapeHtml(gaps.length ? `${gaps.length} required action${gaps.length === 1 ? '' : 's'}` : 'Confirm accountable owner')}</strong>
           </div>
           <ul>
             ${humanReviewReasons(result).map((reason) => `<li>${escapeHtml(reason)}</li>`).join('')}
           </ul>
-        </div>
-        <div class="decision-room-actions">
-          <button type="button" data-report-action="export-review-pack">Export review pack PDF</button>
-          <span>Reviewer artifact only; no operational approval is granted.</span>
         </div>
       </article>
       <div class="decision-metrics" aria-label="Decision metrics">
@@ -2747,6 +2754,7 @@ function renderRun(result, options = {}) {
 
   if (!result.ok) {
     document.body.classList.remove('has-decision-output');
+    document.body.dataset.runComplete = 'false';
     lastRun = result;
     lastRuns[activeRunMode] = result;
     decisionText.textContent = result.message || 'Run blocked';
@@ -2773,7 +2781,8 @@ function renderRun(result, options = {}) {
     lastRuns[activeRunMode] = result;
   }
   document.body.classList.toggle('has-decision-output', Boolean(finalVisible && result.ok));
-  if (finalVisible && (activeRunMode === 'chat' || workspaceView === 'output')) {
+  document.body.dataset.runComplete = finalVisible && result.ok ? 'true' : 'false';
+  if (finalVisible && result.ok) {
     runwayTitle.textContent = 'Decision Room';
     runwayDescription.textContent = 'Business-first recommendation, evidence impact, specialist validation, reviewer actions, and exportable pack.';
   }
@@ -3348,6 +3357,7 @@ async function runAgent(payload, options = {}) {
   const runMode = options.mode || activeRunMode;
   clearPlaybackTimers();
   sampleRun.disabled = true;
+  document.body.dataset.runComplete = 'false';
   sampleRun.textContent = 'Running';
   decisionText.textContent = 'CrewAI review in progress';
   approvalStatus.textContent = 'Submitting case to the agent runtime.';

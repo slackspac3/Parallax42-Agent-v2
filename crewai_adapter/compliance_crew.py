@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -57,6 +58,35 @@ def load_case(path: Path) -> dict[str, Any]:
         return json.load(handle)
 
 
+def truthy_env(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def compact_case_for_prompt(case: dict[str, Any]) -> str:
+    max_chars = int(os.getenv("CREWAI_TASK_CASE_MAX_CHARS", "5000"))
+    payload = {
+        "caseId": case.get("caseId"),
+        "supplierName": case.get("supplierName"),
+        "businessUnit": case.get("businessUnit"),
+        "geography": case.get("geography"),
+        "brief": case.get("brief"),
+        "integrations": (case.get("integrations") or [])[:8],
+        "riskSignals": (case.get("riskSignals") or [])[:12],
+        "evidenceSignals": (case.get("evidenceSignals") or [])[:12],
+        "documents": [
+            {
+                "evidenceId": item.get("evidenceId"),
+                "title": item.get("title") or item.get("fileName"),
+                "signals": (item.get("signals") or [])[:8],
+                "summary": str(item.get("summary") or item.get("text") or "")[:600],
+            }
+            for item in (case.get("documents") or [])[:5]
+            if isinstance(item, dict)
+        ],
+    }
+    return json.dumps(payload, separators=(",", ":"), ensure_ascii=False)[:max_chars]
+
+
 def dry_run_manifest(input_path: Path) -> dict[str, Any]:
     agents = load_yaml(CONFIG_DIR / "agents.yaml")
     tasks = load_yaml(CONFIG_DIR / "tasks.yaml")
@@ -98,14 +128,17 @@ def run_live_crewai(input_path: Path) -> Any:
     agents_config = load_yaml(CONFIG_DIR / "agents.yaml")
     tasks_config = load_yaml(CONFIG_DIR / "tasks.yaml")
     case = load_case(input_path)
+    compact_case = compact_case_for_prompt(case)
 
     agents = {
         key: Agent(
             role=config.get("role", key),
             goal=config.get("goal", ""),
-            backstory=config.get("backstory", ""),
+            backstory=f"{config.get('backstory', '')}\nReturn compact JSON only. Advisory analysis only; never approve.",
             allow_delegation=False,
-            verbose=True,
+            verbose=truthy_env("CREWAI_VERBOSE"),
+            max_iter=int(os.getenv("CREWAI_AGENT_MAX_ITER", "1")),
+            max_execution_time=int(os.getenv("CREWAI_AGENT_MAX_SECONDS", "75")),
         )
         for key, config in agents_config.items()
     }
@@ -117,8 +150,8 @@ def run_live_crewai(input_path: Path) -> Any:
             raise RuntimeError(f"Task {key} references unknown agent {agent_key}")
         tasks.append(
             Task(
-                description=f"{config.get('description', '')}\n\nCase input:\n{json.dumps(case, indent=2)}",
-                expected_output=config.get("expected_output", ""),
+                description=f"{config.get('description', '')}\n\nCompact case JSON:\n{compact_case}",
+                expected_output=f"{config.get('expected_output', '')}\nReturn valid compact JSON only. Max 6 bullets per array.",
                 agent=agents[agent_key],
             )
         )
@@ -127,7 +160,7 @@ def run_live_crewai(input_path: Path) -> Any:
         agents=list(agents.values()),
         tasks=tasks,
         process=Process.sequential,
-        verbose=True,
+        verbose=truthy_env("CREWAI_VERBOSE"),
     )
     return crew.kickoff(inputs={"case": case})
 
