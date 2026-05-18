@@ -1492,6 +1492,293 @@ pre {
   list-style: none;
 }
 
+/* ============================================================
+   DESKTOP SAAS SHELL — canonical Advisor slice
+   ============================================================ */
+@media (min-width: 1181px) {
+  .workbench {
+    width: min(1720px, calc(100% - 32px));
+    padding-top: 18px;
+  }
+
+  .command-center {
+    grid-template-columns: 260px minmax(660px, 1fr) minmax(360px, 400px);
+    grid-template-rows: 1fr;
+    grid-template-areas: "tabs case decision";
+    min-height: calc(100svh - 96px);
+    border-radius: 18px;
+  }
+
+  body[data-run-mode="chat"][data-workspace-view="output"] .command-center {
+    grid-template-areas: "tabs runway decision";
+  }
+
+  .mode-tabs {
+    grid-area: tabs;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    min-height: 100%;
+    padding: 18px 14px;
+    border-right: 1px solid var(--line);
+    border-bottom: 0;
+    border-radius: 0;
+    border-top-left-radius: 18px;
+    border-bottom-left-radius: 18px;
+    background:
+      linear-gradient(180deg, rgba(18, 35, 30, 0.88), rgba(8, 19, 17, 0.96)),
+      rgba(8, 19, 17, 0.96);
+  }
+
+  .mode-tabs::before {
+    display: none;
+  }
+
+  .workspace-identity {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 14px;
+    padding: 0 0 18px;
+    border-bottom: 1px solid rgba(216, 232, 224, 0.1);
+  }
+
+  .workspace-mark {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(34, 227, 180, 0.28);
+    border-radius: 10px;
+    background: rgba(34, 227, 180, 0.08);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 900;
+  }
+
+  .workspace-identity strong {
+    display: block;
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.1;
+  }
+
+  .workspace-identity small {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+
+  .workspace-identity i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 14px rgba(34, 227, 180, 0.5);
+  }
+
+  .mode-tab {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 12px;
+    align-items: center;
+    min-width: 0;
+    min-height: 54px;
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
+  .mode-tab::before {
+    content: attr(data-nav-icon);
+    grid-row: 1 / 3;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .mode-tab span,
+  .mode-tab small {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mode-tab.is-active::before {
+    color: var(--accent);
+    background: rgba(34, 227, 180, 0.1);
+  }
+
+  .council-tab {
+    margin-left: 0;
+    margin-top: 4px;
+  }
+
+  .workspace-utilities {
+    display: grid;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 18px;
+    border-top: 1px solid rgba(216, 232, 224, 0.1);
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .workspace-utilities span {
+    padding: 4px 4px 4px 42px;
+  }
+
+  .case-panel,
+  body[data-run-mode="chat"] .case-panel {
+    min-height: calc(100svh - 96px);
+    padding: 34px 38px;
+    border-right: 1px solid var(--line);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(34, 227, 180, 0.055), transparent 34%),
+      linear-gradient(180deg, rgba(6, 16, 14, 0.98), rgba(4, 12, 11, 0.99));
+  }
+
+  .runway {
+    min-height: calc(100svh - 96px);
+    border-top: 0;
+    border-right: 1px solid var(--line);
+  }
+
+  .pane-header {
+    max-width: 760px;
+  }
+
+  .pane-header strong {
+    font-size: 28px;
+    letter-spacing: -0.03em;
+  }
+
+  .mode-note {
+    max-width: 760px;
+    border-radius: 10px;
+  }
+
+  .conversation-panel {
+    min-height: calc(100svh - 270px);
+  }
+
+  .mission-workspace {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .chat-main-column {
+    min-height: calc(100svh - 405px);
+  }
+
+  .chat-messages {
+    min-height: 260px;
+    max-height: none;
+  }
+
+  .chat-form {
+    margin-top: auto;
+    padding: 14px;
+    border: 1px solid rgba(216, 232, 224, 0.12);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .chat-form textarea {
+    min-height: 78px;
+  }
+
+  .decision-rail {
+    min-height: calc(100svh - 96px);
+    max-height: calc(100svh - 96px);
+    overflow-y: auto;
+    padding: 24px;
+    background:
+      linear-gradient(180deg, rgba(18, 35, 30, 0.9), rgba(8, 19, 17, 0.98)),
+      rgba(8, 19, 17, 0.98);
+  }
+
+  .intelligence-rail-header {
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(216, 232, 224, 0.1);
+  }
+
+  .intelligence-rail-header strong {
+    display: block;
+    margin-top: 5px;
+    color: var(--info);
+    font-size: 22px;
+    line-height: 1.05;
+  }
+
+  .case-intelligence-panel {
+    display: block;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .decision-rail .case-draft-panel {
+    display: none;
+  }
+
+  .intel-heading {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(96, 165, 250, 0.6);
+  }
+
+  #caseIntelReadiness {
+    font-size: 30px;
+    letter-spacing: -0.05em;
+  }
+
+  .decision-rail .executive-intel-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .decision-rail .executive-intel-list article:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .decision-rail .executive-intel-list strong {
+    overflow-wrap: anywhere;
+    font-size: 13px;
+  }
+
+  .decision-card {
+    border-color: rgba(216, 232, 224, 0.12);
+    background: rgba(255, 255, 255, 0.028);
+  }
+
+  .decision-card strong {
+    font-size: 24px;
+  }
+
+  .metric-stack div:first-child,
+  .metric-stack div:last-child {
+    grid-column: auto;
+  }
+
+  .metric-stack strong {
+    font-size: 18px;
+  }
+}
+
 .decision-links {
   display: flex;
   gap: 8px;
@@ -3669,4 +3956,373 @@ pre {
 @keyframes orbit-line-pulse {
   from { opacity: 0.5; }
   to   { opacity: 1; }
+}
+
+/* Final desktop shell overrides: keep the moved intelligence panel contained in
+   the fixed right rail so it cannot visually collide with decision widgets. */
+@media (min-width: 1181px) {
+  .decision-rail .case-intelligence-panel { padding-right: 0; }
+}
+
+/* ============================================================
+   DESKTOP APP SHELL V3 — SaaS mission-control composition
+   ============================================================ */
+@media (min-width: 1181px) {
+  body {
+    background: #04100d;
+  }
+
+  .topbar {
+    min-height: 64px;
+    padding-inline: 36px;
+    background: rgba(4, 15, 12, 0.94);
+    border-bottom-color: rgba(216, 232, 224, 0.12);
+  }
+
+  .topbar nav {
+    justify-self: end;
+    margin-right: 24px;
+  }
+
+  .topbar-status span {
+    border-color: rgba(34, 227, 180, 0.22);
+    background: rgba(34, 227, 180, 0.06);
+    color: var(--text);
+  }
+
+  .workbench {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+  }
+
+  .command-center {
+    min-height: calc(100svh - 64px);
+    grid-template-columns: 320px minmax(720px, 1fr) 420px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .mode-tabs {
+    border-radius: 0;
+    padding: 24px 20px;
+    background:
+      linear-gradient(180deg, rgba(19, 38, 32, 0.96), rgba(8, 20, 17, 0.98));
+  }
+
+  .workspace-identity {
+    grid-template-columns: 44px minmax(0, 1fr);
+    padding-bottom: 22px;
+    margin-bottom: 18px;
+  }
+
+  .workspace-mark {
+    width: 44px;
+    height: 44px;
+  }
+
+  .workspace-identity strong {
+    font-size: 18px;
+  }
+
+  .mode-tab {
+    min-height: 50px;
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .mode-tab:hover:not(.is-active) {
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  .mode-tab.is-active,
+  body[data-workspace-view="output"] .mode-tab.council-tab {
+    border-color: rgba(216, 232, 224, 0.08);
+    background: rgba(216, 232, 224, 0.1);
+    box-shadow: none;
+  }
+
+  .case-panel,
+  body[data-run-mode="chat"] .case-panel {
+    min-height: calc(100svh - 64px);
+    padding: 36px 40px;
+    border-right: 1px solid rgba(216, 232, 224, 0.1);
+    background:
+      radial-gradient(circle at 76% 8%, rgba(96, 165, 250, 0.07), transparent 28%),
+      linear-gradient(180deg, rgba(5, 18, 15, 0.98), rgba(3, 12, 10, 0.99));
+  }
+
+  .pane-header {
+    max-width: 780px;
+    margin-bottom: 10px;
+  }
+
+  .pane-header strong {
+    font-size: 30px;
+  }
+
+  .mode-note {
+    max-width: 780px;
+    padding: 0 0 20px;
+    border: 0;
+    border-bottom: 1px solid rgba(216, 232, 224, 0.11);
+    border-radius: 0;
+    background: transparent;
+    font-size: 14px;
+  }
+
+  .conversation-panel {
+    min-height: calc(100svh - 205px);
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    gap: 18px;
+  }
+
+  .mission-welcome {
+    display: none;
+  }
+
+  .mission-workspace {
+    display: block;
+  }
+
+  .chat-main-column {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto auto minmax(220px, 1fr) auto;
+    gap: 16px;
+  }
+
+  .chat-form {
+    order: 1;
+    margin: 0;
+    padding: 18px;
+    border-radius: 18px;
+    border-color: rgba(216, 232, 224, 0.14);
+    background:
+      linear-gradient(135deg, rgba(34, 227, 180, 0.055), rgba(96, 165, 250, 0.05)),
+      rgba(216, 232, 224, 0.045);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.24);
+  }
+
+  .chat-form textarea {
+    min-height: 96px;
+    max-height: 145px;
+    border: 0;
+    background: rgba(2, 10, 8, 0.78);
+    border-radius: 14px;
+    font-size: 15px;
+  }
+
+  .chat-evidence-picker {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    padding: 12px 14px;
+    border: 1px dashed rgba(96, 165, 250, 0.24);
+    border-radius: 14px;
+    background: rgba(96, 165, 250, 0.045);
+  }
+
+  .form-actions {
+    justify-content: flex-end;
+  }
+
+  .form-actions .primary-action {
+    min-width: 78px;
+    border-radius: 999px;
+  }
+
+  .form-actions .hero-run-button {
+    min-width: 148px;
+    border-radius: 999px;
+    color: #02110d;
+    background: linear-gradient(135deg, #22e3b4, #8bdcff);
+  }
+
+  .context-strength {
+    order: 2;
+    margin: 0;
+    padding: 16px 18px;
+    border-radius: 16px;
+    border-color: rgba(216, 232, 224, 0.1);
+    background: rgba(216, 232, 224, 0.035);
+  }
+
+  .chat-messages {
+    order: 3;
+    min-height: 260px;
+    border-radius: 18px;
+    border: 1px solid rgba(216, 232, 224, 0.11);
+    background: rgba(1, 8, 7, 0.36);
+    padding: 16px;
+  }
+
+  .chat-suggestions {
+    order: 4;
+    margin: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .chat-suggestions button {
+    min-height: 46px;
+    justify-content: flex-start;
+    border-radius: 12px;
+    background: rgba(216, 232, 224, 0.045);
+    border-color: rgba(216, 232, 224, 0.09);
+    color: var(--muted);
+  }
+
+  .decision-rail {
+    min-height: calc(100svh - 64px);
+    max-height: calc(100svh - 64px);
+    gap: 16px;
+    padding: 26px 24px;
+    border-left: 1px solid rgba(216, 232, 224, 0.12);
+    background:
+      linear-gradient(180deg, rgba(21, 39, 33, 0.96), rgba(10, 24, 20, 0.98));
+  }
+
+  .intelligence-rail-header {
+    padding-bottom: 12px;
+  }
+
+  .intelligence-rail-header strong {
+    color: #8bdcff;
+    font-size: 24px;
+  }
+
+  .intel-rail-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid rgba(216, 232, 224, 0.1);
+  }
+
+  .intel-rail-tabs span {
+    padding: 12px 8px 11px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.9px;
+    text-align: center;
+    text-transform: uppercase;
+    border-bottom: 2px solid transparent;
+  }
+
+  .intel-rail-tabs .is-active {
+    color: #8bdcff;
+    border-bottom-color: #8bdcff;
+    background: rgba(96, 165, 250, 0.055);
+  }
+
+  .decision-rail .case-intelligence-panel {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .decision-rail .intel-heading {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .decision-rail .intel-heading .eyebrow {
+    display: none;
+  }
+
+  .decision-rail .intel-meter {
+    margin: 0 0 12px;
+  }
+
+  .decision-rail .case-intel-details {
+    gap: 10px;
+  }
+
+  .decision-rail .executive-intel-list {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .decision-rail .executive-intel-list article,
+  .decision-rail .next-action,
+  .decision-rail .human-boundary-card,
+  .decision-rail .intel-advanced,
+  .decision-card,
+  .metric-stack,
+  .approval-actions,
+  .decision-technical-links {
+    border-color: rgba(216, 232, 224, 0.1);
+    background: rgba(216, 232, 224, 0.04);
+  }
+
+  .decision-rail .executive-intel-list article {
+    min-height: 72px;
+    padding: 12px;
+  }
+
+  .decision-rail .executive-intel-list article:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .decision-rail .executive-intel-list span {
+    color: rgba(234, 244, 255, 0.5);
+  }
+
+  .decision-rail .executive-intel-list strong {
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+
+  .decision-rail .risk-domain-block,
+  .decision-rail .human-boundary-card,
+  .decision-rail .intel-advanced {
+    display: none;
+  }
+
+  .decision-rail .intel-block {
+    margin-bottom: 0;
+    padding: 12px;
+    border: 1px solid rgba(216, 232, 224, 0.1);
+    border-radius: 12px;
+    background: rgba(216, 232, 224, 0.035);
+  }
+
+  .decision-rail .intel-block ul {
+    margin-top: 8px;
+  }
+
+  .decision-rail .next-action {
+    margin-bottom: 0;
+    padding: 14px;
+    border-radius: 14px;
+    min-height: 86px;
+  }
+
+  .decision-rail .next-action strong {
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .decision-card {
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .decision-card strong {
+    font-size: 24px;
+  }
+
+  .metric-stack {
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .approval-actions button,
+  .decision-technical-links {
+    border-radius: 12px;
+  }
 }

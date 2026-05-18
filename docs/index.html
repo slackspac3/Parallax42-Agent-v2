@@ -30,23 +30,34 @@
 
     <main class="workbench">
       <section class="command-center" id="run">
-        <div class="mode-tabs" role="tablist" aria-label="Run mode">
-          <button id="chatModeTab" type="button" class="mode-tab is-active" role="tab" aria-selected="true" aria-controls="run" data-run-mode="chat">
+        <div class="mode-tabs" role="tablist" aria-label="Workspace navigation">
+          <div class="workspace-identity" role="presentation">
+            <span class="workspace-mark">CI</span>
+            <div>
+              <strong>Compliance Intelligence</strong>
+              <small><i></i>Active session</small>
+            </div>
+          </div>
+          <button id="chatModeTab" type="button" class="mode-tab is-active" role="tab" aria-selected="true" aria-controls="run" data-run-mode="chat" data-nav-icon="◌">
             <span>Advisor</span>
             <small>Primary workspace</small>
           </button>
-          <button id="demoModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="run" data-run-mode="demo">
+          <button id="demoModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="run" data-run-mode="demo" data-nav-icon="↺">
             <span>Replay</span>
             <small>Packaged cases</small>
           </button>
-          <button id="liveModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="run" data-run-mode="live">
+          <button id="liveModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="run" data-run-mode="live" data-nav-icon="▤">
             <span>Evidence</span>
             <small>Upload and run</small>
           </button>
-          <button id="councilOutputTab" type="button" class="mode-tab council-tab" aria-controls="workflow">
+          <button id="councilOutputTab" type="button" class="mode-tab council-tab" aria-controls="workflow" data-nav-icon="⌁">
             <span>Council Output</span>
             <small>Decision and pack</small>
           </button>
+          <div class="workspace-utilities" role="presentation">
+            <span>Support</span>
+            <span>Documentation</span>
+          </div>
         </div>
 
         <aside class="case-panel pane">
@@ -198,14 +209,6 @@
                   <button type="button" data-chat-prompt="Review a treasury workflow vendor with payment approval access, Microsoft 365 integration, finance reporting, and missing exit support.">Treasury workflow</button>
                 </div>
               </div>
-              <aside id="caseIntelligencePanel" class="case-intelligence-panel" aria-live="polite">
-                <div class="intel-heading">
-                  <span class="eyebrow">Live Case Intelligence</span>
-                  <strong id="caseIntelReadiness">0%</strong>
-                </div>
-                <div id="caseDraftPanel" class="case-draft-panel" aria-live="polite"></div>
-                <div id="caseIntelDetails" class="case-intel-details"></div>
-              </aside>
             </div>
           </section>
         </aside>
@@ -253,6 +256,22 @@
         </section>
 
         <aside class="decision-rail pane">
+          <div class="intelligence-rail-header">
+            <span class="eyebrow">Intelligence Panel</span>
+            <strong>Fixed analyst view</strong>
+          </div>
+          <div class="intel-rail-tabs" aria-label="Analyst panel sections">
+            <span class="is-active">Live case intelligence</span>
+            <span>Council trace</span>
+          </div>
+          <section id="caseIntelligencePanel" class="case-intelligence-panel" aria-live="polite">
+            <div class="intel-heading">
+              <span class="eyebrow">Live Case Intelligence</span>
+              <strong id="caseIntelReadiness">0%</strong>
+            </div>
+            <div id="caseDraftPanel" class="case-draft-panel" aria-live="polite"></div>
+            <div id="caseIntelDetails" class="case-intel-details"></div>
+          </section>
           <div class="decision-card">
             <span class="eyebrow">Decision</span>
             <strong id="decisionText">Waiting for run</strong>

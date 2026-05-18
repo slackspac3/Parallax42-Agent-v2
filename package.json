@@ -10,11 +10,12 @@
     "dev": "node server.js",
     "check:syntax": "node scripts/syntax-check.js",
     "check:pages": "node scripts/check-pages.js",
+    "check:mirrors": "node scripts/check-static-mirrors.js",
     "capture:evidence": "node scripts/capture-evidence.js",
     "benchmark": "node scripts/benchmark.js",
     "qdrant:smoke": "node scripts/qdrant-smoke.js",
     "test": "node --test $(find tests/unit -name '*.test.js' -print)",
     "check:crewai": "python3 crewai_adapter/compliance_crew.py --dry-run && python3 crewai_adapter/compliance_flow.py --dry-run",
-    "qa": "npm run check:syntax && npm run check:pages && npm test && npm run benchmark && npm run check:crewai"
+    "qa": "npm run check:syntax && npm run check:pages && npm run check:mirrors && npm test && npm run benchmark && npm run check:crewai"
   }
 }

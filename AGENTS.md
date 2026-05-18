@@ -4,7 +4,8 @@
 
 This repository is the Parallax42 Compliance Intelligence Agent:
 - Node/CommonJS Vercel/static app.
-- Vanilla frontend under `public/`.
+- Vanilla frontend canonical source under `public/`.
+- GitHub Pages mirrors exist at repo root and `docs/`.
 - API handlers under `api/`.
 - Local server mirror in `server.js`.
 - Core logic under `lib/`.
@@ -25,8 +26,16 @@ Use it before editing:
 - `public/index.html`
 - `public/app.js`
 - `public/styles.css`
+- root `index.html`, `app.js`, `styles.css`, `config.js`
+- `docs/index.html`, `docs/app.js`, `docs/styles.css`, `docs/config.js`
 
 The skill is the canonical style guide for this app. It supersedes generic frontend taste when working on this repository, while still respecting higher-priority system/developer instructions and the current user request.
+
+Frontend source-of-truth rules:
+- Treat `public/` as the canonical frontend source.
+- Treat repo-root static files and `docs/` static files as deployment mirrors for GitHub Pages.
+- Do not manually edit only one mirror. Any frontend edit must keep `public/`, repo root, and `docs/` byte-for-byte aligned for `index.html`, `app.js`, `styles.css`, and `config.js`.
+- Run `npm run check:mirrors` after frontend edits, and run `npm run qa` when feasible.
 
 For the Advisor desktop view, preserve a SaaS workbench structure:
 - one stable two-column grid
@@ -48,5 +57,7 @@ Keep the UI and docs honest:
 After frontend changes, run:
 
 `npm run check:syntax`
+
+Run `npm run check:mirrors` after frontend changes.
 
 Run `npm run qa` when feasible. For material UI/layout changes, also verify in a browser and check the console.

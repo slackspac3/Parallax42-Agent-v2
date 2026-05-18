@@ -1668,13 +1668,13 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
         <strong>${escapeHtml(evidenceStatusSummary(draft))}</strong>
       </article>
     </div>
-    <div class="intel-block">
+    <div class="intel-block risk-domain-block">
       <span class="eyebrow">Detected risk domains</span>
       <div class="intel-chips">
         ${risks.length ? risks.slice(0, 6).map((risk) => `<span>${escapeHtml(risk)}</span>`).join('') : '<span>awaiting signals</span>'}
       </div>
     </div>
-    <div class="intel-block">
+    <div class="intel-block missing-proof-block">
       <span class="eyebrow">Missing proof</span>
       <ul>
         ${missing.length ? missing.map((item) => `<li>${escapeHtml(item)}</li>`).join('') : '<li>No intake blockers detected; reviewer confirmation still required.</li>'}
