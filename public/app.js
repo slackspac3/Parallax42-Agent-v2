@@ -197,6 +197,18 @@ const defaultAgentActivity = [
   { id: 'packager', label: 'Audit Packager', detail: 'queued', status: 'queued' }
 ];
 
+const councilVisualAgents = [
+  { id: 'intake', label: 'Intake Agent', short: 'Intake', x: 18, y: 31, svgX: 88, svgY: 82, handoff: 'Normalizes the case draft for obligation mapping.' },
+  { id: 'obligations', label: 'Obligation Mapper', short: 'Obligations', x: 36, y: 15, svgX: 286, svgY: 54, handoff: 'Routes applicable domains to evidence review.' },
+  { id: 'evidence', label: 'Evidence Examiner', short: 'Evidence', x: 79, y: 30, svgX: 536, svgY: 86, handoff: 'Promotes citation-ready proof into controls.' },
+  { id: 'controls', label: 'Risk & Controls Analyst', short: 'Controls', x: 79, y: 72, svgX: 542, svgY: 306, handoff: 'Converts gaps into reviewer actions.' },
+  { id: 'review', label: 'Responsible AI Reviewer', short: 'RAI', x: 50, y: 84, svgX: 296, svgY: 354, handoff: 'Locks the human approval boundary.' },
+  { id: 'packager', label: 'Audit Packager', short: 'Audit', x: 21, y: 70, svgX: 88, svgY: 300, handoff: 'Packages decision, trace, evidence IDs, and exports.' }
+];
+
+let councilFocusAgent = 'intake';
+let lastCouncilActivity = defaultAgentActivity;
+
 const agentLabels = {
   runtime_router: 'Runtime Router',
   intake_agent: 'Compliance Orchestrator',
@@ -1326,7 +1338,175 @@ function renderContextStrength(draft = chatCaseDraft) {
   renderCaseIntelligence(draft, lastRuns.chat);
 }
 
+function normalizeAgentKey(value = '') {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function councilOutcomeVerb(agentId, status = 'queued') {
+  if (status === 'active') return 'working';
+  if (status !== 'complete') return 'waiting';
+  if (agentId === 'controls' && (lastRun?.gaps?.length || lastRuns.chat?.gaps?.length)) return 'challenged';
+  if (agentId === 'review') return 'escalated';
+  if (agentId === 'packager') return 'packaged';
+  return 'validated';
+}
+
+function councilAgentNarrative(agent, item = {}) {
+  const draft = chatCaseDraft || {};
+  const result = lastRuns[activeRunMode] || lastRun || {};
+  const missing = missingProofItems(draft, result);
+  const riskSignals = unique([...(draft.riskSignals || []), ...(draft.evidenceSignals || [])]);
+  const evidenceMatches = evidenceMatchesFor(result, draft);
+  const chunks = indexedChunkCount();
+  const gaps = Array.isArray(result.gaps) ? result.gaps : [];
+  const domains = Array.isArray(result.domains) ? result.domains : [];
+  const narratives = {
+    intake: {
+      reviewed: 'Plain-English intake, uploaded evidence metadata, owner, geography, and requested decision.',
+      found: missing.length ? `${missing.length} context item${missing.length === 1 ? '' : 's'} still need confirmation.` : 'Enough intake context is present for council review.',
+      evidenceImpact: evidenceMatches.length || chunks ? 'Evidence is already available to shape follow-up questions.' : 'No evidence has changed the case yet.',
+      handoff: 'Creates the case draft and passes scoped facts to the obligation mapper.'
+    },
+    obligations: {
+      reviewed: 'Scope, geography, integrations, regulated data/assets, and detected risk signals.',
+      found: domains.length ? `${domains.length} obligation domain${domains.length === 1 ? '' : 's'} mapped into the review.` : `${riskSignals.length || 0} risk signal${riskSignals.length === 1 ? '' : 's'} ready for domain mapping.`,
+      evidenceImpact: riskSignals.length ? 'Signals are being translated into domain obligations.' : 'The mapper is waiting for risk or evidence signals.',
+      handoff: 'Turns applicable domains into evidence questions for the examiner.'
+    },
+    evidence: {
+      reviewed: 'Attached documents, retrieved snippets, citation IDs, and metadata-only fallbacks.',
+      found: chunks ? `${chunks} server-side retrieval chunk${chunks === 1 ? '' : 's'} available for citations.` : evidenceMatches.length ? `${evidenceMatches.length} evidence match${evidenceMatches.length === 1 ? '' : 'es'} found.` : 'No citation-ready evidence is available yet.',
+      evidenceImpact: chunks || evidenceMatches.length ? 'Citation-ready proof can support or challenge the decision.' : 'The decision will stay weaker until source proof is attached.',
+      handoff: 'Promotes proof and unresolved evidence gaps into the control review.'
+    },
+    controls: {
+      reviewed: 'Obligations, missing proof, criticality, access scope, and business impact.',
+      found: gaps.length ? `${gaps.length} blocking gap${gaps.length === 1 ? '' : 's'} challenged the approval path.` : 'No blocking control gap remains in the deterministic analysis.',
+      evidenceImpact: gaps.length ? 'Evidence gaps are being converted into reviewer actions.' : 'Evidence did not create a blocking control issue.',
+      handoff: 'Converts residual risk into required human reviewer actions.'
+    },
+    review: {
+      reviewed: 'Decision wording, unsupported certainty, responsible AI boundary, and approval lock.',
+      found: 'Human approval remains required; the system does not auto-approve.',
+      evidenceImpact: 'Weak or missing evidence keeps the recommendation inside human review.',
+      handoff: 'Escalates reviewer confirmations to the audit packager.'
+    },
+    packager: {
+      reviewed: 'Decision memo, trace, evidence IDs, gaps, retrieval context, and export readiness.',
+      found: result?.ok ? 'Review pack is ready to export after council completion.' : 'Waiting for a completed run before packaging.',
+      evidenceImpact: result?.ok ? 'Evidence IDs, citations, and reviewer actions are packaged for inspection.' : 'No exportable evidence pack exists yet.',
+      handoff: 'Packages the executive decision room and advanced trace for inspection.'
+    }
+  };
+  return {
+    ...(narratives[agent.id] || narratives.intake),
+    status: item.status || 'queued',
+    detail: item.detail || 'queued',
+    verb: councilOutcomeVerb(agent.id, item.status || 'queued')
+  };
+}
+
+function buildCouncilAgentViews(items = defaultAgentActivity) {
+  const normalizedItems = (items || []).map((item, index) => ({
+    ...item,
+    index,
+    key: normalizeAgentKey(item.id || item.label || item.agent || item.role)
+  }));
+  return councilVisualAgents.map((agent, index) => {
+    const agentKey = normalizeAgentKey(agent.id);
+    const labelKey = normalizeAgentKey(agent.label);
+    const source = normalizedItems.find((item) => item.key === agentKey || item.key.includes(agentKey) || labelKey.includes(item.key))
+      || normalizedItems[index]
+      || {};
+    const status = source.status || (index === 0 ? 'active' : 'queued');
+    const narrative = councilAgentNarrative(agent, { ...source, status });
+    return {
+      ...agent,
+      ...narrative,
+      status,
+      detail: source.detail || narrative.detail
+    };
+  });
+}
+
 function renderAgentActivity(items = defaultAgentActivity) {
+  if (!agentActivity) return;
+  lastCouncilActivity = items;
+  const views = buildCouncilAgentViews(items);
+  const active = views.find((item) => item.status === 'active') || views.find((item) => item.status === 'complete') || views[0];
+  if (!views.some((item) => item.id === councilFocusAgent)) {
+    councilFocusAgent = active.id;
+  }
+  if (active?.status === 'active') {
+    councilFocusAgent = active.id;
+  }
+  const focus = views.find((item) => item.id === councilFocusAgent) || active;
+  const completed = views.filter((item) => item.status === 'complete').length;
+  const activeLabel = active?.status === 'active' ? active.label : 'Decision core';
+  agentActivity.innerHTML = `
+    <div class="council-constellation">
+      <div class="agent-activity-header">
+        <div>
+          <span class="eyebrow">Executive council view</span>
+          <strong>${escapeHtml(activeLabel)} ${active?.status === 'active' ? 'is working' : 'is ready'}</strong>
+        </div>
+        <small>Deterministic specialist validation</small>
+      </div>
+      <div class="constellation-stage" aria-label="Interactive deterministic council map">
+        <svg class="constellation-svg" viewBox="0 0 640 430" aria-hidden="true">
+          <defs>
+            <radialGradient id="decisionCoreGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#19d6a5" stop-opacity="0.38"></stop>
+              <stop offset="60%" stop-color="#88b9ff" stop-opacity="0.1"></stop>
+              <stop offset="100%" stop-color="#06100f" stop-opacity="0"></stop>
+            </radialGradient>
+          </defs>
+          <circle cx="320" cy="214" r="128" class="council-ring council-ring-one"></circle>
+          <circle cx="320" cy="214" r="74" class="council-ring council-ring-two"></circle>
+          <circle cx="320" cy="214" r="46" fill="url(#decisionCoreGlow)" class="council-core-glow"></circle>
+          ${views.map((agent, index) => {
+            const controlX = Math.round((agent.svgX + 320) / 2);
+            const controlY = Math.round((agent.svgY + 214) / 2) + (index % 2 === 0 ? -32 : 32);
+            return `
+              <path id="council-path-${escapeHtml(agent.id)}" class="council-link is-${escapeHtml(agent.status)}" d="M ${agent.svgX} ${agent.svgY} C ${controlX} ${controlY}, ${controlX} ${controlY}, 320 214"></path>
+              <circle class="council-packet is-${escapeHtml(agent.status)}" r="${agent.status === 'queued' ? 2.8 : 4.4}">
+                <animateMotion dur="${3.2 + (index * 0.18)}s" begin="${index * 0.18}s" repeatCount="indefinite">
+                  <mpath href="#council-path-${escapeHtml(agent.id)}"></mpath>
+                </animateMotion>
+              </circle>
+            `;
+          }).join('')}
+        </svg>
+        <div class="decision-core">
+          <span>${escapeHtml(Math.round((completed / views.length) * 100))}%</span>
+          <strong>Decision core</strong>
+          <small>human review locked</small>
+        </div>
+        ${views.map((agent) => `
+          <button type="button" class="council-agent is-${escapeHtml(agent.status)} ${agent.id === focus.id ? 'is-focused' : ''}" data-council-agent="${escapeHtml(agent.id)}" style="--agent-x: ${agent.x}%; --agent-y: ${agent.y}%;">
+            <span>${escapeHtml(agent.short)}</span>
+            <strong>${escapeHtml(agent.label)}</strong>
+            <small>${escapeHtml(agent.verb)}</small>
+          </button>
+        `).join('')}
+      </div>
+      <div class="council-focus-card is-${escapeHtml(focus.status)}">
+        <div>
+          <span class="eyebrow">${escapeHtml(focus.verb)}</span>
+          <strong>${escapeHtml(focus.label)}</strong>
+        </div>
+        <dl>
+          <div><dt>Status</dt><dd>${escapeHtml(titleCase(focus.verb))}</dd></div>
+          <div><dt>Found</dt><dd>${escapeHtml(focus.found)}</dd></div>
+          <div><dt>Evidence impact</dt><dd>${escapeHtml(focus.evidenceImpact)}</dd></div>
+          <div><dt>Handoff</dt><dd>${escapeHtml(focus.handoff)}</dd></div>
+        </dl>
+      </div>
+    </div>
+  `;
+}
+
+function renderLegacyAgentActivity(items = defaultAgentActivity) {
   if (!agentActivity) return;
   agentActivity.innerHTML = `
     <div class="agent-activity-header">
@@ -1470,35 +1650,23 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
   caseIntelReadiness.textContent = `${Math.max(0, Math.min(100, Math.round(score)))}%`;
   caseIntelDetails.innerHTML = `
     <div class="intel-meter" aria-hidden="true"><span style="width: ${Math.max(0, Math.min(100, Math.round(score)))}%"></span></div>
-    <div class="intel-grid">
-      <span>Supplier / workflow</span><b>${escapeHtml(supplier)}</b>
-      <span>Owner</span><b>${escapeHtml(owner)}</b>
-      <span>Geography</span><b>${escapeHtml(geography)}</b>
-      <span>Evidence status</span><b>${escapeHtml(evidenceStatusSummary(draft))}</b>
-      <span>Human review</span><b>${escapeHtml(approvalRequired ? 'required' : 'check boundary')}</b>
-    </div>
-    <div class="intel-block memory-status-block">
-      <span class="eyebrow">RAG evidence memory</span>
-      <div class="memory-status-grid">
-        <span>Provider</span><b>${escapeHtml(memoryProviderLabel(draft))}</b>
-        <span>Indexed chunks</span><b>${escapeHtml(indexedChunks || 0)}</b>
-        <span>Retrieved matches</span><b>${escapeHtml(evidenceMatches.length)}</b>
-      </div>
-    </div>
-    <div class="intel-block memory-status-block">
-      <span class="eyebrow">Governed learning memory</span>
-      <div class="memory-status-grid">
-        <span>Similar cases</span><b>${escapeHtml(learning.similarCases.length)}</b>
-        <span>Reviewer patterns</span><b>${escapeHtml(learning.suggestions?.sourceMemoryIds?.length || 0)}</b>
-        <span>Control suggestions</span><b>${escapeHtml(learning.suggestions?.commonControlsReviewersAdded?.length || 0)}</b>
-      </div>
-    </div>
-    <div class="intel-block memory-status-block">
-      <span class="eyebrow">Advisory specialists</span>
-      <div class="memory-status-grid">
-        <span>Status</span><b>${escapeHtml(advisory.length ? 'attached' : result?.orchestration?.liveLlm?.requested ? 'unavailable' : 'not requested')}</b>
-        <span>Decision owner</span><b>deterministic engine</b>
-      </div>
+    <div class="executive-intel-list">
+      <article>
+        <span>Case</span>
+        <strong>${escapeHtml(supplier)}</strong>
+      </article>
+      <article>
+        <span>Owner</span>
+        <strong>${escapeHtml(owner)}</strong>
+      </article>
+      <article>
+        <span>Geography</span>
+        <strong>${escapeHtml(geography)}</strong>
+      </article>
+      <article>
+        <span>Evidence confidence</span>
+        <strong>${escapeHtml(evidenceStatusSummary(draft))}</strong>
+      </article>
     </div>
     <div class="intel-block">
       <span class="eyebrow">Detected risk domains</span>
@@ -1516,44 +1684,155 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
       <span class="eyebrow">Next best action</span>
       <strong>${escapeHtml(nextBestAction(draft, result))}</strong>
     </div>
+    <div class="human-boundary-card">
+      <span>Human review boundary</span>
+      <strong>${escapeHtml(approvalRequired ? 'Approval cannot be automated' : 'Reviewer check still required')}</strong>
+      <p>The system can prepare a decision memo and evidence pack, but the accountable human remains the approval owner.</p>
+    </div>
+    <details class="intel-advanced">
+      <summary>Technical runtime details</summary>
+      <div class="memory-status-grid">
+        <span>Vector memory</span><b>${escapeHtml(memoryProviderLabel(draft))}</b>
+        <span>Indexed chunks</span><b>${escapeHtml(indexedChunks || 0)}</b>
+        <span>Retrieved matches</span><b>${escapeHtml(evidenceMatches.length)}</b>
+        <span>Similar cases</span><b>${escapeHtml(learning.similarCases.length)}</b>
+        <span>Reviewer patterns</span><b>${escapeHtml(learning.suggestions?.sourceMemoryIds?.length || 0)}</b>
+        <span>Advisory specialists</span><b>${escapeHtml(advisory.length ? 'attached' : result?.orchestration?.liveLlm?.requested ? 'unavailable' : 'not requested')}</b>
+        <span>Decision owner</span><b>deterministic engine</b>
+      </div>
+    </details>
   `;
 }
 
 function assistantFactsForMessage() {
   const draft = chatCaseDraft || {};
   const facts = [
-    ['Owner', draft.businessUnit],
-    ['Geography', draft.geography],
-    ['Integrations', draft.integrations?.join(', ')],
+    ['Owner', draft.businessUnit || 'needed'],
+    ['Geography', draft.geography || 'needed'],
+    ['Integrations', draft.integrations?.join(', ') || 'none yet'],
     ['Evidence', evidenceStatusSummary(draft)],
-    ['RAG matches', evidenceMatchesFor(lastRuns.chat, draft).length ? `${evidenceMatchesFor(lastRuns.chat, draft).length} retrieved` : 'none yet'],
-    ['Learning memory', learningSuggestionsFor(lastRuns.chat, draft).similarCases.length ? `${learningSuggestionsFor(lastRuns.chat, draft).similarCases.length} similar` : 'none yet']
+    ['Evidence matches', evidenceMatchesFor(lastRuns.chat, draft).length ? `${evidenceMatchesFor(lastRuns.chat, draft).length} found` : 'none yet'],
+    ['Prior cases', learningSuggestionsFor(lastRuns.chat, draft).similarCases.length ? `${learningSuggestionsFor(lastRuns.chat, draft).similarCases.length} similar` : 'none yet']
   ].filter(([, value]) => cleanEvidenceText(value));
   return facts.slice(0, 6);
 }
 
-function renderAssistantMessageDetails() {
+function assistantRawSummary(text = '') {
+  const clean = cleanEvidenceText(text);
+  if (!clean) return 'I am updating the case draft.';
+  if (/could not|failed|error/i.test(clean)) return clean;
+  if (/what i understood|next questions?|missing/i.test(clean)) {
+    return 'I captured the current facts and identified the next proof needed before the council can run cleanly.';
+  }
+  if (/ran|decision|approval|blocking|readiness/i.test(clean)) {
+    return clean.split(/Next questions?:/i)[0].trim().slice(0, 260);
+  }
+  const firstSentence = clean.match(/^(.{1,240}?[.!?])\s/)?.[1];
+  return firstSentence || clean.slice(0, 240);
+}
+
+function assistantQuestionFromText(text = '') {
+  const raw = String(text || '');
+  const fallbackQuestion = () => {
+    const missing = missingProofItems();
+    if (missing.length) {
+      const first = missing[0].toLowerCase();
+      if (/owner|accountable/i.test(first)) return 'Who is the accountable business owner for this case?';
+      if (/geography/i.test(first)) return 'Which geography or regulatory perimeter should I apply?';
+      if (/evidence/i.test(first)) return 'What source evidence should I treat as proof for this decision?';
+      return `Can you confirm the missing ${first}?`;
+    }
+    return chatRunReadiness?.runnable ? 'Should I run the council now?' : 'What else should I know before I run the council?';
+  };
+  const acceptableQuestion = (value = '') => {
+    const candidate = cleanEvidenceText(value).replace(/^next question:\s*/i, '');
+    if (!candidate || candidate.length < 12) return '';
+    if (candidate.endsWith('?')) return candidate;
+    if (/^(who|what|which|where|when|how|can|does|do|is|are|should)\b/i.test(candidate)) return candidate.endsWith('?') ? candidate : `${candidate}?`;
+    return '';
+  };
+  const nextBlock = raw.split(/Next questions?:/i)[1] || '';
+  const bullet = nextBlock.match(/[-•]\s*([^\n]+)/);
+  const bulletQuestion = acceptableQuestion(bullet?.[1]);
+  if (bulletQuestion) return bulletQuestion;
+  const question = raw.match(/([^.!?\n]*\?)/g)?.pop();
+  const detectedQuestion = acceptableQuestion(question);
+  return detectedQuestion || fallbackQuestion();
+}
+
+function assistantAcknowledgement(text = '') {
+  if (/could not|failed|error/i.test(text)) return 'I hit a processing issue, but the case state is still safe.';
+  if (lastRuns.chat?.ok) return 'Council run complete. I kept the decision review-bound.';
+  if (chatRunReadiness?.runnable) return 'Good, I have enough to run the council.';
+  if (indexedChunkCount()) return 'I found indexed evidence and I am building the case around it.';
+  if (hasChatContext()) return 'Got it. I am turning that into a reviewable compliance case.';
+  return 'I can help build the case from plain English.';
+}
+
+function renderThinkingLoader(message = {}) {
+  const isCouncil = /council|workflow|retrieval|execut/i.test(message.text || '');
+  const steps = isCouncil
+    ? [
+        ['Thinking', 'Checking case readiness and human approval boundary'],
+        ['Retrieving', 'Looking for citation-ready evidence and prior reviewer memory'],
+        ['Analysing', 'Running specialist validation across obligations, evidence, controls, and RAI'],
+        ['Formulating', 'Preparing the decision room and reviewer handoff']
+      ]
+    : [
+        ['Thinking', 'Reading your message and updating the working case'],
+        ['Analysing', 'Extracting owner, geography, data, integrations, evidence, and risk signals'],
+        ['Retrieving', 'Checking indexed evidence before asking for anything missing'],
+        ['Formulating', 'Choosing one useful next question']
+      ];
+  return `
+    <div class="thinking-loader" aria-label="Advisor is working">
+      <div class="thinking-loader-head">
+        <span class="thinking-orb" aria-hidden="true"></span>
+        <strong>${escapeHtml(isCouncil ? 'Council is working' : 'Advisor is thinking')}</strong>
+      </div>
+      <div class="thinking-steps">
+        ${steps.map(([label, detail], index) => `
+          <div class="thinking-step" style="--step-index: ${index}">
+            <span>${escapeHtml(label)}</span>
+            <p>${escapeHtml(detail)}</p>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderAssistantTurn(message = {}) {
   const missing = missingProofItems();
   const facts = assistantFactsForMessage();
   const canRun = Boolean(chatRunReadiness?.runnable);
+  const question = assistantQuestionFromText(message.text);
+  const summary = assistantRawSummary(message.text);
+  const acknowledgement = assistantAcknowledgement(message.text);
   return `
-    <div class="assistant-brief">
-      <div>
-        <span class="eyebrow">Case readout</span>
-        <strong>${escapeHtml(canRun ? 'Council-ready context' : 'Context being assembled')}</strong>
+    <div class="advisor-response-card advisor-natural-response">
+      <div class="advisor-response-head">
+        <span class="eyebrow">Advisor</span>
+        <strong>${escapeHtml(acknowledgement)}</strong>
+        <p>${escapeHtml(summary)}</p>
       </div>
-      ${facts.length ? `
+      <div class="advisor-next-question">
+        <span class="eyebrow">${escapeHtml(canRun ? 'Ready when you are' : 'Next question')}</span>
+        <strong>${escapeHtml(canRun ? nextBestAction() : question)}</strong>
+        <p>${escapeHtml(canRun ? 'I can now produce the decision room. Human approval will still remain required.' : 'A short answer is enough. If this is pending, say “unknown” and I will record it as a gap.')}</p>
+        <div class="assistant-next">
+          ${canRun ? '<button type="button" data-chat-action="run-council">Run council</button>' : '<span>Reply in plain English.</span>'}
+        </div>
+      </div>
+      <details class="advisor-case-readout">
+        <summary>Case readout</summary>
         <dl>
           ${facts.map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`).join('')}
         </dl>
-      ` : ''}
-      <div class="assistant-chips">
-        ${missing.length ? missing.map((item) => `<span>${escapeHtml(item)}</span>`).join('') : '<span>no intake blockers</span>'}
-      </div>
-      <div class="assistant-next">
-        <span>${escapeHtml(nextBestAction())}</span>
-        ${canRun ? '<button type="button" data-chat-action="run-council">Run council</button>' : ''}
-      </div>
+        <div class="assistant-chips">
+          ${missing.length ? missing.map((item) => `<span>${escapeHtml(item)}</span>`).join('') : '<span>no intake blockers</span>'}
+        </div>
+      </details>
     </div>
   `;
 }
@@ -1586,6 +1865,7 @@ function renderModeIdle(mode = activeRunMode) {
     if (mode === 'chat') renderChatMessages();
     return;
   }
+  document.body.classList.remove('has-decision-output');
   decisionText.textContent = copy.waitingDecision;
   approvalStatus.textContent = copy.waitingApproval;
   approvalButton.textContent = 'Approval locked';
@@ -1633,6 +1913,7 @@ function renderModeIdle(mode = activeRunMode) {
 
 function resetChatCaseSession() {
   clearPlaybackTimers();
+  document.body.classList.remove('has-decision-output');
   lastRun = null;
   lastRuns.chat = null;
   uploadedEvidence = [];
@@ -1795,15 +2076,17 @@ function renderChatMessages() {
   const latestAssistantIndex = chatMessages.map((message, index) => message.role === 'assistant' ? index : -1).filter((index) => index >= 0).pop();
   chatMessagesEl.innerHTML = chatMessages.map((message, index) => `
     <article class="chat-message is-${escapeHtml(message.role)} ${message.pending ? 'is-pending' : ''}">
-      <strong>${message.role === 'user' ? 'You' : 'Agent'}</strong>
+      <strong>${message.role === 'user' ? 'You' : 'Advisor'}</strong>
       <div class="message-body">
-        <p>${escapeHtml(message.text)}</p>
-        ${message.role === 'assistant' && !message.pending && index === latestAssistantIndex ? renderAssistantMessageDetails() : ''}
-        ${message.pending ? '<div class="typing-dots" aria-hidden="true"><span></span><span></span><span></span></div>' : ''}
+        ${message.pending
+          ? renderThinkingLoader(message)
+          : message.role === 'assistant' && index === latestAssistantIndex
+          ? renderAssistantTurn(message)
+          : `<p>${escapeHtml(message.pending ? assistantRawSummary(message.text) : message.text)}</p>`}
       </div>
     </article>
   `).join('');
-  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+  chatMessagesEl.scrollTop = chatMessages.length <= 1 ? 0 : chatMessagesEl.scrollHeight;
 }
 
 function hasChatContext() {
@@ -2063,6 +2346,32 @@ function businessDecisionSummary(result = {}) {
   return `No blocking gaps remain in the current evidence set. The case is ${readiness}% ready and still requires accountable human approval before operational use.`;
 }
 
+function businessWhyItems(result = {}) {
+  const gaps = Array.isArray(result.gaps) ? result.gaps : [];
+  const domains = Array.isArray(result.domains) ? result.domains : [];
+  const citations = Array.isArray(result.citations) ? result.citations : [];
+  const evidenceQuality = result.evidenceQuality || {};
+  const retrieval = result.retrievalAudit || result.retrievalContext || {};
+  const readiness = Math.round(Number(result.decision?.readinessScore || 0) * 100);
+  const items = [];
+  items.push(`The deterministic compliance engine scored the case at ${readiness}% readiness and kept the outcome inside a human approval boundary.`);
+  if (gaps.length) {
+    items.push(`${gaps.length} blocking item${gaps.length === 1 ? '' : 's'} remained open after risk and control mapping.`);
+  } else {
+    items.push('No blocking control gap remained after deterministic risk mapping, but accountable approval is still required.');
+  }
+  if (citations.length || retrieval.matchCount || retrieval.matches?.length) {
+    items.push(`${citations.length || retrieval.matchCount || retrieval.matches?.length} evidence citation or retrieved chunk${(citations.length || retrieval.matchCount || retrieval.matches?.length) === 1 ? '' : 's'} supported the review.`);
+  } else {
+    items.push('No citation-ready evidence changed the outcome; the council relied on typed context and attached metadata.');
+  }
+  items.push(`Evidence confidence is ${humanize(evidenceQuality.status || 'not scored')}; reviewers must verify source documents before sign-off.`);
+  if (domains.length) {
+    items.push(`${domains.length} compliance domain${domains.length === 1 ? '' : 's'} were mapped into the decision.`);
+  }
+  return unique(items).slice(0, 5);
+}
+
 function businessReviewerActions(result = {}) {
   const readiness = result.decisionReadiness || {};
   const evidenceQuality = result.evidenceQuality || {};
@@ -2237,20 +2546,21 @@ function renderBusinessOutcome(result = {}) {
   const riskItems = riskSummaryItems(result);
   const evidenceItems = evidenceUsedItems(result);
   const reviewerActions = businessReviewerActions(result);
+  const whyItems = businessWhyItems(result);
   const timeline = buildSpecialistTimeline(result);
   const approvalRequired = humanApprovalRequired(result);
   specialistList.innerHTML = `
-    <section class="business-summary council-report ${tone}">
+    <section class="business-summary council-report decision-room-shell ${tone}">
       <article class="decision-memo report-section">
         <div class="business-hero">
-          <span class="eyebrow">Decision Memo</span>
+          <span class="eyebrow">Executive decision room</span>
           <h2>${escapeHtml(businessDecisionHeadline(result))}</h2>
           <p>${escapeHtml(businessDecisionSummary(result))}</p>
         </div>
         <div class="human-boundary">
           <div>
-            <span>humanApprovalRequired</span>
-            <strong>${escapeHtml(String(approvalRequired))}</strong>
+            <span>Human approval</span>
+            <strong>${escapeHtml(approvalRequired ? 'Required' : 'Review required')}</strong>
           </div>
           <div>
             <span>Final decision owner</span>
@@ -2275,8 +2585,14 @@ function renderBusinessOutcome(result = {}) {
         <article><span>Evidence IDs</span><strong>${escapeHtml(evidenceIds.length)}</strong></article>
         <article><span>Confidence</span><strong>${escapeHtml(humanize(evidenceQuality.status || 'not scored'))}</strong></article>
       </div>
+      <article class="report-section why-decision-panel">
+        <span class="eyebrow">Why This Decision</span>
+        <ol>
+          ${whyItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
+        </ol>
+      </article>
       <article class="report-section risk-summary-panel">
-        <span class="eyebrow">Risk Summary</span>
+        <span class="eyebrow">Top Risks</span>
         <div class="risk-list">
           ${riskItems.length ? riskItems.map((item) => `
             <div>
@@ -2286,12 +2602,6 @@ function renderBusinessOutcome(result = {}) {
             </div>
           `).join('') : '<div><span class="status-ready">clear</span><strong>No blocking risk returned</strong><p>The current evidence set did not produce a blocking gap, but human review remains required.</p></div>'}
         </div>
-      </article>
-      <article class="report-section required-actions-panel">
-        <span class="eyebrow">Required Actions</span>
-        <ol>
-          ${reviewerActions.map((action) => `<li>${escapeHtml(action)}</li>`).join('')}
-        </ol>
       </article>
       <article class="report-section evidence-used-panel">
         <div class="report-section-header">
@@ -2316,6 +2626,36 @@ function renderBusinessOutcome(result = {}) {
           `).join('') : '<div><span>none</span><strong>No evidence attached</strong><p>The decision used case context only. Attach source documents before approval.</p><small>human review required</small></div>'}
         </div>
       </article>
+      <article class="report-section agent-findings-panel">
+        <span class="eyebrow">Agent Findings</span>
+        <p class="timeline-disclosure">Visible specialist validation, not live autonomous debate. Each step records what it reviewed and how it changed or validated the handoff.</p>
+        <div class="agent-finding-grid">
+          ${timeline.map((item) => `
+            <div class="is-${escapeHtml(item.action.type)}">
+              <span>${escapeHtml(item.action.label)}</span>
+              <strong>${escapeHtml(item.name)}</strong>
+              <p>${escapeHtml(item.found)}</p>
+              <small>${escapeHtml(item.handoff)}</small>
+            </div>
+          `).join('')}
+        </div>
+      </article>
+      <article class="report-section required-actions-panel reviewer-handoff-panel">
+        <div class="report-section-header">
+          <div>
+            <span class="eyebrow">Required Human Actions</span>
+            <p>These are the actions a reviewer must confirm before the case can move toward operational approval.</p>
+          </div>
+          <div class="decision-room-actions compact">
+            <button type="button" data-report-action="export-review-pack">Export review pack PDF</button>
+          </div>
+        </div>
+        <ol>
+          ${reviewerActions.map((action) => `<li>${escapeHtml(action)}</li>`).join('')}
+        </ol>
+      </article>
+      <details class="advanced-council-details">
+        <summary>Advanced retrieval, learning, advisory, and audit trace</summary>
       <article class="report-section memory-panel">
         <span class="eyebrow">RAG Evidence Memory</span>
         <p class="timeline-disclosure">Server-side retrieval only. The browser receives citations and snippets, never raw embeddings.</p>
@@ -2393,7 +2733,8 @@ function renderBusinessOutcome(result = {}) {
           `).join('')}
         </div>
       </article>
-      ${llmOutput?.summary ? `<div class="advisory-note"><span class="eyebrow">Advisory council summary</span><p>${escapeHtml(llmOutput.summary)}</p></div>` : ''}
+        ${llmOutput?.summary ? `<div class="advisory-note"><span class="eyebrow">Advisory council summary</span><p>${escapeHtml(llmOutput.summary)}</p></div>` : ''}
+      </details>
     </section>
   `;
 }
@@ -2405,6 +2746,7 @@ function renderRun(result, options = {}) {
   const finalVisible = options.finalVisible !== false;
 
   if (!result.ok) {
+    document.body.classList.remove('has-decision-output');
     lastRun = result;
     lastRuns[activeRunMode] = result;
     decisionText.textContent = result.message || 'Run blocked';
@@ -2430,9 +2772,10 @@ function renderRun(result, options = {}) {
     lastRun = result;
     lastRuns[activeRunMode] = result;
   }
-  if (finalVisible && activeRunMode === 'chat') {
+  document.body.classList.toggle('has-decision-output', Boolean(finalVisible && result.ok));
+  if (finalVisible && (activeRunMode === 'chat' || workspaceView === 'output')) {
     runwayTitle.textContent = 'Decision Room';
-    runwayDescription.textContent = 'Business-first council output with deterministic specialist validation, human review boundary, and exportable evidence pack.';
+    runwayDescription.textContent = 'Business-first recommendation, evidence impact, specialist validation, reviewer actions, and exportable pack.';
   }
 
   const domains = Array.isArray(result.domains) ? result.domains : [];
@@ -3339,8 +3682,12 @@ runModeButtons.forEach((button) => {
 councilOutputTab?.addEventListener('click', () => {
   setRunMode('chat', { skipRender: true });
   setWorkspaceView('output');
-  if (lastRuns.chat?.ok) {
-    renderRun(lastRuns.chat);
+  const outputRun = lastRuns.chat?.ok ? lastRuns.chat : lastRun?.ok ? lastRun : null;
+  if (outputRun) {
+    renderRun(outputRun);
+  } else {
+    runwayTitle.textContent = 'Decision Room';
+    runwayDescription.textContent = 'Run the council from Advisor, Replay, or Evidence to produce the executive decision room.';
   }
 });
 
@@ -3349,6 +3696,13 @@ specialistList?.addEventListener('click', (event) => {
   if (action === 'export-review-pack') {
     execReviewPack?.click();
   }
+});
+
+agentActivity?.addEventListener('click', (event) => {
+  const agentButton = event.target?.closest?.('[data-council-agent]');
+  if (!agentButton) return;
+  councilFocusAgent = agentButton.dataset.councilAgent;
+  renderAgentActivity(lastCouncilActivity);
 });
 
 document.querySelectorAll('[data-scenario]').forEach((button) => {
