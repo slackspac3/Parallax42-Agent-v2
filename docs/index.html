@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Parallax42 Compliance Intelligence Agent</title>
+    <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="%2306110d"/><text x="5" y="22" fill="%2312d6a1" font-family="Arial" font-size="13" font-weight="700">P42</text></svg>' />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-run-mode="chat" data-workspace-view="chat">
+    <canvas id="networkCanvas" aria-hidden="true"></canvas>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">P42</span>
+        <div>
+          <span class="brand-name">Parallax42</span>
+          <span class="brand-subtitle">Compliance Intelligence Agent</span>
+        </div>
+      </div>
+      <nav aria-label="Primary">
+        <a href="#run">Agent</a>
+        <a href="#evidence">Evidence</a>
+        <a href="#audit">Audit Pack</a>
+        <a href="#hardening">Hardening</a>
+      </nav>
+      <div class="topbar-status">
+        <span id="topHealth">checking</span>
+      </div>
+    </header>
+
+    <main class="workbench">
+      <section class="command-center" id="run">
+        <div class="mode-tabs" role="tablist" aria-label="Run mode">
+          <button id="chatModeTab" type="button" class="mode-tab is-active" role="tab" aria-selected="true" aria-controls="run" data-run-mode="chat">
+            <span>Advisor</span>
+            <small>Primary workspace</small>
+          </button>
+          <button id="demoModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="run" data-run-mode="demo">
+            <span>Replay</span>
+            <small>Packaged cases</small>
+          </button>
+          <button id="liveModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="run" data-run-mode="live">
+            <span>Evidence</span>
+            <small>Upload and run</small>
+          </button>
+          <button id="councilOutputTab" type="button" class="mode-tab council-tab" aria-controls="workflow">
+            <span>Council Output</span>
+            <small>Decision and pack</small>
+          </button>
+        </div>
+
+        <aside class="case-panel pane">
+          <div class="pane-header">
+            <div>
+              <span id="casePanelEyebrow" class="eyebrow">Conversation</span>
+              <strong id="casePanelTitle">Compliance advisor</strong>
+            </div>
+            <button id="startNewCase" type="button" class="new-case-button mode-chat-only">Start New Case</button>
+          </div>
+
+          <div class="mode-note mode-demo-only">
+            Preset cases replay the submission story without attaching local evidence.
+          </div>
+          <div class="mode-note mode-live-only">
+            Live mode uses the edited intake fields and every uploaded evidence file.
+          </div>
+          <div class="mode-note mode-chat-only">
+            Describe the workflow in plain English. The agent builds the case, asks for missing context, then executes the workflow.
+          </div>
+
+          <section class="replay-command-deck mode-demo-only" aria-label="Golden replay overview">
+            <div>
+              <span class="eyebrow">Golden replay</span>
+              <h2>Choose a packaged review file, then watch the council trace.</h2>
+              <p>Replay mode proves the deterministic flow without depending on live uploads or external parsing.</p>
+            </div>
+            <dl>
+              <div><dt>Output</dt><dd>Decision memo</dd></div>
+              <div><dt>Trace</dt><dd>6 specialists</dd></div>
+              <div><dt>Boundary</dt><dd>Human approval</dd></div>
+            </dl>
+          </section>
+
+          <div class="scenario-switcher mode-demo-only" aria-label="Case scenarios">
+            <button type="button" class="scenario-button is-active" data-scenario="exportControl">
+              <span>Export control</span>
+              <small>Restricted hardware, firmware support, end-use proof</small>
+              <b>High scrutiny</b>
+            </button>
+            <button type="button" class="scenario-button" data-scenario="financeVendor">
+              <span>Finance vendor</span>
+              <small>Payment approvals, tenant access, missing exit support</small>
+              <b>Control gaps</b>
+            </button>
+            <button type="button" class="scenario-button" data-scenario="lowRisk">
+              <span>Low risk</span>
+              <small>SSO-only asset library with documented safeguards</small>
+              <b>Clean path</b>
+            </button>
+          </div>
+
+          <section class="live-command-deck mode-live-only" aria-label="Live evidence intake overview">
+            <div>
+              <span class="eyebrow">Live intake cockpit</span>
+              <h2>Upload evidence, map context, then run a governed council.</h2>
+              <p>Files stay behind the server boundary. The UI receives metadata, parser status, citations, and decision-ready evidence IDs.</p>
+            </div>
+            <div class="live-boundary-grid">
+              <span>Parser/OCR relay</span>
+              <b>external boundary</b>
+              <span>Embeddings</span>
+              <b>Compass gateway</b>
+              <span>Decision owner</span>
+              <b>deterministic engine</b>
+            </div>
+          </section>
+
+          <form id="agentForm" class="case-form mode-form-only">
+            <label class="field-card brief-card">
+              Compliance brief
+              <textarea name="brief" rows="7">Import restricted AI accelerator hardware for an internal research compute cluster, with firmware support, freight forwarding, and remote diagnostic access.</textarea>
+            </label>
+            <div class="field-grid">
+              <label class="field-card">
+                Business unit
+                <input name="businessUnit" value="Research Compute Operations" />
+              </label>
+              <label class="field-card">
+                Geography
+                <input name="geography" value="UAE and Singapore" />
+              </label>
+            </div>
+            <label class="field-card evidence-summary-card">
+              Evidence summary
+              <textarea name="documentSummary" rows="4">Manufacturer classification is pending. Freight forwarder screened clean. No final end-use certificate, import permit, or firmware remote-access runbook attached.</textarea>
+            </label>
+            <section class="live-upload-cockpit mode-live-only">
+              <label class="upload-zone" id="evidenceDropzone">
+                <input id="evidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.doc,.docx,text/*,application/json,text/csv,application/pdf" />
+                <span>Drop or select evidence files</span>
+                <small>PDF/DOCX evidence is sent to the configured parser relay; embeddings and vector chunks stay server-side.</small>
+              </label>
+              <div id="evidenceIngestionStatus" class="ingestion-status">No uploaded evidence yet.</div>
+            </section>
+            <section class="evidence-docket">
+              <div>
+                <span class="eyebrow">Evidence docket</span>
+                <strong class="mode-demo-only">Scenario proof pack</strong>
+                <strong class="mode-live-only">Uploaded proof pack</strong>
+              </div>
+              <div id="evidenceQueue" class="evidence-queue" aria-live="polite"></div>
+            </section>
+            <button id="formRunButton" type="submit" class="primary-action">Run demo</button>
+          </form>
+
+          <section id="conversationPanel" class="conversation-panel mode-chat-only" aria-label="Conversational compliance advisor">
+            <div id="missionWelcome" class="mission-welcome">
+              <div>
+                <span class="eyebrow">Compliance Mission Control</span>
+                <h2>Build a review-ready case through chat.</h2>
+                <p>The deterministic council will produce a decision memo, risks, required actions, evidence use, specialist validation trace, and a human approval boundary.</p>
+              </div>
+              <button type="button" data-chat-prompt="Assess whether we can onboard a UAE healthcare analytics vendor using patient data, Microsoft 365, and cross-border cloud processing. The accountable owner is Group Technology Risk. Evidence includes SOC 2, ISO 27001, signed DPA, retention schedule, model-training exclusion, subprocessor register, BCP/DR plan, exit assistance, SSO/MFA, audit logs, and security testing.">Start sample mission</button>
+            </div>
+            <div class="agent-activity" id="agentActivity" aria-live="polite"></div>
+            <div class="mission-workspace">
+              <div class="chat-main-column">
+                <form id="chatForm" class="chat-form">
+                  <label>
+                    Message
+                    <textarea id="chatInput" rows="5" placeholder="Example: assess a healthcare analytics vendor using patient data, Microsoft 365, and cross-border processing."></textarea>
+                  </label>
+                  <label class="chat-evidence-picker">
+                    Evidence files
+                    <input id="chatEvidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.docx,text/*,application/json,text/csv,application/pdf" />
+                  </label>
+                  <div id="chatAttachmentStatus" class="attachment-status" aria-live="polite">No files attached.</div>
+                  <div id="chatAttachmentList" class="chat-attachment-list" aria-live="polite"></div>
+                  <div class="form-actions">
+                    <button id="chatSubmit" type="submit" class="primary-action">Send</button>
+                    <button id="chatRunNow" type="button" class="hero-run-button">Run council</button>
+                  </div>
+                </form>
+                <div class="context-strength" aria-live="polite">
+                  <div>
+                    <span class="eyebrow">Council readiness</span>
+                    <strong id="contextStrengthLabel">Needs intake</strong>
+                  </div>
+                  <div class="context-meter" aria-hidden="true">
+                    <span id="contextStrengthBar"></span>
+                  </div>
+                  <p id="contextStrengthText">Add scope, owner, geography, evidence, and risk signals before running council.</p>
+                </div>
+                <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
+                <div class="chat-suggestions" aria-label="Suggested prompts">
+                  <button type="button" data-chat-prompt="Review an AI accelerator import for UAE and Singapore. The supplier will ship restricted hardware, provide firmware support, and has no final end-use certificate.">Export-control import</button>
+                  <button type="button" data-chat-prompt="Assess a managed integration partner connecting Oracle ERP, Workday, ServiceNow, SharePoint, and Snowflake with privileged implementation access.">Platform integrator</button>
+                  <button type="button" data-chat-prompt="Review a treasury workflow vendor with payment approval access, Microsoft 365 integration, finance reporting, and missing exit support.">Treasury workflow</button>
+                </div>
+              </div>
+              <aside id="caseIntelligencePanel" class="case-intelligence-panel" aria-live="polite">
+                <div class="intel-heading">
+                  <span class="eyebrow">Live Case Intelligence</span>
+                  <strong id="caseIntelReadiness">0%</strong>
+                </div>
+                <div id="caseDraftPanel" class="case-draft-panel" aria-live="polite"></div>
+                <div id="caseIntelDetails" class="case-intel-details"></div>
+              </aside>
+            </div>
+          </section>
+        </aside>
+
+        <section class="runway pane" id="workflow">
+          <div class="runway-top">
+            <div>
+              <span class="eyebrow">Council command</span>
+              <h1 id="runwayTitle">Agent workflow</h1>
+              <p id="runwayDescription">The case builder promotes ready context into a traced CrewAI run.</p>
+            </div>
+            <div class="run-actions">
+              <button id="sampleRun" type="button" class="primary-action">Run council</button>
+              <button id="execReviewPack" type="button" class="secondary-button">Exec review pack</button>
+              <button id="exportRun" type="button" class="secondary-button">Export pack</button>
+            </div>
+          </div>
+
+          <div class="run-progress" aria-hidden="true">
+            <span id="flowProgress"></span>
+          </div>
+
+          <div class="stage-console">
+            <div>
+              <span id="stageKicker" class="eyebrow">Chat ready</span>
+              <strong id="stageStatus">Awaiting prompt</strong>
+            </div>
+            <p id="stageOutput">Describe a case and the agent will build the draft, ask follow-up questions, or execute the workflow.</p>
+          </div>
+
+          <div id="specialistList" class="specialist-list" aria-live="polite"></div>
+
+          <details class="trace-drawer technical-drawer">
+            <summary>Audit and technical trace</summary>
+            <div class="section-heading">
+              <span class="eyebrow">Audit / Technical Trace</span>
+              <h2>Deterministic trace</h2>
+            </div>
+            <ol id="traceList" class="trace"></ol>
+            <details id="rawRunDetails" class="raw-run-details" hidden>
+              <summary>Advanced raw JSON</summary>
+              <pre id="rawRunJson">{}</pre>
+            </details>
+          </details>
+        </section>
+
+        <aside class="decision-rail pane">
+          <div class="decision-card">
+            <span class="eyebrow">Decision</span>
+            <strong id="decisionText">Waiting for run</strong>
+            <p id="approvalStatus">Human approval gate is locked until the audit pack is complete.</p>
+          </div>
+
+          <div class="metric-stack" aria-live="polite">
+            <div>
+              <span>Runtime</span>
+              <strong id="runtimeText">--</strong>
+            </div>
+            <div>
+              <span>Readiness</span>
+              <strong id="readinessScore">--</strong>
+            </div>
+            <div>
+              <span>Evidence IDs</span>
+              <strong id="evidenceCount">--</strong>
+            </div>
+            <div>
+              <span>Blocking gaps</span>
+              <strong id="gapCount">--</strong>
+            </div>
+          </div>
+
+          <div class="approval-actions">
+            <button id="approvalButton" type="button" class="secondary-button" disabled>Approval locked</button>
+          </div>
+
+          <details class="decision-technical-links">
+            <summary>Technical evidence links</summary>
+            <div class="decision-links">
+              <a id="goldenDemoLink" href="api/demo/golden">Golden JSON</a>
+              <a id="readinessJsonLink" href="api/readiness">Readiness JSON</a>
+              <a id="benchmarksJsonLink" href="api/benchmarks">Benchmarks</a>
+            </div>
+          </details>
+        </aside>
+      </section>
+
+      <section class="evidence-board" id="evidence">
+        <div class="section-heading">
+          <span class="eyebrow">Evidence graph</span>
+          <h2>Obligations, gaps, and controls</h2>
+        </div>
+        <div class="evidence-layout">
+          <div>
+            <div class="board-label">Domain coverage</div>
+            <div id="domainList" class="domain-matrix"></div>
+          </div>
+          <div>
+            <div class="board-label">Blocking gaps</div>
+            <div id="gapList" class="gap-stack"></div>
+          </div>
+        </div>
+        <div class="citation-panel">
+          <div class="board-label">Evidence citations</div>
+          <div id="citationList" class="citation-list"></div>
+        </div>
+      </section>
+
+      <section class="audit-section" id="audit">
+        <div class="section-heading">
+          <span class="eyebrow">Submission pack</span>
+          <h2>Artifacts a reviewer can inspect</h2>
+        </div>
+        <div class="artifact-layout">
+          <div id="artifactPreview" class="artifact-preview"></div>
+          <div>
+            <div class="board-label">Live services</div>
+            <div id="deploymentStatus" class="status-list" aria-live="polite"></div>
+            <div id="capabilityFallbacks" class="capability-fallbacks" aria-live="polite"></div>
+            <details class="advanced-config">
+              <summary>Advanced runtime settings</summary>
+              <form id="runtimeConfig" class="config-panel">
+                <label>
+                  API mode
+                  <select name="apiMode" id="apiMode">
+                    <option value="auto">Auto</option>
+                    <option value="local">Local</option>
+                    <option value="relay">Vercel relay</option>
+                    <option value="live">Live backend focus</option>
+                  </select>
+                </label>
+                <label>
+                  Vercel relay URL
+                  <input name="relayUrl" id="relayUrl" autocomplete="off" />
+                </label>
+                <label>
+                  Parallax42 backend URL
+                  <input name="backendUrl" id="backendUrl" autocomplete="off" />
+                </label>
+                <div class="form-actions">
+                  <button type="submit">Save runtime</button>
+                  <button type="button" id="resetConfig" class="secondary-button">Reset</button>
+                </div>
+              </form>
+              <div class="admin-feature-panel">
+                <div>
+                  <span class="eyebrow">Admin controls</span>
+                  <strong>Capability switches</strong>
+                  <p>All advanced components are requested by default and degrade safely when configuration is absent.</p>
+                </div>
+                <div id="adminFeatureControls" class="feature-toggle-list" aria-live="polite"></div>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="hardening-section" id="hardening">
+        <div class="section-heading">
+          <span class="eyebrow">Production hardening</span>
+          <h2>Readiness track</h2>
+        </div>
+        <div class="hardening-layout">
+          <div id="readinessList" class="hardening-list"></div>
+          <div>
+            <div class="board-label">Local benchmark</div>
+            <div id="benchmarkSummary" class="benchmark-panel"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
