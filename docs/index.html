@@ -175,6 +175,22 @@
             </div>
             <div class="mission-workspace">
               <div class="chat-main-column">
+                <div class="chat-suggestions" aria-label="Suggested prompts">
+                  <button type="button" data-chat-prompt="Review an AI accelerator import for UAE and Singapore. The supplier will ship restricted hardware, provide firmware support, and has no final end-use certificate.">Export-control import</button>
+                  <button type="button" data-chat-prompt="Assess a managed integration partner connecting Oracle ERP, Workday, ServiceNow, SharePoint, and Snowflake with privileged implementation access.">Platform integrator</button>
+                  <button type="button" data-chat-prompt="Review a treasury workflow vendor with payment approval access, Microsoft 365 integration, finance reporting, and missing exit support.">Treasury workflow</button>
+                </div>
+                <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
+                <div class="context-strength" aria-live="polite">
+                  <div>
+                    <span class="eyebrow">Council readiness</span>
+                    <strong id="contextStrengthLabel">Needs intake</strong>
+                  </div>
+                  <div class="context-meter" aria-hidden="true">
+                    <span id="contextStrengthBar"></span>
+                  </div>
+                  <p id="contextStrengthText">Add scope, owner, geography, evidence, and risk signals before running council.</p>
+                </div>
                 <form id="chatForm" class="chat-form">
                   <label>
                     Message
@@ -191,22 +207,6 @@
                     <button id="chatRunNow" type="button" class="hero-run-button">Run council</button>
                   </div>
                 </form>
-                <div class="context-strength" aria-live="polite">
-                  <div>
-                    <span class="eyebrow">Council readiness</span>
-                    <strong id="contextStrengthLabel">Needs intake</strong>
-                  </div>
-                  <div class="context-meter" aria-hidden="true">
-                    <span id="contextStrengthBar"></span>
-                  </div>
-                  <p id="contextStrengthText">Add scope, owner, geography, evidence, and risk signals before running council.</p>
-                </div>
-                <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
-                <div class="chat-suggestions" aria-label="Suggested prompts">
-                  <button type="button" data-chat-prompt="Review an AI accelerator import for UAE and Singapore. The supplier will ship restricted hardware, provide firmware support, and has no final end-use certificate.">Export-control import</button>
-                  <button type="button" data-chat-prompt="Assess a managed integration partner connecting Oracle ERP, Workday, ServiceNow, SharePoint, and Snowflake with privileged implementation access.">Platform integrator</button>
-                  <button type="button" data-chat-prompt="Review a treasury workflow vendor with payment approval access, Microsoft 365 integration, finance reporting, and missing exit support.">Treasury workflow</button>
-                </div>
               </div>
             </div>
           </section>

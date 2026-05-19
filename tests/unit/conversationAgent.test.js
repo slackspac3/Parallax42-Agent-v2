@@ -54,6 +54,63 @@ test('conversation NLP extracts a draft and asks contextual follow-up questions'
   assert.equal(result.run, null);
 });
 
+test('conversation handles payroll outsourcing without inventing an owner', () => {
+  const first = processConversation({
+    message: 'I have a request to omboard a vendor for payroll outsource'
+  }, { runtime: 'deterministic' });
+
+  assert.equal(first.ok, true);
+  assert.equal(first.caseDraft.businessUnit, '');
+  assert.ok(first.caseDraft.integrations.includes('Payroll/HRIS'));
+  assert.ok(first.caseDraft.riskSignals.includes('personal data'));
+  assert.ok(first.caseDraft.riskSignals.includes('finance exposure'));
+  assert.ok(!/Procurement And Third-Party Risk/i.test(first.reply));
+  assert.ok(first.questions.some((question) => /HR\/People|Finance\/Payroll|Procurement/i.test(question)));
+
+  const second = processConversation({
+    message: 'Its for a Abu Dhabi based company but the supplier is in India',
+    caseDraft: first.caseDraft
+  }, { runtime: 'deterministic' });
+
+  assert.equal(second.caseDraft.businessUnit, '');
+  assert.equal(second.caseDraft.geography, 'UAE and India');
+  assert.ok(second.questions.some((question) => /HR\/People|Finance\/Payroll|Procurement/i.test(question)));
+  assert.ok(!second.questions.some((question) => /What payroll-vendor proof/i.test(question)));
+});
+
+test('conversation handles plain payroll outsourcing intake with a practical owner question', () => {
+  const result = processConversation({
+    message: 'I have a request to outsource payroll to a third party'
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.caseDraft.businessUnit, '');
+  assert.ok(result.caseDraft.integrations.includes('Payroll/HRIS'));
+  assert.ok(result.caseDraft.riskSignals.includes('personal data'));
+  assert.ok(result.caseDraft.riskSignals.includes('finance exposure'));
+  assert.ok(result.caseDraft.riskSignals.includes('outsourced service'));
+  assert.ok(result.questions.some((question) => /payroll outsourcing risk internally|HR\/People|Finance\/Payroll/i.test(question)));
+  assert.ok(!/Procurement And Third-Party Risk/i.test(result.reply));
+});
+
+test('conversation asks payroll-specific evidence after owner and geography are known', () => {
+  const result = processConversation({
+    message: 'Finance Payroll owns it',
+    caseDraft: {
+      supplierName: 'Payroll outsourcing vendor',
+      brief: 'Review payroll outsourcing vendor for employee payroll data processed by a supplier in India for an Abu Dhabi company.',
+      geography: 'UAE and India',
+      integrations: ['Payroll/HRIS'],
+      riskSignals: ['personal data', 'finance exposure', 'outsourced service'],
+      questions: ['Who will own this payroll outsourcing risk internally: HR/People, Finance/Payroll, Procurement, or another named team?']
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.caseDraft.businessUnit, 'Finance Payroll');
+  assert.ok(result.questions.some((question) => /payroll-vendor proof|contract or SOW|DPA/i.test(question)));
+  assert.match(result.reply, /payroll outsourcing/i);
+});
+
 test('conversation executes the agent workflow when the draft is complete', () => {
   const result = processConversation({
     forceRun: true,
@@ -171,7 +228,7 @@ test('conversation NLP does not swallow geography label into accountable owner',
 
   assert.equal(result.ok, true);
   assert.equal(result.caseDraft.businessUnit, 'Infrastructure Procurement');
-  assert.equal(result.caseDraft.geography, 'UAE');
+  assert.equal(result.caseDraft.geography, 'UAE and KSA');
   assert.ok(result.caseDraft.riskSignals.includes('export control'));
   assert.ok(!result.caseDraft.riskSignals.includes('AI/model use'));
   assert.equal(result.runReadiness.runnable, false);
@@ -185,7 +242,7 @@ test('conversation NLP handles export-control hardware import cases', () => {
 
   assert.equal(result.ok, true);
   assert.equal(result.caseDraft.businessUnit, 'Trade Compliance And Export Controls');
-  assert.equal(result.caseDraft.geography, 'UAE');
+  assert.equal(result.caseDraft.geography, 'UAE and Singapore');
   assert.ok(result.caseDraft.integrations.includes('Firmware support channel'));
   assert.ok(result.caseDraft.riskSignals.includes('export control'));
   assert.ok(result.caseDraft.riskSignals.includes('remote support access'));

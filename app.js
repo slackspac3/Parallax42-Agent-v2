@@ -151,7 +151,7 @@ let workspaceView = 'chat';
 let chatMessages = [
   {
     role: 'assistant',
-    text: 'Start with the supplier or workflow, geography, regulated data or assets, integrations, and evidence you already have. I will build the case, ask only for missing context, and run the workflow when ready.'
+    text: 'What do you need reviewed?'
   }
 ];
 
@@ -1614,6 +1614,17 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
   const score = result?.ok
     ? Math.round(Number(result.decision?.readinessScore || 0) * 100)
     : Number.isFinite(chatRunReadiness?.score) ? chatRunReadiness.score : contextStrength(draft);
+  if (!result?.ok && !hasChatContext() && !uploadedEvidence.length) {
+    caseIntelReadiness.textContent = '0%';
+    caseIntelDetails.innerHTML = `
+      <div class="intel-meter" aria-hidden="true"><span style="width: 0%"></span></div>
+      <div class="intel-empty-state">
+        <strong>No active case</strong>
+        <p>Describe a workflow or attach evidence. The panel will track readiness, missing proof, and council validation as the case develops.</p>
+      </div>
+    `;
+    return;
+  }
   const risks = result?.ok
     ? (result.domains || []).filter((domain) => /applicable|needs|confirmation/i.test(domain.status || '')).map((domain) => domain.label)
     : unique([...(draft.riskSignals || []), ...(draft.evidenceSignals || [])]).map((item) => compactUiLabel(item, 42));
@@ -1709,8 +1720,8 @@ function assistantRawSummary(text = '') {
   const clean = cleanEvidenceText(text);
   if (!clean) return 'I am updating the case draft.';
   if (/could not|failed|error/i.test(clean)) return clean;
-  if (/what i understood|next questions?|missing/i.test(clean)) {
-    return 'I captured the current facts and identified the proof needed before this is ready for review.';
+  if (/what i understood|so far i have|next questions?|missing/i.test(clean)) {
+    return 'I captured the useful facts and identified the next decision point.';
   }
   if (/ran|decision|approval|blocking|readiness/i.test(clean)) {
     return clean.split(/Next questions?:/i)[0].trim().slice(0, 260);
@@ -1751,10 +1762,10 @@ function assistantQuestionFromText(text = '') {
 function assistantAcknowledgement(text = '') {
   if (/could not|failed|error/i.test(text)) return 'I hit a processing issue, but the case state is still safe.';
   if (lastRuns.chat?.ok) return 'Council run complete. I kept the decision review-bound.';
-  if (chatRunReadiness?.runnable) return 'I have enough to prepare the decision room.';
-  if (indexedChunkCount()) return 'I found indexed evidence and added it to the case.';
-  if (hasChatContext()) return 'That helps. I updated the working case.';
-  return 'Tell me the workflow in plain English.';
+  if (chatRunReadiness?.runnable) return 'I have enough context to prepare the decision room.';
+  if (indexedChunkCount()) return 'I added the evidence to the case.';
+  if (hasChatContext()) return 'Got it. I’m building the case.';
+  return 'Tell me what needs review.';
 }
 
 function renderThinkingLoader(message = {}) {
@@ -1791,43 +1802,32 @@ function renderThinkingLoader(message = {}) {
 }
 
 function renderAssistantTurn(message = {}) {
-  const missing = missingProofItems();
-  const facts = assistantFactsForMessage();
   const canRun = Boolean(chatRunReadiness?.runnable);
   const question = assistantQuestionFromText(message.text);
-  const summary = assistantRawSummary(message.text);
   const acknowledgement = assistantAcknowledgement(message.text);
+  if (!hasChatContext() && !lastRuns.chat?.ok && chatMessages.length <= 1) {
+    return `
+      <div class="advisor-response-card advisor-welcome-response">
+        <div class="advisor-response-head">
+          <strong>What do you need reviewed?</strong>
+          <p>Tell me in one or two sentences. Attach evidence now or later.</p>
+        </div>
+      </div>
+    `;
+  }
   return `
-    <div class="advisor-response-card advisor-natural-response">
+    <div class="advisor-response-card advisor-natural-response advisor-chat-only">
       <div class="advisor-response-head">
         <strong>${escapeHtml(acknowledgement)}</strong>
-        <p>${escapeHtml(summary)}</p>
-      </div>
-      <div class="advisor-fact-strip" aria-label="Case facts captured">
-        ${facts.slice(0, 4).map(([label, value]) => `
-          <span>
-            <small>${escapeHtml(label)}</small>
-            <b>${escapeHtml(value)}</b>
-          </span>
-        `).join('')}
       </div>
       <div class="advisor-next-question">
-        <span class="eyebrow">${escapeHtml(canRun ? 'Ready when you are' : 'One thing I need')}</span>
+        <span class="eyebrow">${escapeHtml(canRun ? 'Ready when you are' : 'Next question')}</span>
         <strong>${escapeHtml(canRun ? nextBestAction() : question)}</strong>
-        <p>${escapeHtml(canRun ? 'I can produce the decision room now. Human approval will still remain required.' : 'Reply naturally. A short answer is fine; if it is pending, say “unknown” and I will record it as a gap.')}</p>
+        <p>${escapeHtml(canRun ? 'I can run the council now; human approval will still remain required.' : 'Short answer is fine. Say “unknown” if it is pending.')}</p>
         <div class="assistant-next">
-          ${canRun ? '<button type="button" data-chat-action="run-council">Run council</button>' : '<span>Reply in plain English.</span>'}
+          ${canRun ? '<button type="button" data-chat-action="run-council">Run council</button>' : ''}
         </div>
       </div>
-      <details class="advisor-case-readout">
-        <summary>Case readout</summary>
-        <dl>
-          ${facts.map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`).join('')}
-        </dl>
-        <div class="assistant-chips">
-          ${missing.length ? missing.map((item) => `<span>${escapeHtml(item)}</span>`).join('') : '<span>no intake blockers</span>'}
-        </div>
-      </details>
     </div>
   `;
 }
@@ -1919,7 +1919,7 @@ function resetChatCaseSession() {
   chatMessages = [
     {
       role: 'assistant',
-      text: 'Start with the supplier or workflow, geography, regulated data or assets, integrations, and evidence you already have. I will build the case, ask only for missing context, and run the workflow when ready.'
+      text: 'What do you need reviewed?'
     }
   ];
   removeStorage(storageKeys.evidenceIndexMeta);
@@ -2079,7 +2079,9 @@ function renderChatMessages() {
           ? renderThinkingLoader(message)
           : message.role === 'assistant' && index === latestAssistantIndex
           ? renderAssistantTurn(message)
-          : `<p>${escapeHtml(message.pending ? assistantRawSummary(message.text) : message.text)}</p>`}
+          : message.role === 'assistant'
+            ? `<p>${escapeHtml(assistantRawSummary(message.text))}</p>`
+            : `<p>${escapeHtml(message.text)}</p>`}
       </div>
     </article>
   `).join('');
@@ -2115,11 +2117,11 @@ function promptForChatContext() {
   const hasIndexedEvidence = Boolean(indexedChunkCount());
   const guidance = uploadedEvidence.length
     ? hasBinaryOnlyEvidence
-      ? 'I have the file registered, but I still need the case context because the document text was not parsed. Tell me the supplier or workflow, geography, data/assets, integrations, and the key clauses or missing evidence you want reviewed.'
+      ? 'I have the file registered. What should I review it against?'
       : hasIndexedEvidence
-        ? 'I parsed and indexed the attached evidence. Tell me the supplier or workflow, geography, data/assets, integrations, and what decision you need, then I can retrieve citations and run council.'
-        : 'I parsed the attached evidence. Tell me the supplier or workflow, geography, data/assets, integrations, and what decision you need, then I can run council.'
-    : 'Start with the supplier or workflow, geography, data handled, integrations, and evidence already available. I will ask only for the fields needed to run the workflow.';
+        ? 'I parsed the evidence. What decision do you need?'
+        : 'I have the evidence. What decision do you need?'
+    : 'What do you need reviewed?';
   if (lastMessage !== guidance) {
     chatMessages.push({ role: 'assistant', text: guidance });
   }
@@ -2127,6 +2129,51 @@ function promptForChatContext() {
   renderIntakePromptState();
   window.setTimeout(renderIntakePromptState, 0);
   chatInput.focus();
+}
+
+function chatCouncilActivityForDraft(draft = {}, missing = [], runReadiness = {}) {
+  const missingText = missing.join(' ').toLowerCase();
+  const hasOwner = Boolean(cleanEvidenceText(draft.businessUnit));
+  const hasGeography = Boolean(cleanEvidenceText(draft.geography));
+  const hasEvidence = Boolean((draft.documents || []).length || (draft.evidenceSignals || []).length || (draft.retrievalContext?.evidenceMatches || []).length);
+  const hasRiskSignals = Boolean((draft.riskSignals || []).length || (draft.evidenceSignals || []).length);
+  const runnable = Boolean(runReadiness.runnable);
+  const intakeComplete = hasOwner && hasGeography;
+  const obligationComplete = intakeComplete && (hasRiskSignals || hasEvidence || runnable);
+  const evidenceActive = intakeComplete && !hasEvidence && /evidence/.test(missingText);
+  const controlsActive = runnable;
+  return [
+    {
+      label: 'Intake Agent',
+      detail: intakeComplete ? 'case scoped' : 'asking next question',
+      status: intakeComplete ? 'complete' : 'active'
+    },
+    {
+      label: 'Obligation Mapper',
+      detail: hasGeography || hasRiskSignals ? 'domains scoped' : 'waiting for perimeter',
+      status: obligationComplete ? 'complete' : intakeComplete ? 'active' : 'queued'
+    },
+    {
+      label: 'Evidence Examiner',
+      detail: hasEvidence ? 'evidence signals found' : /evidence/.test(missingText) ? 'needs proof' : 'queued',
+      status: hasEvidence ? 'complete' : evidenceActive ? 'active' : 'queued'
+    },
+    {
+      label: 'Risk & Controls',
+      detail: runnable ? 'ready for council' : 'waiting for evidence and owner',
+      status: controlsActive ? 'active' : 'queued'
+    },
+    {
+      label: 'Responsible AI',
+      detail: 'human approval boundary locked',
+      status: runnable ? 'queued' : 'queued'
+    },
+    {
+      label: 'Audit Packager',
+      detail: 'waiting for council output',
+      status: 'queued'
+    }
+  ];
 }
 
 function renderConversationState(result = {}) {
@@ -2161,12 +2208,7 @@ function renderConversationState(result = {}) {
     ? questions.join(' ')
     : 'The case draft has enough structure to run, or you can add more evidence first.';
   renderContextStrength(draft);
-  renderAgentActivity(actions.map((action) => ({
-    id: action.id,
-    label: titleCase(action.id).replace(/^Nlp\b/, 'NLP'),
-    detail: humanize(action.status),
-    status: action.status === 'waiting' ? 'active' : action.status === 'complete' || action.status === 'not_required' ? 'complete' : 'queued'
-  })));
+  renderAgentActivity(chatCouncilActivityForDraft(draft, missing, runReadiness));
 
   specialistList.innerHTML = actions.map((action) => {
     const complete = action.status === 'complete' || action.status === 'not_required';
