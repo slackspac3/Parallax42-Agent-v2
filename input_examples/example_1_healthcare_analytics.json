@@ -1,0 +1,27 @@
+{
+  "run_id": "example-healthcare-analytics-001",
+  "use_case_id": "21",
+  "input": {
+    "query": "Assess whether we can onboard a UAE healthcare analytics vendor using patient data, Microsoft 365, and cross-border cloud processing.",
+    "supplierName": "NexaHealth Analytics",
+    "businessUnit": "Group Technology Risk",
+    "geography": "UAE",
+    "integrations": ["Microsoft 365", "Azure AD", "healthcare data lake"],
+    "riskSignals": ["patient data", "cross-border cloud processing", "privileged access"],
+    "documents": [
+      {
+        "evidenceId": "HC-DPA-01",
+        "title": "Draft data processing addendum",
+        "summary": "Draft DPA describes patient-data processing, UAE hosting preference, subprocessor disclosure, and breach notification, but final signature is pending."
+      },
+      {
+        "evidenceId": "HC-SEC-01",
+        "title": "Security controls summary",
+        "summary": "Vendor reports SSO, MFA, access logs, annual penetration testing, and ISO 27001 certification."
+      }
+    ]
+  },
+  "options": {
+    "sample_mode": false
+  }
+}

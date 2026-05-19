@@ -30,6 +30,23 @@ Run checks:
 npm run qa
 ```
 
+Automated evaluator-compatible route:
+
+```bash
+python run.py
+curl -sS -X POST http://127.0.0.1:8000/run \
+  -H "content-type: application/json" \
+  --data @input_examples/example_1_healthcare_analytics.json
+```
+
+`run.py` is a compatibility wrapper over `server.js`, not a FastAPI rewrite. It exposes `GET /health`, `GET /metadata`, and `POST /run` on port `8000` while preserving the same Node/CommonJS compliance runtime.
+
+Compass compatibility:
+
+- Preferred Parallax42 path: `COMPASS_GATEWAY_BASE_URL` plus `COMPASS_GATEWAY_TOKEN`.
+- Direct evaluator alias path: `OPENAI_BASE_URL=https://compass.core42.ai/v1` plus `OPENAI_API_KEY`.
+- Embeddings remain `text-embedding-3-large`; final compliance decisions remain deterministic.
+
 ## Demo Path
 
 1. Open the static cockpit locally or from the live URL.

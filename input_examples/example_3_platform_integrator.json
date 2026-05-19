@@ -1,0 +1,27 @@
+{
+  "run_id": "example-platform-integrator-003",
+  "use_case_id": "21",
+  "input": {
+    "query": "Assess a managed platform integration provider that will connect ServiceNow, procurement, finance approvals, and SharePoint policy repositories.",
+    "supplierName": "VectorBridge Managed Platforms",
+    "businessUnit": "Enterprise Platforms",
+    "geography": "Global with UAE primary operations",
+    "integrations": ["ServiceNow", "procurement suite", "finance approvals", "SharePoint"],
+    "riskSignals": ["privileged integration access", "policy repository access", "financial approval workflow"],
+    "documents": [
+      {
+        "evidenceId": "PLAT-SOW-01",
+        "title": "Statement of work",
+        "summary": "SOW defines implementation scope, named integration owners, least-privilege access, change windows, and support SLAs."
+      },
+      {
+        "evidenceId": "PLAT-BCP-01",
+        "title": "Continuity and exit plan",
+        "summary": "Continuity plan includes backup administrators, exit assistance, configuration export, and 30-day transition support."
+      }
+    ]
+  },
+  "options": {
+    "sample_mode": false
+  }
+}

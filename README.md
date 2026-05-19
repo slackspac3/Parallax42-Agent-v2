@@ -15,6 +15,8 @@ The implementation now defaults agent execution through a dependency-light CrewA
 
 ## Judge Quick Start
 
+For the normal cockpit demo:
+
 ```bash
 npm install
 npm run qa
@@ -45,6 +47,34 @@ Suggested demo steps:
 2. Run Council.
 3. Review the decision memo.
 4. Export Executive Review Pack PDF.
+
+For automated evaluator compatibility, this repository also exposes a thin Python wrapper around the same Node/CommonJS runtime:
+
+```bash
+npm install
+python run.py
+```
+
+Then, from another terminal:
+
+```bash
+curl -sS http://127.0.0.1:8000/health
+curl -sS -X POST http://127.0.0.1:8000/run \
+  -H "content-type: application/json" \
+  --data @input_examples/example_1_healthcare_analytics.json
+```
+
+`run.py` does not introduce FastAPI or a second backend. It starts `server.js` on port `8000` so judges or automated screeners that expect `python run.py` and `POST /run` can exercise the same compliance engine. The same route is also available as `/api/run` in the Vercel API surface, with `/run` rewritten to it.
+
+Compass is already supported through the Parallax42 Compass gateway. For evaluator environments that provide direct OpenAI-compatible Compass variables, the same client also accepts:
+
+```text
+OPENAI_API_KEY=<Compass API key>
+OPENAI_BASE_URL=https://compass.core42.ai/v1
+MODEL_NAME=gpt-4.1
+REASONING_MODEL_NAME=gpt-5.1
+EMBEDDING_MODEL_NAME=text-embedding-3-large
+```
 
 ## What This Demo Does Not Claim
 

@@ -1,0 +1,27 @@
+{
+  "run_id": "example-export-control-002",
+  "use_case_id": "21",
+  "input": {
+    "query": "Review an AI accelerator hardware import for a research compute cluster with freight forwarding, firmware support, and remote diagnostics.",
+    "supplierName": "AsterCompute Components",
+    "businessUnit": "Research Compute Operations",
+    "geography": "UAE and Singapore",
+    "integrations": ["freight forwarder portal", "asset inventory", "remote firmware diagnostics"],
+    "riskSignals": ["export-control classification pending", "remote diagnostic access", "chain of custody"],
+    "documents": [
+      {
+        "evidenceId": "HW-EUC-01",
+        "title": "Draft end-use certificate",
+        "summary": "End-use certificate is drafted but not countersigned by the accountable research operations owner."
+      },
+      {
+        "evidenceId": "HW-LOG-01",
+        "title": "Freight screening summary",
+        "summary": "Freight forwarder screening is clean; manufacturer classification and import permit are not final."
+      }
+    ]
+  },
+  "options": {
+    "sample_mode": false
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "name": "Parallax42 Compliance Intelligence Agent",
+  "use_case_id": "21",
+  "problem_statement": "Legal Intelligence / Compliance",
+  "description": "A chat-first, evidence-backed compliance council that builds reviewer-ready cases, maps obligations, retrieves evidence, names gaps, and packages a deterministic human-review decision.",
+  "entrypoint": "run.py",
+  "api": {
+    "port": 8000,
+    "run_endpoint": "POST /run",
+    "health_endpoint": "GET /health"
+  },
+  "ui": {
+    "local_port": 8000,
+    "path": "/"
+  },
+  "models": {
+    "llm": "gpt-5.1 via Compass-compatible API or Parallax42 Compass gateway",
+    "embeddings": "text-embedding-3-large via Compass-compatible API or Parallax42 Compass gateway"
+  },
+  "agents": [
+    {
+      "name": "Compliance Orchestrator",
+      "role": "Scopes the case and decides which compliance domains apply."
+    },
+    {
+      "name": "Regulatory Obligation Mapper",
+      "role": "Maps the request to policy, privacy, AI, continuity, technical, finance, and third-party obligations."
+    },
+    {
+      "name": "Evidence Examiner",
+      "role": "Reviews supplied evidence, citations, retrieval matches, and missing proof."
+    },
+    {
+      "name": "Risk And Control Analyst",
+      "role": "Turns obligations and evidence gaps into controls, blockers, owners, and remediation actions."
+    },
+    {
+      "name": "Responsible AI Reviewer",
+      "role": "Checks unsupported certainty, automation boundaries, bias-sensitive assumptions, and human approval requirements."
+    },
+    {
+      "name": "Audit Packager",
+      "role": "Packages the final decision, trace, evidence IDs, gaps, and reviewer actions."
+    }
+  ],
+  "capabilities": [
+    "natural-language compliance intake",
+    "server-side evidence indexing and retrieval",
+    "Qdrant-backed RAG when configured",
+    "governed learning memory when configured",
+    "advisory-only Compass/CrewAI specialist outputs when configured",
+    "deterministic final decision ownership",
+    "hash-chained local audit JSONL",
+    "executive review pack PDF export"
+  ],
+  "human_approval_required": true,
+  "sample_mode_supported": false,
+  "notes": [
+    "The deterministic compliance engine remains final decision owner.",
+    "Live LLM and CrewAI outputs are advisory and never auto-approve.",
+    "RBAC enforcement is intentionally deferred; public demo mode uses audit-mode auth."
+  ]
+}

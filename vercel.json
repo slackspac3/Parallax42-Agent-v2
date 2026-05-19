@@ -1,4 +1,18 @@
 {
+  "rewrites": [
+    {
+      "source": "/run",
+      "destination": "/api/run"
+    },
+    {
+      "source": "/health",
+      "destination": "/api/health"
+    },
+    {
+      "source": "/metadata",
+      "destination": "/api/metadata"
+    }
+  ],
   "functions": {
     "api/backend.js": {
       "maxDuration": 120

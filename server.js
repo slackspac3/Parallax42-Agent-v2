@@ -14,6 +14,7 @@ const { gatewayHealth } = require('./lib/compassGatewayClient');
 const { getReadinessInventory } = require('./lib/complianceAgent');
 const { casePayloadFromDraft, processConversation } = require('./lib/conversationAgent');
 const { evidenceVectorStoreHealth, indexEvidenceServerSide, runQdrantSmokeTest, searchEvidenceServerSide } = require('./lib/evidenceVectorStore');
+const { buildEvaluatorError, buildEvaluatorResponse, normalizeEvaluatorInput } = require('./lib/evaluatorRun');
 const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
 const { readJsonBody, writeJson } = require('./lib/http');
 const { findSimilarCases, getControlSuggestions, learningMemoryHealth, recordReviewerFeedback } = require('./lib/learningMemory');
@@ -23,6 +24,7 @@ const { enrichConversationWithServerRetrieval } = require('./lib/serverSideRetri
 
 const PORT = Number(process.env.PORT || 3020);
 const PUBLIC_ROOT = path.join(__dirname, 'public');
+const METADATA_PATH = path.join(__dirname, 'metadata.json');
 
 function contentType(filePath) {
   if (filePath.endsWith('.html')) return 'text/html; charset=utf-8';
@@ -56,7 +58,7 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || '127.0.0.1'}`);
 
   try {
-    if (req.method === 'GET' && url.pathname === '/api/health') {
+    if (req.method === 'GET' && (url.pathname === '/api/health' || url.pathname === '/health')) {
       writeJson(res, 200, {
         ok: true,
         service: 'parallax42-compliance-intelligence-agent',
@@ -73,6 +75,60 @@ const server = http.createServer(async (req, res) => {
         learningMemory: learningMemoryHealth(),
         linkedBackend: process.env.PARALLAX42_BACKEND_URL || 'https://api.parallax42.bhavukarora.com'
       });
+      return;
+    }
+
+    if (req.method === 'GET' && (url.pathname === '/metadata' || url.pathname === '/metadata.json' || url.pathname === '/api/metadata')) {
+      try {
+        writeJson(res, 200, JSON.parse(fs.readFileSync(METADATA_PATH, 'utf8')));
+      } catch (error) {
+        writeJson(res, 500, {
+          error: 'metadata_unavailable',
+          detail: error instanceof Error ? error.message : String(error || 'Unknown metadata error')
+        });
+      }
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/run') {
+      const startedAt = Date.now();
+      let normalized = {};
+      try {
+        const body = await readJsonBody(req, { limitBytes: 5_000_000 });
+        normalized = normalizeEvaluatorInput(body);
+        const auth = await authorizeRequest(req, 'agent:run');
+        if (!auth.ok) {
+          writeJson(res, auth.statusCode, auth.body);
+          return;
+        }
+        const enrichedBody = await enrichConversationWithServerRetrieval({
+          ...body,
+          caseDraft: normalized.caseDraft,
+          forceRun: true,
+          message: body.message || body.prompt || body.input?.query || normalized.caseDraft.brief || 'run it'
+        });
+        const result = await runAgentWithRuntimeAsync(enrichedBody.caseDraft || normalized.caseDraft, {
+          runtime: req.headers['x-agent-runtime'] || normalized.runtime
+        });
+        appendAuditRecord({
+          actor: auth.actor,
+          caseId: result.case?.caseId || normalized.caseDraft.caseId,
+          status: result.ok ? 'completed' : 'blocked',
+          summary: result.ok ? result.decision.recommendation : result.message,
+          payload: {
+            route: 'standard_run',
+            useCaseId: normalized.useCaseId,
+            decision: result.decision,
+            evidenceIds: result.evidenceIds,
+            gapCount: result.gaps?.length || 0,
+            traceEventCount: result.trace?.length || 0,
+            runtime: result.runtime
+          }
+        });
+        writeJson(res, result.ok ? 200 : 400, buildEvaluatorResponse({ normalized, result, startedAt }));
+      } catch (error) {
+        writeJson(res, 500, buildEvaluatorError({ normalized, error, startedAt }));
+      }
       return;
     }
 
@@ -408,6 +464,6 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, '127.0.0.1', () => {
-  process.stdout.write(`Compliance Intelligence Agent listening on http://127.0.0.1:${PORT}\n`);
+server.listen(PORT, '0.0.0.0', () => {
+  process.stdout.write(`Compliance Intelligence Agent listening on http://0.0.0.0:${PORT}\n`);
 });

@@ -5,7 +5,10 @@ __pycache__/
 .env
 .env.*
 !.env.example
-logs/
+!logs/
+logs/*
+!logs/*.sample.jsonl
+!logs/README.md
 audits/
 coverage/
 test-results/

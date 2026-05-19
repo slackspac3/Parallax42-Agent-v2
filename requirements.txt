@@ -1,0 +1,8 @@
+# Mandatory Python dependencies for `python run.py`: none.
+#
+# The submitted implementation is a Node/CommonJS agent runtime. `run.py` is a
+# compatibility wrapper that launches `node server.js` on port 8000 for
+# evaluator tooling.
+#
+# Optional live CrewAI validation dependencies are listed in:
+# requirements-crewai.txt

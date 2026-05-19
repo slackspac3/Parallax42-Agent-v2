@@ -8,6 +8,7 @@ const {
   LLM_MODEL,
   gatewayHealth,
   indexEvidence,
+  isDirectOpenAICompatibleBase,
   searchEvidence
 } = require('../../lib/compassGatewayClient');
 
@@ -105,6 +106,50 @@ test('evidence search forwards query and chunk vectors through the gateway', asy
       });
 
       assert.equal(result.matches[0].score, 0.92);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('direct Compass OpenAI-compatible aliases support embedding without gateway relay', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      COMPASS_GATEWAY_BASE_URL: '',
+      COMPASS_GATEWAY_URL: '',
+      COMPASS_GATEWAY_TOKEN: '',
+      PARALLAX42_GATEWAY_TOKEN: '',
+      OPENAI_BASE_URL: 'https://compass.core42.ai/v1',
+      OPENAI_API_KEY: 'direct-compass-token',
+      EMBEDDINGS_MODEL: 'text-embedding-3-large'
+    }, async () => {
+      assert.equal(isDirectOpenAICompatibleBase(), true);
+      assert.equal(gatewayHealth().directOpenAiCompatible, true);
+
+      global.fetch = async (url, options) => {
+        const body = JSON.parse(options.body);
+        assert.equal(url, 'https://compass.core42.ai/v1/embeddings');
+        assert.equal(options.headers.authorization, 'Bearer direct-compass-token');
+        assert.equal(body.model, 'text-embedding-3-large');
+        assert.deepEqual(body.input, ['Export controls and signed DPA evidence.']);
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            model: 'text-embedding-3-large',
+            data: [{ embedding: [0.2, 0.4, 0.6] }]
+          })
+        };
+      };
+
+      const result = await indexEvidence({
+        documents: [{ evidenceId: 'DOC-1', text: 'Export controls and signed DPA evidence.' }]
+      });
+
+      assert.equal(result.ok, true);
+      assert.equal(result.model, 'text-embedding-3-large');
+      assert.deepEqual(result.chunks[0].embedding, [0.2, 0.4, 0.6]);
     });
   } finally {
     global.fetch = originalFetch;
