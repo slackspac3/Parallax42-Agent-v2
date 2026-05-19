@@ -82,6 +82,10 @@ test('conversation LLM assessor merges strict Compass JSON into the case draft',
                 message: {
                   content: JSON.stringify({
                     intent: 'owner_answer',
+                    requestType: 'payroll_outsourcing',
+                    reviewTarget: 'payroll outsourcing vendor',
+                    reviewScope: 'third-party payroll processing',
+                    recommendedFirstAction: 'ask_geography',
                     confidence: 0.92,
                     reason: 'The terse response answers the previous owner question.',
                     nextBestQuestion: 'Which geography applies?',
@@ -109,11 +113,15 @@ test('conversation LLM assessor merges strict Compass JSON into the case draft',
 
       assert.equal(assessed.llmAssessment.used, true);
       assert.equal(assessed.llmAssessment.intent, 'owner_answer');
+      assert.equal(assessed.llmAssessment.requestType, 'payroll_outsourcing');
+      assert.equal(assessed.llmAssessment.reviewTarget, 'payroll outsourcing vendor');
+      assert.equal(assessed.llmAssessment.recommendedFirstAction, 'ask_geography');
       assert.equal(assessed.caseDraft.businessUnit, 'HR');
       assert.ok(assessed.caseDraft.integrations.includes('Payroll/HRIS'));
       assert.ok(assessed.caseDraft.riskSignals.includes('personal data'));
       assert.ok(assessed.caseDraft.riskSignals.includes('outsourced service'));
       assert.equal(assessed.caseDraft.llmIntake.advisoryOnly, true);
+      assert.equal(assessed.caseDraft.llmIntake.requestType, 'payroll_outsourcing');
     });
   } finally {
     global.fetch = originalFetch;
@@ -133,6 +141,9 @@ test('conversation result exposes Compass assessment as advisory intake metadata
       used: true,
       advisoryOnly: true,
       intent: 'owner_answer',
+      requestType: 'payroll_outsourcing',
+      reviewTarget: 'payroll outsourcing vendor',
+      recommendedFirstAction: 'ask_geography',
       confidence: 0.9,
       reason: 'Terse owner answer.'
     }
@@ -140,5 +151,64 @@ test('conversation result exposes Compass assessment as advisory intake metadata
 
   assert.equal(result.nlp.llmAssessment.used, true);
   assert.equal(result.nlp.llmAssessment.advisoryOnly, true);
+  assert.equal(result.nlp.llmAssessment.requestType, 'payroll_outsourcing');
   assert.ok(result.actions.some((action) => action.id === 'llm_intake_assessment' && action.status === 'complete'));
+});
+
+test('conversation LLM assessor classifies document and clause review requests', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1'
+    }, async () => {
+      global.fetch = async (url, options) => {
+        const body = JSON.parse(options.body);
+        assert.equal(url, 'https://gateway.example/api/chat/completions');
+        assert.match(body.messages[1].content, /requestType/);
+        assert.match(body.messages[1].content, /recommendedFirstAction/);
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            model: 'gpt-5.1',
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    intent: 'case_context',
+                    requestType: 'clause_review',
+                    reviewTarget: 'termination clauses',
+                    reviewScope: 'termination for convenience and liability cap',
+                    recommendedFirstAction: 'paste_clause',
+                    confidence: 0.94,
+                    reason: 'The user asked for specific clauses to be reviewed.',
+                    nextBestQuestion: 'Please paste the clauses or upload the source agreement.',
+                    caseUpdate: {
+                      riskSignals: ['contractual risk']
+                    }
+                  })
+                }
+              }
+            ]
+          })
+        };
+      };
+
+      const assessed = await assessConversationWithLlm({
+        message: 'Can you review these termination clauses?'
+      });
+
+      assert.equal(assessed.llmAssessment.used, true);
+      assert.equal(assessed.llmAssessment.requestType, 'clause_review');
+      assert.equal(assessed.llmAssessment.reviewTarget, 'termination clauses');
+      assert.equal(assessed.llmAssessment.recommendedFirstAction, 'paste_clause');
+      assert.equal(assessed.caseDraft.llmIntake.requestType, 'clause_review');
+      assert.equal(assessed.caseDraft.llmIntake.reviewScope, 'termination for convenience and liability cap');
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
 });
