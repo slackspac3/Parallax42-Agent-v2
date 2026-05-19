@@ -1716,10 +1716,44 @@ function assistantFactsForMessage() {
   return facts.slice(0, 6);
 }
 
+function activeConversationProfile() {
+  return lastRuns.chat?.nlp?.requestProfile
+    || chatCaseDraft?.llmIntake
+    || chatCaseDraft?.intakeAssessment
+    || {};
+}
+
+function isDocumentReviewProfile(profile = activeConversationProfile()) {
+  return /document_review|contract_review|msa_review|dpa_review|clause_review|policy_review/i.test(profile.requestType || '')
+    || /(agreement|contract|msa|dpa|clause|policy|document)/i.test(profile.reviewTarget || '');
+}
+
+function hasChatEvidenceSource() {
+  return Boolean(
+    chatCaseDraft?.documents?.length
+    || chatCaseDraft?.evidenceSignals?.length
+    || chatCaseDraft?.indexedEvidence?.chunkCount
+    || evidenceIndexMeta?.chunkCount
+    || uploadedEvidence.length
+  );
+}
+
+function documentSourcePrompt() {
+  const profile = activeConversationProfile();
+  if (/clause/i.test(profile.requestType || profile.reviewTarget || profile.reviewScope || '')) {
+    return 'Can you paste the clauses here or upload the source document?';
+  }
+  const target = profile.reviewTarget || 'agreement';
+  return `Can you upload the ${target}, or paste the sections you want reviewed?`;
+}
+
 function assistantRawSummary(text = '') {
   const clean = cleanEvidenceText(text);
   if (!clean) return 'I am updating the case draft.';
   if (/could not|failed|error/i.test(clean)) return clean;
+  if (/I understand this as|I’m treating this as|I'm treating this as/i.test(clean)) {
+    return clean.split(/\n\n/)[0].trim().slice(0, 260);
+  }
   if (/what i understood|so far i have|next questions?|missing/i.test(clean)) {
     return 'I captured the useful facts and identified the next decision point.';
   }
@@ -1735,6 +1769,7 @@ function assistantQuestionFromText(text = '') {
   const fallbackQuestion = () => {
     const missing = missingProofItems();
     if (missing.length) {
+      if (isDocumentReviewProfile() && !hasChatEvidenceSource()) return documentSourcePrompt();
       const first = missing[0].toLowerCase();
       if (/owner|accountable/i.test(first)) return 'Who is the accountable business owner for this case?';
       if (/geography/i.test(first)) return 'Which geography or regulatory perimeter should I apply?';
@@ -1762,6 +1797,10 @@ function assistantQuestionFromText(text = '') {
 function assistantAcknowledgement(text = '') {
   if (/could not|failed|error/i.test(text)) return 'I hit a processing issue, but the case state is still safe.';
   if (lastRuns.chat?.ok) return 'Council run complete. I kept the decision review-bound.';
+  const clean = cleanEvidenceText(text);
+  if (/I understand this as|I’m treating this as|I'm treating this as/i.test(clean)) {
+    return clean.split(/\n\n/)[0].replace(/^Got it\s*[—-]\s*/i, '').trim().slice(0, 160);
+  }
   if (chatRunReadiness?.runnable) return 'I have enough context to prepare the decision room.';
   if (indexedChunkCount()) return 'I added the evidence to the case.';
   if (hasChatContext()) return 'Got it. I’m building the case.';

@@ -320,6 +320,7 @@ test('conversation asks to upload a generic agreement before demanding owner met
   assert.ok(result.questions.some((question) => /upload the agreement|analyze it first/i.test(question)));
   assert.ok(!result.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
   assert.match(result.reply, /agreement review|analyze the agreement first/i);
+  assert.equal(result.nlp.requestProfile.conversationStage, 'awaiting_document');
 });
 
 test('conversation classifies MSA review and asks for source upload before metadata', () => {
@@ -361,7 +362,9 @@ test('conversation uses Compass request type to plan clause review intake', () =
         requestType: 'clause_review',
         reviewTarget: 'termination clauses',
         reviewScope: 'contract termination rights',
-        recommendedFirstAction: 'paste_clause'
+        recommendedFirstAction: 'paste_clause',
+        conversationStage: 'awaiting_document',
+        assistantSummary: 'This is a clause review and I need the clauses first.'
       }
     },
     llmAssessment: {
@@ -372,16 +375,19 @@ test('conversation uses Compass request type to plan clause review intake', () =
       intent: 'case_context',
       requestType: 'clause_review',
       reviewTarget: 'termination clauses',
-      reviewScope: 'contract termination rights',
-      recommendedFirstAction: 'paste_clause',
-      confidence: 0.88,
-      reason: 'The user wants specific clauses reviewed.'
-    }
+        reviewScope: 'contract termination rights',
+        recommendedFirstAction: 'paste_clause',
+        conversationStage: 'awaiting_document',
+        assistantSummary: 'This is a clause review and I need the clauses first.',
+        confidence: 0.88,
+        reason: 'The user wants specific clauses reviewed.'
+      }
   }, { runtime: 'deterministic' });
 
   assert.equal(result.ok, true);
   assert.equal(result.nlp.requestProfile.source, 'compass');
   assert.equal(result.nlp.requestProfile.requestType, 'clause_review');
+  assert.equal(result.nlp.requestProfile.conversationStage, 'awaiting_document');
   assert.equal(result.nlp.llmAssessment.requestType, 'clause_review');
   assert.ok(result.questions.some((question) => /paste the clauses|upload the source document/i.test(question)));
 });
@@ -397,7 +403,7 @@ test('conversation does not force document upload for plain vendor onboarding wi
   assert.ok(result.questions.some((question) => /payroll outsourcing risk internally|HR\/People|Finance\/Payroll/i.test(question)));
 });
 
-test('conversation advances through repeated unknown answers without looping on business owner', () => {
+test('conversation keeps document reviews focused on source upload through repeated unknown answers', () => {
   const first = processConversation({
     message: 'I want to review an agreement'
   }, { runtime: 'deterministic' });
@@ -410,8 +416,9 @@ test('conversation advances through repeated unknown answers without looping on 
   }, { runtime: 'deterministic' });
 
   assert.ok(second.caseDraft.knownGaps.includes('evidence'));
-  assert.ok(!second.questions.some((question) => /upload the agreement|evidence available|contract terms/i.test(question)));
-  assert.ok(second.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
+  assert.ok(second.questions.some((question) => /upload the agreement|paste the relevant sections/i.test(question)));
+  assert.ok(!second.questions.some((question) => /accountable business unit|workflow owner|business owner/i.test(question)));
+  assert.match(second.reply, /agreement review|Upload the agreement|source material/i);
 
   const third = processConversation({
     message: 'dont know',
@@ -419,9 +426,9 @@ test('conversation advances through repeated unknown answers without looping on 
   }, { runtime: 'deterministic' });
 
   assert.ok(third.caseDraft.knownGaps.includes('evidence'));
-  assert.ok(third.caseDraft.knownGaps.includes('business_owner'));
-  assert.ok(!third.questions.some((question) => /upload the agreement|accountable business unit|workflow owner|business owner/i.test(question)));
-  assert.ok(third.questions.some((question) => /geography|regulatory perimeter/i.test(question)));
+  assert.ok(!third.caseDraft.knownGaps.includes('business_owner'));
+  assert.ok(third.questions.some((question) => /upload the agreement|paste the relevant sections/i.test(question)));
+  assert.ok(!third.questions.some((question) => /accountable business unit|workflow owner|business owner|geography|regulatory perimeter/i.test(question)));
 
   const fourth = processConversation({
     message: 'dont know',
@@ -429,10 +436,9 @@ test('conversation advances through repeated unknown answers without looping on 
   }, { runtime: 'deterministic' });
 
   assert.ok(fourth.caseDraft.knownGaps.includes('evidence'));
-  assert.ok(fourth.caseDraft.knownGaps.includes('business_owner'));
-  assert.ok(fourth.caseDraft.knownGaps.includes('geography'));
-  assert.deepEqual(fourth.questions, []);
-  assert.match(fourth.reply, /known gap|run it/i);
+  assert.ok(!fourth.caseDraft.knownGaps.includes('business_owner'));
+  assert.ok(!fourth.caseDraft.knownGaps.includes('geography'));
+  assert.ok(fourth.questions.some((question) => /upload the agreement|paste the relevant sections/i.test(question)));
 });
 
 test('conversation normalizes AI-provided known-gap labels before planning questions', () => {

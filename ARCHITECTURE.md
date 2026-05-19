@@ -40,14 +40,15 @@ The browser should not be treated as a trusted evidence or vector store. The int
 ```text
 Browser sends case/evidence metadata
   -> API indexes sanitized evidence chunks
+  -> optional sanitized governance-reference corpus is indexed separately
   -> Compass gateway may create embeddings when configured
   -> local vector store persists by default
   -> Qdrant REST can be used when configured
   -> API returns evidence IDs and sanitized metadata
-  -> council retrieves evidence server-side by case ID
+  -> council retrieves evidence, governance references, and learning memory server-side
 ```
 
-The default vector provider is local-file storage for demo and development. Qdrant REST is optional when `P42_VECTOR_STORE_PROVIDER=qdrant` and the required Qdrant environment variables are configured. Local OCR/document parsing is not implemented in this repository; any production document extraction boundary should be added as a server-side service before storing retrievable chunks.
+The default vector provider is local-file storage for demo and development. Qdrant REST is optional when `P42_VECTOR_STORE_PROVIDER=qdrant` and the required Qdrant environment variables are configured. Governance references are stored as `governance_reference` chunks with sanitized public-test classification and are advisory context, not official policy. Local OCR/document parsing is not implemented in this repository; any production document extraction boundary should be added as a server-side service before storing retrievable chunks.
 
 ## Audit And Security Model
 

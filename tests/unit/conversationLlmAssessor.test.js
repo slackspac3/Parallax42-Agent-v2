@@ -86,6 +86,8 @@ test('conversation LLM assessor merges strict Compass JSON into the case draft',
                     reviewTarget: 'payroll outsourcing vendor',
                     reviewScope: 'third-party payroll processing',
                     recommendedFirstAction: 'ask_geography',
+                    conversationStage: 'asking_clarification',
+                    assistantSummary: 'HR owns the payroll outsourcing review.',
                     confidence: 0.92,
                     reason: 'The terse response answers the previous owner question.',
                     nextBestQuestion: 'Which geography applies?',
@@ -116,12 +118,15 @@ test('conversation LLM assessor merges strict Compass JSON into the case draft',
       assert.equal(assessed.llmAssessment.requestType, 'payroll_outsourcing');
       assert.equal(assessed.llmAssessment.reviewTarget, 'payroll outsourcing vendor');
       assert.equal(assessed.llmAssessment.recommendedFirstAction, 'ask_geography');
+      assert.equal(assessed.llmAssessment.conversationStage, 'asking_clarification');
+      assert.equal(assessed.llmAssessment.assistantSummary, 'HR owns the payroll outsourcing review.');
       assert.equal(assessed.caseDraft.businessUnit, 'HR');
       assert.ok(assessed.caseDraft.integrations.includes('Payroll/HRIS'));
       assert.ok(assessed.caseDraft.riskSignals.includes('personal data'));
       assert.ok(assessed.caseDraft.riskSignals.includes('outsourced service'));
       assert.equal(assessed.caseDraft.llmIntake.advisoryOnly, true);
       assert.equal(assessed.caseDraft.llmIntake.requestType, 'payroll_outsourcing');
+      assert.equal(assessed.caseDraft.llmIntake.conversationStage, 'asking_clarification');
     });
   } finally {
     global.fetch = originalFetch;
@@ -144,6 +149,8 @@ test('conversation result exposes Compass assessment as advisory intake metadata
       requestType: 'payroll_outsourcing',
       reviewTarget: 'payroll outsourcing vendor',
       recommendedFirstAction: 'ask_geography',
+      conversationStage: 'asking_clarification',
+      assistantSummary: 'HR owns the payroll outsourcing review.',
       confidence: 0.9,
       reason: 'Terse owner answer.'
     }
@@ -152,6 +159,7 @@ test('conversation result exposes Compass assessment as advisory intake metadata
   assert.equal(result.nlp.llmAssessment.used, true);
   assert.equal(result.nlp.llmAssessment.advisoryOnly, true);
   assert.equal(result.nlp.llmAssessment.requestType, 'payroll_outsourcing');
+  assert.equal(result.nlp.llmAssessment.conversationStage, 'asking_clarification');
   assert.ok(result.actions.some((action) => action.id === 'llm_intake_assessment' && action.status === 'complete'));
 });
 
@@ -183,6 +191,8 @@ test('conversation LLM assessor classifies document and clause review requests',
                     reviewTarget: 'termination clauses',
                     reviewScope: 'termination for convenience and liability cap',
                     recommendedFirstAction: 'paste_clause',
+                    conversationStage: 'awaiting_document',
+                    assistantSummary: 'This is a clause review; I need the clauses before metadata.',
                     confidence: 0.94,
                     reason: 'The user asked for specific clauses to be reviewed.',
                     nextBestQuestion: 'Please paste the clauses or upload the source agreement.',
@@ -205,8 +215,10 @@ test('conversation LLM assessor classifies document and clause review requests',
       assert.equal(assessed.llmAssessment.requestType, 'clause_review');
       assert.equal(assessed.llmAssessment.reviewTarget, 'termination clauses');
       assert.equal(assessed.llmAssessment.recommendedFirstAction, 'paste_clause');
+      assert.equal(assessed.llmAssessment.conversationStage, 'awaiting_document');
       assert.equal(assessed.caseDraft.llmIntake.requestType, 'clause_review');
       assert.equal(assessed.caseDraft.llmIntake.reviewScope, 'termination for convenience and liability cap');
+      assert.equal(assessed.caseDraft.llmIntake.assistantSummary, 'This is a clause review; I need the clauses before metadata.');
     });
   } finally {
     global.fetch = originalFetch;

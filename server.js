@@ -17,6 +17,7 @@ const { assessConversationWithLlm } = require('./lib/conversationLlmAssessor');
 const { evidenceVectorStoreHealth, indexEvidenceServerSide, runQdrantSmokeTest, searchEvidenceServerSide } = require('./lib/evidenceVectorStore');
 const { buildEvaluatorError, buildEvaluatorResponse, normalizeEvaluatorInput } = require('./lib/evaluatorRun');
 const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
+const { governanceReferenceHealth, indexGovernanceReference, searchGovernanceReferences } = require('./lib/governanceReferenceStore');
 const { readJsonBody, writeJson } = require('./lib/http');
 const { findSimilarCases, getControlSuggestions, learningMemoryHealth, recordReviewerFeedback } = require('./lib/learningMemory');
 const { authHealth, authorizeRequest } = require('./lib/rbac');
@@ -73,6 +74,7 @@ const server = http.createServer(async (req, res) => {
         },
         evidenceGateway: gatewayHealth(),
         evidenceVectorStore: evidenceVectorStoreHealth(),
+        governanceReference: governanceReferenceHealth(),
         learningMemory: learningMemoryHealth(),
         linkedBackend: process.env.PARALLAX42_BACKEND_URL || 'https://api.parallax42.bhavukarora.com'
       });
@@ -381,6 +383,59 @@ const server = http.createServer(async (req, res) => {
           index: result.index,
           queryLength: String(body.query || '').length,
           matchIds: (result.matches || []).map((match) => match.chunkId).filter(Boolean)
+        }
+      });
+      writeJson(res, 200, result);
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/reference/index') {
+      const auth = await authorizeRequest(req, 'agent:run');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
+      const body = await readJsonBody(req, { limitBytes: 5_000_000 });
+      const result = await indexGovernanceReference(body);
+      appendAuditRecord({
+        actor: auth.actor,
+        caseId: body.caseId || result.context?.sourceId || 'governance-reference-index',
+        status: 'governance_reference_indexed',
+        summary: `Indexed ${result.chunking?.chunkCount || 0} governance reference chunks.`,
+        payload: {
+          route: 'reference.index',
+          model: result.model,
+          context: result.context,
+          chunking: result.chunking,
+          index: result.index,
+          advisoryOnly: true,
+          authority: result.context?.authority || 'context_reference_not_policy'
+        }
+      });
+      writeJson(res, 200, result);
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/reference/search') {
+      const auth = await authorizeRequest(req, 'agent:run');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
+      const body = await readJsonBody(req, { limitBytes: 1_000_000 });
+      const result = await searchGovernanceReferences(body);
+      appendAuditRecord({
+        actor: auth.actor,
+        caseId: body.caseId || body.sourceId || 'governance-reference-search',
+        status: 'governance_reference_searched',
+        summary: `Searched governance reference memory for ${result.references?.length || 0} matches.`,
+        payload: {
+          route: 'reference.search',
+          model: result.model,
+          context: result.context,
+          index: result.index,
+          queryLength: String(body.query || '').length,
+          referenceIds: (result.references || []).map((reference) => reference.referenceId).filter(Boolean)
         }
       });
       writeJson(res, 200, result);

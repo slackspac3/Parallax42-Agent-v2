@@ -40,6 +40,16 @@ npm run qdrant:smoke
 
 The smoke test indexes a tiny synthetic compliance evidence text, searches it, verifies at least one match, and reports provider, collection, indexed chunk count, and match count. If Qdrant is not configured, it reports a skipped result instead of pretending full RAG is active.
 
+## Governance Reference Index
+
+Seed the sanitized governance-reference corpus after configuring the embedding boundary:
+
+```bash
+npm run reference:index
+```
+
+This indexes `reference_context/sanitised_enterprise_ai_governance_context.md` as advisory `governance_reference` chunks. It is separate from case evidence and governed learning memory, and search responses return safe snippets/citations only.
+
 ## CrewAI Dry-Run Checks
 
 Run the CrewAI validation path:

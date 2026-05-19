@@ -162,6 +162,7 @@ COMPASS_GATEWAY_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
 COMPASS_GATEWAY_TOKEN=<server-side gateway token>
 EMBEDDINGS_MODEL=text-embedding-3-large
 P42_REQUIRE_DURABLE_STORAGE=0
+P42_REFERENCE_CONTEXT_DIR=
 P42_VECTOR_STORE_PROVIDER=qdrant
 # Full RAG requires these Qdrant values. Without them the runtime falls back to local-file demo storage.
 # QDRANT_URL=https://<cluster>.cloud.qdrant.io
@@ -190,6 +191,7 @@ P42_VECTOR_STORE_PROVIDER=qdrant
 QDRANT_URL=https://<cluster>.cloud.qdrant.io
 QDRANT_API_KEY=<server-side qdrant key>
 QDRANT_COLLECTION=p42_compliance_evidence
+P42_REFERENCE_CONTEXT_DIR=
 AGENT_RUNTIME=crewai_llm
 CREWAI_ENABLE_LIVE_LLM=1
 CREWAI_LLM_MODEL=gpt-5.1
@@ -204,7 +206,10 @@ After configuring Qdrant and the Compass gateway, run:
 
 ```bash
 npm run qdrant:smoke
+npm run reference:index
 ```
+
+`npm run reference:index` seeds `reference_context/sanitised_enterprise_ai_governance_context.md` as sanitized governance-reference memory. It is advisory context only: it helps chat and retrieval reason about governance, assurance, SAA, ISO, Responsible AI, and risk language, but it is not official policy and never overrides the deterministic council or human review boundary.
 
 ## CrewAI
 
