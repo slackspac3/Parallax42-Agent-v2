@@ -5538,3 +5538,348 @@ pre {
     font-size: 13px;
   }
 }
+
+/* ============================================================
+   DESKTOP CHAT UX TIGHTENING
+   Keeps the Stitch-style shell, but makes Advisor behave like a
+   SaaS intake workbench instead of a large command form.
+   ============================================================ */
+@media (min-width: 1181px) {
+  body[data-workspace-view="chat"] .case-panel {
+    padding-top: 34px;
+  }
+
+  body[data-workspace-view="chat"] .pane-header {
+    max-width: 700px;
+    padding-bottom: 12px;
+  }
+
+  body[data-workspace-view="chat"] .pane-header strong {
+    font-size: 31px;
+  }
+
+  body[data-workspace-view="chat"] .mode-note {
+    max-width: 700px;
+    margin-top: -8px;
+    padding-bottom: 12px;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  body[data-workspace-view="chat"] .chat-main-column {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "suggestions"
+      "messages"
+      "composer";
+    gap: 12px;
+  }
+
+  body[data-workspace-view="chat"] .chat-suggestions {
+    gap: 10px;
+  }
+
+  body[data-workspace-view="chat"] .chat-suggestions button {
+    min-height: 58px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  body[data-workspace-view="chat"] .chat-messages {
+    gap: 12px;
+    padding: 4px 8px 8px;
+  }
+
+  body[data-workspace-view="chat"] .chat-message {
+    max-width: min(560px, 72%);
+  }
+
+  body[data-workspace-view="chat"] .chat-message .message-body > p,
+  body[data-workspace-view="chat"] .advisor-response-card,
+  body[data-workspace-view="chat"] .thinking-loader {
+    padding: 12px 14px;
+    border-radius: 16px;
+    border-color: rgba(207, 232, 222, 0.1);
+    background: rgba(20, 43, 36, 0.58);
+    box-shadow: none;
+  }
+
+  body[data-workspace-view="chat"] .chat-message.is-user .message-body > p {
+    background: rgba(34, 227, 180, 0.13);
+    border-color: rgba(34, 227, 180, 0.22);
+  }
+
+  body[data-workspace-view="chat"] .advisor-response-card {
+    gap: 9px;
+  }
+
+  body[data-workspace-view="chat"] .advisor-response-head strong,
+  body[data-workspace-view="chat"] .advisor-next-question strong {
+    font-size: 14px;
+    line-height: 1.34;
+  }
+
+  body[data-workspace-view="chat"] .advisor-response-head p,
+  body[data-workspace-view="chat"] .advisor-next-question p {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.42;
+  }
+
+  body[data-workspace-view="chat"] .advisor-next-question {
+    padding: 10px 12px;
+    border-radius: 14px;
+    border-color: rgba(251, 191, 36, 0.16);
+    background: rgba(251, 191, 36, 0.035);
+  }
+
+  body[data-workspace-view="chat"] .advisor-next-question .eyebrow {
+    font-size: 10px;
+  }
+
+  body[data-workspace-view="chat"] .context-strength {
+    display: none !important;
+  }
+
+  body[data-workspace-view="chat"] .chat-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "message actions"
+      "evidence evidence"
+      "status status"
+      "attachments attachments";
+    gap: 8px 12px;
+    padding: 12px;
+    border-radius: 18px;
+    background: rgba(18, 40, 34, 0.72);
+  }
+
+  body[data-workspace-view="chat"] .chat-form textarea {
+    min-height: 52px;
+    max-height: 72px;
+    margin-top: 4px;
+    padding: 12px 14px;
+    border-radius: 13px;
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  body[data-workspace-view="chat"] .chat-evidence-picker {
+    min-height: 34px;
+    border-radius: 12px;
+  }
+
+  body[data-workspace-view="chat"] .form-actions {
+    align-self: end;
+  }
+
+  body[data-workspace-view="chat"] .form-actions .primary-action,
+  body[data-workspace-view="chat"] .form-actions .hero-run-button {
+    min-height: 44px;
+    border-radius: 14px;
+    padding: 0 18px;
+  }
+
+  body[data-workspace-view="chat"] .form-actions .hero-run-button {
+    min-width: 134px;
+  }
+
+  body[data-workspace-view="chat"] .attachment-status,
+  body[data-workspace-view="chat"] .chat-attachment-list {
+    font-size: 12px;
+  }
+
+  .decision-rail .intel-live-preview {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    margin: 8px 0 0;
+    padding: 0 9px;
+    border: 1px solid rgba(96, 165, 250, 0.24);
+    border-radius: 999px;
+    background: rgba(96, 165, 250, 0.08);
+    color: #9fd0ff;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  .decision-rail .executive-intel-list {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin: 12px 0;
+  }
+
+  .decision-rail .executive-intel-list article,
+  .decision-rail .risk-domain-block,
+  .decision-rail .missing-proof-block,
+  .decision-rail .next-action,
+  .decision-rail .human-boundary-card,
+  .decision-rail .intel-advanced {
+    border-radius: 12px;
+  }
+
+  .decision-rail .executive-intel-list article {
+    min-height: 54px;
+    padding: 10px 12px;
+  }
+
+  .decision-rail .executive-intel-list article:first-child {
+    grid-column: auto;
+  }
+
+  .decision-rail .executive-intel-list span {
+    font-size: 10px;
+  }
+
+  .decision-rail .executive-intel-list strong {
+    font-size: 14px;
+  }
+
+  .decision-rail .missing-proof-block,
+  .decision-rail .next-action {
+    padding: 11px 12px;
+  }
+
+  .decision-rail .risk-domain-block {
+    margin-top: 8px;
+  }
+
+  .decision-rail .intel-detail-pack {
+    padding: 0;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .decision-rail .intel-detail-pack summary {
+    min-height: 42px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: pointer;
+    color: rgba(234, 244, 255, 0.75);
+    font-size: 12px;
+    font-weight: 850;
+    list-style: none;
+  }
+
+  .decision-rail .intel-detail-pack summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .decision-rail .intel-detail-pack summary span {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(234, 244, 255, 0.56);
+  }
+
+  .decision-rail .intel-detail-pack summary b {
+    color: var(--accent);
+    font-size: 12px;
+  }
+
+  .decision-rail .intel-detail-pack[open] {
+    padding-bottom: 10px;
+  }
+
+  .decision-rail .intel-detail-pack[open] .intel-chips,
+  .decision-rail .intel-detail-pack[open] p,
+  .decision-rail .intel-detail-pack[open] strong,
+  .decision-rail .intel-detail-pack[open] .memory-status-grid {
+    margin: 0 12px;
+  }
+
+  .decision-rail .intel-chips {
+    max-height: none;
+    gap: 6px;
+  }
+
+  .decision-rail .intel-chips span {
+    max-width: 100%;
+  }
+
+  .decision-rail .human-boundary-card,
+  .decision-rail .intel-advanced {
+    display: block;
+  }
+
+  .decision-rail .human-boundary-card strong {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  .decision-rail .human-boundary-card p {
+    color: rgba(234, 244, 255, 0.58);
+    font-size: 12px;
+    line-height: 1.38;
+  }
+
+  .decision-rail .agent-activity {
+    padding-top: 10px;
+  }
+
+  .council-trace-details {
+    border: 1px solid rgba(207, 232, 222, 0.1);
+    border-radius: 14px;
+    background: rgba(216, 232, 224, 0.035);
+    overflow: hidden;
+  }
+
+  .council-trace-details > summary {
+    min-height: 52px;
+    padding: 0 12px;
+    display: grid;
+    align-content: center;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .council-trace-details > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .council-trace-details > summary span {
+    color: rgba(234, 244, 255, 0.52);
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+  }
+
+  .council-trace-details > summary strong {
+    margin-top: 3px;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  .council-trace-details .council-constellation {
+    padding: 0 12px 12px;
+  }
+
+  .decision-rail .agent-activity-header {
+    display: none;
+  }
+
+  .decision-rail .constellation-stage {
+    height: 176px;
+    min-height: 176px;
+  }
+
+  .decision-rail .council-focus-card {
+    margin-top: 10px;
+    padding: 11px;
+    border-radius: 12px;
+  }
+
+  .decision-rail .council-focus-card dl {
+    grid-template-columns: 1fr;
+  }
+}

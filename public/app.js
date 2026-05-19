@@ -1444,6 +1444,11 @@ function renderAgentActivity(items = defaultAgentActivity) {
   const completed = views.filter((item) => item.status === 'complete').length;
   const activeLabel = active?.status === 'active' ? active.label : 'Decision core';
   agentActivity.innerHTML = `
+    <details class="council-trace-details">
+      <summary>
+        <span>Executive council view</span>
+        <strong>${escapeHtml(activeLabel)} ${active?.status === 'active' ? 'is working' : 'is ready'}</strong>
+      </summary>
     <div class="council-constellation">
       <div class="agent-activity-header">
         <div>
@@ -1503,6 +1508,7 @@ function renderAgentActivity(items = defaultAgentActivity) {
         </dl>
       </div>
     </div>
+    </details>
   `;
 }
 
@@ -1603,6 +1609,93 @@ function memoryProviderLabel(draft = chatCaseDraft) {
   return draft.indexedEvidence?.provider || evidenceIndexMeta.provider || 'local-file fallback';
 }
 
+function addPreviewSignal(items = [], value = '') {
+  const signal = cleanEvidenceText(value);
+  if (!signal) return items;
+  return unique([...(Array.isArray(items) ? items : []), signal]);
+}
+
+function inferLiveInputDraft(baseDraft = chatCaseDraft, inputText = '') {
+  const text = cleanEvidenceText(inputText);
+  if (!text) return baseDraft;
+  const draft = {
+    ...(baseDraft || {}),
+    __previewOnly: true,
+    brief: cleanEvidenceText(baseDraft?.brief) || text
+  };
+  let riskSignals = Array.isArray(draft.riskSignals) ? [...draft.riskSignals] : [];
+  let evidenceSignals = Array.isArray(draft.evidenceSignals) ? [...draft.evidenceSignals] : [];
+  let integrations = Array.isArray(draft.integrations) ? [...draft.integrations] : [];
+
+  if (!cleanEvidenceText(draft.supplierName)) {
+    if (/(agreement|contract|msa|dpa|sow|clause|document)/i.test(text)) {
+      draft.supplierName = 'Document review request';
+    } else if (/(vendor|supplier|third[-\s]?party|outsourc)/i.test(text)) {
+      draft.supplierName = 'Third-party onboarding request';
+    } else {
+      draft.supplierName = 'Draft from current message';
+    }
+  }
+
+  if (!cleanEvidenceText(draft.businessUnit)) {
+    if (/\b(hr|people|payroll)\b/i.test(text)) draft.businessUnit = 'HR / Payroll';
+    else if (/\bfinance|treasury|payment|invoice|ledger\b/i.test(text)) draft.businessUnit = 'Finance';
+    else if (/\bprocurement|vendor|supplier|third[-\s]?party\b/i.test(text)) draft.businessUnit = 'Procurement / Third-Party Risk';
+    else if (/\bit|technology|security|platform|integration\b/i.test(text)) draft.businessUnit = 'IT / Security';
+  }
+
+  if (!cleanEvidenceText(draft.geography)) {
+    const geographies = [];
+    if (/\babu dhabi\b/i.test(text)) geographies.push('Abu Dhabi');
+    if (/\buae\b|emirates/i.test(text)) geographies.push('UAE');
+    if (/\bindia\b/i.test(text)) geographies.push('India');
+    if (/\bksa\b|saudi/i.test(text)) geographies.push('KSA');
+    if (/\beu\b|emea|gdpr|europe/i.test(text)) geographies.push('EU / EMEA');
+    if (/\bglobal\b|cross[-\s]?border/i.test(text)) geographies.push('Global / cross-border');
+    if (geographies.length) draft.geography = unique(geographies).join(' and ');
+  }
+
+  if (/\bpayroll|hris|employee|salary|compensation\b/i.test(text)) {
+    integrations = addPreviewSignal(integrations, 'Payroll / HRIS');
+    riskSignals = addPreviewSignal(riskSignals, 'employee personal data');
+    riskSignals = addPreviewSignal(riskSignals, 'outsourced critical process');
+  }
+  if (/\bpatient|healthcare|medical|clinical\b/i.test(text)) {
+    riskSignals = addPreviewSignal(riskSignals, 'sensitive health data');
+  }
+  if (/\bai|model|training|inference|llm|chip|accelerator\b/i.test(text)) {
+    riskSignals = addPreviewSignal(riskSignals, 'AI/model governance');
+  }
+  if (/\bexport|sanction|end[-\s]?use|import|customs\b/i.test(text)) {
+    riskSignals = addPreviewSignal(riskSignals, 'export controls and sanctions');
+  }
+  if (/\bcross[-\s]?border|transfer|offshore|india|eu|global\b/i.test(text)) {
+    riskSignals = addPreviewSignal(riskSignals, 'cross-border data transfer');
+  }
+  if (/\bworkday|oracle|sap|microsoft 365|m365|azure|servicenow|snowflake|erp\b/i.test(text)) {
+    integrations = addPreviewSignal(integrations, text.match(/\b(workday|oracle|sap|microsoft 365|m365|azure|servicenow|snowflake|erp)\b/i)?.[0] || 'enterprise platform');
+  }
+  if (/\bdpa\b|data processing agreement/i.test(text)) evidenceSignals = addPreviewSignal(evidenceSignals, 'DPA');
+  if (/\bsoc\s*2\b|soc2/i.test(text)) evidenceSignals = addPreviewSignal(evidenceSignals, 'SOC 2');
+  if (/\biso\s*27001\b/i.test(text)) evidenceSignals = addPreviewSignal(evidenceSignals, 'ISO 27001');
+  if (/\bbcp\b|business continuity|disaster recovery|dr\b/i.test(text)) evidenceSignals = addPreviewSignal(evidenceSignals, 'BCP/DR');
+  if (/\bcontract|agreement|msa|sow|clause|annex|addendum\b/i.test(text)) evidenceSignals = addPreviewSignal(evidenceSignals, 'contract document');
+
+  draft.riskSignals = riskSignals;
+  draft.evidenceSignals = evidenceSignals;
+  draft.integrations = integrations;
+  return draft;
+}
+
+function currentLivePreviewDraft() {
+  return inferLiveInputDraft(chatCaseDraft, chatInput?.value || '');
+}
+
+function updateLiveCasePreview() {
+  if (activeRunMode !== 'chat' || workspaceView !== 'chat') return;
+  renderCaseIntelligence(currentLivePreviewDraft(), lastRuns.chat);
+}
+
 function renderMissionWelcome() {
   if (!missionWelcome) return;
   const hasContext = hasChatContext() || chatMessages.length > 1 || lastRuns.chat?.ok;
@@ -1611,10 +1704,11 @@ function renderMissionWelcome() {
 
 function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
   if (!caseIntelReadiness || !caseIntelDetails) return;
+  const isPreview = Boolean(draft?.__previewOnly);
   const score = result?.ok
     ? Math.round(Number(result.decision?.readinessScore || 0) * 100)
-    : Number.isFinite(chatRunReadiness?.score) ? chatRunReadiness.score : contextStrength(draft);
-  if (!result?.ok && !hasChatContext() && !uploadedEvidence.length) {
+    : isPreview ? contextStrength(draft) : Number.isFinite(chatRunReadiness?.score) ? chatRunReadiness.score : contextStrength(draft);
+  if (!result?.ok && !isPreview && !hasChatContext() && !uploadedEvidence.length) {
     caseIntelReadiness.textContent = '0%';
     caseIntelDetails.innerHTML = `
       <div class="intel-meter" aria-hidden="true"><span style="width: 0%"></span></div>
@@ -1649,6 +1743,7 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
   caseIntelReadiness.textContent = `${Math.max(0, Math.min(100, Math.round(score)))}%`;
   caseIntelDetails.innerHTML = `
     <div class="intel-meter" aria-hidden="true"><span style="width: ${Math.max(0, Math.min(100, Math.round(score)))}%"></span></div>
+    ${isPreview ? '<div class="intel-live-preview">Live typing preview</div>' : ''}
     <div class="executive-intel-list">
       <article>
         <span>Case</span>
@@ -1667,12 +1762,12 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
         <strong>${escapeHtml(evidenceSummary)}</strong>
       </article>
     </div>
-    <div class="intel-block risk-domain-block">
-      <span class="eyebrow">Detected risk domains</span>
+    <details class="intel-detail-pack risk-domain-block">
+      <summary><span>Risk signals</span><b>${escapeHtml(risks.length || 0)}</b></summary>
       <div class="intel-chips">
         ${risks.length ? risks.slice(0, 6).map((risk) => `<span>${escapeHtml(risk)}</span>`).join('') : '<span>awaiting signals</span>'}
       </div>
-    </div>
+    </details>
     <div class="intel-block missing-proof-block">
       <span class="eyebrow">Missing proof</span>
       <ul>
@@ -1683,12 +1778,12 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
       <span class="eyebrow">Next best action</span>
       <strong>${escapeHtml(nextBestAction(draft, result))}</strong>
     </div>
-    <div class="human-boundary-card">
-      <span>Human review boundary</span>
+    <details class="intel-detail-pack human-boundary-card">
+      <summary><span>Human review boundary</span><b>${escapeHtml(approvalRequired ? 'locked' : 'check')}</b></summary>
       <strong>${escapeHtml(approvalRequired ? 'Approval cannot be automated' : 'Reviewer check still required')}</strong>
       <p>The system can prepare a decision memo and evidence pack, but the accountable human remains the approval owner.</p>
-    </div>
-    <details class="intel-advanced">
+    </details>
+    <details class="intel-detail-pack intel-advanced">
       <summary>Technical runtime details</summary>
       <div class="memory-status-grid">
         <span>Vector memory</span><b>${escapeHtml(memoryProviderLabel(draft))}</b>
@@ -1791,7 +1886,19 @@ function assistantQuestionFromText(text = '') {
   if (bulletQuestion) return bulletQuestion;
   const question = raw.match(/([^.!?\n]*\?)/g)?.pop();
   const detectedQuestion = acceptableQuestion(question);
-  return detectedQuestion || fallbackQuestion();
+  return normalizeAssistantQuestion(detectedQuestion || fallbackQuestion());
+}
+
+function normalizeAssistantQuestion(question = '') {
+  const text = cleanEvidenceText(question);
+  if (!text) return text;
+  const letters = text.replace(/[^a-z]/gi, '');
+  const uppercase = letters.replace(/[^A-Z]/g, '');
+  if (letters.length >= 8 && uppercase.length / letters.length > 0.72) {
+    const lowered = text.toLowerCase();
+    return `${lowered.charAt(0).toUpperCase()}${lowered.slice(1)}`.replace(/\bi\b/g, 'I');
+  }
+  return text;
 }
 
 function assistantAcknowledgement(text = '') {
@@ -3955,6 +4062,14 @@ form.addEventListener('submit', (event) => {
 chatForm.addEventListener('submit', (event) => {
   event.preventDefault();
   submitChatMessage(chatInput.value);
+});
+
+chatInput?.addEventListener('input', updateLiveCasePreview);
+chatInput?.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+  event.preventDefault();
+  const message = cleanEvidenceText(chatInput.value);
+  if (message) submitChatMessage(message);
 });
 
 chatRunNow.addEventListener('click', () => {
