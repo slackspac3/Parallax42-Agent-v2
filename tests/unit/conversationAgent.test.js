@@ -93,6 +93,33 @@ test('conversation handles plain payroll outsourcing intake with a practical own
   assert.ok(!/Procurement And Third-Party Risk/i.test(result.reply));
 });
 
+test('conversation does not repeat payroll owner question after terse HR answer', () => {
+  const first = processConversation({
+    message: 'I have a request to outsource payroll'
+  }, { runtime: 'deterministic' });
+
+  assert.ok(first.questions.some((question) => /payroll outsourcing risk internally|HR\/People/i.test(question)));
+
+  const second = processConversation({
+    message: 'HR',
+    caseDraft: first.caseDraft
+  }, { runtime: 'deterministic' });
+
+  assert.equal(second.caseDraft.businessUnit, 'HR');
+  assert.ok(!second.questions.some((question) => /payroll outsourcing risk internally|HR\/People/i.test(question)));
+  assert.ok(second.questions.some((question) => /geography|regulatory perimeter/i.test(question)));
+
+  const third = processConversation({
+    message: 'UAE, the vendor is based in India',
+    caseDraft: second.caseDraft
+  }, { runtime: 'deterministic' });
+
+  assert.equal(third.caseDraft.businessUnit, 'HR');
+  assert.equal(third.caseDraft.geography, 'UAE and India');
+  assert.ok(!third.questions.some((question) => /payroll outsourcing risk internally|HR\/People/i.test(question)));
+  assert.ok(third.questions.some((question) => /DPA|payroll-vendor proof|contract|SOC 2|ISO 27001/i.test(question)));
+});
+
 test('conversation asks payroll-specific evidence after owner and geography are known', () => {
   const result = processConversation({
     message: 'Finance Payroll owns it',

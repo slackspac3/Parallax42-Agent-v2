@@ -13,6 +13,7 @@ const { runBenchmark } = require('./lib/benchmarkSuite');
 const { gatewayHealth } = require('./lib/compassGatewayClient');
 const { getReadinessInventory } = require('./lib/complianceAgent');
 const { casePayloadFromDraft, processConversation } = require('./lib/conversationAgent');
+const { assessConversationWithLlm } = require('./lib/conversationLlmAssessor');
 const { evidenceVectorStoreHealth, indexEvidenceServerSide, runQdrantSmokeTest, searchEvidenceServerSide } = require('./lib/evidenceVectorStore');
 const { buildEvaluatorError, buildEvaluatorResponse, normalizeEvaluatorInput } = require('./lib/evaluatorRun');
 const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
@@ -284,8 +285,9 @@ const server = http.createServer(async (req, res) => {
       }
       const body = await readJsonBody(req, { limitBytes: 2_000_000 });
       const enrichedBody = await enrichConversationWithServerRetrieval(body);
-      const runtime = req.headers['x-agent-runtime'] || enrichedBody.runtime;
-      const result = processConversation(enrichedBody, { runtime });
+      const assessedBody = await assessConversationWithLlm(enrichedBody);
+      const runtime = req.headers['x-agent-runtime'] || assessedBody.runtime;
+      const result = processConversation(assessedBody, { runtime });
       if (result.run?.ok) {
         result.run = await runAgentWithRuntimeAsync(casePayloadFromDraft(result.caseDraft), { runtime });
         result.actions = [
@@ -310,6 +312,7 @@ const server = http.createServer(async (req, res) => {
             roles: auth.actor.roles,
             authenticated: auth.actor.authenticated
           },
+          llmAssessment: result.nlp?.llmAssessment || assessedBody.llmAssessment || null,
           nlp: result.nlp,
           actions: result.actions,
           missingFields: result.missingFields,
