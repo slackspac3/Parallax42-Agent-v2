@@ -1842,12 +1842,31 @@ function documentSourcePrompt() {
   return `Can you upload the ${target}, or paste the sections you want reviewed?`;
 }
 
+function naturalizeAssistantLead(text = '') {
+  const clean = cleanEvidenceText(text)
+    .replace(/^Got it\s*[—-]\s*/i, '')
+    .replace(/\s+So far I have:.*$/i, '')
+    .replace(/\s+What I found:.*$/i, '')
+    .trim();
+  if (!clean) return '';
+  if (/I understand this as|I’m treating this as|I'm treating this as/i.test(clean)) {
+    return clean
+      .replace(/^I understand this as\s*:?\s*/i, 'I understand this as ')
+      .replace(/^I’m treating this as\s*:?\s*/i, 'I’m treating this as ')
+      .replace(/^I'm treating this as\s*:?\s*/i, 'I’m treating this as ')
+      .replace(/\ba agreement\b/gi, 'an agreement')
+      .replace(/\ba MSA\b/g, 'an MSA')
+      .slice(0, 180);
+  }
+  return clean.slice(0, 180);
+}
+
 function assistantRawSummary(text = '') {
   const clean = cleanEvidenceText(text);
   if (!clean) return 'I am updating the case draft.';
   if (/could not|failed|error/i.test(clean)) return clean;
   if (/I understand this as|I’m treating this as|I'm treating this as/i.test(clean)) {
-    return clean.split(/\n\n/)[0].trim().slice(0, 260);
+    return naturalizeAssistantLead(clean) || 'I updated the review context.';
   }
   if (/what i understood|so far i have|next questions?|missing/i.test(clean)) {
     return 'I captured the useful facts and identified the next decision point.';
@@ -1906,7 +1925,7 @@ function assistantAcknowledgement(text = '') {
   if (lastRuns.chat?.ok) return 'Council run complete. I kept the decision review-bound.';
   const clean = cleanEvidenceText(text);
   if (/I understand this as|I’m treating this as|I'm treating this as/i.test(clean)) {
-    return clean.split(/\n\n/)[0].replace(/^Got it\s*[—-]\s*/i, '').trim().slice(0, 160);
+    return naturalizeAssistantLead(clean) || 'I updated the review context.';
   }
   if (chatRunReadiness?.runnable) return 'I have enough context to prepare the decision room.';
   if (indexedChunkCount()) return 'I added the evidence to the case.';
@@ -1974,6 +1993,14 @@ function renderAssistantTurn(message = {}) {
           ${canRun ? '<button type="button" data-chat-action="run-council">Run council</button>' : ''}
         </div>
       </div>
+    </div>
+  `;
+}
+
+function renderAssistantHistoryTurn(message = {}) {
+  return `
+    <div class="advisor-history-bubble">
+      <p>${escapeHtml(assistantRawSummary(message.text))}</p>
     </div>
   `;
 }
@@ -2226,7 +2253,7 @@ function renderChatMessages() {
           : message.role === 'assistant' && index === latestAssistantIndex
           ? renderAssistantTurn(message)
           : message.role === 'assistant'
-            ? `<p>${escapeHtml(assistantRawSummary(message.text))}</p>`
+            ? renderAssistantHistoryTurn(message)
             : `<p>${escapeHtml(message.text)}</p>`}
       </div>
     </article>
