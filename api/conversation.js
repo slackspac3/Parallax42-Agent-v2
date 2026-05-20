@@ -3,9 +3,8 @@
 const { appendAuditRecord } = require('../lib/auditStore');
 const { runAgentWithRuntimeAsync } = require('../lib/agentRuntime');
 const { casePayloadFromDraft, processConversation } = require('../lib/conversationAgent');
-const { assessConversationWithLlm } = require('../lib/conversationLlmAssessor');
+const { planConversationTurn } = require('../lib/conversationPlanner');
 const { authorizeRequest } = require('../lib/rbac');
-const { enrichConversationWithServerRetrieval } = require('../lib/serverSideRetrieval');
 const { methodGuard, readJsonRequest, sendJson } = require('./_http');
 
 module.exports = async function handler(req, res) {
@@ -17,8 +16,7 @@ module.exports = async function handler(req, res) {
       return;
     }
     const body = await readJsonRequest(req);
-    const enrichedBody = await enrichConversationWithServerRetrieval(body);
-    const assessedBody = await assessConversationWithLlm(enrichedBody);
+    const assessedBody = await planConversationTurn(body);
     const runtime = req.headers['x-agent-runtime'] || assessedBody.runtime;
     const result = processConversation(assessedBody, { runtime });
     if (result.run?.ok) {
@@ -46,6 +44,7 @@ module.exports = async function handler(req, res) {
           authenticated: auth.actor.authenticated
         },
         nlp: result.nlp,
+        conversationPlan: result.conversationPlan || assessedBody.conversationPlan || null,
         llmAssessment: result.nlp?.llmAssessment || assessedBody.llmAssessment || null,
         actions: result.actions,
         missingFields: result.missingFields,

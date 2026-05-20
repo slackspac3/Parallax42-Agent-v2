@@ -2876,6 +2876,43 @@ function renderBusinessOutcome(result = {}) {
           ${reviewerActions.map((action) => `<li>${escapeHtml(action)}</li>`).join('')}
         </ol>
       </article>
+      <article class="report-section learning-feedback-panel">
+        <div class="report-section-header">
+          <div>
+            <span class="eyebrow">Governed Learning Feedback</span>
+            <p>Capture the human reviewer outcome as advisory memory for future similar cases. This does not train a model or change this decision.</p>
+          </div>
+        </div>
+        <form class="learning-feedback-form" data-learning-feedback-form>
+          <label>
+            <span>Reviewer outcome</span>
+            <select name="reviewerDecision">
+              <option value="Request remediation">Request remediation</option>
+              <option value="Conditional approval">Conditional approval</option>
+              <option value="Reject">Reject</option>
+              <option value="Approve after controls">Approve after controls</option>
+            </select>
+          </label>
+          <label>
+            <span>Reviewer notes</span>
+            <textarea name="reviewerNotes" rows="3" placeholder="Example: require signed DPA, India transfer basis, payroll access approval, and exit support before approval."></textarea>
+          </label>
+          <div class="learning-feedback-grid">
+            <label>
+              <span>Controls added</span>
+              <input name="addedControls" placeholder="Comma-separated controls">
+            </label>
+            <label>
+              <span>Missing evidence</span>
+              <input name="missingEvidence" placeholder="Comma-separated evidence gaps">
+            </label>
+          </div>
+          <div class="learning-feedback-actions">
+            <button type="submit">Save governed memory</button>
+            <small data-learning-feedback-status>Stored as reviewer memory only.</small>
+          </div>
+        </form>
+      </article>
       <details class="advanced-council-details">
         <summary>Advanced retrieval, learning, advisory, and audit trace</summary>
       <article class="report-section memory-panel">
@@ -3718,6 +3755,65 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   }
 }
 
+function splitFeedbackList(value = '') {
+  return cleanEvidenceText(value)
+    .split(/[,;\n]+/)
+    .map((item) => cleanEvidenceText(item))
+    .filter(Boolean)
+    .slice(0, 10);
+}
+
+async function submitLearningFeedback(form) {
+  const result = lastRuns.chat?.ok ? lastRuns.chat : lastRun?.ok ? lastRun : null;
+  const status = form.querySelector('[data-learning-feedback-status]');
+  if (!result) {
+    if (status) status.textContent = 'Run the council before saving reviewer memory.';
+    return;
+  }
+  const data = new FormData(form);
+  const reviewerDecision = cleanEvidenceText(data.get('reviewerDecision') || 'Request remediation');
+  const reviewerNotes = cleanEvidenceText(data.get('reviewerNotes') || '');
+  if (!reviewerNotes) {
+    if (status) status.textContent = 'Add a short reviewer note before saving.';
+    return;
+  }
+  const payload = {
+    caseId: result.case?.caseId || chatCaseDraft.caseId || 'conversation-case',
+    originalDecision: result.decision?.recommendation || result.decision?.status || '',
+    reviewerDecision,
+    reviewerNotes,
+    addedControls: splitFeedbackList(data.get('addedControls') || ''),
+    missingEvidence: splitFeedbackList(data.get('missingEvidence') || '').length
+      ? splitFeedbackList(data.get('missingEvidence') || '')
+      : (result.gaps || []).map((gap) => gap.gap).filter(Boolean).slice(0, 8),
+    rejectedEvidence: [],
+    finalOutcome: reviewerDecision,
+    domains: (result.domains || []).map((domain) => domain.label || domain.id).filter(Boolean).slice(0, 8),
+    tags: [
+      ...(result.case?.integrations || []),
+      ...(result.case?.documents || []).flatMap((doc) => doc.signals || [])
+    ].filter(Boolean).slice(0, 12)
+  };
+  const submit = form.querySelector('button[type="submit"]');
+  if (submit) submit.disabled = true;
+  if (status) status.textContent = 'Saving governed learning artifact...';
+  try {
+    const saved = await apiFetch('/api/learning/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (status) {
+      status.textContent = `Saved ${saved.artifacts?.length || 0} advisory memory artifact${(saved.artifacts?.length || 0) === 1 ? '' : 's'} via ${saved.provider || 'learning memory'}.`;
+    }
+    form.reset();
+  } catch (error) {
+    if (status) status.textContent = error instanceof Error ? error.message : 'Could not save reviewer memory.';
+  } finally {
+    if (submit) submit.disabled = false;
+  }
+}
+
 async function loadReadiness() {
   try {
     const readiness = await apiFetch('/api/readiness');
@@ -4018,6 +4114,13 @@ specialistList?.addEventListener('click', (event) => {
   if (action === 'export-review-pack') {
     execReviewPack?.click();
   }
+});
+
+specialistList?.addEventListener('submit', (event) => {
+  const form = event.target?.closest?.('[data-learning-feedback-form]');
+  if (!form) return;
+  event.preventDefault();
+  submitLearningFeedback(form);
 });
 
 agentActivity?.addEventListener('click', (event) => {

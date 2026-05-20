@@ -416,9 +416,9 @@ test('conversation keeps document reviews focused on source upload through repea
   }, { runtime: 'deterministic' });
 
   assert.ok(second.caseDraft.knownGaps.includes('evidence'));
-  assert.ok(second.questions.some((question) => /upload the agreement|paste the relevant sections/i.test(question)));
+  assert.ok(second.questions.some((question) => /what should I focus on|privacy\/data terms|liability|all risks/i.test(question)));
   assert.ok(!second.questions.some((question) => /accountable business unit|workflow owner|business owner/i.test(question)));
-  assert.match(second.reply, /agreement review|Upload the agreement|source material/i);
+  assert.match(second.reply, /agreement source as pending|upload the agreement|source document/i);
 
   const third = processConversation({
     message: 'dont know',
@@ -426,9 +426,11 @@ test('conversation keeps document reviews focused on source upload through repea
   }, { runtime: 'deterministic' });
 
   assert.ok(third.caseDraft.knownGaps.includes('evidence'));
+  assert.ok(third.caseDraft.knownGaps.includes('review_focus'));
   assert.ok(!third.caseDraft.knownGaps.includes('business_owner'));
-  assert.ok(third.questions.some((question) => /upload the agreement|paste the relevant sections/i.test(question)));
+  assert.equal(third.questions.length, 0);
   assert.ok(!third.questions.some((question) => /accountable business unit|workflow owner|business owner|geography|regulatory perimeter/i.test(question)));
+  assert.doesNotMatch(third.reply, /agreement document .* using the supplied document evidence/i);
 
   const fourth = processConversation({
     message: 'dont know',
@@ -438,7 +440,41 @@ test('conversation keeps document reviews focused on source upload through repea
   assert.ok(fourth.caseDraft.knownGaps.includes('evidence'));
   assert.ok(!fourth.caseDraft.knownGaps.includes('business_owner'));
   assert.ok(!fourth.caseDraft.knownGaps.includes('geography'));
-  assert.ok(fourth.questions.some((question) => /upload the agreement|paste the relevant sections/i.test(question)));
+  assert.equal(fourth.questions.length, 0);
+});
+
+test('conversation does not repeat stale document evidence summary after unknown agreement answers', () => {
+  const first = processConversation({
+    message: 'I want an agreement reviewed',
+    caseDraft: {
+      indexedEvidence: { chunkCount: 4 },
+      retrievalContext: {
+        evidenceMatches: [{ title: 'Previously indexed evidence', score: 0.82 }]
+      },
+      documents: [{
+        evidenceId: 'UP-01',
+        title: 'Previously uploaded agreement.pdf',
+        indexStatus: 'indexed',
+        extractionStatus: 'backend_parsed'
+      }]
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.match(first.reply, /attached source evidence/i);
+
+  const second = processConversation({
+    message: 'dont know',
+    caseDraft: first.caseDraft
+  }, { runtime: 'deterministic' });
+  const third = processConversation({
+    message: 'dont know',
+    caseDraft: second.caseDraft
+  }, { runtime: 'deterministic' });
+
+  assert.match(second.reply, /recorded business owner as a known gap/i);
+  assert.match(third.reply, /recorded geography as a known gap/i);
+  assert.doesNotMatch(second.reply, /using the supplied document evidence/i);
+  assert.doesNotMatch(third.reply, /using the supplied document evidence/i);
 });
 
 test('conversation normalizes AI-provided known-gap labels before planning questions', () => {

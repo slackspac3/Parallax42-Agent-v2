@@ -50,6 +50,90 @@
   --t: 200ms var(--ease);
 }
 
+.learning-feedback-panel {
+  border-color: rgba(107, 244, 205, 0.2);
+  background:
+    linear-gradient(135deg, rgba(17, 53, 45, 0.72), rgba(7, 17, 16, 0.88)),
+    rgba(10, 20, 19, 0.88);
+}
+
+.learning-feedback-form {
+  margin-top: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.learning-feedback-form label {
+  display: grid;
+  gap: 7px;
+  color: rgba(234, 244, 255, 0.64);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.learning-feedback-form input,
+.learning-feedback-form select,
+.learning-feedback-form textarea {
+  width: 100%;
+  border: 1px solid rgba(207, 232, 222, 0.14);
+  border-radius: 12px;
+  background: rgba(3, 12, 11, 0.58);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 12px 13px;
+  outline: none;
+}
+
+.learning-feedback-form textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.learning-feedback-form input:focus,
+.learning-feedback-form select:focus,
+.learning-feedback-form textarea:focus {
+  border-color: rgba(33, 235, 191, 0.54);
+  box-shadow: 0 0 0 3px rgba(33, 235, 191, 0.1);
+}
+
+.learning-feedback-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.learning-feedback-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.learning-feedback-actions button {
+  border: 1px solid rgba(33, 235, 191, 0.42);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(33, 235, 191, 0.98), rgba(125, 211, 252, 0.92));
+  color: #031311;
+  font-weight: 900;
+  padding: 11px 17px;
+  cursor: pointer;
+}
+
+.learning-feedback-actions button:disabled {
+  cursor: progress;
+  opacity: 0.62;
+}
+
+.learning-feedback-actions small {
+  color: rgba(234, 244, 255, 0.58);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 /* --- Reset -------------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; }
 
