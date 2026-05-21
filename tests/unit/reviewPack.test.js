@@ -33,6 +33,9 @@ test('review pack includes digest, evidence quality, retrieval audit, and human 
   const markdown = buildReviewPackMarkdown(pack);
   assert.match(markdown, /Executive Review Pack/);
   assert.match(markdown, /Human approval required: yes/);
+  assert.match(markdown, /Executive Memo/);
+  assert.match(markdown, /Specialist Validation Trace/);
+  assert.match(markdown, /Final decision owner: deterministic compliance engine/);
 
   const pdf = buildReviewPackPdf(pack);
   assert.ok(Buffer.isBuffer(pdf));

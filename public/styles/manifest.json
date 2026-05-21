@@ -1,0 +1,28 @@
+{
+  "generatedFrom": "public/styles.css",
+  "files": [
+    "01-parallax42-design-system-v2.css",
+    "02-topbar.css",
+    "03-workbench.css",
+    "04-command-center.css",
+    "05-case-panel-header.css",
+    "06-case-form.css",
+    "07-conversation-chat-panel.css",
+    "08-runway-council-panel.css",
+    "09-decision-rail.css",
+    "10-case-draft-panel.css",
+    "11-council-output-report-sections.css",
+    "12-bottom-sections-evidence-audit-hardening.css",
+    "13-forms-config.css",
+    "14-animations.css",
+    "15-responsive.css",
+    "16-council-constellation.css",
+    "17-evidence-pipeline-widget.css",
+    "18-thinking-loader.css",
+    "19-advisor-response-cards.css",
+    "20-case-intelligence-panel-decision-rail.css",
+    "21-additional-keyframe-animations.css",
+    "22-desktop-app-shell-v7-stitch-inspired-operational-console.css",
+    "23-desktop-chat-ux-tightening.css"
+  ]
+}

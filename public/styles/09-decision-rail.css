@@ -1,0 +1,99 @@
+/* ============================================================
+   DECISION RAIL
+   ============================================================ */
+.decision-card {
+  padding: 20px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.025);
+}
+
+.decision-card strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.08;
+}
+
+.decision-card p {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Metrics */
+.metric-stack {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.metric-stack div {
+  padding: 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.025);
+  transition: border-color var(--t), box-shadow var(--t);
+}
+
+.metric-stack div:first-child,
+.metric-stack div:last-child { grid-column: 1 / -1; }
+
+.metric-stack span {
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+
+.metric-stack strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.08;
+}
+
+.approval-actions { display: grid; }
+.approval-actions button { width: 100%; }
+
+.decision-technical-links summary {
+  cursor: pointer;
+  color: var(--subtle);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 4px 0;
+  user-select: none;
+  list-style: none;
+}
+
+.decision-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  margin-top: 8px;
+}
+
+.decision-links a {
+  padding: 5px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 600;
+  transition: color var(--t), border-color var(--t), background var(--t);
+}
+
+.decision-links a:hover {
+  color: var(--accent);
+  border-color: var(--line-accent);
+  background: rgba(34,227,180,0.06);
+}
+

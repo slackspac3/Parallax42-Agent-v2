@@ -1,0 +1,354 @@
+/* ============================================================
+   PARALLAX42 — Design System v2
+   ============================================================ */
+
+/* --- Tokens ------------------------------------------------- */
+:root {
+  color-scheme: dark;
+
+  /* Surface */
+  --bg:           #040810;
+  --surface:      #080f1a;
+  --surface-2:    #0c1522;
+  --surface-3:    #101c2c;
+  --glass:        rgba(12, 21, 34, 0.72);
+  --glass-strong: rgba(8, 15, 26, 0.88);
+
+  /* Borders */
+  --line:         rgba(120, 180, 255, 0.09);
+  --line-strong:  rgba(120, 180, 255, 0.18);
+  --line-accent:  rgba(34, 227, 180, 0.28);
+
+  /* Text */
+  --text:   #eaf4ff;
+  --muted:  #7a9bb5;
+  --subtle: #3d5a72;
+
+  /* Brand palette */
+  --accent: #22e3b4;
+  --accent-dim: rgba(34, 227, 180, 0.12);
+  --accent-mid: rgba(34, 227, 180, 0.24);
+  --info:   #60a5fa;
+  --violet: #a78bfa;
+  --warning: #fbbf24;
+  --danger:  #f87171;
+
+  /* Glow */
+  --glow-accent: rgba(34, 227, 180, 0.18);
+  --glow-info:   rgba(96, 165, 250, 0.14);
+  --glow-violet: rgba(167, 139, 250, 0.14);
+  --shadow:      rgba(0, 0, 0, 0.62);
+
+  /* Radii */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+
+  /* Transitions */
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --t: 200ms var(--ease);
+}
+
+.learning-feedback-panel {
+  border-color: rgba(107, 244, 205, 0.2);
+  background:
+    linear-gradient(135deg, rgba(17, 53, 45, 0.72), rgba(7, 17, 16, 0.88)),
+    rgba(10, 20, 19, 0.88);
+}
+
+.learning-feedback-form {
+  margin-top: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.learning-feedback-form label {
+  display: grid;
+  gap: 7px;
+  color: rgba(234, 244, 255, 0.64);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.learning-feedback-form input,
+.learning-feedback-form select,
+.learning-feedback-form textarea {
+  width: 100%;
+  border: 1px solid rgba(207, 232, 222, 0.14);
+  border-radius: 12px;
+  background: rgba(3, 12, 11, 0.58);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 12px 13px;
+  outline: none;
+}
+
+.learning-feedback-form textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.learning-feedback-form input:focus,
+.learning-feedback-form select:focus,
+.learning-feedback-form textarea:focus {
+  border-color: rgba(33, 235, 191, 0.54);
+  box-shadow: 0 0 0 3px rgba(33, 235, 191, 0.1);
+}
+
+.learning-feedback-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.learning-feedback-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.learning-feedback-actions button {
+  border: 1px solid rgba(33, 235, 191, 0.42);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(33, 235, 191, 0.98), rgba(125, 211, 252, 0.92));
+  color: #031311;
+  font-weight: 900;
+  padding: 11px 17px;
+  cursor: pointer;
+}
+
+.learning-feedback-actions button:disabled {
+  cursor: progress;
+  opacity: 0.62;
+}
+
+.learning-feedback-actions small {
+  color: rgba(234, 244, 255, 0.58);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+/* --- Reset -------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+h1, h2, p { margin: 0; }
+
+h1 {
+  margin-top: 8px;
+  font-size: clamp(28px, 3.2vw, 44px);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.5px;
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.2px;
+}
+
+button, input, select, textarea { font: inherit; }
+
+button { cursor: pointer; }
+
+a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color var(--t);
+}
+a:hover { color: var(--text); }
+
+/* --- Body / canvas ----------------------------------------- */
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* Ambient background glows */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  background:
+    radial-gradient(ellipse 60% 50% at 85% 0%,   rgba(34, 227, 180, 0.09) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 8%  90%,  rgba(167, 139, 250, 0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 30% at 50% 50%,  rgba(96, 165, 250, 0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Subtle grid */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.016) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,.7) 0%, rgba(0,0,0,.1) 80%, transparent);
+  pointer-events: none;
+}
+
+#networkCanvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.14;
+}
+
+/* --- Global button ----------------------------------------- */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: #02110d;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.2px;
+  transition: transform var(--t), filter var(--t), box-shadow var(--t), border-color var(--t), background var(--t);
+  position: relative;
+  overflow: hidden;
+}
+
+button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity var(--t);
+  pointer-events: none;
+}
+
+button:hover:not(:disabled)::after { opacity: 1; }
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+  box-shadow: 0 6px 24px rgba(34, 227, 180, 0.28);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.96);
+}
+
+button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.primary-action {
+  background: linear-gradient(135deg, #22e3b4 0%, #1cc99f 100%);
+  color: #02110d;
+  font-weight: 800;
+  box-shadow: 0 0 0 1px rgba(34, 227, 180, 0.3), 0 8px 32px rgba(34, 227, 180, 0.18);
+}
+
+.primary-action:hover:not(:disabled) {
+  box-shadow: 0 0 0 1px rgba(34, 227, 180, 0.5), 0 12px 40px rgba(34, 227, 180, 0.3);
+}
+
+.secondary-button {
+  background: rgba(255, 255, 255, 0.055);
+  border-color: var(--line-strong);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(120, 180, 255, 0.3);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+}
+
+.hero-run-button {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.18), rgba(167, 139, 250, 0.12));
+  border-color: rgba(96, 165, 250, 0.34);
+  color: var(--text);
+}
+
+.hero-run-button:hover:not(:disabled) {
+  box-shadow: 0 6px 24px rgba(96, 165, 250, 0.22);
+}
+
+/* --- Inputs ------------------------------------------------ */
+label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font-size: 13px;
+  resize: vertical;
+  transition: border-color var(--t), background var(--t), box-shadow var(--t);
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--line-accent);
+  background: rgba(34, 227, 180, 0.04);
+  box-shadow: 0 0 0 3px rgba(34, 227, 180, 0.08);
+}
+
+textarea { line-height: 1.5; }
+
+select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 15px, calc(100% - 10px) 15px;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+/* --- Eyebrow / labels -------------------------------------- */
+.eyebrow, .board-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.board-label {
+  color: var(--subtle);
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+

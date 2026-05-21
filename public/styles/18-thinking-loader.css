@@ -1,0 +1,86 @@
+/* ============================================================
+   THINKING LOADER
+   ============================================================ */
+.thinking-loader {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(34,227,180,0.2);
+  background:
+    radial-gradient(ellipse 60% 80% at 10% 0%, rgba(34,227,180,0.08), transparent 60%),
+    rgba(255,255,255,0.025);
+  animation: fade-up 300ms var(--ease) both;
+}
+
+.thinking-loader-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.thinking-orb {
+  position: relative;
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.thinking-orb::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--accent);
+  border-left-color: rgba(34,227,180,0.4);
+  animation: orb-spin 0.9s linear infinite;
+}
+
+.thinking-orb::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: rgba(34,227,180,0.3);
+  animation: orb-core-pulse 1.4s ease-in-out infinite alternate;
+}
+
+.thinking-loader-head strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.thinking-steps { display: grid; gap: 6px; }
+
+.thinking-step {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.02);
+  opacity: 0;
+  animation: thinking-step-in 400ms var(--ease) forwards;
+  animation-delay: calc(var(--step-index, 0) * 600ms);
+}
+
+.thinking-step span {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--accent);
+  min-width: 76px;
+}
+
+.thinking-step p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+

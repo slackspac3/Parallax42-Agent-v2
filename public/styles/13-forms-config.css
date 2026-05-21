@@ -1,0 +1,10 @@
+/* ============================================================
+   FORMS / CONFIG
+   ============================================================ */
+.form-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.brief-card textarea { min-height: 132px; }
+.evidence-summary-card textarea { min-height: 88px; }
+
+.live-upload-cockpit { display: grid; gap: 10px; }
+

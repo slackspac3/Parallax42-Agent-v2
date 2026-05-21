@@ -4,7 +4,20 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
-const assets = ['index.html', 'app.js', 'styles.css', 'config.js'];
+const assets = [
+  'index.html',
+  'modules/text.js',
+  'modules/apiClient.js',
+  'modules/state.js',
+  'modules/caseIntelligencePanel.js',
+  'modules/decisionRoom.js',
+  'modules/chatUi.js',
+  'modules/evidenceUploadUi.js',
+  'appModules.js',
+  'app.js',
+  'styles.css',
+  'config.js'
+];
 const mirrors = [
   { label: 'repo root', dir: ROOT },
   { label: 'docs/', dir: path.join(ROOT, 'docs') }

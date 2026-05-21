@@ -1,0 +1,242 @@
+/* ============================================================
+   EVIDENCE PIPELINE WIDGET
+   ============================================================ */
+.has-pipeline { padding: 0; }
+
+.evidence-pipeline {
+  padding: 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.025);
+  display: grid;
+  gap: 10px;
+  animation: fade-up 300ms var(--ease) both;
+}
+
+.evidence-pipeline.is-ready {
+  border-color: rgba(34,227,180,0.28);
+  background: linear-gradient(135deg, rgba(34,227,180,0.08), rgba(34,227,180,0.02));
+}
+
+.evidence-pipeline.is-error {
+  border-color: rgba(248,113,113,0.28);
+  background: rgba(248,113,113,0.04);
+}
+
+.pipeline-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.pipeline-orb {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.pipeline-orb::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--accent);
+  border-right-color: rgba(34,227,180,0.3);
+  animation: orb-spin 1.2s linear infinite;
+}
+
+.pipeline-orb::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(34,227,180,0.22), rgba(34,227,180,0.04));
+  animation: orb-core-pulse 2s ease-in-out infinite alternate;
+}
+
+.pipeline-orb > span {
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.7;
+  animation: orb-core-pulse 1.8s ease-in-out infinite alternate;
+}
+
+.pipeline-head strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pipeline-head p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.pipeline-head b {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.evidence-pipeline.is-error .pipeline-head b { color: var(--danger); }
+
+.pipeline-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pipeline-rail span {
+  height: 2px;
+  border-radius: 999px;
+  background: var(--line);
+  position: relative;
+  overflow: hidden;
+}
+
+.pipeline-rail span::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: lane-flow calc(1.4s + var(--agent-lane, 0) * 0.3s) ease-in-out infinite;
+  animation-delay: calc(var(--agent-lane, 0) * 0.22s);
+}
+
+.evidence-pipeline.is-error .pipeline-rail span::after {
+  background: linear-gradient(90deg, transparent, var(--danger), transparent);
+}
+
+.pipeline-meter {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+
+.pipeline-meter span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--info));
+  transition: width 500ms var(--ease);
+  box-shadow: 0 0 8px rgba(34,227,180,0.5);
+}
+
+.evidence-pipeline.is-error .pipeline-meter span {
+  background: var(--danger);
+  box-shadow: 0 0 8px rgba(248,113,113,0.5);
+}
+
+.pipeline-steps {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pipeline-steps span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--subtle);
+  background: rgba(255,255,255,0.02);
+  transition: border-color var(--t), background var(--t), color var(--t);
+}
+
+.pipeline-steps span i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--subtle);
+  flex-shrink: 0;
+  display: block;
+  font-style: normal;
+  transition: background var(--t), box-shadow var(--t);
+}
+
+.pipeline-steps span.is-complete {
+  border-color: rgba(34,227,180,0.24);
+  color: var(--accent);
+  background: rgba(34,227,180,0.06);
+}
+
+.pipeline-steps span.is-complete i {
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(34,227,180,0.6);
+}
+
+.pipeline-steps span.is-active {
+  border-color: rgba(34,227,180,0.42);
+  color: var(--text);
+  background: rgba(34,227,180,0.1);
+  animation: step-active-pulse 1s ease-in-out infinite alternate;
+}
+
+.pipeline-steps span.is-active i {
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(34,227,180,0.8);
+  animation: orb-core-pulse 0.8s ease-in-out infinite alternate;
+}
+
+.pipeline-steps span.is-error {
+  border-color: rgba(248,113,113,0.28);
+  color: var(--danger);
+  background: rgba(248,113,113,0.06);
+}
+
+.pipeline-steps span.is-error i { background: var(--danger); }
+
+.pipeline-files {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pipeline-files span {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.03);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.pipeline-telemetry {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.pipeline-telemetry span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--subtle);
+  animation: telemetry-blink 2.4s ease-in-out infinite;
+}
+
+.pipeline-telemetry span:nth-child(2) { animation-delay: 0.6s; }
+.pipeline-telemetry span:nth-child(3) { animation-delay: 1.2s; }
+.pipeline-telemetry span:nth-child(4) { animation-delay: 1.8s; }
+

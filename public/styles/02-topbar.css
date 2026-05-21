@@ -1,0 +1,97 @@
+/* ============================================================
+   TOPBAR
+   ============================================================ */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 32px;
+  min-height: 60px;
+  padding: 0 clamp(16px, 3vw, 40px);
+  background: rgba(4, 8, 16, 0.82);
+  backdrop-filter: blur(24px) saturate(1.4);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  background: linear-gradient(135deg, rgba(34, 227, 180, 0.22), rgba(96, 165, 250, 0.1));
+  border: 1px solid rgba(34, 227, 180, 0.32);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  box-shadow: 0 0 20px rgba(34, 227, 180, 0.18), inset 0 1px 0 rgba(255,255,255,0.1);
+  animation: brand-glow 3s ease-in-out infinite alternate;
+}
+
+.brand-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.brand-subtitle {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+nav {
+  display: flex;
+  gap: 4px;
+}
+
+nav a {
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: color var(--t), background var(--t);
+}
+
+nav a:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.topbar-status {
+  display: flex;
+  align-items: center;
+}
+
+.topbar-status span {
+  padding: 5px 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  transition: color var(--t), border-color var(--t);
+}
+

@@ -1,0 +1,80 @@
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1200px) {
+  .command-center,
+  body[data-run-mode="chat"] .command-center {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "tabs"
+      "case"
+      "decision"
+      "runway";
+  }
+
+  .case-panel { border-right: 0; border-bottom: 1px solid var(--line); }
+  .decision-rail { border-left: 0; border-top: 1px solid var(--line); }
+  .runway { border-top: 1px solid var(--line); }
+  .chat-messages { min-height: 320px; }
+
+  .evidence-layout, .artifact-layout, .hardening-layout { grid-template-columns: 1fr; }
+  .hardening-list { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    position: static;
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  nav { flex-wrap: wrap; }
+
+  .workbench { width: calc(100% - 20px); padding-top: 12px; }
+
+  .command-center { border-radius: var(--r-lg); }
+
+  .case-panel,
+  body[data-run-mode="chat"] .case-panel,
+  .runway,
+  .decision-rail,
+  .evidence-board,
+  .audit-section,
+  .hardening-section { padding: 18px; }
+
+  .mode-tabs { flex-wrap: wrap; }
+  .mode-tabs::before { width: 100%; }
+  .mode-tab { flex: 1 1 130px; min-width: 0; }
+
+  .chat-suggestions { grid-template-columns: 1fr; }
+  /* on mobile keep the same logical order — input at bottom */
+  .chat-form { order: 4; }
+  .chat-suggestions { order: 2; }
+  .chat-messages { order: 1; min-height: 180px; }
+
+  .field-grid,
+  .metric-stack,
+  .domain-row,
+  .citation-row,
+  .hardening-list,
+  .specialist-list,
+  body[data-run-mode="demo"] .specialist-list,
+  body[data-run-mode="live"] .specialist-list,
+  .decision-metrics,
+  .business-columns,
+  .agent-finding-grid,
+  .domain-snapshot,
+  .review-package,
+  .human-boundary { grid-template-columns: 1fr; }
+
+  h1 { font-size: 32px; }
+  .runway-top, .stage-console { grid-template-columns: 1fr; }
+  .run-actions { flex-direction: row; }
+
+  .constellation-stage { aspect-ratio: 4 / 3; }
+  .council-focus-card dl { grid-template-columns: 1fr; }
+  .executive-intel-list { grid-template-columns: 1fr; }
+}
+

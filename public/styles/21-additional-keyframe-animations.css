@@ -1,0 +1,79 @@
+/* ============================================================
+   ADDITIONAL KEYFRAME ANIMATIONS
+   ============================================================ */
+
+@keyframes ring-rotate-cw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes ring-rotate-ccw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+@keyframes link-pulse {
+  from { stroke-opacity: 0.45; }
+  to   { stroke-opacity: 1; filter: drop-shadow(0 0 6px rgba(34,227,180,0.7)); }
+}
+
+@keyframes core-pulse {
+  from {
+    box-shadow:
+      0 0 0 6px rgba(34,227,180,0.04),
+      0 0 0 14px rgba(34,227,180,0.02),
+      inset 0 0 20px rgba(34,227,180,0.06);
+  }
+  to {
+    box-shadow:
+      0 0 0 10px rgba(34,227,180,0.08),
+      0 0 0 22px rgba(34,227,180,0.04),
+      inset 0 0 32px rgba(34,227,180,0.14);
+  }
+}
+
+@keyframes agent-active-pulse {
+  from { box-shadow: 0 0 0 2px rgba(34,227,180,0.08), 0 0 16px rgba(34,227,180,0.14); }
+  to   { box-shadow: 0 0 0 4px rgba(34,227,180,0.18), 0 0 28px rgba(34,227,180,0.28); }
+}
+
+@keyframes orb-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes orb-core-pulse {
+  from { opacity: 0.6; transform: scale(0.85); }
+  to   { opacity: 1;   transform: scale(1.1); }
+}
+
+@keyframes lane-flow {
+  0%   { left: -40%; }
+  100% { left: 110%; }
+}
+
+@keyframes step-active-pulse {
+  from { box-shadow: none; }
+  to   { box-shadow: 0 0 0 2px rgba(34,227,180,0.14); }
+}
+
+@keyframes telemetry-blink {
+  0%, 80%, 100% { opacity: 0.55; }
+  40%           { opacity: 1; }
+}
+
+@keyframes thinking-step-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes chip-in {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes star-drift {
+  from { opacity: 0.7; transform: translate(0, 0); }
+  to   { opacity: 1;   transform: translate(4px, -3px); }
+}
+

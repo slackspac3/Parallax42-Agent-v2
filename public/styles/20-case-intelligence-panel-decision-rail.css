@@ -1,0 +1,151 @@
+/* ============================================================
+   CASE INTELLIGENCE PANEL (decision rail)
+   ============================================================ */
+.intel-meter {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+  margin: 6px 0 12px;
+}
+
+.intel-meter span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--info));
+  transition: width 700ms var(--ease);
+  box-shadow: 0 0 8px rgba(34,227,180,0.4);
+}
+
+.executive-intel-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.executive-intel-list article {
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.025);
+  transition: border-color var(--t);
+}
+
+.executive-intel-list article:hover { border-color: var(--line-accent); }
+
+.executive-intel-list span {
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--subtle);
+  margin-bottom: 4px;
+}
+
+.executive-intel-list strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.intel-block { margin-bottom: 12px; }
+
+.intel-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+
+.intel-chips span {
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(248,113,113,0.22);
+  background: rgba(248,113,113,0.06);
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 700;
+  animation: chip-in 250ms var(--ease) both;
+}
+
+.intel-block ul {
+  margin: 7px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 5px;
+}
+
+.intel-block li { color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+.next-action {
+  padding: 12px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(34,227,180,0.2);
+  background: rgba(34,227,180,0.05);
+  margin-bottom: 12px;
+}
+
+.next-action strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.human-boundary-card {
+  padding: 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid rgba(251,191,36,0.2);
+  background: rgba(251,191,36,0.05);
+}
+
+.human-boundary-card span {
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--warning);
+  margin-bottom: 4px;
+}
+
+.human-boundary-card strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+
+.human-boundary-card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+.intel-advanced {
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: rgba(255,255,255,0.02);
+}
+
+.intel-advanced summary {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  user-select: none;
+  list-style: none;
+}
+
+.memory-status-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 5px 12px;
+  padding: 0 12px 12px;
+}
+
+.memory-status-grid span { font-size: 11px; color: var(--muted); }
+.memory-status-grid b { font-size: 11px; font-weight: 700; color: var(--accent); text-align: right; }
+

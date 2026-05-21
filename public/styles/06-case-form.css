@@ -1,0 +1,124 @@
+/* ============================================================
+   CASE FORM
+   ============================================================ */
+.case-form, .config-panel { display: grid; gap: 14px; }
+
+.field-card {
+  padding: 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.025);
+  transition: border-color var(--t);
+}
+
+.field-card:focus-within {
+  border-color: var(--line-accent);
+  background: rgba(34,227,180,0.03);
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Evidence */
+.upload-zone {
+  position: relative;
+  padding: 28px 22px;
+  border: 1.5px dashed rgba(34, 227, 180, 0.35);
+  border-radius: var(--r-lg);
+  background:
+    radial-gradient(ellipse 70% 80% at 50% 0%, rgba(34,227,180,0.06), transparent 60%),
+    rgba(34, 227, 180, 0.03);
+  cursor: pointer;
+  transition: border-color var(--t), background var(--t), box-shadow var(--t);
+  display: grid;
+  gap: 8px;
+  text-align: center;
+  justify-items: center;
+}
+
+.upload-zone::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 4px;
+  background: rgba(34,227,180,0.12);
+  border: 1px solid rgba(34,227,180,0.3);
+  border-radius: 50%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2322e3b4' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' d='M12 16V8m0 0-3 3m3-3 3 3M5 20h14'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: background-color var(--t), transform 200ms var(--ease);
+}
+
+.upload-zone input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.upload-zone span { color: var(--text); font-weight: 700; font-size: 14px; }
+.upload-zone small, .ingestion-status { color: var(--muted); font-size: 11px; line-height: 1.5; max-width: 280px; }
+
+.upload-zone:hover, .upload-zone.is-dragging {
+  border-color: var(--accent);
+  background: rgba(34, 227, 180, 0.07);
+  box-shadow: 0 0 28px rgba(34,227,180,0.12), inset 0 0 20px rgba(34,227,180,0.04);
+}
+
+.upload-zone:hover::before, .upload-zone.is-dragging::before {
+  background-color: rgba(34,227,180,0.2);
+  transform: translateY(-2px);
+}
+
+.ingestion-status {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+}
+
+.evidence-docket { margin-top: 4px; }
+
+.evidence-queue { display: grid; gap: 6px; }
+
+.evidence-queue > span {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.evidence-queue > span > b { color: var(--info); font-size: 11px; }
+.evidence-queue em {
+  max-width: 110px;
+  color: var(--accent);
+  font-size: 10px;
+  font-style: normal;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.evidence-queue > span > span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.needs-extraction { color: var(--warning); }
+.is-indexed {
+  border-color: rgba(34, 227, 180, 0.36) !important;
+  background: linear-gradient(90deg, rgba(34, 227, 180, 0.07), rgba(96, 165, 250, 0.03)) !important;
+}
+

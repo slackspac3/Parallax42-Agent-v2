@@ -1,0 +1,70 @@
+/* ============================================================
+   ADVISOR RESPONSE CARDS
+   ============================================================ */
+.advisor-response-card {
+  padding: 16px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(34,227,180,0.2);
+  background:
+    linear-gradient(135deg, rgba(34,227,180,0.08), rgba(96,165,250,0.03)),
+    rgba(4,8,16,0.7);
+  animation: message-in 300ms var(--ease) both;
+}
+
+.advisor-response-head {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 12px;
+}
+
+.advisor-response-head strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 6px;
+}
+
+.advisor-response-head p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.advisor-next-question {
+  padding: 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid rgba(251,191,36,0.22);
+  background: rgba(251,191,36,0.055);
+}
+
+.advisor-next-question strong {
+  display: block;
+  margin: 6px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.advisor-next-question p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.assistant-next { display: flex; align-items: center; gap: 8px; }
+.assistant-next span { font-size: 12px; color: var(--subtle); font-style: italic; }
+.assistant-next button {
+  min-height: 32px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #22e3b4, #1cc99f);
+  color: #02110d;
+  border: none;
+  border-radius: var(--r-sm);
+  box-shadow: 0 0 12px rgba(34,227,180,0.2);
+}
+

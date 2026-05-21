@@ -1,0 +1,220 @@
+/* ============================================================
+   RUNWAY (COUNCIL PANEL)
+   ============================================================ */
+.runway-top {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 16px;
+}
+
+.runway-top p {
+  max-width: 440px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.run-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 128px;
+}
+
+.run-actions button { width: 100%; }
+
+/* Progress bar */
+.run-progress {
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+
+.run-progress span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--info), var(--violet));
+  transition: width 500ms var(--ease);
+  box-shadow: 0 0 10px rgba(34,227,180,0.5);
+}
+
+/* Stage console */
+.stage-console {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.025);
+}
+
+.stage-console strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.stage-console p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* Specialist list */
+.specialist-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+body[data-run-mode="demo"] .specialist-list,
+body[data-run-mode="live"] .specialist-list { grid-template-columns: repeat(2, 1fr); }
+
+.specialist {
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.025);
+  opacity: 0.55;
+  transition: opacity var(--t), border-color var(--t), background var(--t), box-shadow var(--t);
+}
+
+.specialist.is-active {
+  opacity: 1;
+  border-color: rgba(34,227,180,0.4);
+  background: linear-gradient(135deg, rgba(34,227,180,0.1), rgba(34,227,180,0.02));
+  animation: specialist-pulse 1.2s ease-in-out infinite alternate;
+}
+
+.specialist.is-complete {
+  opacity: 1;
+  border-color: rgba(34,227,180,0.22);
+  background: rgba(34,227,180,0.04);
+}
+
+.specialist span {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--warning);
+}
+
+.specialist.is-complete span { color: var(--accent); }
+
+.specialist strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.specialist p {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* Trace */
+.trace-drawer {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+
+.trace-drawer summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 0;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+
+.trace-drawer summary::before {
+  content: "▶";
+  font-size: 9px;
+  color: var(--accent);
+  transition: transform var(--t);
+}
+
+.trace-drawer[open] summary::before { transform: rotate(90deg); }
+
+.trace {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  padding: 0;
+  margin: 12px 0 0;
+  list-style: none;
+  counter-reset: trace;
+}
+
+.trace li {
+  counter-increment: trace;
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.025);
+  animation: fade-up 300ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+.trace li::before {
+  content: counter(trace, decimal-leading-zero);
+  color: var(--accent);
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  padding-top: 2px;
+}
+
+.trace strong { font-size: 13px; font-weight: 700; }
+.trace p { margin-top: 3px; color: var(--muted); font-size: 12px; }
+
+.raw-run-details {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: rgba(4,8,16,0.7);
+}
+
+.raw-run-details summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.raw-run-details[open] summary { border-bottom: 1px solid var(--line); }
+
+.raw-run-details pre { max-height: 460px; margin: 0; border: 0; }
+
+pre {
+  margin: 14px 0 0;
+  padding: 16px;
+  overflow: auto;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: rgba(0,0,0,0.32);
+  font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+

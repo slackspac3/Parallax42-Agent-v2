@@ -1,0 +1,252 @@
+/* ============================================================
+   CONVERSATION / CHAT PANEL
+   ============================================================ */
+.conversation-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  min-height: 0;
+}
+
+.mission-welcome {
+  padding: 24px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-accent);
+  background:
+    radial-gradient(ellipse 60% 80% at 15% 0%, rgba(34,227,180,0.1) 0%, transparent 60%),
+    rgba(255,255,255,0.03);
+  animation: fade-up 500ms var(--ease) both;
+}
+
+.mission-welcome h2 {
+  margin-top: 10px;
+  font-size: 22px;
+}
+
+.mission-welcome p {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 560px;
+}
+
+.mission-welcome button {
+  margin-top: 18px;
+  background: linear-gradient(135deg, rgba(34,227,180,0.18), rgba(96,165,250,0.1));
+  border: 1px solid rgba(34,227,180,0.3);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 0 20px;
+  border-radius: var(--r-md);
+  box-shadow: none;
+}
+
+.mission-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 16px;
+  align-items: start;
+}
+
+/* ── Chat main column ─────────────────────────────────────────
+   Flex column so order properties actually work.
+   Visual order (top→bottom): messages → suggestions → input
+   ──────────────────────────────────────────────────────────── */
+.chat-main-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+/* Chat messages — top, scrollable, grows to fill space */
+.chat-messages {
+  order: 1;
+  flex: 1 1 auto;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 220px;
+  padding: 16px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01)),
+    rgba(4,8,16,0.7);
+  overflow-y: auto;
+}
+
+/* Suggestions — below messages, above input */
+/* (overrides the later .chat-suggestions rule's order) */
+
+/* Context strength — above input */
+.context-strength { order: 3; }
+
+/* Chat form — always at bottom */
+.chat-form {
+  order: 4;
+  flex-shrink: 0;
+  display: grid;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+  background: transparent;
+}
+
+.chat-form textarea { min-height: 100px; border-radius: var(--r-md); }
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.attachment-status { color: var(--muted); font-size: 12px; }
+.chat-attachment-list { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-track { background: transparent; }
+.chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }
+
+.chat-message {
+  max-width: 88%;
+  padding: 13px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.045);
+  color: var(--muted);
+  animation: message-in 280ms var(--ease) both;
+}
+
+.chat-message strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.chat-message p {
+  white-space: pre-line;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.chat-message.is-user {
+  justify-self: end;
+  min-width: min(200px, 82%);
+  border-color: rgba(34,227,180,0.32);
+  background: linear-gradient(135deg, rgba(34,227,180,0.14), rgba(96,165,250,0.05));
+  color: var(--text);
+}
+
+.chat-message.is-assistant { justify-self: start; }
+
+.chat-message.is-pending { color: var(--warning); }
+
+.chat-message.is-pending::after {
+  content: "";
+  display: inline-block;
+  width: 32px;
+  height: 3px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--info), var(--violet));
+  animation: typing-bar 800ms ease-in-out infinite alternate;
+}
+
+/* Suggestions — below messages, above form */
+.chat-suggestions {
+  order: 2;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.chat-suggestions button {
+  min-height: 52px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: rgba(255,255,255,0.025);
+  color: var(--muted);
+  text-align: left;
+  font-size: 12px;
+  box-shadow: none;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.chat-suggestions button:hover:not(:disabled) {
+  border-color: rgba(34,227,180,0.36);
+  background: rgba(34,227,180,0.05);
+  color: var(--text);
+  transform: translateY(-1px);
+  filter: none;
+  box-shadow: 0 4px 16px rgba(34,227,180,0.1);
+}
+
+/* Context strength */
+.context-strength {
+  display: grid;
+  gap: 8px;
+}
+
+.context-strength > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.context-meter {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.07);
+  overflow: hidden;
+}
+
+#contextStrengthBar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--info));
+  width: 0;
+  transition: width 600ms var(--ease);
+  box-shadow: 0 0 8px rgba(34,227,180,0.5);
+}
+
+#contextStrengthLabel { font-size: 13px; font-weight: 700; color: var(--text); }
+
+#contextStrengthText { font-size: 12px; color: var(--muted); }
+
+/* only hide agent-activity when the welcome screen is actually visible */
+.mission-welcome:not([hidden]) + .agent-activity { display: none; }
+
+/* Agent activity widget */
+.agent-activity {
+  order: 0;
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+  border: 1px solid rgba(255,255,255,0.1);
+  background:
+    radial-gradient(ellipse 60% 100% at 5% 0%, rgba(34,227,180,0.14) 0%, transparent 50%),
+    linear-gradient(180deg, rgba(255,255,255,0.052), rgba(255,255,255,0.02));
+}
+
+.agent-activity-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.agent-activity-header strong { font-size: 13px; color: var(--muted); }
+
