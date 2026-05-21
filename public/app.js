@@ -110,6 +110,7 @@ const citationList = document.querySelector('#citationList');
 const benchmarkSummary = document.querySelector('#benchmarkSummary');
 const deploymentStatus = document.querySelector('#deploymentStatus');
 const capabilityFallbacks = document.querySelector('#capabilityFallbacks');
+const adminStatusDashboard = document.querySelector('#adminStatusDashboard');
 const adminFeatureControls = document.querySelector('#adminFeatureControls');
 const readinessJsonLink = document.querySelector('#readinessJsonLink');
 const benchmarksJsonLink = document.querySelector('#benchmarksJsonLink');
@@ -145,6 +146,7 @@ let playbackTimers = [];
 let uploadedEvidence = [];
 let evidenceIndexMeta = {};
 let adminFeatureState = null;
+let humanReviewRecord = null;
 let chatCaseDraft = {};
 let chatRunReadiness = null;
 let workspaceView = 'chat';
@@ -281,11 +283,11 @@ const backendParsedEvidenceExtensions = new Set(['pdf', 'docx', 'txt', 'md', 'ma
 const textEvidenceSampleBytes = 180 * 1024;
 const defaultUploadChunkBytes = 1024 * 1024;
 const evidencePipelineSteps = [
-  { id: 'queue', label: 'Queue' },
-  { id: 'upload', label: 'Upload' },
-  { id: 'parse', label: 'Parse' },
-  { id: 'embed', label: 'Embed' },
-  { id: 'ready', label: 'Ready' }
+  { id: 'queue', label: 'Queued' },
+  { id: 'upload', label: 'Uploaded' },
+  { id: 'parse', label: 'Parsing / OCR' },
+  { id: 'embed', label: 'Embedding / indexing' },
+  { id: 'ready', label: 'Citation-ready' }
 ];
 const evidenceSignalPatterns = [
   ['export control', /export control|classification|end[- ]use|end user|import permit|sanctions|restricted party|freight forwarder/i],
@@ -523,7 +525,8 @@ function renderEvidencePipelineStatus({
   progress = 4,
   files = [],
   metric = '',
-  state = 'working'
+  state = 'working',
+  startedAt = null
 } = {}) {
   window.P42AppModules.evidenceUploadUi.renderEvidencePipelineStatus(chatAttachmentStatus, {
     title,
@@ -533,6 +536,7 @@ function renderEvidencePipelineStatus({
     files,
     metric,
     state,
+    startedAt,
     steps: evidencePipelineSteps
   });
 }
@@ -748,6 +752,18 @@ async function indexEvidenceForRetrieval(items = []) {
     }
   });
   return result;
+}
+
+function evidenceIndexProvider(result = {}) {
+  return String(result.index?.provider || result.indexingProvider || result.provider || evidenceIndexMeta.provider || '').toLowerCase();
+}
+
+function evidenceIndexStorageSummary(result = {}) {
+  const provider = evidenceIndexProvider(result);
+  if (/qdrant/.test(provider)) return 'Stored in Qdrant-backed evidence memory for semantic retrieval.';
+  if (/local/.test(provider)) return 'Stored in server-side local vector fallback. Configure Qdrant for durable evidence memory.';
+  if (/none|metadata/.test(provider)) return 'Evidence metadata is registered, but semantic indexing is disabled in this runtime.';
+  return 'Stored behind the API for council citation retrieval.';
 }
 
 function retrievalQueryFromDraft(draft = chatCaseDraft) {
@@ -1108,15 +1124,17 @@ async function ingestEvidenceFiles(files = []) {
       }
       try {
         indexResult = await indexEvidenceForRetrieval(extracted);
+        const provider = evidenceIndexProvider(indexResult);
+        const localFallback = /local|none|metadata/.test(provider);
         if (activeRunMode === 'chat') {
           renderEvidencePipelineStatus({
             phase: 'ready',
             progress: 100,
             title: 'Evidence retrieval ready',
-            detail: `${indexResult?.index?.chunkCount || indexResult?.chunking?.chunkCount || indexedChunkCount()} embedded chunks are stored server-side for council citations.`,
-            metric: 'indexed',
+            detail: `${indexResult?.index?.chunkCount || indexResult?.chunking?.chunkCount || indexedChunkCount()} embedded chunks are ready for council citations. ${evidenceIndexStorageSummary(indexResult)}`,
+            metric: localFallback ? 'local fallback' : 'indexed',
             files: extracted,
-            state: 'ready'
+            state: localFallback ? 'warning' : 'ready'
           });
         }
       } catch (error) {
@@ -1155,7 +1173,7 @@ async function ingestEvidenceFiles(files = []) {
         text: binaryOnlyCount
           ? `Attached ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. ${parsedCount} parsed, ${binaryOnlyCount} registered as metadata only. Add a short description of the supplier/workflow and key clauses before running council.`
           : indexedCount
-            ? `Attached, parsed, and indexed ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. I extracted ${signalCount} signal${signalCount === 1 ? '' : 's'} and stored ${chunkCount} retrieval chunk${chunkCount === 1 ? '' : 's'} server-side for council citations.`
+            ? `Attached, parsed, and indexed ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. I extracted ${signalCount} signal${signalCount === 1 ? '' : 's'} and stored ${chunkCount} retrieval chunk${chunkCount === 1 ? '' : 's'} for council citations. ${evidenceIndexStorageSummary(indexResult)}`
             : `Attached and parsed ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. I extracted ${signalCount} signal${signalCount === 1 ? '' : 's'}, but semantic retrieval is not indexed yet.`
       });
       if (indexedCount) {
@@ -1163,10 +1181,10 @@ async function ingestEvidenceFiles(files = []) {
           phase: 'ready',
           progress: 100,
           title: 'Evidence ready for council',
-          detail: `${uploadedEvidence.length} file${uploadedEvidence.length === 1 ? '' : 's'} attached · ${indexedChunkCount()} server-side indexed chunks ready for semantic retrieval.`,
-          metric: 'ready',
+          detail: `${uploadedEvidence.length} file${uploadedEvidence.length === 1 ? '' : 's'} attached · ${indexedChunkCount()} indexed chunks ready for semantic retrieval. ${evidenceIndexStorageSummary(indexResult)}`,
+          metric: /local|none|metadata/.test(evidenceIndexProvider(indexResult)) ? 'local fallback' : 'ready',
           files: extracted,
-          state: 'ready'
+          state: /local|none|metadata/.test(evidenceIndexProvider(indexResult)) ? 'warning' : 'ready'
         });
       } else {
         setAttachmentStatus(`${uploadedEvidence.length} file${uploadedEvidence.length === 1 ? '' : 's'} attached. ${binaryOnlyCount ? 'Describe the case before running council.' : 'Continue the case or run council.'}`, 'ready');
@@ -1862,6 +1880,7 @@ function renderModeIdle(mode = activeRunMode) {
   approvalStatus.textContent = copy.waitingApproval;
   approvalButton.textContent = 'Approval locked';
   approvalButton.disabled = true;
+  approvalButton.removeAttribute('data-review-action');
   runtimeText.textContent = '--';
   readinessScore.textContent = '--';
   evidenceCount.textContent = mode === 'live' && uploadedEvidence.length ? String(uploadedEvidence.length) : '--';
@@ -1908,6 +1927,7 @@ function resetChatCaseSession() {
   document.body.classList.remove('has-decision-output');
   lastRun = null;
   lastRuns.chat = null;
+  humanReviewRecord = null;
   uploadedEvidence = [];
   evidenceIndexMeta = {};
   chatCaseDraft = {};
@@ -2152,6 +2172,7 @@ function renderConversationState(result = {}) {
     : 'The agent is collecting required context before producing a decision.';
   approvalButton.textContent = 'Approval locked';
   approvalButton.disabled = true;
+  approvalButton.removeAttribute('data-review-action');
   runtimeText.textContent = 'NLP case builder';
   readinessScore.textContent = runReadiness.runnable ? 'runnable' : 'draft';
   evidenceCount.textContent = String((draft.documents || []).length || evidenceSignals.length || 0);
@@ -2373,6 +2394,7 @@ function renderRun(result, options = {}) {
     approvalStatus.textContent = 'Case could not be evaluated.';
     approvalButton.textContent = 'Approval locked';
     approvalButton.disabled = true;
+    approvalButton.removeAttribute('data-review-action');
     runtimeText.textContent = '--';
     readinessScore.textContent = '--';
     evidenceCount.textContent = '--';
@@ -2410,8 +2432,16 @@ function renderRun(result, options = {}) {
   approvalStatus.textContent = finalVisible
     ? businessDecisionSummary(result)
     : 'Specialists are building the audit pack.';
-  approvalButton.textContent = finalVisible ? 'Human approval required' : 'Review in progress';
-  approvalButton.disabled = true;
+  const recordedReview = result.humanReviewRecorded || humanReviewRecord;
+  approvalButton.textContent = finalVisible
+    ? recordedReview ? 'Human review recorded' : 'Record human review'
+    : 'Review in progress';
+  approvalButton.disabled = !finalVisible || Boolean(recordedReview);
+  if (finalVisible && !recordedReview) {
+    approvalButton.dataset.reviewAction = 'record-human-review';
+  } else {
+    approvalButton.removeAttribute('data-review-action');
+  }
   runtimeText.textContent = formatRuntime(result.runtime?.actualRuntime || result.mode || 'unknown');
   readinessScore.textContent = finalVisible
     ? `${Math.round(result.decision.readinessScore * 100)}%`
@@ -3174,6 +3204,40 @@ async function submitLearningFeedback(form) {
   }
 }
 
+async function recordHumanReview() {
+  const result = lastRun?.ok ? lastRun : lastRuns[activeRunMode]?.ok ? lastRuns[activeRunMode] : null;
+  if (!result || humanReviewRecord) return;
+  const confirmed = window.confirm('Record that a human reviewer inspected this decision room? This writes an audit event; it does not auto-approve operational use.');
+  if (!confirmed) return;
+  approvalButton.disabled = true;
+  approvalButton.textContent = 'Recording review';
+  try {
+    const recorded = await apiFetch('/api/case/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        caseId: result.case?.caseId || chatCaseDraft.caseId || 'conversation-case',
+        decision: result.decision || {},
+        reviewerDecision: 'Human review recorded',
+        reviewerNotes: 'Reviewer inspected the decision room and evidence pack from the cockpit.',
+        evidenceIds: Array.isArray(result.evidenceIds) ? result.evidenceIds : []
+      })
+    });
+    humanReviewRecord = recorded;
+    result.humanReviewRecorded = recorded;
+    lastRun = result;
+    lastRuns[activeRunMode] = result;
+    approvalButton.textContent = 'Human review recorded';
+    approvalButton.disabled = true;
+    approvalButton.removeAttribute('data-review-action');
+  } catch (error) {
+    approvalButton.textContent = 'Review not recorded';
+    window.setTimeout(() => {
+      renderRun(result);
+    }, 1600);
+  }
+}
+
 async function loadReadiness() {
   try {
     const readiness = await apiFetch('/api/readiness');
@@ -3306,6 +3370,57 @@ function renderCapabilityFallbacks(results = []) {
       <p>${escapeHtml(note.detail)}</p>
     </article>
   `).join('');
+}
+
+function adminStatusCard(label, status, detail) {
+  const healthy = /ready|configured|active|enforced|qdrant|hash|ok|available|enabled/i.test(`${status} ${detail}`);
+  const warning = /audit|local|fallback|disabled|missing|not configured|not active|not enforced/i.test(`${status} ${detail}`) && !healthy;
+  const className = healthy ? 'is-ready' : warning ? 'is-warning' : 'is-danger';
+  return `
+    <article class="admin-status-card ${className}">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(status)}</strong>
+      <p>${escapeHtml(detail)}</p>
+    </article>
+  `;
+}
+
+function renderAdminStatus(status = {}) {
+  if (!adminStatusDashboard) return;
+  const vector = status.vector || {};
+  const gateway = status.gateway || {};
+  const parserRelay = status.parserRelay || {};
+  const runtime = status.runtime || {};
+  const auth = status.auth || {};
+  const audit = status.audit || {};
+  const cards = [
+    adminStatusCard('Auth mode', auth.enforced ? 'enforced' : auth.mode || 'audit', auth.enforced ? 'RBAC policy blocks unauthorized actions.' : 'Audit-mode records actor context without blocking the demo.'),
+    adminStatusCard('Audit chain', audit.hashChained ? 'hash-chained' : 'not verified', audit.provider || 'local-jsonl'),
+    adminStatusCard('Vector memory', vector.provider || 'local-file', vector.qdrantConfigured ? `Qdrant collection ${vector.collection || 'configured'}` : 'Local-file fallback is demo-grade.'),
+    adminStatusCard('Compass gateway', gateway.configured ? 'configured' : 'not configured', gateway.configured ? 'LLM/advisory and embeddings boundary can be used.' : 'Deterministic council still runs without model calls.'),
+    adminStatusCard('Parser relay', parserRelay.configured ? 'configured' : 'default relay', parserRelay.featureEnabled === false ? 'Disabled by admin switch.' : 'External parser/OCR boundary is requested when available.'),
+    adminStatusCard('CrewAI runtime', runtime.liveCrewAIEnabled ? 'requested' : runtime.default || 'crewai_llm', runtime.liveLlmAdvisoryEnabled ? 'Live advisory specialists enabled.' : 'Deterministic decision owner remains active.')
+  ];
+  adminStatusDashboard.innerHTML = cards.join('');
+}
+
+async function loadAdminStatus() {
+  if (!adminStatusDashboard) return null;
+  adminStatusDashboard.innerHTML = '<article class="admin-status-card is-loading"><span>Runtime status</span><strong>Checking</strong><p>Loading safe admin readiness signals...</p></article>';
+  try {
+    const status = await apiFetch('/api/admin/status');
+    renderAdminStatus(status);
+    return status;
+  } catch (error) {
+    adminStatusDashboard.innerHTML = `
+      <article class="admin-status-card is-danger">
+        <span>Runtime status</span>
+        <strong>unavailable</strong>
+        <p>${escapeHtml(error instanceof Error ? error.message : 'Could not load admin status.')}</p>
+      </article>
+    `;
+    return null;
+  }
 }
 
 function adminFeatureBadge(feature = {}) {
@@ -3447,6 +3562,7 @@ async function loadDeploymentStatus() {
 
   renderStatusCards(results);
   renderCapabilityFallbacks(results);
+  loadAdminStatus();
   loadAdminFeatures();
 }
 
@@ -3481,6 +3597,12 @@ specialistList?.addEventListener('submit', (event) => {
   if (!form) return;
   event.preventDefault();
   submitLearningFeedback(form);
+});
+
+approvalButton?.addEventListener('click', () => {
+  if (approvalButton.dataset.reviewAction === 'record-human-review') {
+    recordHumanReview();
+  }
 });
 
 agentActivity?.addEventListener('click', (event) => {

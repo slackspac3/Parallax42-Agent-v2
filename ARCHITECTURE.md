@@ -38,17 +38,17 @@ The deterministic compliance engine owns final decision status, blocker naming, 
 The browser should not be treated as a trusted evidence or vector store. The intended current flow is:
 
 ```text
-Browser sends case/evidence metadata
-  -> API indexes sanitized evidence chunks
+Browser sends case/evidence metadata and sanitized excerpts
+  -> API indexes sanitized evidence chunks and keeps embeddings server-side
   -> optional sanitized governance-reference corpus is indexed separately
   -> Compass gateway may create embeddings when configured
   -> local vector store persists by default
   -> Qdrant REST can be used when configured
-  -> API returns evidence IDs and sanitized metadata
+  -> API returns evidence IDs, sanitized metadata, and safe snippets/citations
   -> council retrieves evidence, governance references, and learning memory server-side
 ```
 
-The default vector provider is local-file storage for demo and development. Qdrant REST is optional when `P42_VECTOR_STORE_PROVIDER=qdrant` and the required Qdrant environment variables are configured. Governance references are stored as `governance_reference` chunks with sanitized public-test classification and are advisory context, not official policy. Local OCR/document parsing is not implemented in this repository; any production document extraction boundary should be added as a server-side service before storing retrievable chunks.
+The default vector provider is local-file storage for demo and development. Qdrant REST is optional when `P42_VECTOR_STORE_PROVIDER=qdrant` and the required Qdrant environment variables are configured. Governance references are stored as `governance_reference` chunks with sanitized public-test classification and are advisory context, not official policy. Local OCR/document parsing is not implemented in this repository; browser-side state may include metadata, excerpts, and retrieved snippets for the visible review experience, but not embedding vectors. Any production document extraction boundary should be added as a server-side service before storing retrievable chunks.
 
 ## Audit And Security Model
 

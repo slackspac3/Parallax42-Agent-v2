@@ -8,3 +8,54 @@
 
 .live-upload-cockpit { display: grid; gap: 10px; }
 
+.admin-status-panel {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+}
+
+.admin-status-panel > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-status-panel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.admin-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.admin-status-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 10px;
+  background: rgba(255,255,255,0.025);
+  display: grid;
+  gap: 5px;
+}
+
+.admin-status-card span {
+  color: var(--subtle);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-status-card strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.admin-status-card.is-ready { border-color: rgba(34,227,180,0.2); }
+.admin-status-card.is-warning { border-color: rgba(245,197,66,0.28); }
+.admin-status-card.is-danger { border-color: rgba(248,113,113,0.28); }
+.admin-status-card.is-loading { opacity: 0.78; }

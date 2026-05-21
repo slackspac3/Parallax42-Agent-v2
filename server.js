@@ -10,6 +10,7 @@ const { buildFeatureStatus, updateFeatureFlags } = require('./lib/adminFeatureFl
 const { buildAdminStatus } = require('./lib/adminStatus');
 const { appendAuditRecord, auditStoreHealth, readRecentAuditRecords, verifyAuditChain } = require('./lib/auditStore');
 const { runBenchmark } = require('./lib/benchmarkSuite');
+const { handleCaseApproval } = require('./lib/caseApproval');
 const { gatewayHealth } = require('./lib/compassGatewayClient');
 const { getReadinessInventory } = require('./lib/complianceAgent');
 const { evidenceVectorStoreHealth, runQdrantSmokeTest } = require('./lib/evidenceVectorStore');
@@ -26,6 +27,7 @@ const {
 } = require('./lib/httpHandlers');
 const { findSimilarCases, getControlSuggestions, learningMemoryHealth, recordReviewerFeedback } = require('./lib/learningMemory');
 const { authHealth, authorizeRequest } = require('./lib/rbac');
+const { backendRelayHandler } = require('./api/_backendRelay');
 
 const PORT = Number(process.env.PORT || 3020);
 const PUBLIC_ROOT = path.join(__dirname, 'public');
@@ -57,6 +59,52 @@ function serveStatic(res, pathname) {
     });
     res.end(data);
   });
+}
+
+function queryObject(searchParams) {
+  const query = {};
+  for (const [key, value] of searchParams.entries()) {
+    if (query[key] === undefined) {
+      query[key] = value;
+    } else if (Array.isArray(query[key])) {
+      query[key].push(value);
+    } else {
+      query[key] = [query[key], value];
+    }
+  }
+  return query;
+}
+
+function localRelayResponse(res) {
+  let statusCode = 200;
+  return {
+    setHeader(name, value) {
+      res.setHeader(name, value);
+    },
+    status(code) {
+      statusCode = Number(code) || 200;
+      return this;
+    },
+    json(body) {
+      writeJson(res, statusCode, body);
+    },
+    send(body) {
+      res.statusCode = statusCode;
+      if (!res.getHeader('Cache-Control')) res.setHeader('Cache-Control', 'no-store');
+      if (!res.getHeader('Content-Type')) res.setHeader('Content-Type', 'application/octet-stream');
+      res.end(body);
+    },
+    end(body) {
+      res.statusCode = statusCode;
+      if (!res.getHeader('Cache-Control')) res.setHeader('Cache-Control', 'no-store');
+      res.end(body);
+    }
+  };
+}
+
+async function handleLocalBackendRelay(req, res, url) {
+  req.query = queryObject(url.searchParams);
+  await backendRelayHandler(req, localRelayResponse(res));
 }
 
 const server = http.createServer(async (req, res) => {
@@ -100,6 +148,11 @@ const server = http.createServer(async (req, res) => {
       const body = await readJsonBody(req, { limitBytes: 5_000_000 });
       const result = await handleStandardRun({ req, body, startedAt: Date.now() });
       writeJson(res, result.status, result.body);
+      return;
+    }
+
+    if (url.pathname === '/api/backend' || url.pathname.startsWith('/api/backend/')) {
+      await handleLocalBackendRelay(req, res, url);
       return;
     }
 
@@ -211,6 +264,13 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/api/agent/run') {
       const body = await readJsonBody(req, { limitBytes: 5_000_000 });
       const result = await handleAgentRun({ req, body });
+      writeJson(res, result.status, result.body);
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/case/approve') {
+      const body = await readJsonBody(req, { limitBytes: 1_000_000 });
+      const result = await handleCaseApproval({ req, body });
       writeJson(res, result.status, result.body);
       return;
     }

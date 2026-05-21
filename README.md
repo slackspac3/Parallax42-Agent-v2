@@ -92,7 +92,7 @@ Implemented in this repo:
 
 - `POST /api/conversation` NLP case-builder endpoint that asks follow-up questions and executes the agent workflow when ready
 - `POST /api/agent/run` CrewAI Flow-routed compliance-agent run with deterministic fallback
-- `POST /api/evidence/index` and `POST /api/evidence/search` server-side retrieval boundary: gateway embeddings are stored behind the API, and the browser receives only case/evidence/index metadata
+- `POST /api/evidence/index` and `POST /api/evidence/search` server-side retrieval boundary: gateway embeddings and indexed chunks stay behind the API; the browser receives case/evidence/index metadata plus safe snippets/citations needed for the reviewer UI
 - `GET /api/readiness` submission-readiness inventory
 - `GET /api/health` runtime and linked-platform status
 - Vercel-compatible serverless API functions under `api/`
@@ -239,7 +239,7 @@ export CREWAI_LLM_API_KEY=$COMPASS_GATEWAY_TOKEN
 AGENT_RUNTIME=crewai_llm npm run dev
 ```
 
-Live LLM specialist output is attached under `orchestration.llmOutput`; on Vercel this can use the Node-side Compass advisory adapter when `AGENT_RUNTIME=crewai_llm` and `CREWAI_ENABLE_LIVE_LLM=1` are set. The final decision remains guarded by the deterministic engine. The evidence boundary uses server-side `POST /api/evidence/index` and `POST /api/evidence/search`, calls the reusable Parallax42 embedding boundary using `text-embedding-3-large`, stores chunk vectors behind the API, and keeps browser state limited to case IDs, evidence IDs, and sanitized index metadata.
+Live LLM specialist output is attached under `orchestration.llmOutput`; on Vercel this can use the Node-side Compass advisory adapter when `AGENT_RUNTIME=crewai_llm` and `CREWAI_ENABLE_LIVE_LLM=1` are set. The final decision remains guarded by the deterministic engine. The evidence boundary uses server-side `POST /api/evidence/index` and `POST /api/evidence/search`, calls the reusable Parallax42 embedding boundary using `text-embedding-3-large`, stores chunk vectors behind the API, and keeps embedding vectors out of browser state. The browser may carry sanitized document metadata, excerpts, and retrieved snippets so the chat and reviewer UI can explain what was used.
 
 For live CrewAI multi-agent execution from Vercel, configure `P42_CREWAI_SERVICE_URL` and `P42_CREWAI_SERVICE_TOKEN`. The Node runtime delegates the six-agent CrewAI council to that service, attaches its output under `orchestration.crewaiOutput`, then still applies the deterministic council as the final decision owner.
 

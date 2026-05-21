@@ -369,6 +369,14 @@
                   <button type="button" id="resetConfig" class="secondary-button">Reset</button>
                 </div>
               </form>
+              <div class="admin-status-panel">
+                <div>
+                  <span class="eyebrow">Runtime status</span>
+                  <strong>Admin readiness</strong>
+                  <p>Safe configuration signals only; no secrets or raw environment values are exposed.</p>
+                </div>
+                <div id="adminStatusDashboard" class="admin-status-grid" aria-live="polite"></div>
+              </div>
               <div class="admin-feature-panel">
                 <div>
                   <span class="eyebrow">Admin controls</span>
