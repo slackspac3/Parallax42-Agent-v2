@@ -1951,6 +1951,50 @@ pre {
 /* Agent findings */
 .agent-findings-panel { border-color: rgba(34,227,180,0.18); }
 
+.agent-findings-panel summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 18px;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+}
+
+.agent-findings-panel summary::-webkit-details-marker { display: none; }
+
+.agent-findings-panel summary::after {
+  content: "Open trace";
+  justify-self: end;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(34,227,180,0.22);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.agent-findings-panel[open] summary::after { content: "Hide trace"; }
+
+.agent-findings-panel summary .eyebrow,
+.agent-findings-panel summary small {
+  grid-column: 1;
+}
+
+.agent-findings-panel summary strong {
+  grid-column: 1;
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.agent-findings-panel summary small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .agent-finding-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -2018,6 +2062,55 @@ pre {
   padding-left: 20px;
   color: var(--text);
   line-height: 1.5;
+}
+
+.reviewer-action-table {
+  display: grid;
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid rgba(251,191,36,0.2);
+  border-radius: var(--r-md);
+  background: rgba(251,191,36,0.14);
+}
+
+.reviewer-action-table > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(160px, 0.7fr) minmax(160px, 0.6fr);
+  gap: 1px;
+  background: rgba(255,255,255,0.04);
+}
+
+.reviewer-action-table > div > * {
+  min-width: 0;
+  padding: 14px;
+  background: rgba(8,14,22,0.96);
+}
+
+.reviewer-action-table .reviewer-action-head > * {
+  color: var(--warning);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.reviewer-action-table strong {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.42;
+}
+
+.reviewer-action-table span,
+.reviewer-action-table em {
+  color: var(--muted);
+  font-size: 13px;
+  font-style: normal;
+  line-height: 1.42;
+}
+
+.reviewer-action-table em {
+  color: var(--warning);
+  font-weight: 800;
 }
 
 .evidence-pill-row {
@@ -2257,7 +2350,6 @@ pre {
 
 /* Council Timeline Panel */
 .council-timeline-panel { border-color: rgba(34,227,180,0.16); }
-
 /* ============================================================
    BOTTOM SECTIONS (Evidence, Audit, Hardening)
    ============================================================ */

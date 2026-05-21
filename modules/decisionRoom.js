@@ -335,9 +335,30 @@
           <article><span>Evidence IDs</span><strong>${escapeHtml(evidenceIds.length)}</strong></article>
           <article><span>Confidence</span><strong>${escapeHtml(humanize(evidenceQuality.status || 'not scored'))}</strong></article>
         </div>
-        <article class="report-section why-decision-panel">
-          <span class="eyebrow">Why This Decision</span>
-          <ol>${whyItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ol>
+        <article class="report-section required-actions-panel reviewer-handoff-panel">
+          <div class="report-section-header">
+            <div>
+              <span class="eyebrow">Required Reviewer Actions</span>
+              <p>What the accountable human reviewer must confirm before this can move toward operational approval.</p>
+            </div>
+            <div class="decision-room-actions compact">
+              <button type="button" data-report-action="export-review-pack">Export review pack PDF</button>
+            </div>
+          </div>
+          <div class="reviewer-action-table" role="table" aria-label="Required reviewer actions">
+            <div role="row" class="reviewer-action-head">
+              <span role="columnheader">Action</span>
+              <span role="columnheader">Owner</span>
+              <span role="columnheader">Status</span>
+            </div>
+            ${reviewerActions.map((action) => `
+              <div role="row">
+                <strong role="cell">${escapeHtml(action)}</strong>
+                <span role="cell">${escapeHtml(result?.case?.businessUnit || 'Accountable reviewer')}</span>
+                <em role="cell">Needs human confirmation</em>
+              </div>
+            `).join('')}
+          </div>
         </article>
         <article class="report-section risk-summary-panel">
           <span class="eyebrow">Top Risks</span>
@@ -354,7 +375,7 @@
         <article class="report-section evidence-used-panel">
           <div class="report-section-header">
             <div>
-              <span class="eyebrow">Evidence Used</span>
+              <span class="eyebrow">Evidence Quality And Sources</span>
               <p>${escapeHtml(documentImpact.summary || `${citations.length} citation${citations.length === 1 ? '' : 's'} mapped into the decision.`)}</p>
             </div>
             <div class="evidence-pill-row">
@@ -366,16 +387,20 @@
           <div class="evidence-used-list">
             ${evidenceItems.length ? evidenceItems.map((item) => `
               <div>
-                <span>${escapeHtml(item.id)}</span>
+                <span>${escapeHtml(item.signals || 'source evidence')}</span>
                 <strong>${escapeHtml(item.title)}</strong>
                 <p>${escapeHtml(item.detail)}</p>
-                <small>${escapeHtml(item.signals)}</small>
+                <small>Reviewer reference: ${escapeHtml(item.id)}</small>
               </div>
             `).join('') : '<div><span>none</span><strong>No evidence attached</strong><p>The decision used case context only. Attach source documents before approval.</p><small>human review required</small></div>'}
           </div>
         </article>
-        <article class="report-section agent-findings-panel">
-          <span class="eyebrow">Agent Findings</span>
+        <details class="report-section agent-findings-panel">
+          <summary>
+            <span class="eyebrow">Specialist Collaboration Trace</span>
+            <strong>Deterministic specialist validation</strong>
+            <small>Collapsed by default. Open to inspect reviewed inputs, findings, challenges, and handoffs.</small>
+          </summary>
           <p class="timeline-disclosure">Visible specialist validation, not live autonomous debate. Each step records what it reviewed and how it changed or validated the handoff.</p>
           <div class="agent-finding-grid">
             ${timeline.map((item) => `
@@ -387,18 +412,10 @@
               </div>
             `).join('')}
           </div>
-        </article>
-        <article class="report-section required-actions-panel reviewer-handoff-panel">
-          <div class="report-section-header">
-            <div>
-              <span class="eyebrow">Required Human Actions</span>
-              <p>These are the actions a reviewer must confirm before the case can move toward operational approval.</p>
-            </div>
-            <div class="decision-room-actions compact">
-              <button type="button" data-report-action="export-review-pack">Export review pack PDF</button>
-            </div>
-          </div>
-          <ol>${reviewerActions.map((action) => `<li>${escapeHtml(action)}</li>`).join('')}</ol>
+        </details>
+        <article class="report-section why-decision-panel">
+          <span class="eyebrow">Executive Rationale</span>
+          <ol>${whyItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ol>
         </article>
         <article class="report-section learning-feedback-panel">
           <div class="report-section-header">

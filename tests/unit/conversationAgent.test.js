@@ -120,6 +120,33 @@ test('conversation does not repeat payroll owner question after terse HR answer'
   assert.ok(third.questions.some((question) => /DPA|payroll-vendor proof|contract|SOC 2|ISO 27001/i.test(question)));
 });
 
+test('conversation does not repeat a generic owner question after a terse owner answer', () => {
+  const first = processConversation({
+    message: 'Review a vendor that will process customer records and has SOC 2 evidence.'
+  }, { runtime: 'deterministic' });
+
+  assert.ok(first.questions.some((question) => /accountable business unit|workflow owner|who.*own/i.test(question)));
+
+  const second = processConversation({
+    message: 'Head of IT',
+    caseDraft: first.caseDraft
+  }, { runtime: 'deterministic' });
+
+  assert.equal(second.caseDraft.businessUnit, 'Head of IT');
+  assert.ok(!second.questions.some((question) => /accountable business unit|workflow owner|who.*own/i.test(question)));
+  assert.ok(second.questions.some((question) => /geography|regulatory perimeter/i.test(question)));
+  assert.equal(second.caseDraft.recentlyAnsweredFields.business_owner, 2);
+
+  const third = processConversation({
+    message: 'The supplier is in India',
+    caseDraft: second.caseDraft
+  }, { runtime: 'deterministic' });
+
+  assert.equal(third.caseDraft.businessUnit, 'Head of IT');
+  assert.equal(third.caseDraft.geography, 'India');
+  assert.ok(!third.questions.some((question) => /accountable business unit|workflow owner|who.*own/i.test(question)));
+});
+
 test('conversation asks payroll-specific evidence after owner and geography are known', () => {
   const result = processConversation({
     message: 'Finance Payroll owns it',
