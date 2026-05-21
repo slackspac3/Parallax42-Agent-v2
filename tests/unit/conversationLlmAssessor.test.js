@@ -7,7 +7,10 @@ const os = require('node:os');
 const path = require('node:path');
 
 const { processConversation } = require('../../lib/conversationAgent');
-const { assessConversationWithLlm } = require('../../lib/conversationLlmAssessor');
+const {
+  SMART_INTAKE_UNAVAILABLE_MESSAGE,
+  assessConversationWithLlm
+} = require('../../lib/conversationLlmAssessor');
 
 function withEnv(overrides, fn) {
   const snapshot = {};
@@ -30,7 +33,7 @@ function featureConfigPath() {
   return path.join(dir, 'features.json');
 }
 
-test('conversation LLM assessor skips safely when Compass token is absent', async () => {
+test('conversation LLM assessor reports smart intake unavailable when Compass token is absent', async () => {
   const originalFetch = global.fetch;
   try {
     global.fetch = async () => {
@@ -49,8 +52,99 @@ test('conversation LLM assessor skips safely when Compass token is absent', asyn
       });
 
       assert.equal(result.llmAssessment.used, false);
-      assert.match(result.llmAssessment.reason, /token is not configured/i);
+      assert.equal(result.llmAssessment.reason, SMART_INTAKE_UNAVAILABLE_MESSAGE);
+      assert.equal(result.llmAssessment.userMessage, SMART_INTAKE_UNAVAILABLE_MESSAGE);
+      assert.equal(result.llmAssessment.requiresCompass, true);
+      assert.equal(result.llmAssessment.smartIntakeUnavailable, true);
       assert.equal(result.caseDraft, undefined);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('conversation LLM assessor treats Compass gateway errors as visible smart intake outages', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1'
+    }, async () => {
+      global.fetch = async () => ({
+        ok: false,
+        status: 502,
+        text: async () => 'bad gateway'
+      });
+
+      const result = await assessConversationWithLlm({
+        message: 'I have an agreement to review'
+      });
+
+      assert.equal(result.llmAssessment.used, false);
+      assert.equal(result.llmAssessment.reason, SMART_INTAKE_UNAVAILABLE_MESSAGE);
+      assert.equal(result.llmAssessment.userMessage, SMART_INTAKE_UNAVAILABLE_MESSAGE);
+      assert.equal(result.llmAssessment.requiresCompass, true);
+      assert.equal(result.llmAssessment.smartIntakeUnavailable, true);
+      assert.match(result.llmAssessment.detail, /bad gateway|502/i);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('conversation LLM assessor calls Compass even if legacy compassLlmCalls feature flag is off', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      P42_FEATURE_COMPASS_LLM_CALLS: '0',
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1'
+    }, async () => {
+      let called = false;
+      global.fetch = async () => {
+        called = true;
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            model: 'gpt-5.1',
+            choices: [{
+              message: {
+                  content: JSON.stringify({
+                    intent: 'case_context',
+                    requestType: 'saas_agreement_review',
+                    workflowType: 'saas_vendor_review',
+                    documentTypes: ['saas_agreement'],
+                    reviewTarget: 'SaaS agreement',
+                    reviewScope: 'customer data and integration terms',
+                    recommendedFirstAction: 'upload_document',
+                    conversationStage: 'awaiting_document',
+                    suggestedWorkflowSteps: ['classify SaaS terms', 'map data and integrations', 'check security/privacy evidence'],
+                    assistantSummary: 'This is a SaaS agreement review.',
+                    confidence: 0.9,
+                    nextBestQuestion: 'Would you like to upload the agreement now?',
+                    caseUpdate: {}
+                })
+              }
+            }]
+          })
+        };
+      };
+
+      const result = await assessConversationWithLlm({
+        message: 'I have an agreement to review'
+      });
+
+      assert.equal(called, true);
+      assert.equal(result.llmAssessment.used, true);
+      assert.equal(result.llmAssessment.requestType, 'saas_agreement_review');
+      assert.equal(result.llmAssessment.workflowType, 'saas_vendor_review');
+      assert.deepEqual(result.llmAssessment.documentTypes, ['saas_agreement']);
+      assert.equal(result.caseDraft.llmIntake.workflowType, 'saas_vendor_review');
     });
   } finally {
     global.fetch = originalFetch;
@@ -161,6 +255,34 @@ test('conversation result exposes Compass assessment as advisory intake metadata
   assert.equal(result.nlp.llmAssessment.requestType, 'payroll_outsourcing');
   assert.equal(result.nlp.llmAssessment.conversationStage, 'asking_clarification');
   assert.ok(result.actions.some((action) => action.id === 'llm_intake_assessment' && action.status === 'complete'));
+});
+
+test('conversation result surfaces Compass outage instead of asking deterministic fallback questions', () => {
+  const result = processConversation({
+    message: 'I have an agreement to review',
+    conversationPlan: {
+      usedLlm: false,
+      smartIntakeUnavailable: true,
+      requiresCompass: true,
+      userMessage: SMART_INTAKE_UNAVAILABLE_MESSAGE,
+      fallbackReason: SMART_INTAKE_UNAVAILABLE_MESSAGE
+    },
+    llmAssessment: {
+      provider: 'compass_gateway',
+      model: 'gpt-5.1',
+      used: false,
+      requiresCompass: true,
+      smartIntakeUnavailable: true,
+      userMessage: SMART_INTAKE_UNAVAILABLE_MESSAGE,
+      reason: SMART_INTAKE_UNAVAILABLE_MESSAGE,
+      error: true
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.reply, SMART_INTAKE_UNAVAILABLE_MESSAGE);
+  assert.deepEqual(result.questions, []);
+  assert.equal(result.conversationPlan.smartIntakeUnavailable, true);
+  assert.ok(result.actions.some((action) => action.id === 'conversation_planner' && action.status === 'not_available'));
 });
 
 test('conversation LLM assessor classifies document and clause review requests', async () => {

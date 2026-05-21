@@ -7,6 +7,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 const { buildConversationPlan, planConversationTurn } = require('../../lib/conversationPlanner');
+const { SMART_INTAKE_UNAVAILABLE_MESSAGE } = require('../../lib/conversationLlmAssessor');
 
 function withEnv(overrides, fn) {
   const snapshot = {};
@@ -29,7 +30,7 @@ function featureConfigPath() {
   return path.join(dir, 'features.json');
 }
 
-test('conversation planner builds explicit deterministic fallback plan when LLM is unavailable', () => {
+test('conversation planner marks smart intake unavailable when required Compass path is down', () => {
   const plan = buildConversationPlan({
     message: 'I need to review an agreement',
     caseDraft: {
@@ -41,17 +42,26 @@ test('conversation planner builds explicit deterministic fallback plan when LLM 
     },
     llmAssessment: {
       used: false,
-      reason: 'Compass LLM token is not configured.'
+      requiresCompass: true,
+      smartIntakeUnavailable: true,
+      userMessage: SMART_INTAKE_UNAVAILABLE_MESSAGE,
+      reason: SMART_INTAKE_UNAVAILABLE_MESSAGE
     }
   });
 
-  assert.equal(plan.source, 'deterministic_planner_fallback');
+  assert.equal(plan.source, 'compass_required_unavailable');
+  assert.equal(plan.nextBestAction, 'contact_admin');
+  assert.equal(plan.smartIntakeUnavailable, true);
+  assert.equal(plan.requiresCompass, true);
+  assert.equal(plan.userMessage, SMART_INTAKE_UNAVAILABLE_MESSAGE);
+  assert.equal(plan.nextQuestion, SMART_INTAKE_UNAVAILABLE_MESSAGE);
+  assert.equal(plan.shouldRunCouncil, false);
   assert.equal(plan.retrievalBeforePlanning, true);
   assert.equal(plan.deterministicDecisionOwner, true);
   assert.equal(plan.memoryFindings.evidenceMatches, 1);
   assert.equal(plan.memoryFindings.similarCases, 1);
   assert.equal(plan.memoryFindings.controlSuggestions, 1);
-  assert.equal(plan.fallbackReason, 'Compass LLM token is not configured.');
+  assert.equal(plan.fallbackReason, SMART_INTAKE_UNAVAILABLE_MESSAGE);
 });
 
 test('conversation planner calls Compass after retrieval context is prepared', async () => {

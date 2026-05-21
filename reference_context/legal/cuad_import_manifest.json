@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "source": "curated_clause_pattern_reference",
+  "sourcePath": "reference_context/legal_intelligence/sample_contract_clause_patterns.json",
+  "advisoryOnly": true,
+  "sample": true,
+  "importedRecordCount": 5,
+  "files": {
+    "recordsJsonl": "reference_context/legal/cuad_clause_reference.jsonl",
+    "markdown": "reference_context/legal/cuad_clause_reference.md"
+  },
+  "index": {
+    "skipped": true,
+    "reason": "Indexing skipped by --skip-index."
+  },
+  "createdAt": "2026-05-21T10:41:14.606Z"
+}

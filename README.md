@@ -11,6 +11,8 @@ This repo is the clean build surface for packaging the existing Parallax42 work 
 - enterprise integration and deployment evidence
 - Responsible AI and benchmark artifacts
 
+Hackathon positioning: this submission maps to **Use Case #21: Legal Intelligence / Compliance**. The primary workflow is enterprise agreement and vendor-evidence review: uploaded agreements, DPAs, MSAs, SOC/ISO/BCP evidence, and advisory legal-reference context are converted into a human-review decision pack. The Caselaw Access Project data path is implemented as advisory legal-reference memory, not as legal advice or automated approval.
+
 The implementation now defaults agent execution through a dependency-light CrewAI Flow orchestration path with deterministic compliance decisions as the stable fallback. The stronger Parallax42 assets remain the source of truth for the live supplier-risk backend and are referenced in the submission dossier.
 
 ## Judge Quick Start
@@ -159,7 +161,7 @@ P42_CREWAI_SERVICE_URL=https://api.parallax42.bhavukarora.com/crewai
 P42_CREWAI_SERVICE_TOKEN=<server-side-service-token>
 PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com
 COMPASS_GATEWAY_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
-COMPASS_GATEWAY_TOKEN=<server-side gateway token>
+COMPASS_GATEWAY_TOKEN=<server-side gateway token required for smart chat intake>
 EMBEDDINGS_MODEL=text-embedding-3-large
 P42_REQUIRE_DURABLE_STORAGE=0
 P42_REFERENCE_CONTEXT_DIR=
@@ -168,7 +170,7 @@ P42_VECTOR_STORE_PROVIDER=qdrant
 # QDRANT_URL=https://<cluster>.cloud.qdrant.io
 # QDRANT_API_KEY=<server-side-vector-db-key>
 # QDRANT_COLLECTION=p42_compliance_evidence
-P42_FEATURE_COMPASS_LLM_CALLS=1
+P42_FEATURE_COMPASS_LLM_CALLS=1 # legacy admin visibility; smart intake is gated by COMPASS_GATEWAY_TOKEN
 P42_FEATURE_COMPASS_EMBEDDINGS=1
 P42_FEATURE_QDRANT_RAG=1
 P42_FEATURE_QDRANT_LEARNING_MEMORY=1
@@ -179,7 +181,7 @@ P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020
 AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
 ```
 
-The advanced components are requested by default and can be switched off through `GET|PATCH /api/admin/features` or the cockpit's Advanced runtime settings panel. The admin response distinguishes `enabled`, `configured`, and `active`, so missing Compass tokens, Qdrant URLs, parser relay configuration, or optional CrewAI Python dependencies are shown as safe degradation rather than hidden failures.
+The advanced components are requested by default and can be switched off through `GET|PATCH /api/admin/features` or the cockpit's Advanced runtime settings panel. Smart chat intake requires `COMPASS_GATEWAY_TOKEN`; when it is absent or the gateway fails, the chat shows "Compass gateway is not configured — smart intake is unavailable. Contact your administrator." instead of silently falling back to pattern-only conversation. The admin response distinguishes `enabled`, `configured`, and `active`, so missing Compass tokens, Qdrant URLs, parser relay configuration, or optional CrewAI Python dependencies are visible rather than hidden.
 
 Full RAG and governed-learning demo setup:
 
@@ -207,9 +209,17 @@ After configuring Qdrant and the Compass gateway, run:
 ```bash
 npm run qdrant:smoke
 npm run reference:index
+npm run reference:intelligence
+npm run reference:courtlistener
 ```
 
 `npm run reference:index` seeds `reference_context/sanitised_enterprise_ai_governance_context.md` as sanitized governance-reference memory. It is advisory context only: it helps chat and retrieval reason about governance, assurance, SAA, ISO, Responsible AI, and risk language, but it is not official policy and never overrides the deterministic council or human review boundary.
+
+`npm run reference:intelligence` creates safe local reference-lane artifacts without live API calls. It covers legal, compliance, procurement, security, AI governance, sanctions/export, and HSE/ESG lane directories so the demo can explain the broader ingestion strategy without pretending those corpora are already fully loaded.
+
+`npm run reference:courtlistener` aligns the demo with Use Case #21's legal/compliance reference path through CourtListener / Free Law Project. It imports a small CourtListener sample when `COURTLISTENER_API_TOKEN` is configured or local JSON/JSONL is supplied, writes normalized legal-reference records under `reference_context/legal/`, and can index the resulting markdown through the same reference-memory path. CourtListener references are advisory legal intelligence only; they are not jurisdiction-specific advice and cannot approve a contract. The legacy `npm run reference:cap` command remains available for CAP API access.
+
+See [`docs/REFERENCE_INTELLIGENCE_DATA.md`](docs/REFERENCE_INTELLIGENCE_DATA.md) for the broader legal, compliance, procurement, security, AI governance, sanctions/export, and HSE/ESG reference-lane model.
 
 ## CrewAI
 
@@ -260,6 +270,7 @@ Learning memory endpoints are advisory:
 - [Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md)
 - [Milestone 1 CrewAI Flow Runtime](docs/MILESTONE_1_CREWAI_FLOW.md)
 - [Benchmark Report](docs/BENCHMARK_REPORT.md)
+- [Legal Intelligence Data](docs/LEGAL_INTELLIGENCE_DATA.md)
 - [Responsible AI Controls](docs/RESPONSIBLE_AI_CONTROLS.md)
 - [Integration Matrix](docs/INTEGRATION_MATRIX.md)
 - [Requirements Traceability](docs/REQUIREMENTS_TRACEABILITY.md)

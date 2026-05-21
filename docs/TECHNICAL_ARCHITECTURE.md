@@ -16,7 +16,7 @@ Linked production evidence:
 
 ```text
 Parallax42 GitHub Pages UI
-  -> FastAPI backend
+  -> external Parallax42 backend
   -> SupplierRiskFlow
   -> Compass gateway
   -> Core42 Compass GPT-5.1
@@ -48,6 +48,21 @@ Browser
   -> Vercel /api/export/review-pack packages decision, citations, evidence quality, and retrieval audit
 ```
 
+Reference-intelligence memory for Use Case #21 and adjacent compliance domains:
+
+```text
+CourtListener / CUAD-compatible / NIST / legacy CAP local imports
+  -> scripts/import-courtlistener-reference.js
+  -> scripts/import-cuad-reference.js
+  -> scripts/import-nist-reference.js
+  -> normalized advisory reference records
+  -> reference_context/<lane>/*.md
+  -> governance/reference indexing boundary
+  -> Compass text-embedding-3-large
+  -> Qdrant or local-file reference memory
+  -> conversation and council receive advisory context only
+```
+
 ## Components In This Repo
 
 | Component | Path | Responsibility |
@@ -64,6 +79,7 @@ Browser
 | Shared evidence gateway client | `lib/compassGatewayClient.js` | Server-side bridge to the reusable Parallax42 gateway for GPT-5.1, `text-embedding-3-large`, evidence chunking, and semantic search. |
 | Server-side evidence vector store | `lib/evidenceVectorStore.js` | Stores chunk embeddings behind the API, supports Qdrant-compatible production storage, strips vectors from browser responses, and retrieves evidence by `caseId`. |
 | Governed learning memory | `lib/learningMemory.js` | Stores reviewer feedback, outcomes, control patterns, overrides, and evidence-quality notes as advisory memory. This is not model training. |
+| Reference intelligence corpus | `lib/referenceIntelligenceCorpus.js`, `scripts/import-courtlistener-reference.js`, `scripts/import-cuad-reference.js`, `scripts/import-nist-reference.js`, `reference_context/` | Normalizes legal, contract, compliance, security, procurement, AI governance, sanctions/export, and HSE/ESG reference context for advisory retrieval. |
 | Audit store | `lib/auditStore.js` | Hash-chained append-only JSONL audit with integrity verification; production should point `AGENT_AUDIT_DIR` at durable storage. |
 | Review pack builder | `lib/reviewPack.js` | Generates digest-backed executive review packs with evidence quality, retrieval audit, citations, and reviewer actions. |
 | Cockpit UI | `public/` | Chat-first operator workspace with advanced demo/live run modes. |

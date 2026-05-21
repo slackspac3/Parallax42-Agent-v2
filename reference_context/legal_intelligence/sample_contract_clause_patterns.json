@@ -1,0 +1,78 @@
+{
+  "source": "curated_clause_pattern_reference",
+  "sourceAlignment": "Agentathon Use Case #21 Legal Intelligence; complements Caselaw Access Project imports when available.",
+  "advisoryOnly": true,
+  "legalCaveat": "This file is an original clause-risk pattern fixture for demo evaluation. It is not legal advice, not a contract template, and not a substitute for legal review.",
+  "patterns": [
+    {
+      "id": "clause_pattern_limitation_of_liability",
+      "name": "Limitation of liability",
+      "reviewQuestions": [
+        "Does the cap exclude confidentiality, data breach, IP infringement, fraud, gross negligence, willful misconduct, regulatory fines, or indemnity obligations?",
+        "Is the cap tied to fees paid in a defined lookback period?",
+        "Does the clause conflict with mandatory insurance or indemnity obligations?"
+      ],
+      "riskSignals": [
+        "uncapped operational exposure",
+        "ambiguous excluded losses",
+        "low cap for high-impact data processing"
+      ]
+    },
+    {
+      "id": "clause_pattern_indemnification",
+      "name": "Indemnification",
+      "reviewQuestions": [
+        "Who controls defense and settlement?",
+        "Are data breach, confidentiality, sanctions/export, IP, and employment claims covered?",
+        "Are notice and cooperation obligations practical for incident response timelines?"
+      ],
+      "riskSignals": [
+        "one-way indemnity",
+        "missing data/security indemnity",
+        "settlement control without customer consent"
+      ]
+    },
+    {
+      "id": "clause_pattern_governing_law_forum",
+      "name": "Governing law and forum",
+      "reviewQuestions": [
+        "Does the chosen law/forum align with the customer operating jurisdiction and enforcement needs?",
+        "Does the dispute mechanism conflict with regulatory reporting or injunction needs?",
+        "Are emergency remedies preserved for confidentiality, IP, and data misuse?"
+      ],
+      "riskSignals": [
+        "unfamiliar forum",
+        "no injunctive relief carveout",
+        "unclear dispute escalation path"
+      ]
+    },
+    {
+      "id": "clause_pattern_confidentiality_data_security",
+      "name": "Confidentiality and data security",
+      "reviewQuestions": [
+        "Does confidentiality survive termination for an appropriate period?",
+        "Are security controls, incident notice, audit rights, and subcontractor obligations explicit?",
+        "Are personal data, customer data, credentials, source code, and regulated records covered?"
+      ],
+      "riskSignals": [
+        "short confidentiality survival",
+        "no incident notice SLA",
+        "subprocessors not bound to equivalent controls"
+      ]
+    },
+    {
+      "id": "clause_pattern_termination_exit",
+      "name": "Termination and exit assistance",
+      "reviewQuestions": [
+        "Can the customer terminate for regulatory, security, sanctions, or material control failures?",
+        "Is data return/deletion certificated and time-bound?",
+        "Is transition support defined for critical services?"
+      ],
+      "riskSignals": [
+        "no exit assistance",
+        "unclear data deletion",
+        "termination rights too narrow for regulated workflows"
+      ]
+    }
+  ]
+}

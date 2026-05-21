@@ -9,7 +9,15 @@ Primary demo surfaces:
 - API health: `https://parallax42-compliance-intelligence.vercel.app/api/health`
 - Compass gateway health: `https://parallax42-compass-gateway.vercel.app/api/health`
 
-The Compass gateway is optional/advisory for LLM and embedding calls. The deterministic compliance engine remains the authority for final decision status.
+The Compass gateway is required for smart chat intake and shared embeddings/advisory model calls. The deterministic compliance engine remains the authority for final decision status.
+
+## Selected Hackathon Use Case
+
+- **Use Case ID:** `21`
+- **Problem statement:** Legal Intelligence / Compliance
+- **Suggested data source alignment:** CourtListener / Free Law Project, with legacy Caselaw Access Project support
+
+Parallax42 applies Legal Intelligence to enterprise agreement and compliance-evidence review. The system reviews contracts, MSAs, DPAs, outsourcing arrangements, and supporting assurance evidence, then produces a human-review decision memo with risks, required actions, citations, and a deterministic specialist trace. CourtListener/CAP references are used only as advisory legal-reference memory for clause and risk comparison, citation checks, and reviewer questions; they are not legal advice and do not approve the case.
 
 ## Local Quick Start
 
@@ -67,6 +75,7 @@ Compass compatibility:
 - Optional CrewAI-shaped orchestration and Compass advisory model path.
 - Audit traceability through local hash-chained JSONL.
 - Generated evidence artifacts under `evidence/`.
+- Use Case #21 legal-reference data path through `scripts/import-courtlistener-reference.js`, `scripts/import-cuad-reference.js`, legacy `scripts/import-cap-legal-reference.js`, and `reference_context/legal/`.
 - Honest separation between implemented demo capabilities and production hardening requirements.
 
 ## Honest Implementation Status
@@ -80,6 +89,7 @@ Implemented:
 - Dry-run CrewAI-shaped orchestration checks.
 - Deterministic compliance engine for final decisions.
 - Optional Compass gateway client for LLM and embeddings.
+- CourtListener, CUAD-compatible, NIST, and legacy CAP import/index paths for advisory Reference Intelligence memory.
 - Local vector store default with optional Qdrant REST provider when configured.
 - Local append-only hash-chained JSONL audit.
 
@@ -104,5 +114,6 @@ Not implemented or not claimed:
 - [CrewAI Architecture](docs/CREWAI_ARCHITECTURE.md)
 - [Golden Demo Workflow](docs/GOLDEN_DEMO_WORKFLOW.md)
 - [Integration Matrix](docs/INTEGRATION_MATRIX.md)
+- [Legal Intelligence Data](docs/LEGAL_INTELLIGENCE_DATA.md)
 - [Production Track](docs/PRODUCTION_TRACK.md)
 - [Security, RBAC, And Audit Plan](docs/SECURITY_RBAC_AUDIT_PLAN.md)

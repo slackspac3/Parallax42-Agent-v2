@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "source": "NIST public reference manifest",
+  "advisoryOnly": true,
+  "sample": true,
+  "importedRecordCount": 5,
+  "files": {
+    "recordsJsonl": "reference_context/security/nist_reference_manifest.jsonl",
+    "securityMarkdown": "reference_context/security/nist_reference_manifest.md",
+    "aiGovernanceMarkdown": "reference_context/ai_governance/nist_ai_governance_reference.md"
+  },
+  "index": {
+    "skipped": true,
+    "reason": "Indexing skipped by --skip-index."
+  },
+  "createdAt": "2026-05-21T10:41:14.886Z"
+}

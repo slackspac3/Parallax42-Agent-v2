@@ -1,0 +1,64 @@
+{
+  "ok": true,
+  "source": "Caselaw Access Project",
+  "sourceUrl": "https://case.law/",
+  "apiBaseUrl": "https://api.case.law/v1/cases/",
+  "useCaseId": "21",
+  "problemStatement": "Legal Intelligence",
+  "advisoryOnly": true,
+  "importedCaseCount": 0,
+  "failedQueryCount": 10,
+  "failures": [
+    {
+      "query": "limitation of liability contract",
+      "detail": "CAP request for \"limitation of liability contract\" did not return JSON. Received text/html; charset=utf-8."
+    },
+    {
+      "query": "indemnification agreement",
+      "detail": "CAP request for \"indemnification agreement\" did not return JSON. Received text/html; charset=utf-8."
+    },
+    {
+      "query": "forum selection clause",
+      "detail": "CAP request for \"forum selection clause\" did not return JSON. Received text/html; charset=utf-8."
+    },
+    {
+      "query": "choice of law clause",
+      "detail": "CAP request for \"choice of law clause\" did not return JSON. Received text/html; charset=utf-8."
+    },
+    {
+      "query": "arbitration agreement",
+      "detail": "CAP request for \"arbitration agreement\" did not return JSON. Received text/html; charset=utf-8."
+    },
+    {
+      "query": "confidentiality agreement",
+      "detail": "CAP request for \"confidentiality agreement\" did not return JSON. Received text/html; charset=utf-8."
+    },
+    {
+      "query": "trade secrets confidentiality",
+      "detail": "CAP request for \"trade secrets confidentiality\" did not return JSON. Received text/html; charset=utf-8."
+    },
+    {
+      "query": "data breach vendor contract",
+      "detail": "CAP request for \"data breach vendor contract\" did not return JSON. Received text/html; charset=utf-8."
+    },
+    {
+      "query": "service agreement breach",
+      "detail": "CAP request for \"service agreement breach\" did not return JSON. Received text/html; charset=utf-8."
+    },
+    {
+      "query": "employment outsourcing contract",
+      "detail": "CAP request for \"employment outsourcing contract\" did not return JSON. Received text/html; charset=utf-8."
+    }
+  ],
+  "files": {
+    "queries": "reference_context/legal_intelligence/cap_sample_queries.json",
+    "caveats": "reference_context/legal_intelligence/legal_caveats.md",
+    "casesJsonl": "reference_context/legal_intelligence/cap_cases.jsonl",
+    "markdown": "reference_context/legal_intelligence/cap_legal_reference.md"
+  },
+  "index": {
+    "skipped": true,
+    "reason": "No live CAP case records were imported. Check CAP API access or CAP_API_TOKEN."
+  },
+  "createdAt": "2026-05-21T07:58:23.070Z"
+}

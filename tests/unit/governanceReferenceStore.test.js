@@ -60,7 +60,12 @@ test('governance reference index stores sanitized context locally without browse
     }, async () => {
       const result = await indexGovernanceReference({
         markdown: SAMPLE_REFERENCE,
-        sourceId: 'sanitised_enterprise_ai_governance_context'
+        sourceId: 'sanitised_enterprise_ai_governance_context',
+        corpusType: 'ai_governance',
+        lane: 'ai_governance',
+        jurisdiction: 'global',
+        documentType: 'sanitised_context',
+        sourceUrl: 'https://example.invalid/reference'
       });
       const search = await searchGovernanceReferences({
         query: 'export controls sanctions end-use certificate',
@@ -73,6 +78,9 @@ test('governance reference index stores sanitized context locally without browse
       assert.equal(search.references.length > 0, true);
       assert.equal(search.references[0].authority, 'context_reference_not_policy');
       assert.equal(search.references[0].requiresHumanReview, true);
+      assert.equal(search.references[0].metadata.corpusType, 'ai_governance');
+      assert.equal(search.references[0].metadata.lane, 'ai_governance');
+      assert.equal(search.references[0].metadata.sourceUrl, 'https://example.invalid/reference');
       assert.equal(search.references[0].embedding, undefined);
       assert.equal(governanceReferenceHealth().localChunkCount > 0, true);
     });
@@ -120,6 +128,9 @@ test('qdrant governance reference index writes typed payloads without vectors in
           assert.equal(point.payload.workspaceId, 'parallax42');
           assert.equal(point.payload.projectId, 'compliance-intelligence-agent');
           assert.equal(point.payload.sourceId, 'sanitised_enterprise_ai_governance_context');
+          assert.equal(point.payload.corpusType, 'sanctions_export');
+          assert.equal(point.payload.lane, 'sanctions_export');
+          assert.equal(point.payload.documentType, 'reference_manifest');
           assert.equal(point.payload.embedding, undefined);
           assert.deepEqual(point.vector, [0.1, 0.2, 0.3]);
           return { ok: true, status: 200, text: async () => JSON.stringify({ result: true }) };
@@ -129,7 +140,11 @@ test('qdrant governance reference index writes typed payloads without vectors in
 
       const result = await indexGovernanceReference({
         markdown: '## 8. Export Control\n\nEnd-use and sanctions checks are required.',
-        sourceId: 'sanitised_enterprise_ai_governance_context'
+        sourceId: 'sanitised_enterprise_ai_governance_context',
+        corpusType: 'sanctions_export',
+        lane: 'sanctions_export',
+        jurisdiction: 'global',
+        documentType: 'reference_manifest'
       });
 
       assert.equal(result.index.provider, 'qdrant');

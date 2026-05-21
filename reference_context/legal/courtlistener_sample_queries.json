@@ -1,0 +1,20 @@
+{
+  "source": "CourtListener",
+  "sourceUrl": "https://www.courtlistener.com/api/rest/v4/",
+  "advisoryOnly": true,
+  "tokenRecommended": true,
+  "authenticatedRateLimitWarning": "CourtListener authenticated API limits are low; prefer curated samples or bulk data for larger corpora.",
+  "queries": [
+    "limitation of liability contract",
+    "indemnification agreement",
+    "data processing agreement subprocessor retention",
+    "service agreement breach outsourcing",
+    "confidentiality agreement trade secrets",
+    "software license audit rights",
+    "cloud services data breach contract",
+    "forum selection clause",
+    "choice of law clause",
+    "arbitration agreement"
+  ],
+  "citations": []
+}

@@ -46,6 +46,7 @@
   "capabilities": [
     "natural-language compliance intake",
     "server-side evidence indexing and retrieval",
+    "Caselaw Access Project legal-reference import path for Use Case #21",
     "Qdrant-backed RAG when configured",
     "governed learning memory when configured",
     "advisory-only Compass/CrewAI specialist outputs when configured",

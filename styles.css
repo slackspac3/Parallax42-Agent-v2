@@ -3504,6 +3504,27 @@ pre {
   line-height: 1.55;
 }
 
+.advisor-system-warning {
+  border-color: rgba(251,191,36,0.34);
+  background:
+    linear-gradient(135deg, rgba(251,191,36,0.12), rgba(248,113,113,0.035)),
+    rgba(18,16,10,0.78);
+}
+
+.advisor-system-warning .advisor-response-head {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: 0;
+}
+
+.advisor-system-warning .advisor-response-head strong {
+  color: var(--warning);
+}
+
+.advisor-system-warning .advisor-response-head p {
+  color: rgba(255,250,232,0.84);
+}
+
 .advisor-next-question {
   padding: 12px;
   border-radius: var(--r-sm);
@@ -3540,7 +3561,6 @@ pre {
   border-radius: var(--r-sm);
   box-shadow: 0 0 12px rgba(34,227,180,0.2);
 }
-
 /* ============================================================
    CASE INTELLIGENCE PANEL (decision rail)
    ============================================================ */

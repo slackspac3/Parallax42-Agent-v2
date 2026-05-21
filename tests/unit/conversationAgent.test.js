@@ -303,7 +303,8 @@ test('conversation NLP handles export-control hardware import cases', () => {
   assert.ok(!result.caseDraft.riskSignals.includes('AI/model use'));
   assert.ok(!result.caseDraft.evidenceSignals.includes('end-use certificate'));
   assert.ok(result.missingFields.includes('export_control_evidence'));
-  assert.ok(result.questions.some((question) => /classification|end-use|import permit|denied-party/i.test(question)));
+  assert.ok(result.questions.some((question) => /upload the export control pack|classify it|analyze it first/i.test(question)));
+  assert.ok(!result.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
 });
 
 test('conversation run readiness allows council with core intake while preserving advisory gaps', () => {
@@ -359,6 +360,46 @@ test('conversation classifies MSA review and asks for source upload before metad
   assert.equal(result.nlp.requestProfile.requestType, 'msa_review');
   assert.equal(result.nlp.requestProfile.reviewTarget, 'MSA');
   assert.ok(result.questions.some((question) => /upload the MSA|analyze it first/i.test(question)));
+  assert.ok(!result.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
+});
+
+test('conversation classifies SaaS agreement review into the SaaS workflow before metadata', () => {
+  const result = processConversation({
+    message: 'Can you review a SaaS agreement for Microsoft 365 integration and customer data terms?'
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.nlp.requestProfile.requestType, 'saas_agreement_review');
+  assert.equal(result.nlp.requestProfile.workflowType, 'saas_vendor_review');
+  assert.ok(result.nlp.requestProfile.documentTypes.includes('saas_agreement'));
+  assert.ok(result.questions.some((question) => /upload the agreement|classify it|analyze it first/i.test(question)));
+  assert.ok(!result.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
+  assert.match(result.reply, /SaaS\/vendor review workflow|upload the agreement/i);
+});
+
+test('conversation classifies assurance artifacts without treating them as legal contracts', () => {
+  const result = processConversation({
+    message: 'I need a SOC 2 report reviewed for exceptions and security gaps.'
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.nlp.requestProfile.requestType, 'security_assurance_review');
+  assert.equal(result.nlp.requestProfile.workflowType, 'security_assurance_review');
+  assert.ok(result.nlp.requestProfile.documentTypes.includes('soc2_report'));
+  assert.ok(result.questions.some((question) => /upload the document|classify it|analyze it first/i.test(question)));
+  assert.ok(!result.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
+});
+
+test('conversation classifies export-control procurement asks into export workflow', () => {
+  const result = processConversation({
+    message: 'Please review a purchase order for restricted AI chips with sanctions screening and end-use certificate pending.'
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.nlp.requestProfile.workflowType, 'export_control_review');
+  assert.equal(result.nlp.requestProfile.requestType, 'export_control');
+  assert.ok(result.nlp.requestProfile.documentTypes.includes('purchase_order'));
+  assert.ok(result.questions.some((question) => /upload|paste/i.test(question)));
   assert.ok(!result.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
 });
 

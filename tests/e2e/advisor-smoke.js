@@ -97,16 +97,11 @@ async function main() {
     await page.locator('#chatInput').fill('');
 
     await sendMessage(page, 'I have a request to outsource payroll to a third party');
-    await page.waitForFunction(() => document.querySelector('#chatMessages')?.textContent.includes('Who will own'), null, { timeout: 10_000 });
+    await page.waitForFunction(() => document.querySelector('#chatMessages')?.textContent.includes('Compass gateway is not configured'), null, { timeout: 10_000 });
 
     const firstReply = await page.locator('#chatMessages').textContent();
-    assert.match(firstReply, /payroll|owner|who will own/i);
-
-    await sendMessage(page, 'HR owns it');
-    await page.waitForFunction(() => /HR|People|Payroll/i.test(document.querySelector('#caseIntelDetails')?.textContent || ''), null, { timeout: 10_000 });
-
-    const readinessAfterOwner = await page.locator('#caseIntelReadiness').textContent();
-    assert.notEqual(readinessAfterOwner.trim(), '0%');
+    assert.match(firstReply, /Compass gateway is not configured/i);
+    assert.match(firstReply, /smart intake is unavailable/i);
 
     await page.locator('#startNewCase').click();
     await page.waitForFunction(() => (document.querySelector('#caseIntelReadiness')?.textContent || '').trim() === '0%', null, { timeout: 10_000 });

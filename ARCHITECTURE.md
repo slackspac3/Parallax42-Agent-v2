@@ -2,7 +2,7 @@
 
 ## Product Overview
 
-Parallax42 Compliance Intelligence Agent is a judge-facing compliance case workspace. It helps an operator build a compliance case through chat, attach or reference evidence, run a council-style assessment, and export a human-review pack with traceable gaps, controls, citations, and audit metadata.
+Parallax42 Compliance Intelligence Agent is a judge-facing Legal Intelligence / Compliance workspace for **Agentathon Use Case #21**. It helps an operator build an agreement or vendor-evidence review case through chat, attach or reference evidence, run a council-style assessment, and export a human-review pack with traceable gaps, controls, citations, and audit metadata.
 
 The current repository is a Node/CommonJS Vercel/static application. It is intentionally lightweight: the browser cockpit runs from `public/`, API routes live under `api/`, `server.js` mirrors those APIs for local development, and reusable decision/retrieval logic lives under `lib/`.
 
@@ -11,7 +11,7 @@ The current repository is a Node/CommonJS Vercel/static application. It is inten
 ```text
 Browser cockpit
   -> Node API route or local server.js mirror
-  -> conversation/case builder
+  -> Compass-backed smart intake planner
   -> evidence indexing and retrieval boundary
   -> deterministic compliance engine
   -> optional advisory CrewAI/Compass-shaped orchestration
@@ -19,7 +19,7 @@ Browser cockpit
   -> local append-only audit trail
 ```
 
-The deterministic compliance engine owns final decision status, blocker naming, approval readiness, and required controls. CrewAI is dry-run/orchestration-shaped by default, and Compass gateway calls for LLM or embeddings are optional/advisory boundaries rather than the authority for compliance approval.
+The deterministic compliance engine owns final decision status, blocker naming, approval readiness, and required controls. Compass gateway LLM access is required for the smart chat intake planner; if the gateway token is missing, the UI reports smart intake unavailable instead of silently dropping into pattern-only chat. CrewAI is dry-run/orchestration-shaped by default, and Compass advisory outputs remain non-authoritative for compliance approval.
 
 ## Frontend, API, And Library Layout
 
@@ -41,6 +41,7 @@ The browser should not be treated as a trusted evidence or vector store. The int
 Browser sends case/evidence metadata and sanitized excerpts
   -> API indexes sanitized evidence chunks and keeps embeddings server-side
   -> optional sanitized governance-reference corpus is indexed separately
+  -> optional reference-intelligence corpora are indexed separately
   -> Compass gateway may create embeddings when configured
   -> local vector store persists by default
   -> Qdrant REST can be used when configured
@@ -48,7 +49,7 @@ Browser sends case/evidence metadata and sanitized excerpts
   -> council retrieves evidence, governance references, and learning memory server-side
 ```
 
-The default vector provider is local-file storage for demo and development. Qdrant REST is optional when `P42_VECTOR_STORE_PROVIDER=qdrant` and the required Qdrant environment variables are configured. Governance references are stored as `governance_reference` chunks with sanitized public-test classification and are advisory context, not official policy. Local OCR/document parsing is not implemented in this repository; browser-side state may include metadata, excerpts, and retrieved snippets for the visible review experience, but not embedding vectors. Any production document extraction boundary should be added as a server-side service before storing retrievable chunks.
+The default vector provider is local-file storage for demo and development. Qdrant REST is optional when `P42_VECTOR_STORE_PROVIDER=qdrant` and the required Qdrant environment variables are configured. Governance references and reference-intelligence samples are stored as `governance_reference` chunks and are advisory context only. CourtListener and CAP records are legal-reference memory for clause/risk comparison, citation verification, and reviewer questions; they are not legal advice, not jurisdiction-specific advice, and not an approval source. Local OCR/document parsing is not implemented in this repository; browser-side state may include metadata, excerpts, and retrieved snippets for the visible review experience, but not embedding vectors. Any production document extraction boundary should be added as a server-side service before storing retrievable chunks.
 
 ## Audit And Security Model
 
@@ -61,7 +62,7 @@ Security boundaries in the current architecture:
 - Deterministic guardrails own final decision status even when advisory LLM output exists.
 - Human approval remains required for operational use.
 - RBAC/JWT policy support exists in code, but production identity enforcement depends on configured environment values.
-- Compass gateway is optional and should be treated as a server-side model boundary.
+- Compass gateway is a required server-side model boundary for smart chat intake and the shared embeddings/advisory model path.
 
 ## Implemented Now Vs Production Hardening
 
@@ -72,6 +73,7 @@ Implemented now:
 - Conversation/case builder and deterministic compliance engine.
 - CrewAI-shaped dry-run orchestration checks.
 - Evidence indexing/search API boundary with local vector store default.
+- Reference-intelligence lane import/index path for Use Case #21 legal/compliance references and adjacent compliance, security, procurement, AI governance, sanctions/export, and HSE/ESG context.
 - Optional Compass gateway support for LLM and embeddings.
 - Optional Qdrant REST vector provider when configured.
 - Local hash-chained JSONL audit.

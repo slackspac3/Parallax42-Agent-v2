@@ -1,0 +1,19 @@
+{
+  "source": "Caselaw Access Project",
+  "sourceUrl": "https://case.law/",
+  "useCaseId": "21",
+  "problemStatement": "Legal Intelligence",
+  "advisoryOnly": true,
+  "queries": [
+    "limitation of liability contract",
+    "indemnification agreement",
+    "forum selection clause",
+    "choice of law clause",
+    "arbitration agreement",
+    "confidentiality agreement",
+    "trade secrets confidentiality",
+    "data breach vendor contract",
+    "service agreement breach",
+    "employment outsourcing contract"
+  ]
+}

@@ -1770,6 +1770,7 @@ function assistantRawSummary(text = '') {
 
 function assistantQuestionFromText(text = '') {
   const raw = String(text || '');
+  if (/Compass gateway is not configured/i.test(raw)) return '';
   const fallbackQuestion = () => {
     const missing = missingProofItems();
     if (missing.length) {
@@ -1811,6 +1812,7 @@ function normalizeAssistantQuestion(question = '') {
 }
 
 function assistantAcknowledgement(text = '') {
+  if (/Compass gateway is not configured/i.test(text)) return 'Smart intake unavailable';
   if (/could not|failed|error/i.test(text)) return 'I hit a processing issue, but the case state is still safe.';
   if (lastRuns.chat?.ok) return 'Council run complete. I kept the decision review-bound.';
   const clean = cleanEvidenceText(text);
@@ -1829,6 +1831,7 @@ function renderThinkingLoader(message = {}) {
 
 function renderAssistantTurn(message = {}) {
   const canRun = Boolean(chatRunReadiness?.runnable);
+  const smartIntakeUnavailable = /Compass gateway is not configured/i.test(message.text || '');
   const question = assistantQuestionFromText(message.text);
   const acknowledgement = assistantAcknowledgement(message.text);
   return window.P42AppModules.chatUi.renderAssistantTurn(message, {
@@ -1838,7 +1841,9 @@ function renderAssistantTurn(message = {}) {
     hasChatContext: hasChatContext(),
     lastRunOk: Boolean(lastRuns.chat?.ok),
     nextBestAction: nextBestAction(),
-    question
+    question,
+    smartIntakeUnavailable,
+    unavailableMessage: message.text
   });
 }
 
@@ -3325,13 +3330,13 @@ function renderCapabilityFallbacks(results = []) {
 
   if (appBody.evidenceGateway && !appBody.evidenceGateway.tokenConfigured) {
     notes.push({
-      label: 'Compass gateway token absent',
-      detail: 'Chat intake, deterministic council, audit trace, and PDF export still work. Semantic evidence indexing, embeddings retrieval, and live LLM advisory are disabled in this runtime.'
+      label: 'Compass gateway required',
+      detail: 'Smart intake is unavailable until the Compass gateway token is configured. Replay/live structured runs, deterministic council execution, audit trace, and PDF export remain available.'
     });
   } else if (gateway.status === 'unavailable') {
     notes.push({
       label: 'Compass gateway unavailable',
-      detail: 'The council can still run from typed context and attached metadata. Evidence embedding/search and advisory model calls should be treated as unavailable for this demo run.'
+      detail: 'Smart intake is unavailable while the Compass gateway is unreachable. Use replay or structured intake; evidence embedding/search and advisory model calls should be treated as unavailable for this demo run.'
     });
   }
 
@@ -3397,7 +3402,7 @@ function renderAdminStatus(status = {}) {
     adminStatusCard('Auth mode', auth.enforced ? 'enforced' : auth.mode || 'audit', auth.enforced ? 'RBAC policy blocks unauthorized actions.' : 'Audit-mode records actor context without blocking the demo.'),
     adminStatusCard('Audit chain', audit.hashChained ? 'hash-chained' : 'not verified', audit.provider || 'local-jsonl'),
     adminStatusCard('Vector memory', vector.provider || 'local-file', vector.qdrantConfigured ? `Qdrant collection ${vector.collection || 'configured'}` : 'Local-file fallback is demo-grade.'),
-    adminStatusCard('Compass gateway', gateway.configured ? 'configured' : 'not configured', gateway.configured ? 'LLM/advisory and embeddings boundary can be used.' : 'Deterministic council still runs without model calls.'),
+    adminStatusCard('Compass gateway', gateway.configured ? 'required / configured' : 'required / missing', gateway.configured ? 'Required smart intake, advisory LLM, and embeddings boundary is configured.' : 'Compass gateway is not configured — smart intake is unavailable. Contact your administrator.'),
     adminStatusCard('Parser relay', parserRelay.configured ? 'configured' : 'default relay', parserRelay.featureEnabled === false ? 'Disabled by admin switch.' : 'External parser/OCR boundary is requested when available.'),
     adminStatusCard('CrewAI runtime', runtime.liveCrewAIEnabled ? 'requested' : runtime.default || 'crewai_llm', runtime.liveLlmAdvisoryEnabled ? 'Live advisory specialists enabled.' : 'Deterministic decision owner remains active.')
   ];

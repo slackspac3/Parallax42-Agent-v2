@@ -97,6 +97,16 @@
 
   function renderAssistantTurn(message, context) {
     const state = context || {};
+    if (state.smartIntakeUnavailable) {
+      return `
+        <div class="advisor-response-card advisor-system-warning">
+          <div class="advisor-response-head">
+            <strong>Smart intake unavailable</strong>
+            <p>${escapeHtml(state.unavailableMessage || 'Compass gateway is not configured — smart intake is unavailable. Contact your administrator.')}</p>
+          </div>
+        </div>
+      `;
+    }
     if (!state.hasChatContext && !state.lastRunOk && state.chatMessageCount <= 1) {
       return `
         <div class="advisor-response-card advisor-welcome-response">
