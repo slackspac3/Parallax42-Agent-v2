@@ -109,6 +109,15 @@ async function main() {
     const resetText = await page.locator('#chatMessages').textContent();
     assert.match(resetText, /What do you need reviewed/i);
     assert.equal((await page.locator('#chatInput').inputValue()).trim(), '');
+
+    await page.locator('#councilOutputTab').click();
+    await page.waitForFunction(() => {
+      const workflow = document.querySelector('#workflow');
+      return document.body.dataset.workspaceView === 'output'
+        && workflow
+        && /Decision room is empty|Run the council/i.test(workflow.textContent || '');
+    }, null, { timeout: 10_000 });
+    assert.match(await page.locator('#workflow').textContent(), /Run the council/i);
   } finally {
     await browser.close();
     await stopServer(server);

@@ -147,6 +147,44 @@ test('conversation does not repeat a generic owner question after a terse owner 
   assert.ok(!third.questions.some((question) => /accountable business unit|workflow owner|who.*own/i.test(question)));
 });
 
+test('conversation preserves platform team as explicit owner after owner question', () => {
+  const result = processConversation({
+    message: 'Platform team',
+    caseDraft: {
+      brief: 'Assess a managed integration partner connecting Oracle ERP, Workday, ServiceNow, SharePoint, and Snowflake with privileged implementation access.',
+      businessUnit: 'Group Technology Risk',
+      geography: 'UAE',
+      integrations: ['Oracle ERP', 'Workday', 'ServiceNow', 'SharePoint', 'Snowflake'],
+      riskSignals: ['privileged access'],
+      questions: ['Who is the accountable business unit or workflow owner?'],
+      conversationHistory: [
+        { role: 'assistant', text: 'Who is the accountable business unit or workflow owner?' },
+        { role: 'user', text: 'Platform team' }
+      ]
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.caseDraft.businessUnit, 'Platform Team');
+  assert.ok(!result.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
+});
+
+test('conversation resolves platform team from assistant history even after generic owner inference', () => {
+  const result = processConversation({
+    message: 'platform team',
+    caseDraft: {
+      brief: 'Review a platform integration partner with privileged implementation access.',
+      businessUnit: 'Group Technology Risk',
+      geography: 'UAE',
+      conversationHistory: [
+        { role: 'assistant', text: 'Who will own this review internally?' },
+        { role: 'user', text: 'platform team' }
+      ]
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.caseDraft.businessUnit, 'Platform Team');
+});
+
 test('conversation asks payroll-specific evidence after owner and geography are known', () => {
   const result = processConversation({
     message: 'Finance Payroll owns it',

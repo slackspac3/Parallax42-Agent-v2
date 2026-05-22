@@ -1623,10 +1623,12 @@ function renderMissionWelcome() {
 function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
   if (!caseIntelReadiness || !caseIntelDetails) return;
   const isPreview = Boolean(draft?.__previewOnly);
-  const score = result?.ok
+  const useRunResult = Boolean(result?.ok && workspaceView === 'output');
+  const panelResult = useRunResult ? result : null;
+  const score = useRunResult
     ? Math.round(Number(result.decision?.readinessScore || 0) * 100)
     : isPreview ? contextStrength(draft) : Number.isFinite(chatRunReadiness?.score) ? chatRunReadiness.score : contextStrength(draft);
-  if (!result?.ok && !isPreview && !hasChatContext() && !uploadedEvidence.length) {
+  if (!panelResult?.ok && !isPreview && !hasChatContext() && !uploadedEvidence.length) {
     caseIntelReadiness.textContent = '0%';
     caseIntelDetails.innerHTML = `
       <div class="intel-meter" aria-hidden="true"><span style="width: 0%"></span></div>
@@ -1637,25 +1639,25 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
     `;
     return;
   }
-  const risks = result?.ok
+  const risks = useRunResult
     ? (result.domains || []).filter((domain) => /applicable|needs|confirmation/i.test(domain.status || '')).map((domain) => domain.label)
     : unique([...(draft.riskSignals || []), ...(draft.evidenceSignals || [])]).map((item) => compactUiLabel(item, 42));
-  const missing = missingProofItems(draft, result);
-  const supplier = result?.ok
-    ? (result?.case?.supplierName || draft.supplierName || 'Completed review')
-    : (draft.supplierName || result?.case?.supplierName || 'New compliance case');
-  const owner = result?.ok
-    ? (result?.case?.businessUnit || draft.businessUnit || 'needed')
-    : (draft.businessUnit || result?.case?.businessUnit || 'needed');
-  const geography = result?.ok
-    ? (result?.case?.geography || draft.geography || 'needed')
-    : (draft.geography || result?.case?.geography || 'needed');
-  const approvalRequired = result?.ok ? humanApprovalRequired(result) : true;
-  const evidenceMatches = evidenceMatchesFor(result, draft);
-  const learning = learningSuggestionsFor(result, draft);
-  const advisory = advisorySpecialistsFor(result);
-  const indexedChunks = Number(draft.indexedEvidence?.chunkCount || evidenceIndexMeta.chunkCount || retrievalContextFor(result, draft).chunkCount || 0);
-  const evidenceSummary = result?.ok
+  const missing = missingProofItems(draft, panelResult);
+  const supplier = useRunResult
+    ? (draft.supplierName || result?.case?.supplierName || 'Completed review')
+    : (draft.supplierName || 'New compliance case');
+  const owner = useRunResult
+    ? (draft.businessUnit || result?.case?.businessUnit || 'needed')
+    : (draft.businessUnit || 'needed');
+  const geography = useRunResult
+    ? (draft.geography || result?.case?.geography || 'needed')
+    : (draft.geography || 'needed');
+  const approvalRequired = useRunResult ? humanApprovalRequired(result) : true;
+  const evidenceMatches = evidenceMatchesFor(panelResult, draft);
+  const learning = learningSuggestionsFor(panelResult, draft);
+  const advisory = advisorySpecialistsFor(panelResult);
+  const indexedChunks = Number(draft.indexedEvidence?.chunkCount || evidenceIndexMeta.chunkCount || retrievalContextFor(panelResult, draft).chunkCount || 0);
+  const evidenceSummary = useRunResult
     ? `${(result.evidenceIds || []).length || result.citations?.length || 0} evidence ID${((result.evidenceIds || []).length || result.citations?.length || 0) === 1 ? '' : 's'} · ${humanize(result.evidenceQuality?.status || 'not scored')}`
     : evidenceStatusSummary(draft);
   caseIntelReadiness.textContent = `${Math.max(0, Math.min(100, Math.round(score)))}%`;
@@ -2384,7 +2386,80 @@ function renderBusinessOutcome(result = {}) {
   });
 }
 
+function renderDecisionRoomEmptyState(message = 'Run the council from Advisor, Replay, or Evidence to produce the executive decision room.') {
+  document.body.classList.remove('has-decision-output');
+  document.body.dataset.runComplete = 'false';
+  runwayTitle.textContent = 'Decision Room';
+  runwayDescription.textContent = 'Executive recommendation, risk rationale, evidence, specialist trace, and review pack will appear here after a run.';
+  decisionText.textContent = 'No council output yet';
+  approvalStatus.textContent = 'Run the council before recording human review.';
+  approvalButton.textContent = 'Approval locked';
+  approvalButton.disabled = true;
+  approvalButton.removeAttribute('data-review-action');
+  runtimeText.textContent = '--';
+  readinessScore.textContent = '--';
+  evidenceCount.textContent = '--';
+  gapCount.textContent = '--';
+  flowProgress.style.width = '0%';
+  stageKicker.textContent = 'Awaiting council run';
+  stageStatus.textContent = 'Decision room is empty';
+  stageOutput.textContent = message;
+  specialistList.innerHTML = `
+    <article class="decision-room-empty">
+      <span class="eyebrow">No decision memo yet</span>
+      <strong>Run the council to generate the executive output.</strong>
+      <p>${escapeHtml(message)}</p>
+      <button type="button" class="primary-action" data-report-action="run-council">Run council</button>
+    </article>
+  `;
+  domainList.innerHTML = '<article class="empty-row">Domain coverage appears after the obligation mapper runs.</article>';
+  gapList.innerHTML = '<article class="empty-row">Reviewer actions appear after the risk and controls analyst runs.</article>';
+  citationList.innerHTML = '<article class="empty-row">Evidence citations appear after the evidence examiner runs.</article>';
+  traceList.innerHTML = '';
+  renderRawRunDetails({ ok: false, message }, { finalVisible: false });
+  artifactPreview.innerHTML = `
+    <div class="artifact-header">
+      <span class="eyebrow">waiting</span>
+      <strong>review pack pending</strong>
+    </div>
+    <p>Run the council first. The pack will include the decision memo, trace, citations, and human review boundary.</p>
+  `;
+  renderCaseIntelligence(chatCaseDraft, null);
+}
+
+function renderOutputRenderError(error, result = {}) {
+  const message = error instanceof Error ? error.message : String(error || 'Unknown rendering error');
+  document.body.classList.remove('has-decision-output');
+  document.body.dataset.runComplete = 'false';
+  runwayTitle.textContent = 'Decision Room';
+  runwayDescription.textContent = 'The council completed, but the decision room could not render safely.';
+  decisionText.textContent = 'Output render issue';
+  approvalStatus.textContent = 'The raw audit pack is still available below for diagnosis.';
+  approvalButton.textContent = 'Approval locked';
+  approvalButton.disabled = true;
+  flowProgress.style.width = '100%';
+  stageKicker.textContent = 'Render guard';
+  stageStatus.textContent = 'Decision output needs review';
+  stageOutput.textContent = message;
+  specialistList.innerHTML = `
+    <article class="decision-room-empty is-error">
+      <span class="eyebrow">Safe fallback</span>
+      <strong>The app prevented a blank decision room.</strong>
+      <p>${escapeHtml(message)}</p>
+    </article>
+  `;
+  renderRawRunDetails(result || { ok: false, message }, { finalVisible: true });
+}
+
 function renderRun(result, options = {}) {
+  try {
+    renderRunResult(result, options);
+  } catch (error) {
+    renderOutputRenderError(error, result);
+  }
+}
+
+function renderRunResult(result, options = {}) {
   const stages = getStages(result);
   const stageIndex = Number.isFinite(options.stageIndex) ? options.stageIndex : stages.length - 1;
   const activeIndex = Number.isFinite(options.activeIndex) ? options.activeIndex : null;
@@ -3589,8 +3664,7 @@ councilOutputTab?.addEventListener('click', () => {
   if (outputRun) {
     renderRun(outputRun);
   } else {
-    runwayTitle.textContent = 'Decision Room';
-    runwayDescription.textContent = 'Run the council from Advisor, Replay, or Evidence to produce the executive decision room.';
+    renderDecisionRoomEmptyState('Run the council from Advisor, Replay, or Evidence to produce the executive decision room.');
   }
 });
 
@@ -3598,6 +3672,8 @@ specialistList?.addEventListener('click', (event) => {
   const action = event.target?.closest?.('[data-report-action]')?.dataset?.reportAction;
   if (action === 'export-review-pack') {
     execReviewPack?.click();
+  } else if (action === 'run-council') {
+    submitChatMessage(chatInput.value || 'run it', { forceRun: true });
   }
 });
 

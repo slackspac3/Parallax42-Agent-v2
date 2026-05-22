@@ -712,3 +712,37 @@
 
 /* Council Timeline Panel */
 .council-timeline-panel { border-color: rgba(34,227,180,0.16); }
+
+.decision-room-empty {
+  min-height: 280px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 12px;
+  padding: 28px;
+  border: 1px solid rgba(207, 232, 222, 0.14);
+  border-radius: var(--r-lg);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(34, 227, 180, 0.1), transparent 34%),
+    rgba(216, 232, 224, 0.04);
+}
+
+.decision-room-empty strong {
+  color: var(--text);
+  font-size: clamp(22px, 2vw, 34px);
+  line-height: 1.08;
+}
+
+.decision-room-empty p {
+  max-width: 640px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.decision-room-empty.is-error {
+  border-color: rgba(255, 122, 122, 0.28);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 122, 122, 0.08), transparent 34%),
+    rgba(255, 122, 122, 0.035);
+}
