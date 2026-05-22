@@ -221,25 +221,99 @@ test('conversation LLM assessor reports malformed Compass output accurately', as
       COMPASS_GATEWAY_TOKEN: 'test-token',
       CONVERSATION_LLM_MODEL: 'gpt-5.1'
     }, async () => {
+      let calls = 0;
       global.fetch = async () => ({
         ok: true,
         status: 200,
-        text: async () => JSON.stringify({
-          model: 'gpt-5.1',
-          choices: [{ message: { content: 'I can help with that, but this is not JSON.' } }]
-        })
+        text: async () => {
+          calls += 1;
+          return JSON.stringify({
+            model: 'gpt-5.1',
+            choices: [{ message: { content: 'I can help with that, but this is not JSON.' } }]
+          });
+        }
       });
 
       const result = await assessConversationWithLlm({
         message: 'Assess a managed integration partner'
       });
 
+      assert.equal(calls, 2);
       assert.equal(result.llmAssessment.used, false);
       assert.equal(result.llmAssessment.userMessage, SMART_INTAKE_INVALID_RESPONSE_MESSAGE);
       assert.equal(result.llmAssessment.reason, SMART_INTAKE_INVALID_RESPONSE_MESSAGE);
       assert.equal(result.llmAssessment.invalidCompassResponse, true);
       assert.equal(result.llmAssessment.requiresCompass, false);
       assert.match(result.llmAssessment.detail, /not valid JSON/i);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('conversation LLM assessor retries malformed Compass output with compact JSON prompt', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1'
+    }, async () => {
+      const requests = [];
+      global.fetch = async (url, options) => {
+        requests.push(JSON.parse(options.body));
+        if (requests.length === 1) {
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              model: 'gpt-5.1',
+              choices: [{ message: { content: 'Sure, I can assess that, but this response is prose.' } }]
+            })
+          };
+        }
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            model: 'gpt-5.1',
+            choices: [{
+              message: {
+                content: JSON.stringify({
+                  intent: 'case_context',
+                  requestType: 'supplier_risk',
+                  workflowType: 'supplier_risk_review',
+                  reviewTarget: 'managed integration partner',
+                  recommendedFirstAction: 'ask_scope',
+                  conversationStage: 'asking_clarification',
+                  assistantSummary: 'This is a managed integration partner review.',
+                  confidence: 0.84,
+                  nextBestQuestion: 'Should I focus on access controls, privacy, contractual safeguards, or all of these?',
+                  caseUpdate: {
+                    supplierName: 'managed integration partner',
+                    integrations: ['Oracle ERP', 'Workday'],
+                    riskSignals: ['privileged access']
+                  }
+                })
+              }
+            }]
+          })
+        };
+      };
+
+      const result = await assessConversationWithLlm({
+        message: 'Assess a managed integration partner with privileged access.'
+      });
+
+      assert.equal(requests.length, 2);
+      assert.deepEqual(requests[0].response_format, { type: 'json_object' });
+      assert.deepEqual(requests[1].response_format, { type: 'json_object' });
+      assert.match(requests[1].messages[0].content, /one valid minified JSON object only/i);
+      assert.equal(result.llmAssessment.used, true);
+      assert.equal(result.llmAssessment.retriedAfterInvalidJson, true);
+      assert.equal(result.llmAssessment.requestType, 'supplier_risk');
+      assert.ok(result.caseDraft.integrations.includes('Oracle ERP'));
     });
   } finally {
     global.fetch = originalFetch;
