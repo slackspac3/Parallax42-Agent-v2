@@ -8,8 +8,10 @@ const path = require('node:path');
 
 const { processConversation } = require('../../lib/conversationAgent');
 const {
+  SMART_INTAKE_INVALID_RESPONSE_MESSAGE,
   SMART_INTAKE_UNAVAILABLE_MESSAGE,
-  assessConversationWithLlm
+  assessConversationWithLlm,
+  extractChatContent
 } = require('../../lib/conversationLlmAssessor');
 
 function withEnv(overrides, fn) {
@@ -149,6 +151,106 @@ test('conversation LLM assessor calls Compass even if legacy compassLlmCalls fea
   } finally {
     global.fetch = originalFetch;
   }
+});
+
+test('conversation LLM assessor requests JSON mode and handles OpenAI response output arrays', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1'
+    }, async () => {
+      global.fetch = async (url, options) => {
+        const body = JSON.parse(options.body);
+        assert.equal(url, 'https://gateway.example/api/chat/completions');
+        assert.deepEqual(body.response_format, { type: 'json_object' });
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            model: 'gpt-5.1',
+            output: [{
+              content: [{
+                type: 'output_text',
+                text: JSON.stringify({
+                  intent: 'case_context',
+                  requestType: 'vendor_onboarding',
+                  workflowType: 'procurement_vendor_review',
+                  reviewTarget: 'managed integration partner',
+                  recommendedFirstAction: 'ask_geography',
+                  conversationStage: 'asking_clarification',
+                  assistantSummary: 'This is a managed integration partner review.',
+                  confidence: 0.88,
+                  nextBestQuestion: 'Where is the supplier operating from?',
+                  caseUpdate: {
+                    supplierName: 'managed integration partner',
+                    integrations: ['Oracle ERP', 'Workday', 'ServiceNow', 'SharePoint', 'Snowflake'],
+                    riskSignals: ['privileged access']
+                  }
+                })
+              }]
+            }]
+          })
+        };
+      };
+
+      const assessed = await assessConversationWithLlm({
+        message: 'Assess a managed integration partner connecting Oracle ERP, Workday, ServiceNow, SharePoint, and Snowflake with privileged implementation access.'
+      });
+
+      assert.equal(assessed.llmAssessment.used, true);
+      assert.equal(assessed.llmAssessment.requestType, 'vendor_onboarding');
+      assert.equal(assessed.llmAssessment.workflowType, 'procurement_vendor_review');
+      assert.equal(assessed.caseDraft.supplierName, 'managed integration partner');
+      assert.ok(assessed.caseDraft.integrations.includes('Oracle ERP'));
+      assert.ok(assessed.caseDraft.riskSignals.includes('privileged access'));
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('conversation LLM assessor reports malformed Compass output accurately', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1'
+    }, async () => {
+      global.fetch = async () => ({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({
+          model: 'gpt-5.1',
+          choices: [{ message: { content: 'I can help with that, but this is not JSON.' } }]
+        })
+      });
+
+      const result = await assessConversationWithLlm({
+        message: 'Assess a managed integration partner'
+      });
+
+      assert.equal(result.llmAssessment.used, false);
+      assert.equal(result.llmAssessment.userMessage, SMART_INTAKE_INVALID_RESPONSE_MESSAGE);
+      assert.equal(result.llmAssessment.reason, SMART_INTAKE_INVALID_RESPONSE_MESSAGE);
+      assert.equal(result.llmAssessment.invalidCompassResponse, true);
+      assert.equal(result.llmAssessment.requiresCompass, false);
+      assert.match(result.llmAssessment.detail, /not valid JSON/i);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('extractChatContent handles common gateway response wrappers', () => {
+  assert.deepEqual(extractChatContent({ intent: 'case_context', caseUpdate: {} }), { intent: 'case_context', caseUpdate: {} });
+  assert.equal(extractChatContent({ result: { choices: [{ message: { content: '{"intent":"case_context"}' } }] } }), '{"intent":"case_context"}');
+  assert.equal(extractChatContent({ message: { content: '{"intent":"question"}' } }), '{"intent":"question"}');
+  assert.equal(extractChatContent({ output: [{ content: [{ text: '{"intent":"owner_answer"}' }] }] }), '{"intent":"owner_answer"}');
 });
 
 test('conversation LLM assessor merges strict Compass JSON into the case draft', async () => {

@@ -7,7 +7,10 @@ const os = require('node:os');
 const path = require('node:path');
 
 const { buildConversationPlan, planConversationTurn } = require('../../lib/conversationPlanner');
-const { SMART_INTAKE_UNAVAILABLE_MESSAGE } = require('../../lib/conversationLlmAssessor');
+const {
+  SMART_INTAKE_INVALID_RESPONSE_MESSAGE,
+  SMART_INTAKE_UNAVAILABLE_MESSAGE
+} = require('../../lib/conversationLlmAssessor');
 
 function withEnv(overrides, fn) {
   const snapshot = {};
@@ -62,6 +65,28 @@ test('conversation planner marks smart intake unavailable when required Compass 
   assert.equal(plan.memoryFindings.similarCases, 1);
   assert.equal(plan.memoryFindings.controlSuggestions, 1);
   assert.equal(plan.fallbackReason, SMART_INTAKE_UNAVAILABLE_MESSAGE);
+});
+
+test('conversation planner distinguishes malformed Compass output from missing configuration', () => {
+  const plan = buildConversationPlan({
+    message: 'Assess a managed integration partner',
+    caseDraft: {},
+    llmAssessment: {
+      used: false,
+      smartIntakeUnavailable: true,
+      invalidCompassResponse: true,
+      userMessage: SMART_INTAKE_INVALID_RESPONSE_MESSAGE,
+      reason: SMART_INTAKE_INVALID_RESPONSE_MESSAGE
+    }
+  });
+
+  assert.equal(plan.source, 'compass_invalid_response');
+  assert.equal(plan.nextBestAction, 'contact_admin');
+  assert.equal(plan.smartIntakeUnavailable, true);
+  assert.equal(plan.requiresCompass, false);
+  assert.equal(plan.userMessage, SMART_INTAKE_INVALID_RESPONSE_MESSAGE);
+  assert.equal(plan.nextQuestion, SMART_INTAKE_INVALID_RESPONSE_MESSAGE);
+  assert.equal(plan.shouldRunCouncil, false);
 });
 
 test('conversation planner calls Compass after retrieval context is prepared', async () => {

@@ -1770,7 +1770,7 @@ function assistantRawSummary(text = '') {
 
 function assistantQuestionFromText(text = '') {
   const raw = String(text || '');
-  if (/Compass gateway is not configured/i.test(raw)) return '';
+  if (/Compass gateway is not configured|Smart intake received an invalid Compass response/i.test(raw)) return '';
   const fallbackQuestion = () => {
     const missing = missingProofItems();
     if (missing.length) {
@@ -1812,7 +1812,7 @@ function normalizeAssistantQuestion(question = '') {
 }
 
 function assistantAcknowledgement(text = '') {
-  if (/Compass gateway is not configured/i.test(text)) return 'Smart intake unavailable';
+  if (/Compass gateway is not configured|Smart intake received an invalid Compass response/i.test(text)) return 'Smart intake issue';
   if (/could not|failed|error/i.test(text)) return 'I hit a processing issue, but the case state is still safe.';
   if (lastRuns.chat?.ok) return 'Council run complete. I kept the decision review-bound.';
   const clean = cleanEvidenceText(text);
@@ -1831,7 +1831,7 @@ function renderThinkingLoader(message = {}) {
 
 function renderAssistantTurn(message = {}) {
   const canRun = Boolean(chatRunReadiness?.runnable);
-  const smartIntakeUnavailable = /Compass gateway is not configured/i.test(message.text || '');
+  const smartIntakeUnavailable = /Compass gateway is not configured|Smart intake received an invalid Compass response/i.test(message.text || '');
   const question = assistantQuestionFromText(message.text);
   const acknowledgement = assistantAcknowledgement(message.text);
   return window.P42AppModules.chatUi.renderAssistantTurn(message, {
