@@ -302,6 +302,9 @@ test('conversation LLM assessor sends full chat context for terse answer interpr
         const body = JSON.parse(options.body);
         const prompt = JSON.parse(body.messages[1].content);
         assert.equal(prompt.latestMessage, 'we do not know at this point');
+        assert.equal(prompt.eventType, 'user_answer');
+        assert.equal(prompt.activeQuestion, 'What source evidence should I treat as proof for this decision?');
+        assert.equal(prompt.currentDraft.activeQuestion, 'What source evidence should I treat as proof for this decision?');
         assert.equal(prompt.conversationHistory.at(-2).role, 'assistant');
         assert.match(prompt.conversationHistory.at(-2).text, /source evidence/i);
         assert.match(prompt.currentDraft.conversationHistory.at(-2).text, /source evidence/i);
@@ -333,6 +336,8 @@ test('conversation LLM assessor sends full chat context for terse answer interpr
 
       const result = await assessConversationWithLlm({
         message: 'we do not know at this point',
+        eventType: 'user_answer',
+        activeQuestion: 'What source evidence should I treat as proof for this decision?',
         caseDraft: {
           brief: 'Assess a managed integration partner with privileged access.'
         },

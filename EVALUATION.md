@@ -10,6 +10,16 @@ npm run qa
 
 This runs syntax checks, static page checks, unit tests, local benchmarks, and CrewAI dry-run validation. The application is a Node/CommonJS Vercel/static app, so there is no React, Vite, FastAPI, Docker, Redis, Postgres, or durable queue setup required for this QA path.
 
+## Live Local/Hosted Consistency Check
+
+Run this only when `.env.local` contains the same server-side values used by the hosted demo:
+
+```bash
+npm run qa:live
+```
+
+This starts a local `server.js` instance, verifies local `/api/health` and `/api/admin/status`, checks the local `/api/backend` relay against the DigitalOcean backend, checks the Vercel Compass gateway health route, confirms Qdrant configuration, and sends one real smart-intake request through Compass GPT-5.1. It is intentionally not part of `npm run qa` because it is networked and can spend gateway tokens.
+
 ## Unit Tests
 
 Run unit tests only:

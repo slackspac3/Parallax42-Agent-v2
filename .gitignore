@@ -18,3 +18,4 @@ dist/
 build/
 *.local
 .vercel
+.env*.local

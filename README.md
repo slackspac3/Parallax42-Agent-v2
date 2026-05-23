@@ -117,6 +117,8 @@ Linked live assets already in place:
 
 ## Run Locally
 
+For local testing that matches the hosted demo boundary, create `.env.local` from the relevant values in `.env.example`. `npm run dev` automatically loads `.env` and `.env.local`; shell-exported variables still win. Keep secrets such as `COMPASS_GATEWAY_TOKEN`, `QDRANT_API_KEY`, and `P42_CREWAI_SERVICE_TOKEN` out of git.
+
 ```bash
 npm run dev
 ```
@@ -132,6 +134,14 @@ http://127.0.0.1:3020
 ```bash
 npm run qa
 ```
+
+Run the live dependency check when you need localhost to prove it can reach the DigitalOcean backend, the local `/api/backend` relay, the Vercel Compass gateway, Qdrant config, and one real Compass GPT-5.1 smart-intake turn:
+
+```bash
+npm run qa:live
+```
+
+`npm run qa` stays deterministic and does not spend gateway tokens. `npm run qa:live` is intentionally networked and requires `.env.local` to contain the same server-side values used by Vercel.
 
 ## Evidence Capture
 

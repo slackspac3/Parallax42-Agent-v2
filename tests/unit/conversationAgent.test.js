@@ -147,6 +147,45 @@ test('conversation does not repeat a generic owner question after a terse owner 
   assert.ok(!third.questions.some((question) => /accountable business unit|workflow owner|who.*own/i.test(question)));
 });
 
+test('conversation uses activeQuestion to resolve a terse owner answer when rendered history is sparse', () => {
+  const result = processConversation({
+    message: 'Finance',
+    eventType: 'user_answer',
+    caseDraft: {
+      brief: 'Review access reports during onboarding.',
+      activeQuestion: 'Who is the accountable business owner for this case?',
+      questions: [],
+      askedQuestions: ['What do you need reviewed?'],
+      conversationHistory: [
+        { role: 'assistant', text: 'I added the evidence to the case.', displayedQuestion: 'Who is the accountable business owner for this case?' },
+        { role: 'user', text: 'Finance', answeringQuestion: 'Who is the accountable business owner for this case?' }
+      ]
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.caseDraft.businessUnit, 'Finance');
+  assert.ok(!result.questions.some((question) => /business owner|accountable business unit|workflow owner/i.test(question)));
+});
+
+test('conversation does not treat Finance as an owner when the active question is generic scope', () => {
+  const result = processConversation({
+    message: 'Finance',
+    eventType: 'user_answer',
+    caseDraft: {
+      activeQuestion: 'What do you need reviewed?',
+      questions: ['What do you need reviewed?'],
+      askedQuestions: ['What do you need reviewed?'],
+      conversationHistory: [
+        { role: 'assistant', text: 'What do you need reviewed?', displayedQuestion: 'What do you need reviewed?' },
+        { role: 'user', text: 'Finance', answeringQuestion: 'What do you need reviewed?' }
+      ]
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.caseDraft.businessUnit, '');
+  assert.match(result.caseDraft.brief, /Finance/i);
+});
+
 test('conversation preserves platform team as explicit owner after owner question', () => {
   const result = processConversation({
     message: 'Platform team',
@@ -424,6 +463,26 @@ test('conversation maps unknown answers from full chat history when draft questi
   assert.match(result.reply, /source evidence as a known gap/i);
 });
 
+test('conversation maps unknown phrases to activeQuestion even when draft questions are missing', () => {
+  const result = processConversation({
+    message: 'we do not know at this point',
+    eventType: 'user_answer',
+    caseDraft: {
+      brief: 'Assess a managed integration partner with privileged access.',
+      businessUnit: 'Platform Team',
+      geography: 'UAE',
+      activeQuestion: 'What source evidence should I treat as proof for this decision?',
+      conversationHistory: [
+        { role: 'assistant', text: 'I added the evidence to the case.', displayedQuestion: 'What source evidence should I treat as proof for this decision?' },
+        { role: 'user', text: 'we do not know at this point', answeringQuestion: 'What source evidence should I treat as proof for this decision?' }
+      ]
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.ok(result.caseDraft.knownGaps.includes('evidence'));
+  assert.ok(!result.questions.some((question) => /source evidence|evidence is available|contract terms|SOC 2|DPA/i.test(question)));
+});
+
 test('conversation asks to upload a generic agreement before demanding owner metadata', () => {
   const result = processConversation({
     message: 'I want to review an agreement'
@@ -446,6 +505,58 @@ test('conversation classifies MSA review and asks for source upload before metad
   assert.equal(result.nlp.requestProfile.reviewTarget, 'MSA');
   assert.ok(result.questions.some((question) => /upload the MSA|analyze it first/i.test(question)));
   assert.ok(!result.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
+});
+
+test('conversation uses uploaded evidence event to ask document-aware question before generic metadata', () => {
+  const result = processConversation({
+    message: 'Evidence uploaded: services agreement.pdf. Classify the uploaded document and ask the next best review question.',
+    eventType: 'evidence_uploaded',
+    caseDraft: {
+      supplierName: 'Services Agreement',
+      brief: 'Uploaded services agreement for review.',
+      currentEventType: 'evidence_uploaded',
+      documents: [{
+        evidenceId: 'UP-01',
+        title: 'services agreement.pdf',
+        documentType: 'agreement',
+        extractionStatus: 'backend_parsed',
+        summary: 'Managed platform integration services agreement with implementation access, data processing, and commercial terms.',
+        signals: ['agreement', 'data processing', 'privileged access']
+      }],
+      evidenceSignals: ['agreement', 'data processing', 'privileged access'],
+      riskSignals: ['privileged access', 'personal data'],
+      indexedEvidence: { chunkCount: 4, model: 'text-embedding-3-large' }
+    },
+    conversationPlan: {
+      usedLlm: true,
+      confidence: 0.86,
+      nextQuestion: 'I can review the uploaded agreement first. Should I focus on access and security, data processing, commercial terms, or all risks?',
+      nextBestAction: 'ask_scope',
+      assistantSummary: 'I found an uploaded agreement and will triage it before asking for generic metadata.'
+    },
+    llmAssessment: {
+      provider: 'compass_gateway',
+      model: 'gpt-5.1',
+      used: true,
+      confidence: 0.86,
+      intent: 'case_context',
+      requestType: 'agreement_review',
+      workflowType: 'contract_risk_review',
+      documentTypes: ['agreement'],
+      recommendedFirstAction: 'ask_scope',
+      conversationStage: 'document_uploaded',
+      nextBestQuestion: 'I can review the uploaded agreement first. Should I focus on access and security, data processing, commercial terms, or all risks?',
+      assistantSummary: 'I found an uploaded agreement and will triage it before asking for generic metadata.',
+      caseUpdate: {
+        documentTypes: ['agreement'],
+        evidenceSignals: ['agreement', 'data processing', 'privileged access'],
+        riskSignals: ['privileged access', 'personal data']
+      }
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.ok(result.questions.some((question) => /uploaded agreement|access and security|data processing|commercial terms|all risks/i.test(question)));
+  assert.ok(!result.questions.some((question) => /business owner|accountable business unit|workflow owner|geography|regulatory perimeter/i.test(question)));
 });
 
 test('conversation classifies SaaS agreement review into the SaaS workflow before metadata', () => {

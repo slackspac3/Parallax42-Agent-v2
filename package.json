@@ -18,16 +18,20 @@
     "capture:evidence": "node scripts/capture-evidence.js",
     "benchmark": "node scripts/benchmark.js",
     "qdrant:smoke": "node scripts/qdrant-smoke.js",
+    "check:live": "node scripts/check-live-dependencies.js",
     "reference:index": "node scripts/index-governance-reference.js",
     "reference:cap": "node scripts/import-cap-legal-reference.js",
     "reference:courtlistener": "node scripts/import-courtlistener-reference.js",
     "reference:cuad": "node scripts/import-cuad-reference.js",
     "reference:nist": "node scripts/import-nist-reference.js",
     "reference:intelligence": "npm run reference:courtlistener -- --no-live --skip-index && npm run reference:cuad -- --skip-index && npm run reference:nist -- --skip-index",
-    "test": "node --test $(find tests/unit -name '*.test.js' -print)",
+    "test": "P42_SKIP_LOCAL_ENV=1 node --test $(find tests/unit -name '*.test.js' -print)",
     "test:e2e:smoke": "node tests/e2e/advisor-smoke.js",
+    "test:e2e:mock": "P42_SKIP_LOCAL_ENV=1 node tests/e2e/advisor-regression-mock.js",
+    "test:e2e:deployed": "node tests/e2e/deployed-smoke.js",
+    "qa:live": "npm run check:live && npm run qdrant:smoke",
     "check:crewai": "python3 crewai_adapter/compliance_crew.py --dry-run && python3 crewai_adapter/compliance_flow.py --dry-run",
-    "qa": "npm run check:syntax && npm run check:css && npm run check:pages && npm run check:mirrors && npm run check:submission && npm test && npm run benchmark && npm run check:crewai"
+    "qa": "npm run check:syntax && npm run check:css && npm run check:pages && npm run check:mirrors && npm run check:submission && npm test && npm run test:e2e:mock && npm run benchmark && npm run check:crewai"
   },
   "devDependencies": {
     "playwright": "^1.60.0"

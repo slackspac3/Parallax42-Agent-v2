@@ -150,10 +150,12 @@ let humanReviewRecord = null;
 let chatCaseDraft = {};
 let chatRunReadiness = null;
 let workspaceView = 'chat';
+let activeQuestion = 'What do you need reviewed?';
 let chatMessages = [
   {
     role: 'assistant',
-    text: 'What do you need reviewed?'
+    text: 'What do you need reviewed?',
+    displayedQuestion: 'What do you need reviewed?'
   }
 ];
 
@@ -1168,14 +1170,6 @@ async function ingestEvidenceFiles(files = []) {
       const signalCount = unique(extracted.flatMap((item) => item.signals || [])).length;
       const indexedCount = extracted.filter((item) => item.indexStatus === 'indexed').length;
       const chunkCount = indexResult?.index?.chunkCount || indexResult?.chunking?.chunkCount || indexedChunkCount();
-      chatMessages.push({
-        role: 'assistant',
-        text: binaryOnlyCount
-          ? `Attached ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. ${parsedCount} parsed, ${binaryOnlyCount} registered as metadata only. Add a short description of the supplier/workflow and key clauses before running council.`
-          : indexedCount
-            ? `Attached, parsed, and indexed ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. I extracted ${signalCount} signal${signalCount === 1 ? '' : 's'} and stored ${chunkCount} retrieval chunk${chunkCount === 1 ? '' : 's'} for council citations. ${evidenceIndexStorageSummary(indexResult)}`
-            : `Attached and parsed ${extracted.length} evidence file${extracted.length === 1 ? '' : 's'}: ${names}. I extracted ${signalCount} signal${signalCount === 1 ? '' : 's'}, but semantic retrieval is not indexed yet.`
-      });
       if (indexedCount) {
         renderEvidencePipelineStatus({
           phase: 'ready',
@@ -1189,7 +1183,16 @@ async function ingestEvidenceFiles(files = []) {
       } else {
         setAttachmentStatus(`${uploadedEvidence.length} file${uploadedEvidence.length === 1 ? '' : 's'} attached. ${binaryOnlyCount ? 'Describe the case before running council.' : 'Continue the case or run council.'}`, 'ready');
       }
-      renderChatMessages();
+      const eventSummary = binaryOnlyCount
+        ? `Evidence uploaded: ${names}. ${parsedCount} parsed, ${binaryOnlyCount} registered as metadata only. Classify what was uploaded and ask the next best question.`
+        : indexedCount
+          ? `Evidence uploaded: ${names}. ${signalCount} extracted signals and ${chunkCount} indexed retrieval chunks are available. Classify the uploaded document and ask the next best review question before requesting generic metadata.`
+          : `Evidence uploaded: ${names}. ${signalCount} extracted signals are available, but semantic retrieval is not indexed yet. Classify the uploaded document and ask the next best question.`;
+      await submitChatMessage(eventSummary, {
+        eventType: 'evidence_uploaded',
+        silentUser: true,
+        activeQuestion: ''
+      });
       renderAgentActivity([
         { label: 'Intake Agent', detail: 'ready', status: 'complete' },
         { label: 'Obligation Mapper', detail: 'queued', status: 'queued' },
@@ -1590,8 +1593,21 @@ function inferLiveInputDraft(baseDraft = chatCaseDraft, inputText = '') {
   if (/\bcross[-\s]?border|transfer|offshore|india|eu|global\b/i.test(text)) {
     riskSignals = addPreviewSignal(riskSignals, 'cross-border data transfer');
   }
-  if (/\bworkday|oracle|sap|microsoft 365|m365|azure|servicenow|snowflake|erp\b/i.test(text)) {
-    integrations = addPreviewSignal(integrations, text.match(/\b(workday|oracle|sap|microsoft 365|m365|azure|servicenow|snowflake|erp)\b/i)?.[0] || 'enterprise platform');
+  const platformMatches = Array.from(text.matchAll(/\b(oracle\s+erp|workday|sap|microsoft\s+365|m365|azure|servicenow|snowflake|salesforce|sharepoint|erp)\b/gi))
+    .map((match) => match[1])
+    .map((value) => value.replace(/\s+/g, ' ').trim())
+    .map((value) => {
+      const lower = value.toLowerCase();
+      if (lower === 'm365') return 'Microsoft 365';
+      if (lower === 'oracle erp') return 'Oracle ERP';
+      if (lower === 'servicenow') return 'ServiceNow';
+      return value.replace(/\b\w/g, (char) => char.toUpperCase());
+    });
+  platformMatches.forEach((platform) => {
+    integrations = addPreviewSignal(integrations, platform);
+  });
+  if (platformMatches.length) {
+    riskSignals = addPreviewSignal(riskSignals, 'enterprise system integration');
   }
   if (/\bdpa\b|data processing agreement/i.test(text)) evidenceSignals = addPreviewSignal(evidenceSignals, 'DPA');
   if (/\bsoc\s*2\b|soc2/i.test(text)) evidenceSignals = addPreviewSignal(evidenceSignals, 'SOC 2');
@@ -1657,6 +1673,7 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
   const learning = learningSuggestionsFor(panelResult, draft);
   const advisory = advisorySpecialistsFor(panelResult);
   const indexedChunks = Number(draft.indexedEvidence?.chunkCount || evidenceIndexMeta.chunkCount || retrievalContextFor(panelResult, draft).chunkCount || 0);
+  const integrations = Array.isArray(draft.integrations) ? unique(draft.integrations).filter(Boolean) : [];
   const evidenceSummary = useRunResult
     ? `${(result.evidenceIds || []).length || result.citations?.length || 0} evidence ID${((result.evidenceIds || []).length || result.citations?.length || 0) === 1 ? '' : 's'} · ${humanize(result.evidenceQuality?.status || 'not scored')}`
     : evidenceStatusSummary(draft);
@@ -1681,6 +1698,16 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
         <span>Evidence confidence</span>
         <strong>${escapeHtml(evidenceSummary)}</strong>
       </article>
+      ${integrations.length ? `
+        <article>
+          <span>Integrations</span>
+          <strong>${escapeHtml(compactUiLabel(integrations.join(', '), 72))}</strong>
+        </article>
+      ` : ''}
+    </div>
+    <div class="next-action">
+      <span class="eyebrow">Next best action</span>
+      <strong>${escapeHtml(nextBestAction(draft, result))}</strong>
     </div>
     <details class="intel-detail-pack risk-domain-block">
       <summary><span>Risk signals</span><b>${escapeHtml(risks.length || 0)}</b></summary>
@@ -1688,16 +1715,12 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
         ${risks.length ? risks.slice(0, 6).map((risk) => `<span>${escapeHtml(risk)}</span>`).join('') : '<span>awaiting signals</span>'}
       </div>
     </details>
-    <div class="intel-block missing-proof-block">
-      <span class="eyebrow">Missing proof</span>
+    <details class="intel-detail-pack missing-proof-block">
+      <summary><span>Missing proof</span><b>${escapeHtml(missing.length || 0)}</b></summary>
       <ul>
         ${missing.length ? missing.map((item) => `<li>${escapeHtml(item)}</li>`).join('') : '<li>No intake blockers detected; reviewer confirmation still required.</li>'}
       </ul>
-    </div>
-    <div class="next-action">
-      <span class="eyebrow">Next best action</span>
-      <strong>${escapeHtml(nextBestAction(draft, result))}</strong>
-    </div>
+    </details>
     <details class="intel-detail-pack human-boundary-card">
       <summary><span>Human review boundary</span><b>${escapeHtml(approvalRequired ? 'locked' : 'check')}</b></summary>
       <strong>${escapeHtml(approvalRequired ? 'Approval cannot be automated' : 'Reviewer check still required')}</strong>
@@ -1834,7 +1857,8 @@ function renderThinkingLoader(message = {}) {
 function renderAssistantTurn(message = {}) {
   const canRun = Boolean(chatRunReadiness?.runnable);
   const smartIntakeUnavailable = /Compass gateway is not configured|Smart intake (?:received an invalid Compass response|could not get valid Compass JSON)/i.test(message.text || '');
-  const question = assistantQuestionFromText(message.text);
+  const question = message.displayedQuestion || assistantQuestionFromText(message.text);
+  if (question && !message.displayedQuestion) message.displayedQuestion = question;
   const acknowledgement = assistantAcknowledgement(message.text);
   return window.P42AppModules.chatUi.renderAssistantTurn(message, {
     acknowledgement,
@@ -1847,6 +1871,32 @@ function renderAssistantTurn(message = {}) {
     smartIntakeUnavailable,
     unavailableMessage: message.text
   });
+}
+
+function persistActiveQuestion(question = '') {
+  const clean = cleanEvidenceText(question);
+  activeQuestion = clean;
+  chatCaseDraft = {
+    ...chatCaseDraft,
+    activeQuestion: clean,
+    questions: clean ? [clean] : [],
+    askedQuestions: unique([
+      ...(chatCaseDraft.askedQuestions || []),
+      ...(clean ? [clean] : [])
+    ]).slice(-24)
+  };
+  return clean;
+}
+
+function refreshActiveQuestionFromLatestAssistant() {
+  const latestAssistant = [...chatMessages].reverse().find((message) => message?.role === 'assistant' && !message.pending);
+  if (!latestAssistant) {
+    persistActiveQuestion('');
+    return '';
+  }
+  const question = latestAssistant.displayedQuestion || assistantQuestionFromText(latestAssistant.text || '');
+  if (question) latestAssistant.displayedQuestion = question;
+  return persistActiveQuestion(question);
 }
 
 function renderAssistantHistoryTurn(message = {}) {
@@ -1939,10 +1989,12 @@ function resetChatCaseSession() {
   evidenceIndexMeta = {};
   chatCaseDraft = {};
   chatRunReadiness = null;
+  activeQuestion = 'What do you need reviewed?';
   chatMessages = [
     {
       role: 'assistant',
-      text: 'What do you need reviewed?'
+      text: 'What do you need reviewed?',
+      displayedQuestion: 'What do you need reviewed?'
     }
   ];
   removeStorage(storageKeys.evidenceIndexMeta);
@@ -2070,15 +2122,20 @@ function renderCaseDraft() {
   const indexedLabel = draft.indexedEvidence?.chunkCount
     ? `${draft.indexedEvidence.chunkCount} server-side chunks`
     : '';
+  const readiness = Number.isFinite(chatRunReadiness?.score) ? Math.round(chatRunReadiness.score) : contextStrength(draft);
+  const status = chatRunReadiness?.runnable ? 'ready for council' : hasChatContext() || uploadedEvidence.length ? 'building case' : 'awaiting context';
   caseDraftPanel.innerHTML = `
     <div class="case-draft-header">
       <span class="eyebrow">working draft</span>
       <strong>${escapeHtml(draft.supplierName || 'New compliance case')}</strong>
     </div>
-    <div class="draft-grid">
+    <div class="draft-compact-strip">
+      <span>${escapeHtml(status)}</span>
+      <b>${escapeHtml(Math.max(0, Math.min(100, readiness)))}%</b>
+    </div>
+    <div class="draft-compact-meta">
       <span>Owner</span><b>${escapeHtml(draft.businessUnit || 'needed')}</b>
       <span>Geography</span><b>${escapeHtml(draft.geography || 'needed')}</b>
-      <span>Integrations</span><b>${escapeHtml(integrations.length ? integrations.join(', ') : 'none yet')}</b>
       <span>Evidence</span><b>${escapeHtml([evidenceStatusSummary(draft), indexedLabel].filter(Boolean).join(' · ') || 'needed')}</b>
     </div>
     <div class="draft-pills">
@@ -2090,6 +2147,7 @@ function renderCaseDraft() {
 }
 
 function renderChatMessages() {
+  refreshActiveQuestionFromLatestAssistant();
   renderCaseDraft();
   renderContextStrength();
   renderChatAttachments();
@@ -3170,7 +3228,13 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   setRunMode('chat', { skipRender: true });
   clearPlaybackTimers();
   syncUploadedEvidenceIntoChatDraft();
-  chatMessages.push({ role: 'user', text: message });
+  const eventType = cleanEvidenceText(options.eventType || (options.forceRun ? 'run_request' : activeQuestion ? 'user_answer' : 'user_message'));
+  const questionAtTurnStart = cleanEvidenceText(Object.prototype.hasOwnProperty.call(options, 'activeQuestion')
+    ? options.activeQuestion
+    : activeQuestion || chatCaseDraft.activeQuestion || '');
+  if (!options.silentUser) {
+    chatMessages.push({ role: 'user', text: message, answeringQuestion: questionAtTurnStart || '' });
+  }
   const pendingMessage = {
     role: 'assistant',
     text: options.forceRun
@@ -3228,10 +3292,17 @@ async function submitChatMessage(rawMessage = '', options = {}) {
       body: JSON.stringify({
         message,
         caseDraft: chatCaseDraft,
+        activeQuestion: questionAtTurnStart,
+        eventType,
         history: chatMessages
           .filter((item) => item && !item.pending && (item.role === 'user' || item.role === 'assistant'))
           .slice(-12)
-          .map((item) => ({ role: item.role, text: item.text || '' })),
+          .map((item) => ({
+            role: item.role,
+            text: item.text || '',
+            displayedQuestion: item.displayedQuestion || '',
+            answeringQuestion: item.answeringQuestion || ''
+          })),
         uploadedEvidence,
         retrievalQuery: options.forceRun ? retrievalQueryFromDraft() : '',
         forceRun: Boolean(options.forceRun)
@@ -3241,6 +3312,9 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     chatRunReadiness = result.runReadiness || null;
     pendingMessage.pending = false;
     pendingMessage.text = result.reply || 'The conversation step completed.';
+    pendingMessage.displayedQuestion = (Array.isArray(result.questions) && result.questions[0])
+      ? result.questions[0]
+      : assistantQuestionFromText(pendingMessage.text);
     renderChatMessages();
     if (result.run?.ok) {
       lastRuns.chat = result.run;
@@ -3798,12 +3872,15 @@ chatForm.addEventListener('submit', (event) => {
   submitChatMessage(chatInput.value);
 });
 
-chatInput?.addEventListener('input', updateLiveCasePreview);
 chatInput?.addEventListener('keydown', (event) => {
   if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
   event.preventDefault();
   const message = cleanEvidenceText(chatInput.value);
   if (message) submitChatMessage(message);
+});
+
+chatInput?.addEventListener('input', () => {
+  updateLiveCasePreview();
 });
 
 chatRunNow.addEventListener('click', () => {
