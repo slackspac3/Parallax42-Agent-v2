@@ -846,21 +846,29 @@ function applyCaseAssistOutput(output = {}, offset = uploadedEvidence.length) {
   const documents = Array.isArray(output.uploaded_documents) ? output.uploaded_documents : [];
   const parsed = documents.map((document, index) => uploadedDocumentToEvidence(document, offset + index));
   if (output.extracted_case) {
+    const caseRequestStarted = hasCaseRequestContext(chatCaseDraft);
     chatCaseDraft = {
       ...chatCaseDraft,
       supplierName: output.extracted_case.supplier_name || chatCaseDraft.supplierName,
-      businessUnit: output.extracted_case.business_unit || chatCaseDraft.businessUnit,
-      geography: output.extracted_case.geography || chatCaseDraft.geography,
-      brief: output.extracted_case.service_description || output.source_summary || chatCaseDraft.brief,
-      integrations: unique([
+      businessUnit: caseRequestStarted ? (output.extracted_case.business_unit || chatCaseDraft.businessUnit) : chatCaseDraft.businessUnit,
+      geography: caseRequestStarted ? (output.extracted_case.geography || chatCaseDraft.geography) : chatCaseDraft.geography,
+      brief: caseRequestStarted ? (output.extracted_case.service_description || output.source_summary || chatCaseDraft.brief) : chatCaseDraft.brief,
+      documentContext: {
+        ...(chatCaseDraft.documentContext || {}),
+        supplierName: output.extracted_case.supplier_name || chatCaseDraft.documentContext?.supplierName || '',
+        businessUnit: output.extracted_case.business_unit || chatCaseDraft.documentContext?.businessUnit || '',
+        geography: output.extracted_case.geography || chatCaseDraft.documentContext?.geography || '',
+        serviceDescription: output.extracted_case.service_description || output.source_summary || chatCaseDraft.documentContext?.serviceDescription || ''
+      },
+      integrations: caseRequestStarted ? unique([
         ...(chatCaseDraft.integrations || []),
         ...(Array.isArray(output.extracted_case.integrations) ? output.extracted_case.integrations : [])
-      ]),
-      riskSignals: unique([
+      ]) : (chatCaseDraft.integrations || []),
+      riskSignals: caseRequestStarted ? unique([
         ...(chatCaseDraft.riskSignals || []),
         ...(Array.isArray(output.evidence_checklist) ? output.evidence_checklist : []),
         ...(Array.isArray(output.missing_inputs) ? output.missing_inputs : [])
-      ])
+      ]) : (chatCaseDraft.riskSignals || [])
     };
   }
   return parsed;
@@ -1238,7 +1246,20 @@ function setWorkspaceView(view = 'chat') {
   if (workspaceView === 'output') {
     window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, behavior: 'auto' });
+      ensureDecisionRoomVisible();
     });
+  }
+}
+
+function ensureDecisionRoomVisible() {
+  if (workspaceView !== 'output' || !specialistList) return;
+  const visibleText = cleanEvidenceText(specialistList.textContent || '');
+  if (visibleText) return;
+  const outputRun = lastRuns.chat?.ok ? lastRuns.chat : lastRun?.ok ? lastRun : null;
+  if (outputRun) {
+    renderRun(outputRun);
+  } else {
+    renderDecisionRoomEmptyState('No council output has been generated yet. Return to Advisor, describe the case, then run the council.');
   }
 }
 
@@ -1253,10 +1274,13 @@ function contextCopy(score) {
 function renderContextStrength(draft = chatCaseDraft) {
   if (!contextStrengthBar || !contextStrengthLabel || !contextStrengthText) return;
   const readiness = draft === chatCaseDraft ? chatRunReadiness : null;
-  const score = Number.isFinite(readiness?.score) ? readiness.score : contextStrength(draft);
+  const hasCase = hasCaseRequestContext(draft);
+  const score = hasCase && Number.isFinite(readiness?.score) ? readiness.score : hasCase ? contextStrength(draft) : 0;
   const runnable = readiness?.runnable;
   const blockerCount = readiness?.executionBlockers?.length || 0;
-  const [label, text] = readiness
+  const [label, text] = !hasCase && hasEvidenceContext(draft)
+    ? ['Evidence staged', 'Tell me what you need reviewed. Staged evidence does not count as case readiness until the request is clear.']
+    : readiness
     ? runnable
       ? [
         readiness.advisoryGaps?.length ? 'Runnable with open gaps' : 'Council ready',
@@ -1643,10 +1667,12 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
   const isPreview = Boolean(draft?.__previewOnly);
   const useRunResult = Boolean(result?.ok && workspaceView === 'output');
   const panelResult = useRunResult ? result : null;
+  const caseStarted = useRunResult || hasCaseRequestContext(draft);
+  const evidenceOnly = !caseStarted && hasEvidenceContext(draft);
   const score = useRunResult
     ? Math.round(Number(result.decision?.readinessScore || 0) * 100)
-    : isPreview ? contextStrength(draft) : Number.isFinite(chatRunReadiness?.score) ? chatRunReadiness.score : contextStrength(draft);
-  if (!panelResult?.ok && !isPreview && !hasChatContext() && !uploadedEvidence.length) {
+    : !caseStarted ? 0 : isPreview ? contextStrength(draft) : Number.isFinite(chatRunReadiness?.score) ? chatRunReadiness.score : contextStrength(draft);
+  if (!panelResult?.ok && !isPreview && !hasChatContext() && !hasEvidenceContext(draft)) {
     caseIntelReadiness.textContent = '0%';
     caseIntelDetails.innerHTML = `
       <div class="intel-meter" aria-hidden="true"><span style="width: 0%"></span></div>
@@ -1654,6 +1680,44 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
         <strong>No active case</strong>
         <p>Describe a workflow or attach evidence. The panel will track readiness, missing proof, and council validation as the case develops.</p>
       </div>
+    `;
+    return;
+  }
+  if (evidenceOnly && !isPreview) {
+    const evidenceSummary = evidenceStatusSummary(draft);
+    const chunks = Number(draft.indexedEvidence?.chunkCount || evidenceIndexMeta.chunkCount || 0);
+    caseIntelReadiness.textContent = '0%';
+    caseIntelDetails.innerHTML = `
+      <div class="intel-meter" aria-hidden="true"><span style="width: 0%"></span></div>
+      <div class="executive-intel-list">
+        <article>
+          <span>Status</span>
+          <strong>Evidence staged</strong>
+        </article>
+        <article>
+          <span>Case readiness</span>
+          <strong>Waiting for request</strong>
+        </article>
+        <article>
+          <span>Evidence confidence</span>
+          <strong>${escapeHtml(evidenceSummary)}</strong>
+        </article>
+        ${chunks ? `
+          <article>
+            <span>Server-side chunks</span>
+            <strong>${escapeHtml(chunks)}</strong>
+          </article>
+        ` : ''}
+      </div>
+      <div class="next-action">
+        <span class="eyebrow">Next best action</span>
+        <strong>Describe what decision or review you need from this evidence.</strong>
+      </div>
+      <details class="intel-detail-pack human-boundary-card" open>
+        <summary><span>Human review boundary</span><b>locked</b></summary>
+        <strong>No council decision has started.</strong>
+        <p>The file can be used as evidence, but readiness stays at 0% until a review request is supplied.</p>
+      </details>
     `;
     return;
   }
@@ -2117,7 +2181,7 @@ function renderEvidenceQueue(scenario = scenarios[currentScenarioKey]) {
 
 function renderCaseDraft() {
   const draft = chatCaseDraft || {};
-  if (!hasChatContext() && !uploadedEvidence.length && !lastRuns.chat?.ok) {
+  if (!hasCaseRequestContext(draft) && !lastRuns.chat?.ok) {
     caseDraftPanel.innerHTML = '';
     renderCaseIntelligence(draft, lastRuns.chat);
     renderMissionWelcome();
@@ -2178,13 +2242,40 @@ function renderChatMessages() {
 }
 
 function hasChatContext() {
+  return hasCaseRequestContext(chatCaseDraft);
+}
+
+function hasSubstantiveReviewRequestText(value = '') {
+  const text = cleanEvidenceText(value);
+  if (!text || text.length < 8) return false;
+  if (/^(unknown|dont know|don't know|do not know|not sure|pending|n\/a|na|no idea)$/i.test(text)) return false;
+  if (/^(run it|run council|yes|no|ok|okay)$/i.test(text)) return false;
+  return true;
+}
+
+function hasCaseRequestContext(draft = chatCaseDraft) {
+  const record = draft || {};
+  const hasUserRequest = Boolean(record.caseRequestStarted);
+  const riskSignals = Array.isArray(record.riskSignals) ? record.riskSignals : [];
+  const integrations = Array.isArray(record.integrations) ? record.integrations : [];
   return Boolean(
-    cleanEvidenceText(chatCaseDraft.brief)
-    || chatCaseDraft.riskSignals?.length
-    || chatCaseDraft.evidenceSignals?.length
-    || chatCaseDraft.integrations?.length
-    || chatCaseDraft.documents?.length
-    || chatCaseDraft.indexedEvidence?.chunkCount
+    hasUserRequest
+    || (cleanEvidenceText(record.brief).length > 32 && !record.documentContextOnly)
+    || cleanEvidenceText(record.businessUnit)
+    || cleanEvidenceText(record.geography)
+    || riskSignals.length
+    || integrations.length
+  );
+}
+
+function hasEvidenceContext(draft = chatCaseDraft) {
+  const record = draft || {};
+  return Boolean(
+    uploadedEvidence.length
+    || record.documents?.length
+    || record.evidenceSignals?.length
+    || record.indexedEvidence?.chunkCount
+    || evidenceIndexMeta?.chunkCount
   );
 }
 
@@ -3235,6 +3326,12 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   }
   setRunMode('chat', { skipRender: true });
   clearPlaybackTimers();
+  if (!options.silentUser && !options.forceRun && hasSubstantiveReviewRequestText(message)) {
+    chatCaseDraft = {
+      ...chatCaseDraft,
+      caseRequestStarted: true
+    };
+  }
   syncUploadedEvidenceIntoChatDraft();
   const eventType = cleanEvidenceText(options.eventType || (options.forceRun ? 'run_request' : activeQuestion ? 'user_answer' : 'user_message'));
   const questionAtTurnStart = cleanEvidenceText(Object.prototype.hasOwnProperty.call(options, 'activeQuestion')
@@ -3316,7 +3413,30 @@ async function submitChatMessage(rawMessage = '', options = {}) {
         forceRun: Boolean(options.forceRun)
       })
     });
-    chatCaseDraft = result.caseDraft || chatCaseDraft;
+    const returnedDraft = result.caseDraft || {};
+    if (eventType === 'evidence_uploaded' && !chatCaseDraft.caseRequestStarted) {
+      chatCaseDraft = {
+        ...chatCaseDraft,
+        documents: returnedDraft.documents || chatCaseDraft.documents,
+        evidenceSignals: unique([...(chatCaseDraft.evidenceSignals || []), ...(returnedDraft.evidenceSignals || [])]),
+        indexedEvidence: returnedDraft.indexedEvidence || chatCaseDraft.indexedEvidence,
+        retrievalContext: returnedDraft.retrievalContext || chatCaseDraft.retrievalContext,
+        documentContext: {
+          ...(chatCaseDraft.documentContext || {}),
+          supplierName: returnedDraft.supplierName || chatCaseDraft.documentContext?.supplierName || '',
+          businessUnit: returnedDraft.businessUnit || chatCaseDraft.documentContext?.businessUnit || '',
+          geography: returnedDraft.geography || chatCaseDraft.documentContext?.geography || '',
+          serviceDescription: returnedDraft.brief || chatCaseDraft.documentContext?.serviceDescription || ''
+        },
+        caseRequestStarted: false
+      };
+    } else {
+      chatCaseDraft = {
+        ...chatCaseDraft,
+        ...returnedDraft,
+        caseRequestStarted: Boolean(chatCaseDraft.caseRequestStarted || returnedDraft.caseRequestStarted)
+      };
+    }
     chatRunReadiness = result.runReadiness || null;
     pendingMessage.pending = false;
     pendingMessage.text = result.reply || 'The conversation step completed.';

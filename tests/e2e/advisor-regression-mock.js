@@ -331,6 +331,21 @@ async function main() {
       await assertNonBlankWorkbench(page);
       await assertFirstViewportLayout(page);
 
+      await page.evaluate(() => {
+        window.localStorage.setItem('p42:evidence-index-meta', JSON.stringify({
+          caseId: 'stale-evidence-only-case',
+          provider: 'qdrant',
+          chunkCount: 4,
+          evidenceIds: ['UP-STAGED-01']
+        }));
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('#chatInput');
+      await page.waitForFunction(() => (document.querySelector('#caseIntelReadiness')?.textContent || '').trim() === '0%');
+      await assertVisibleText(page, '#caseIntelDetails', /Evidence staged|Waiting for request|Describe what decision/i);
+      assert.doesNotMatch(await page.locator('#caseDraftPanel').textContent(), /New compliance case/i);
+      await page.locator('#startNewCase').click();
+
       await page.locator('#chatInput').fill('First line');
       await page.locator('#chatInput').press('Shift+Enter');
       await page.keyboard.type('second line');

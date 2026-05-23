@@ -34,15 +34,23 @@
     const evidenceSignals = Array.isArray(record.evidenceSignals) ? record.evidenceSignals : [];
     const riskSignals = Array.isArray(record.riskSignals) ? record.riskSignals : [];
     const integrations = Array.isArray(record.integrations) ? record.integrations : [];
+    const hasCaseRequest = Boolean(
+      record.caseRequestStarted
+      || cleanEvidenceText(record.brief).length > 32
+      || cleanEvidenceText(record.businessUnit)
+      || cleanEvidenceText(record.geography)
+      || riskSignals.length
+      || integrations.length
+    );
     let score = 0;
     if (cleanEvidenceText(record.brief).length > 32) score += 20;
     if (cleanEvidenceText(record.businessUnit)) score += 18;
     if (cleanEvidenceText(record.geography)) score += 16;
     if (riskSignals.length) score += Math.min(18, 8 + riskSignals.length * 4);
     if (integrations.length) score += Math.min(10, integrations.length * 5);
-    if (evidenceSignals.length || documents.length) score += Math.min(28, 12 + (evidenceSignals.length + documents.length) * 4);
-    if (record.indexedEvidence && record.indexedEvidence.chunkCount) score += Math.min(12, 6 + Math.round(record.indexedEvidence.chunkCount / 8));
-    if (record.retrievalContext && Array.isArray(record.retrievalContext.matches) && record.retrievalContext.matches.length) {
+    if (hasCaseRequest && (evidenceSignals.length || documents.length)) score += Math.min(28, 12 + (evidenceSignals.length + documents.length) * 4);
+    if (hasCaseRequest && record.indexedEvidence && record.indexedEvidence.chunkCount) score += Math.min(12, 6 + Math.round(record.indexedEvidence.chunkCount / 8));
+    if (hasCaseRequest && record.retrievalContext && Array.isArray(record.retrievalContext.matches) && record.retrievalContext.matches.length) {
       score += Math.min(10, 4 + record.retrievalContext.matches.length);
     }
     return Math.min(100, score);
