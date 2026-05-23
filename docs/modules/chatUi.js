@@ -77,25 +77,32 @@
           ['Retrieving', 'Checking indexed evidence before asking for anything missing'],
           ['Formulating', 'Choosing one useful next question']
         ];
-    const activeIndex = Math.max(0, Math.min(steps.length - 1, Number(message && message.thinkingStepIndex || 0)));
-    const activeStep = steps[activeIndex] || steps[0] || [];
+    const retrying = Boolean(message && message.retried && Number(message.attemptCount || 0) > 1);
+    const visibleSteps = retrying && !steps.some((step) => cleanText(Array.isArray(step) ? step[0] : step.label).match(/retrying smart intake/i))
+      ? steps.concat([{ label: 'Retrying smart intake', detail: 'Gateway took longer than expected; using a compact recovery prompt.', tone: 'warning' }])
+      : steps;
+    const activeIndex = Math.max(0, Math.min(visibleSteps.length - 1, Number(message && message.thinkingStepIndex || 0)));
+    const activeStep = visibleSteps[activeIndex] || visibleSteps[0] || [];
     const attemptLabel = cleanText(message && message.attemptLabel);
+    const elapsed = Number(message && message.elapsedSeconds || 0);
+    const startedAt = Number(message && message.startedAt || Date.now());
     return `
-      <div class="thinking-loader" aria-label="Advisor is working">
+      <div class="thinking-loader" data-start-time="${escapeHtml(String(startedAt))}" aria-label="Advisor is working">
         <div class="thinking-loader-head">
           <span class="thinking-orb" aria-hidden="true"></span>
           <div class="thinking-loader-copy">
-            <strong>${escapeHtml(message && message.phaseTitle || activeStep[0] || (isCouncil ? 'Council is working' : 'Advisor is thinking'))}</strong>
-            <p>${escapeHtml(message && message.phaseDetail || activeStep[1] || '')}</p>
+            <strong>${escapeHtml(message && message.phaseTitle || activeStep[0] || activeStep.label || (isCouncil ? 'Council is working' : 'Advisor is thinking'))}</strong>
+            <p>${escapeHtml(message && message.phaseDetail || activeStep[1] || activeStep.detail || '')}${elapsed ? ` <span class="thinking-elapsed">(${escapeHtml(String(elapsed))}s...)</span>` : ''}</p>
           </div>
           ${attemptLabel ? `<span class="thinking-attempt-pill">${escapeHtml(attemptLabel)}</span>` : ''}
         </div>
         <div class="thinking-steps">
-          ${steps.map(function renderStep(step, index) {
+          ${visibleSteps.map(function renderStep(step, index) {
             const label = Array.isArray(step) ? step[0] : step.label;
             const detail = Array.isArray(step) ? step[1] : step.detail;
+            const tone = Array.isArray(step) ? '' : cleanText(step.tone);
             return `
-              <div class="thinking-step ${index === activeIndex ? 'is-active' : ''} ${index < activeIndex ? 'is-complete' : ''}" style="--step-index: ${index}">
+              <div class="thinking-step ${tone ? `is-${escapeHtml(tone)}` : ''} ${index === activeIndex ? 'is-active' : ''} ${index < activeIndex ? 'is-complete' : ''}" style="--step-index: ${index}">
                 <span>${escapeHtml(label)}</span>
                 <p>${escapeHtml(detail)}</p>
               </div>
@@ -104,6 +111,24 @@
         </div>
       </div>
     `;
+  }
+
+  function hintChipsForQuestion(question) {
+    const clean = cleanText(question).toLowerCase();
+    if (!clean) return [];
+    if (/geograph|jurisdiction|perimeter|region|where/i.test(clean)) {
+      return ['UAE and India', 'Global / all jurisdictions', 'Not known yet'];
+    }
+    if (/owner|business unit|workflow owner|accountable|internally/i.test(clean)) {
+      return ['Technology Risk owns it', 'Finance owns it', 'Not known yet'];
+    }
+    if (/evidence|proof|document|source|upload|agreement|contract|clause/i.test(clean)) {
+      return ['I have a signed agreement', 'Evidence is pending', 'Not available yet'];
+    }
+    if (/focus|scope|prioriti|checked/i.test(clean)) {
+      return ['All material risks', 'Privacy and data protection', 'Access controls'];
+    }
+    return ['I am not sure yet', 'Use the uploaded document', 'Ask me the next question'];
   }
 
   function renderAssistantTurn(message, context) {
@@ -128,19 +153,28 @@
         </div>
       `;
     }
+    const responseText = cleanText(state.responseText || state.acknowledgement || 'I updated the review context.');
+    const questionText = cleanText(state.question);
+    const responseIncludesQuestion = questionText
+      && responseText.toLowerCase().includes(questionText.toLowerCase().slice(0, Math.min(80, questionText.length)));
+    const chips = state.canRun || responseIncludesQuestion ? [] : hintChipsForQuestion(questionText);
     return `
       <div class="advisor-response-card advisor-natural-response advisor-chat-only">
         <div class="advisor-response-head">
-          <strong>${escapeHtml(state.acknowledgement || 'I updated the review context.')}</strong>
+          <p class="advisor-natural-copy">${escapeHtml(responseText)}</p>
+          ${message && message.retryNote ? `<small class="intake-retry-note">${escapeHtml(message.retryNote)}</small>` : ''}
         </div>
-        <div class="advisor-next-question">
-          <span class="eyebrow">${escapeHtml(state.canRun ? 'Ready when you are' : 'Next question')}</span>
-          <strong>${escapeHtml(state.canRun ? state.nextBestAction : state.question)}</strong>
-          <p>${escapeHtml(state.canRun ? 'I can run the council now; human approval will still remain required.' : 'Short answer is fine. Say “unknown” if it is pending.')}</p>
-          <div class="assistant-next">
-            ${state.canRun ? '<button type="button" data-chat-action="run-council">Run council</button>' : ''}
+        ${state.canRun || (!responseIncludesQuestion && questionText) ? `
+          <div class="advisor-next-question">
+            <span class="eyebrow">${escapeHtml(state.canRun ? 'Ready when you are' : 'Next question')}</span>
+            <strong>${escapeHtml(state.canRun ? state.nextBestAction : questionText)}</strong>
+            <p>${escapeHtml(state.canRun ? 'I can run the council now; human approval will still remain required.' : 'Short answer is fine. Say “unknown” if it is pending.')}</p>
+            ${chips.length ? `<div class="hint-chip-row">${chips.map((chip) => `<button type="button" class="hint-chip" data-hint-chip="${escapeHtml(chip)}">${escapeHtml(chip)}</button>`).join('')}</div>` : ''}
+            <div class="assistant-next">
+              ${state.canRun ? '<button type="button" data-chat-action="run-council">Run council</button>' : ''}
+            </div>
           </div>
-        </div>
+        ` : ''}
       </div>
     `;
   }

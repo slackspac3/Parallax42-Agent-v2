@@ -241,8 +241,21 @@ test('conversation LLM assessor requests JSON mode and handles OpenAI response o
       global.fetch = async (url, options) => {
         const body = JSON.parse(options.body);
         assert.equal(url, 'https://gateway.example/api/chat/completions');
+        if (!body.response_format) {
+          assert.equal(body.temperature, 0.4);
+          assert.equal(body.max_tokens, 400);
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              model: 'gpt-5.1',
+              choices: [{ message: { content: 'I understand this as a managed integration partner review. Where is the supplier operating from?' } }]
+            })
+          };
+        }
         assert.deepEqual(body.response_format, { type: 'json_object' });
-        assert.equal(body.temperature, 0.4);
+        assert.equal(body.temperature, 0);
+        assert.equal(body.max_tokens, 800);
         return {
           ok: true,
           status: 200,
@@ -301,6 +314,17 @@ test('conversation LLM assessor sends full chat context for terse answer interpr
     }, async () => {
       global.fetch = async (url, options) => {
         const body = JSON.parse(options.body);
+        if (!body.response_format) {
+          assert.equal(body.temperature, 0.4);
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              model: 'gpt-5.1',
+              choices: [{ message: { content: 'I’ve recorded source evidence as pending for the managed integration partner review. Is there any access-control scope we should capture while evidence is pending?' } }]
+            })
+          };
+        }
         const prompt = JSON.parse(body.messages[1].content);
         assert.equal(prompt.latestMessage, 'we do not know at this point');
         assert.equal(prompt.eventType, 'user_answer');
@@ -309,7 +333,7 @@ test('conversation LLM assessor sends full chat context for terse answer interpr
         assert.equal(prompt.conversationHistory, undefined);
         assert.equal(prompt.currentDraft.conversationHistory, undefined);
         assert.equal(prompt.recentConversationTurnCount, 3);
-        assert.equal(body.temperature, 0.4);
+        assert.equal(body.temperature, 0);
         assert.equal(body.messages.at(-3).role, 'user');
         assert.match(body.messages.at(-3).content, /managed integration partner/i);
         assert.equal(body.messages.at(-2).role, 'assistant');
@@ -482,7 +506,7 @@ test('conversation LLM assessor reports malformed Compass output accurately', as
   }
 });
 
-test('conversation LLM assessor retries malformed Compass output with compact JSON prompt', async () => {
+test('conversation LLM assessor retries malformed Compass output with compact JSON prompt then populates prose', async () => {
   const originalFetch = global.fetch;
   try {
     await withEnv({
@@ -501,6 +525,20 @@ test('conversation LLM assessor retries malformed Compass output with compact JS
             text: async () => JSON.stringify({
               model: 'gpt-5.1',
               choices: [{ message: { content: 'Sure, I can assess that, but this response is prose.' } }]
+            })
+          };
+        }
+        if (!requests.at(-1).response_format) {
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              model: 'gpt-5.1',
+              choices: [{
+                message: {
+                  content: 'I understand this as a managed integration partner review with privileged access. Should I focus on access controls, privacy, contractual safeguards, or all of these?'
+                }
+              }]
             })
           };
         }
@@ -537,12 +575,17 @@ test('conversation LLM assessor retries malformed Compass output with compact JS
         message: 'Assess a managed integration partner with privileged access.'
       });
 
-      assert.equal(requests.length, 2);
+      assert.equal(requests.length, 3);
       assert.deepEqual(requests[0].response_format, { type: 'json_object' });
       assert.deepEqual(requests[1].response_format, { type: 'json_object' });
       assert.match(requests[1].messages[0].content, /one valid minified JSON object only/i);
+      assert.equal(requests[1].max_tokens, 800);
+      assert.equal(requests[2].response_format, undefined);
+      assert.equal(requests[2].temperature, 0.4);
+      assert.equal(requests[2].max_tokens, 400);
       assert.equal(result.llmAssessment.used, true);
       assert.equal(result.llmAssessment.retriedAfterInvalidJson, true);
+      assert.match(result.llmAssessment.naturalResponse, /managed integration partner review/i);
       assert.equal(result.llmAssessment.requestType, 'supplier_risk');
       assert.ok(result.caseDraft.integrations.includes('Oracle ERP'));
     });
@@ -572,7 +615,18 @@ test('conversation LLM assessor merges strict Compass JSON into the case draft',
         assert.equal(url, 'https://gateway.example/api/chat/completions');
         assert.equal(options.headers['x-parallax42-gateway-token'], 'test-token');
         assert.equal(body.model, 'gpt-5.1');
-        assert.equal(body.temperature, 0.4);
+        if (!body.response_format) {
+          assert.equal(body.temperature, 0.4);
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              model: 'gpt-5.1',
+              choices: [{ message: { content: 'HR is now the owner for the payroll outsourcing review. Which geography applies?' } }]
+            })
+          };
+        }
+        assert.equal(body.temperature, 0);
         assert.match(body.messages[1].content, /latestMessage/);
         assert.deepEqual(body.messages.at(-1), { role: 'user', content: 'HR' });
         return {

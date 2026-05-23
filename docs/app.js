@@ -1972,6 +1972,7 @@ function renderAssistantTurn(message = {}) {
     lastRunOk: Boolean(lastRuns.chat?.ok),
     nextBestAction: nextBestAction(),
     question,
+    responseText: message.text,
     smartIntakeUnavailable,
     unavailableMessage: message.text
   });
@@ -3385,10 +3386,12 @@ function startChatThinkingProgress(message = {}, options = {}) {
       ]
     : [
         { delay: 0, title: 'Thinking', detail: 'Sending the full conversation context to Compass GPT-5.1 for smart intake.', attempt: 'Compass attempt 1' },
-        { delay: 1300, title: 'Analysing', detail: 'Validating the structured intake plan and extracted case updates.', attempt: 'Compass attempt 1' },
-        { delay: 3000, title: 'Retrying if needed', detail: 'If the first response is slow or malformed, retrying with a compact JSON-only prompt.', attempt: 'Compass attempt 2 if needed' },
-        { delay: 5200, title: 'Final verification', detail: 'Making a final Compass attempt before surfacing an administrator-visible intake issue.', attempt: 'Compass attempt 3 if needed' }
+        { delay: 1100, title: 'Structuring', detail: 'Building a compact JSON plan for intent, case updates, and the next best question.', attempt: 'Compass attempt 1' },
+        { delay: 2300, title: 'Formulating', detail: 'Writing the natural advisor response from the structured plan.', attempt: 'Compass prose' },
+        { delay: 5200, title: 'Final verification', detail: 'Checking the response before showing it in the chat.', attempt: 'Compass verification' }
       ];
+  message.startedAt = message.startedAt || Date.now();
+  message.elapsedSeconds = 0;
   message.thinkingSteps = steps.map((step) => [step.title, step.detail]);
   const timers = steps.map((step, index) => window.setTimeout(() => {
     if (!message.pending) return;
@@ -3398,8 +3401,26 @@ function startChatThinkingProgress(message = {}, options = {}) {
     message.attemptLabel = step.attempt;
     renderChatMessages();
   }, step.delay));
+  if (!councilMode) {
+    timers.push(window.setTimeout(() => {
+      if (!message.pending) return;
+      message.retried = true;
+      message.attemptCount = Math.max(2, Number(message.attemptCount || 1));
+      message.thinkingStepIndex = message.thinkingSteps.length;
+      message.phaseTitle = 'Retrying smart intake';
+      message.phaseDetail = 'Gateway took longer than expected; retrying with a compact recovery prompt.';
+      message.attemptLabel = 'Compass attempt 2';
+      renderChatMessages();
+    }, 3400));
+  }
+  const elapsedTimer = window.setInterval(() => {
+    if (!message.pending) return;
+    message.elapsedSeconds = Math.max(0, Math.round((Date.now() - message.startedAt) / 1000));
+    renderChatMessages();
+  }, 1000);
   return function stopChatThinkingProgress() {
     timers.forEach((timer) => window.clearTimeout(timer));
+    window.clearInterval(elapsedTimer);
   };
 }
 
@@ -3529,6 +3550,10 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     chatRunReadiness = result.runReadiness || null;
     pendingMessage.pending = false;
     pendingMessage.text = result.reply || 'The conversation step completed.';
+    const llmAttempt = result.nlp?.llmAssessment || result.conversationPlan?.llmAssessment || {};
+    if (llmAttempt.retried && Number(llmAttempt.attemptCount || 0) > 1) {
+      pendingMessage.retryNote = `Smart intake took ${llmAttempt.attemptCount} attempts — response may be slower than usual.`;
+    }
     pendingMessage.displayedQuestion = (Array.isArray(result.questions) && result.questions[0])
       ? result.questions[0]
       : assistantQuestionFromText(pendingMessage.text);
@@ -4129,6 +4154,13 @@ chatRunNow.addEventListener('click', () => {
 });
 
 chatMessagesEl?.addEventListener('click', (event) => {
+  const hint = event.target?.closest?.('[data-hint-chip]')?.dataset?.hintChip;
+  if (hint && chatInput) {
+    chatInput.value = hint;
+    updateLiveCasePreview();
+    chatInput.focus();
+    return;
+  }
   const action = event.target?.closest?.('[data-chat-action]')?.dataset?.chatAction;
   if (action === 'run-council') {
     submitChatMessage(chatInput.value || 'run it', { forceRun: true });

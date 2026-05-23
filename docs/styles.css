@@ -3977,6 +3977,11 @@ pre {
   line-height: 1.35;
 }
 
+.thinking-elapsed {
+  color: var(--subtle);
+  font-variant-numeric: tabular-nums;
+}
+
 .thinking-attempt-pill {
   margin-left: auto;
   flex-shrink: 0;
@@ -4010,6 +4015,15 @@ pre {
   background: rgba(34,227,180,0.07);
 }
 
+.thinking-step.is-warning {
+  border-color: rgba(245, 180, 64, 0.4);
+  background: rgba(245, 180, 64, 0.08);
+}
+
+.thinking-step.is-warning span {
+  color: var(--warning);
+}
+
 .thinking-step.is-complete {
   opacity: 1;
 }
@@ -4028,6 +4042,52 @@ pre {
   font-size: 12px;
   color: var(--muted);
   line-height: 1.4;
+}
+
+.intake-retry-note {
+  display: block;
+  margin-top: 4px;
+  color: var(--subtle);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.advisor-natural-copy {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.hint-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.hint-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(34,227,180,0.28);
+  background: rgba(34,227,180,0.06);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 150ms var(--ease), border-color 150ms var(--ease), transform 150ms var(--ease);
+}
+
+.hint-chip:hover,
+.hint-chip:focus-visible {
+  border-color: rgba(34,227,180,0.5);
+  background: rgba(34,227,180,0.14);
+  transform: translateY(-1px);
 }
 /* ============================================================
    ADVISOR RESPONSE CARDS
