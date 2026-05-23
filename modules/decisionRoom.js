@@ -194,15 +194,27 @@
     const documents = evidenceDocuments(result);
     const source = citations.length ? citations : documents;
     return source.slice(0, 6).map(function mapEvidence(doc, index) {
+      const title = doc.title || doc.fileName || doc.sourceTitle || doc.documentTitle || `Evidence ${index + 1}`;
       return {
         id: doc.evidenceId || doc.sourceEvidenceId || doc.citationId || `DOC-${String(index + 1).padStart(2, '0')}`,
-        title: doc.title || doc.fileName || `Evidence ${index + 1}`,
+        title,
         detail: summarizeText(doc.text || doc.excerpt || doc.summary || 'Evidence attached without extracted text.', 220),
         signals: Array.isArray(doc.signals) && doc.signals.length
           ? doc.signals.slice(0, 4).join(', ')
           : doc.score ? `retrieval score ${Number(doc.score || 0).toFixed(2)}` : humanize(doc.extractionStatus || doc.sourceType || 'attached')
       };
     });
+  }
+
+  function evidenceDocumentName(doc, index) {
+    return cleanText(doc?.title || doc?.fileName || doc?.sourceTitle || doc?.documentTitle || '') || `Evidence document ${index + 1}`;
+  }
+
+  function evidenceNamesForTimeline(result, limit) {
+    const citations = Array.isArray(result?.citations) ? result.citations : [];
+    const documents = evidenceDocuments(result);
+    const source = citations.length ? citations : documents;
+    return unique(source.map(evidenceDocumentName)).slice(0, limit || 2);
   }
 
   function timelineAction(type, label, detail) {
@@ -219,6 +231,10 @@
     const evidenceQuality = result?.evidenceQuality || {};
     const retrieval = result?.retrievalAudit || result?.retrievalContext || {};
     const approvalRequired = humanApprovalRequired(result);
+    const topEvidenceNames = evidenceNamesForTimeline(result, 2);
+    const namedEvidence = topEvidenceNames.length
+      ? topEvidenceNames.join(topEvidenceNames.length === 2 ? ' and ' : ', ')
+      : 'the attached evidence set';
     return [
       {
         name: 'Intake Agent',
@@ -240,8 +256,10 @@
       },
       {
         name: 'Evidence Examiner',
-        reviewed: `${documents.length} source document${documents.length === 1 ? '' : 's'}, ${citations.length} citation${citations.length === 1 ? '' : 's'}, and ${retrieval.matchCount || retrieval.matches?.length || 0} retrieved chunk${(retrieval.matchCount || retrieval.matches?.length || 0) === 1 ? '' : 's'}.`,
-        found: `${evidenceIds.length} evidence identifier${evidenceIds.length === 1 ? '' : 's'} linked with ${humanize(evidenceQuality.status || 'unscored')} evidence quality.`,
+        reviewed: `${namedEvidence} against the obligation set, citation requirements, and reviewer proof needs.`,
+        found: topEvidenceNames.length
+          ? `Matched ${namedEvidence} with ${humanize(evidenceQuality.status || 'unscored')} evidence quality.`
+          : `${evidenceIds.length} evidence reference${evidenceIds.length === 1 ? '' : 's'} linked with ${humanize(evidenceQuality.status || 'unscored')} evidence quality.`,
         action: /missing|weak/i.test(evidenceQuality.status || '')
           ? timelineAction('challenged', 'Challenged evidence strength', 'The decision stays review-bound until stronger proof is confirmed.')
           : timelineAction('validated', 'Validated evidence set', 'Evidence was sufficient for deterministic council analysis.'),
@@ -271,7 +289,7 @@
       },
       {
         name: 'Audit Packager',
-        reviewed: `${trace.length} trace event${trace.length === 1 ? '' : 's'}, runtime metadata, evidence IDs, and export fields.`,
+        reviewed: `${trace.length} trace event${trace.length === 1 ? '' : 's'}, runtime metadata, ${namedEvidence}, and export fields.`,
         found: 'Decision memo, trace, evidence, and reviewer actions are ready for export.',
         action: timelineAction('validated', 'Packaged audit trail', 'The package preserves deterministic trace and raw JSON for inspection.'),
         handoff: 'Ready for human reviewer inspection and PDF export.'
@@ -446,6 +464,8 @@
     const loopSpec = agentLoopSpecForResult(result);
     const rubric = loopSpec.rubric;
     const approvalRequired = humanApprovalRequired(result);
+    const advisorySummary = cleanText(llmOutput?.summary || '');
+    const executiveBridge = advisorySummary || businessDecisionSummary(result);
     return `
       <section class="business-summary council-report decision-room-shell ${tone}">
         <article class="decision-room-hero report-section">
@@ -459,6 +479,7 @@
               <p>${escapeHtml(businessDecisionSummary(result))}</p>
               <div class="decision-room-actions">
                 <button type="button" data-report-action="export-review-pack">Export review pack PDF</button>
+                <button type="button" data-report-action="continue-conversation">Continue conversation</button>
                 <span>Reviewer artifact only; no operational approval is granted.</span>
               </div>
             </div>
@@ -474,6 +495,10 @@
             <div><span>Reviewer focus</span><strong>${escapeHtml(gaps.length ? `${gaps.length} required action${gaps.length === 1 ? '' : 's'}` : 'Confirm accountable owner')}</strong></div>
             <ul>${humanReviewReasons(result).map((reason) => `<li>${escapeHtml(reason)}</li>`).join('')}</ul>
           </div>
+        </article>
+        <article class="report-section council-ai-summary">
+          <span class="eyebrow">${escapeHtml(advisorySummary ? 'AI-assisted summary - advisory only' : 'Decision summary')}</span>
+          <p data-council-summary-text>${escapeHtml(executiveBridge)}</p>
         </article>
         <div class="decision-metrics" aria-label="Decision metrics">
           <article><span>Readiness</span><strong>${escapeHtml(readiness)}%</strong></article>
@@ -511,6 +536,7 @@
             </div>
             <div class="decision-room-actions compact">
               <button type="button" data-report-action="export-review-pack">Export review pack PDF</button>
+              <button type="button" data-report-action="continue-conversation">Continue conversation</button>
             </div>
           </div>
           <div class="reviewer-action-table" role="table" aria-label="Required reviewer actions">
@@ -531,11 +557,12 @@
         <article class="report-section risk-summary-panel">
           <span class="eyebrow">Top Risks</span>
           <div class="risk-list">
-            ${riskItems.length ? riskItems.map((item) => `
+            ${riskItems.length ? riskItems.map((item, index) => `
               <div>
                 <span class="${/high|critical|escalated/i.test(item.severity) ? 'status-danger' : 'status-warning'}">${escapeHtml(item.severity)}</span>
                 <strong>${escapeHtml(item.label)}</strong>
                 <p>${escapeHtml(item.detail)}</p>
+                ${index < 3 ? `<small data-gap-remediation-index="${escapeHtml(index)}">Suggested action: ${escapeHtml(item.detail)}</small>` : ''}
               </div>
             `).join('') : '<div><span class="status-ready">clear</span><strong>No blocking risk returned</strong><p>The current evidence set did not produce a blocking gap, but human review remains required.</p></div>'}
           </div>

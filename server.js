@@ -11,6 +11,7 @@ const { buildAdminStatus } = require('./lib/adminStatus');
 const { appendAuditRecord, auditStoreHealth, readRecentAuditRecords, verifyAuditChain } = require('./lib/auditStore');
 const { runBenchmark } = require('./lib/benchmarkSuite');
 const { handleCaseApproval } = require('./lib/caseApproval');
+const { buildCouncilNarrative } = require('./lib/councilNarrative');
 const { gatewayHealth } = require('./lib/compassGatewayClient');
 const { getReadinessInventory } = require('./lib/complianceAgent');
 const { evidenceVectorStoreHealth, runQdrantSmokeTest } = require('./lib/evidenceVectorStore');
@@ -272,6 +273,13 @@ const server = http.createServer(async (req, res) => {
       const body = await readJsonBody(req, { limitBytes: 1_000_000 });
       const result = await handleCaseApproval({ req, body });
       writeJson(res, result.status, result.body);
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/case/narrative') {
+      const body = await readJsonBody(req, { limitBytes: 1_500_000 });
+      const narrative = await buildCouncilNarrative(body.result || body.run || body);
+      writeJson(res, 200, narrative);
       return;
     }
 

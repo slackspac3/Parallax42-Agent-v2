@@ -1,5 +1,6 @@
 'use strict';
 
+const DEFAULT_DOCUMENT_TITLE = document.title || 'Parallax42 Compliance Intelligence Agent';
 const runtimeDefaults = window.P42_CONFIG || {};
 const storageKeys = {
   mode: 'p42:api-mode',
@@ -151,6 +152,7 @@ let chatCaseDraft = {};
 let chatRunReadiness = null;
 let workspaceView = 'chat';
 let activeQuestion = 'What do you need reviewed?';
+let lastCouncilNarrative = null;
 let chatMessages = [
   {
     role: 'assistant',
@@ -1271,6 +1273,25 @@ function contextCopy(score) {
   return window.P42AppModules.caseIntelligencePanel.contextCopy(score);
 }
 
+function reviewerMissingItemLabel(item = '') {
+  const key = String(item || '').toLowerCase();
+  if (/owner|business.?unit|accountable/.test(key)) return 'who owns this review internally';
+  if (/geograph|jurisdiction|perimeter|region|country/.test(key)) return 'geography or regulatory perimeter';
+  if (/evidence|proof|document|source/.test(key)) return 'source evidence or documents';
+  if (/scope|request|review|case/.test(key)) return 'what needs to be reviewed';
+  return humanize(item);
+}
+
+function readinessMissingItems(draft = chatCaseDraft, readiness = chatRunReadiness) {
+  const blockers = Array.isArray(readiness?.executionBlockers) ? readiness.executionBlockers : [];
+  const items = blockers.map(reviewerMissingItemLabel);
+  if (!cleanEvidenceText(draft.businessUnit)) items.push('who owns this review internally');
+  if (!cleanEvidenceText(draft.geography)) items.push('geography or regulatory perimeter');
+  if (!hasEvidenceContext(draft)) items.push('source evidence or documents');
+  if (!hasCaseRequestContext(draft)) items.push('what needs to be reviewed');
+  return unique(items).filter(Boolean);
+}
+
 function renderContextStrength(draft = chatCaseDraft) {
   if (!contextStrengthBar || !contextStrengthLabel || !contextStrengthText) return;
   const readiness = draft === chatCaseDraft ? chatRunReadiness : null;
@@ -1278,6 +1299,7 @@ function renderContextStrength(draft = chatCaseDraft) {
   const score = hasCase && Number.isFinite(readiness?.score) ? readiness.score : hasCase ? contextStrength(draft) : 0;
   const runnable = readiness?.runnable;
   const blockerCount = readiness?.executionBlockers?.length || 0;
+  const missingItems = readinessMissingItems(draft, readiness).slice(0, 2);
   const [label, text] = !hasCase && hasEvidenceContext(draft)
     ? ['Evidence staged', 'Tell me what you need reviewed. Staged evidence does not count as case readiness until the request is clear.']
     : readiness
@@ -1286,18 +1308,19 @@ function renderContextStrength(draft = chatCaseDraft) {
         readiness.advisoryGaps?.length ? 'Runnable with open gaps' : 'Council ready',
         readiness.advisoryGaps?.length
           ? 'The council can run now and will preserve unresolved evidence or control gaps in the decision.'
-          : 'Required intake is present. The council can run with human approval still locked.'
+          : 'Ready - click Run council. Human approval still remains required.'
       ]
       : [
         blockerCount ? 'Blocked before council' : 'Building context',
-        blockerCount
-          ? `Add ${readiness.executionBlockers.map((item) => humanize(item)).join(', ')} before running council.`
+        missingItems.length
+          ? `Missing: ${missingItems.join('; ')}.`
           : 'The advisor has context, but more detail is needed before execution.'
       ]
     : contextCopy(score);
   contextStrengthLabel.textContent = `${label} · ${score}%`;
   contextStrengthText.textContent = text;
   contextStrengthBar.style.width = `${score}%`;
+  contextStrengthBar.setAttribute('aria-valuenow', String(Math.max(0, Math.min(100, Math.round(score)))));
   chatRunNow.disabled = readiness ? !readiness.runnable : false;
   renderCaseIntelligence(draft, lastRuns.chat);
 }
@@ -1407,6 +1430,7 @@ function renderAgentActivity(items = defaultAgentActivity) {
   const focus = views.find((item) => item.id === councilFocusAgent) || active;
   const completed = views.filter((item) => item.status === 'complete').length;
   const noActiveCase = activeRunMode === 'chat' && workspaceView === 'chat' && !hasChatContext() && !uploadedEvidence.length && !lastRuns.chat?.ok;
+  const isRunActive = !noActiveCase && views.some((item) => item.status === 'active');
   const activeLabel = noActiveCase ? 'Council' : active?.status === 'active' ? active.label : 'Decision core';
   const activitySummary = noActiveCase ? 'queued for intake' : active?.status === 'active' ? 'is working' : 'is ready';
   agentActivity.innerHTML = `
@@ -1415,7 +1439,7 @@ function renderAgentActivity(items = defaultAgentActivity) {
         <span>Executive council view</span>
         <strong>${escapeHtml(activeLabel)} ${escapeHtml(activitySummary)}</strong>
       </summary>
-    <div class="council-constellation">
+    <div class="council-constellation ${noActiveCase ? 'is-idle' : ''} ${isRunActive ? 'is-running' : ''}">
       <div class="agent-activity-header">
         <div>
           <span class="eyebrow">Executive council view</span>
@@ -1439,8 +1463,8 @@ function renderAgentActivity(items = defaultAgentActivity) {
             const controlX = Math.round((agent.svgX + 320) / 2);
             const controlY = Math.round((agent.svgY + 214) / 2) + (index % 2 === 0 ? -32 : 32);
             return `
-              <path id="council-path-${escapeHtml(agent.id)}" class="council-link is-${escapeHtml(agent.status)}" d="M ${agent.svgX} ${agent.svgY} C ${controlX} ${controlY}, ${controlX} ${controlY}, 320 214"></path>
-              <circle class="council-packet is-${escapeHtml(agent.status)}" r="${agent.status === 'queued' ? 2.8 : 4.4}">
+              <path id="council-path-${escapeHtml(agent.id)}" class="council-link is-${escapeHtml(agent.status)} ${isRunActive && agent.id === active.id ? 'is-current' : ''}" d="M ${agent.svgX} ${agent.svgY} C ${controlX} ${controlY}, ${controlX} ${controlY}, 320 214"></path>
+              <circle class="council-packet is-${escapeHtml(agent.status)} ${isRunActive && agent.id === active.id ? 'is-current' : ''}" r="${agent.status === 'queued' ? 2.8 : 4.4}">
                 <animateMotion dur="${3.2 + (index * 0.18)}s" begin="${index * 0.18}s" repeatCount="indefinite">
                   <mpath href="#council-path-${escapeHtml(agent.id)}"></mpath>
                 </animateMotion>
@@ -1453,13 +1477,15 @@ function renderAgentActivity(items = defaultAgentActivity) {
           <strong>Decision core</strong>
           <small>human review locked</small>
         </div>
-        ${views.map((agent) => `
-          <button type="button" class="council-agent is-${escapeHtml(agent.status)} ${agent.id === focus.id ? 'is-focused' : ''}" data-council-agent="${escapeHtml(agent.id)}" style="--agent-x: ${agent.x}%; --agent-y: ${agent.y}%;">
+        ${views.map((agent) => {
+          const tooltip = `${agent.label} - ${titleCase(agent.verb)}. ${agent.found} Handoff: ${agent.handoff}`;
+          return `
+          <button type="button" class="council-agent is-${escapeHtml(agent.status)} ${agent.id === focus.id ? 'is-focused' : ''}" data-council-agent="${escapeHtml(agent.id)}" style="--agent-x: ${agent.x}%; --agent-y: ${agent.y}%;" title="${escapeHtml(tooltip)}" aria-label="${escapeHtml(tooltip)}">
             <span>${escapeHtml(agent.short)}</span>
             <strong>${escapeHtml(agent.label)}</strong>
             <small>${escapeHtml(agent.verb)}</small>
           </button>
-        `).join('')}
+        `;}).join('')}
       </div>
       <div class="council-focus-card is-${escapeHtml(focus.status)}">
         <div>
@@ -1656,6 +1682,11 @@ function updateLiveCasePreview() {
   renderCaseIntelligence(currentLivePreviewDraft(), lastRuns.chat);
 }
 
+function updateDocumentTitle(draft = chatCaseDraft, result = lastRuns.chat) {
+  const activeName = cleanEvidenceText(draft?.supplierName || result?.case?.supplierName || '');
+  document.title = activeName ? `${compactUiLabel(activeName, 72)} - Parallax42 Compliance` : DEFAULT_DOCUMENT_TITLE;
+}
+
 function renderMissionWelcome() {
   if (!missionWelcome) return;
   const hasContext = hasChatContext() || chatMessages.length > 1 || lastRuns.chat?.ok;
@@ -1664,6 +1695,7 @@ function renderMissionWelcome() {
 
 function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
   if (!caseIntelReadiness || !caseIntelDetails) return;
+  if (!draft?.__previewOnly) updateDocumentTitle(draft, result);
   const isPreview = Boolean(draft?.__previewOnly);
   const useRunResult = Boolean(result?.ok && workspaceView === 'output');
   const panelResult = useRunResult ? result : null;
@@ -1679,6 +1711,12 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
       <div class="intel-empty-state">
         <strong>No active case</strong>
         <p>Describe a workflow or attach evidence. The panel will track readiness, missing proof, and council validation as the case develops.</p>
+        <div class="intel-prompt-chips" aria-label="Case starters">
+          <button type="button" data-intel-prompt="The supplier is ">Supplier name</button>
+          <button type="button" data-intel-prompt="The accountable owner is ">Owner</button>
+          <button type="button" data-intel-prompt="The company is in UAE and the supplier is in ">Geography</button>
+          <button type="button" data-intel-prompt="I have a signed agreement, DPA, SOC 2, or ISO evidence for this review.">Evidence file</button>
+        </div>
       </div>
     `;
     return;
@@ -2016,8 +2054,8 @@ function renderModeIdle(mode = activeRunMode) {
     : mode === 'demo'
       ? 'Run a packaged scenario to inspect the agent trace and audit pack.'
       : 'Upload evidence or edit the live intake, then submit it to the configured runtime.';
-  domainList.innerHTML = '<article class="empty-row">Domain coverage appears after the run starts.</article>';
-  gapList.innerHTML = '<article class="empty-row">Blocking gaps appear after control analysis completes.</article>';
+  domainList.innerHTML = '<article class="empty-row">Domain coverage, gaps, and citations appear here after you run the council. Attach evidence documents in the chat to improve accuracy.</article>';
+  gapList.innerHTML = '<article class="empty-row">Reviewer actions appear here after the council maps obligations and controls.</article>';
   traceList.innerHTML = '';
   if (rawRunDetails) {
     rawRunDetails.hidden = true;
@@ -2025,12 +2063,13 @@ function renderModeIdle(mode = activeRunMode) {
   }
   if (rawRunJson) rawRunJson.textContent = '{}';
   specialistList.innerHTML = '';
-  citationList.innerHTML = '<article class="empty-row">Citations appear after evidence is mapped.</article>';
+  citationList.innerHTML = '<article class="empty-row">Citations appear after evidence is mapped. Upload or describe source documents before running the council.</article>';
   artifactPreview.innerHTML = `
     <div class="artifact-header">
       <span class="eyebrow">waiting</span>
       <strong>${escapeHtml(mode === 'chat' ? 'chat session' : mode === 'demo' ? 'demo replay' : 'live case')}</strong>
     </div>
+    <p>The review pack and artifact preview populate after a council run. Click Run council in the Advisor tab to begin.</p>
     <pre>{
   "mode": "${escapeHtml(mode)}",
   "runStarted": false,
@@ -2045,12 +2084,20 @@ function renderModeIdle(mode = activeRunMode) {
   }
 }
 
-function resetChatCaseSession() {
+function resetChatCaseSession(options = {}) {
+  const hasCompletedRun = Boolean(lastRuns.chat?.ok || (activeRunMode === 'chat' && lastRun?.ok));
+  const hasConversation = chatMessages.length > 1 || hasChatContext() || uploadedEvidence.length;
+  if (!options.skipConfirm && (hasCompletedRun || hasConversation)) {
+    const shouldReset = window.confirm('Start a new case? Your current conversation and council output will be cleared.');
+    if (!shouldReset) return false;
+  }
   clearPlaybackTimers();
   document.body.classList.remove('has-decision-output');
+  document.title = DEFAULT_DOCUMENT_TITLE;
   lastRun = null;
   lastRuns.chat = null;
   humanReviewRecord = null;
+  lastCouncilNarrative = null;
   uploadedEvidence = [];
   evidenceIndexMeta = {};
   chatCaseDraft = {};
@@ -2085,6 +2132,7 @@ function resetChatCaseSession() {
     if (submitButton) submitButton.disabled = false;
   }
   chatInput?.focus();
+  return true;
 }
 
 function setRunMode(mode = 'demo', options = {}) {
@@ -2541,6 +2589,36 @@ function renderBusinessOutcome(result = {}) {
     learning: learningSuggestionsFor(result, chatCaseDraft),
     memoryProviderLabel: memoryProviderLabel(chatCaseDraft)
   });
+  loadCouncilNarrative(result);
+}
+
+async function loadCouncilNarrative(result = {}) {
+  if (!result?.ok || !specialistList) return;
+  const summaryEl = specialistList.querySelector('[data-council-summary-text]');
+  const remediationEls = Array.from(specialistList.querySelectorAll('[data-gap-remediation-index]'));
+  if (!summaryEl && !remediationEls.length) return;
+  try {
+    const narrative = await apiFetch('/api/case/narrative', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ result })
+    });
+    lastCouncilNarrative = narrative;
+    if (narrative?.summary && summaryEl) {
+      summaryEl.textContent = narrative.summary;
+      summaryEl.closest('.council-ai-summary')?.querySelector('.eyebrow')?.replaceChildren(document.createTextNode(
+        narrative.source === 'compass_gateway' ? 'AI-assisted summary - advisory only' : 'Decision summary'
+      ));
+    }
+    const remediations = Array.isArray(narrative?.gapRemediations) ? narrative.gapRemediations : [];
+    remediationEls.forEach((el) => {
+      const index = Number(el.dataset.gapRemediationIndex);
+      const item = remediations.find((entry) => Number(entry.index) === index) || remediations[index];
+      if (item?.suggestedAction) el.textContent = `Suggested action: ${item.suggestedAction}`;
+    });
+  } catch {
+    // Narrative is advisory only; deterministic decision output remains authoritative.
+  }
 }
 
 function renderDecisionRoomEmptyState(message = 'Run the council from Advisor, Replay, or Evidence to produce the executive decision room.') {
@@ -2768,6 +2846,10 @@ function evidenceDocuments(result = {}) {
   return Array.isArray(result.case?.documents) ? result.case.documents : [];
 }
 
+function evidenceDisplayName(doc = {}, index = 0) {
+  return cleanEvidenceText(doc.title || doc.fileName || doc.sourceTitle || doc.documentTitle || '') || `Evidence ${index + 1}`;
+}
+
 function renderCitations(result, options = {}) {
   const showCitations = options.finalVisible || options.stageIndex >= 2;
   const citations = Array.isArray(result.citations) ? result.citations : [];
@@ -2782,17 +2864,18 @@ function renderCitations(result, options = {}) {
   }
   citationList.innerHTML = documents.map((doc, index) => {
     const evidenceId = doc.evidenceId || doc.sourceEvidenceId || `DOC-${String(index + 1).padStart(2, '0')}`;
+    const displayName = evidenceDisplayName(doc, index);
     const signals = Array.isArray(doc.signals) && doc.signals.length
       ? doc.signals.join(', ')
       : doc.score ? `retrieval score ${Number(doc.score || 0).toFixed(2)}` : 'No strong signal detected';
     return `
       <article class="citation-row ${doc.extractionStatus === 'binary_registered' ? 'needs-extraction' : ''} ${doc.extractionStatus === 'retrieved_chunk' || doc.sourceType === 'semantic_retrieval' ? 'is-indexed' : ''}">
         <div>
-          <span>${escapeHtml(evidenceId)} · ${escapeHtml(doc.citationId || doc.chunkId || doc.extractionStatus || 'attached')}</span>
-          <strong>${escapeHtml(doc.title || doc.fileName || `Evidence ${index + 1}`)}</strong>
+          <span>${escapeHtml(doc.citationId || doc.chunkId || doc.extractionStatus || 'attached')}</span>
+          <strong>${escapeHtml(displayName)}</strong>
           <p>${escapeHtml(doc.text || doc.excerpt || doc.summary || 'Evidence attached without extracted text.')}</p>
         </div>
-        <small>${escapeHtml(signals)}</small>
+        <small>${escapeHtml(signals)} · ${escapeHtml(evidenceId)}</small>
       </article>
     `;
   }).join('');
@@ -2852,6 +2935,10 @@ function renderArtifactPreview(result, options = {}) {
       <div class="artifact-header">
         <span class="eyebrow">review package</span>
         <strong>${escapeHtml(result.case?.caseId || 'case pending')}</strong>
+      </div>
+      <div class="artifact-primary-action">
+        <button type="button" data-report-action="export-review-pack">Download review pack (PDF)</button>
+        <small>Business memo, evidence citations, specialist trace, and human approval boundary.</small>
       </div>
       <div class="review-package">
         <article>
@@ -2985,12 +3072,13 @@ function buildExecReviewPack(result = lastRun) {
   }
 
   lines.push('', '## Evidence Manifest', '');
-  lines.push(`Evidence IDs: ${evidenceIds.join(', ') || 'none'}`);
+  lines.push(`Evidence references: ${documents.map((doc, index) => evidenceDisplayName(doc, index)).join(', ') || evidenceIds.join(', ') || 'none'}`);
   lines.push(`Indexed retrieval chunks searched: ${retrieval.chunkCount || 0}`);
   lines.push(`Semantic matches used: ${retrieval.matchCount || retrieval.matches?.length || 0}`);
   if (documents.length) {
     documents.forEach((doc, index) => {
-      lines.push(`${index + 1}. ${doc.evidenceId || `DOC-${index + 1}`} - ${doc.title || doc.fileName || 'Evidence document'}`);
+      lines.push(`${index + 1}. ${evidenceDisplayName(doc, index)}`);
+      lines.push(`   Reviewer reference: ${doc.evidenceId || `DOC-${index + 1}`}`);
       lines.push(`   Extraction: ${doc.extractionStatus || 'attached'}`);
       lines.push(`   Signals: ${(doc.signals || []).join(', ') || 'none detected'}`);
     });
@@ -3001,8 +3089,8 @@ function buildExecReviewPack(result = lastRun) {
   lines.push('', '## Evidence Citations', '');
   if (citations.length) {
     citations.forEach((citation, index) => {
-      lines.push(`${index + 1}. ${citation.evidenceId || `CITE-${index + 1}`} - ${citation.title || 'Evidence citation'}`);
-      lines.push(`   Source: ${citation.citationId || citation.sourceType || 'attached evidence'}`);
+      lines.push(`${index + 1}. ${evidenceDisplayName(citation, index)}`);
+      lines.push(`   Source: ${citation.citationId || citation.sourceType || 'attached evidence'} (${citation.evidenceId || `CITE-${index + 1}`})`);
       if (citation.score) lines.push(`   Retrieval score: ${Number(citation.score).toFixed(3)}`);
       lines.push(`   Extract: ${citation.text || 'No extract available.'}`);
     });
@@ -3040,6 +3128,7 @@ function buildExecReviewHtml(result = lastRun) {
   const memo = gaps.length
     ? `${decision.recommendation || 'Pending review'} The council identified ${gaps.length} blocking item${gaps.length === 1 ? '' : 's'} that must be confirmed by a human reviewer before approval.`
     : `${decision.recommendation || 'Pending review'} No blocking gaps remain in the current evidence set, but accountable human approval is still required.`;
+  const exportNarrative = cleanEvidenceText(lastCouncilNarrative?.exportSummary || lastCouncilNarrative?.summary || '');
 
   const domainStatusColor = (s = '') => /applicable/i.test(s) && !/not/i.test(s) ? '#22e3b4' : /confirmation|needs/i.test(s) ? '#f4c95d' : /not.applicable/i.test(s) ? '#4a6080' : '#60a5fa';
   const gapCls = (s = '') => /high|critical/i.test(s) ? '' : /medium|moderate/i.test(s) ? 'medium' : 'low';
@@ -3125,7 +3214,7 @@ function buildExecReviewHtml(result = lastRun) {
     <section class="hero">
       <span class="ey">Executive review pack · ${escapeHtml(generatedAt)}</span>
       <h1>${escapeHtml(decision.recommendation || 'Compliance Review')}</h1>
-      <p class="memo">${escapeHtml(memo)}</p>
+      <p class="memo">${escapeHtml(exportNarrative || memo)}</p>
       <div class="tiles">
         <div class="tile"><div class="lbl">Readiness</div><span class="val">${escapeHtml(readiness)}%</span></div>
         <div class="tile"><div class="lbl">Blocking gaps</div><span class="val">${escapeHtml(gaps.length)}</span></div>
@@ -3182,8 +3271,8 @@ function buildExecReviewHtml(result = lastRun) {
       <h2>${escapeHtml(humanize(evidenceQuality.status || 'Evidence review'))}</h2>
       <p>Retrieval stays server-side. This export contains safe citations and metadata only — raw embeddings and vector chunks are not included.</p>
       <div class="cite-list">
-        ${(citations.length ? citations : [{ title: 'No citation records returned.', text: 'Run with indexed evidence to populate citation-ready extracts.' }]).map((c) => `
-          <div class="cite"><span class="cite-id">${escapeHtml(c.evidenceId || c.citationId || 'evidence')}</span><span class="cite-title">${escapeHtml(c.title || 'Citation')}</span><span class="cite-text">${escapeHtml(c.text || 'No extract available.')}</span></div>`).join('')}
+        ${(citations.length ? citations : [{ title: 'No citation records returned.', text: 'Run with indexed evidence to populate citation-ready extracts.' }]).map((c, index) => `
+          <div class="cite"><span class="cite-id">${escapeHtml(c.citationId || c.evidenceId || 'evidence')}</span><span class="cite-title">${escapeHtml(evidenceDisplayName(c, index))}</span><span class="cite-text">${escapeHtml(c.text || 'No extract available.')}</span></div>`).join('')}
       </div>
     </section>
 
@@ -3911,9 +4000,20 @@ specialistList?.addEventListener('click', (event) => {
   const action = event.target?.closest?.('[data-report-action]')?.dataset?.reportAction;
   if (action === 'export-review-pack') {
     execReviewPack?.click();
+  } else if (action === 'continue-conversation') {
+    setWorkspaceView('chat');
+    setRunMode('chat', { skipRender: true });
+    renderChatMessages();
+    renderContextStrength();
+    window.setTimeout(() => chatInput?.focus(), 0);
   } else if (action === 'run-council') {
     submitChatMessage(chatInput.value || 'run it', { forceRun: true });
   }
+});
+
+artifactPreview?.addEventListener('click', (event) => {
+  const action = event.target?.closest?.('[data-report-action]')?.dataset?.reportAction;
+  if (action === 'export-review-pack') execReviewPack?.click();
 });
 
 specialistList?.addEventListener('submit', (event) => {
@@ -4001,6 +4101,11 @@ chatForm.addEventListener('submit', (event) => {
 });
 
 chatInput?.addEventListener('keydown', (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && !event.isComposing) {
+    event.preventDefault();
+    submitChatMessage(chatInput.value || 'run it again', { forceRun: true });
+    return;
+  }
   if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
   event.preventDefault();
   const message = cleanEvidenceText(chatInput.value);
@@ -4009,6 +4114,14 @@ chatInput?.addEventListener('keydown', (event) => {
 
 chatInput?.addEventListener('input', () => {
   updateLiveCasePreview();
+});
+
+caseIntelDetails?.addEventListener('click', (event) => {
+  const prompt = event.target?.closest?.('[data-intel-prompt]')?.dataset?.intelPrompt;
+  if (!prompt || !chatInput) return;
+  chatInput.value = prompt;
+  updateLiveCasePreview();
+  chatInput.focus();
 });
 
 chatRunNow.addEventListener('click', () => {
@@ -4097,7 +4210,7 @@ execReviewPack?.addEventListener('click', async () => {
     const response = await apiFetch('/api/export/review-pack', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ run: lastRun })
+      body: JSON.stringify({ run: lastRun, narrative: lastCouncilNarrative })
     });
     if (response.pdfBase64) {
       downloadBase64(

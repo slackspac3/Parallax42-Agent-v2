@@ -53,3 +53,38 @@ test('review pack includes digest, evidence quality, retrieval audit, and human 
   assert.match(pdfText, /Governed Agent Loop/);
   assert.match(pdfText, /Quality Rubric/);
 });
+
+test('review pack can carry advisory narrative without changing decision ownership', () => {
+  const run = runComplianceAgent({
+    businessUnit: 'Procurement',
+    geography: 'UAE',
+    supplierName: 'Northstar Services',
+    brief: 'Assess a service provider handling employee data with a DPA and continuity evidence.',
+    documents: [
+      {
+        evidenceId: 'DPA-01',
+        title: 'Signed DPA',
+        summary: 'The DPA says no model training and includes retention commitments.',
+        signals: ['signed dpa', 'model-training exclusion', 'retention schedule']
+      }
+    ]
+  });
+
+  const narrative = {
+    advisoryOnly: true,
+    source: 'compass_gateway',
+    summary: 'The council found the main privacy evidence and preserved one reviewer action for accountable approval.',
+    exportSummary: 'Board summary: the review is ready for human assessment with privacy evidence attached and final approval still controlled by the business owner.',
+    gapRemediations: [
+      { index: 0, suggestedAction: 'Ask the owner to confirm whether the DPA covers the live processing scope.' }
+    ]
+  };
+  const pack = buildReviewPack(run, { narrative, generatedAt: '2026-05-15T00:00:00.000Z' });
+  const markdown = buildReviewPackMarkdown(pack);
+
+  assert.equal(pack.executiveNarrative.advisoryOnly, true);
+  assert.equal(pack.decisionRoom.decision.finalDecisionOwner, 'deterministic compliance engine');
+  assert.equal(pack.controls.noAutomaticApproval, true);
+  assert.match(markdown, /Board summary: the review is ready/);
+  assert.match(markdown, /Final decision owner: deterministic compliance engine/);
+});

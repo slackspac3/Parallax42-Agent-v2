@@ -186,15 +186,15 @@
                     <span class="eyebrow">Council readiness</span>
                     <strong id="contextStrengthLabel">Needs intake</strong>
                   </div>
-                  <div class="context-meter" aria-hidden="true">
-                    <span id="contextStrengthBar"></span>
+                  <div class="context-meter">
+                    <span id="contextStrengthBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Council readiness"></span>
                   </div>
                   <p id="contextStrengthText">Add scope, owner, geography, evidence, and risk signals before running council.</p>
                 </div>
                 <form id="chatForm" class="chat-form">
                   <label>
                     Message
-                    <textarea id="chatInput" rows="5" title="Press Enter to send. Use Shift+Enter for a new line." placeholder="Example: assess a healthcare analytics vendor using patient data, Microsoft 365, and cross-border processing."></textarea>
+                    <textarea id="chatInput" rows="5" title="Press Enter to send · Shift+Enter for a new line · Cmd/Ctrl+Enter to run council" placeholder="Example: assess a healthcare analytics vendor using patient data, Microsoft 365, and cross-border processing."></textarea>
                   </label>
                   <label class="chat-evidence-picker">
                     Evidence files
