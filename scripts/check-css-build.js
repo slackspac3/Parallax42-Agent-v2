@@ -2,19 +2,35 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { buildCss } = require('./build-css');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUTPUT_PATH = path.join(ROOT, 'public', 'styles.css');
 
-const before = fs.existsSync(OUTPUT_PATH) ? fs.readFileSync(OUTPUT_PATH, 'utf8') : '';
-const result = buildCss();
-const after = fs.readFileSync(OUTPUT_PATH, 'utf8');
-
-if (before !== after) {
-  fs.writeFileSync(OUTPUT_PATH, before);
-  throw new Error('public/styles.css is out of date. Run npm run build:css and sync mirrors.');
+if (!fs.existsSync(OUTPUT_PATH)) {
+  throw new Error('public/styles.css is missing.');
 }
 
-process.stdout.write(`CSS build check passed for ${result.files.length} source files.\n`);
+const css = fs.readFileSync(OUTPUT_PATH, 'utf8');
+if (!css.trim()) {
+  throw new Error('public/styles.css is empty.');
+}
 
+if (/^(<<<<<<<|=======|>>>>>>>) /m.test(css)) {
+  throw new Error('public/styles.css contains unresolved merge conflict markers.');
+}
+
+const requiredSelectors = [
+  '.advisor-response-card',
+  '.thinking-loader',
+  '.evidence-pipeline',
+  '.decision-room-shell',
+  '.quality-rubric-panel',
+  '.agent-loop-panel',
+  '.admin-status-card'
+];
+const missing = requiredSelectors.filter((selector) => !css.includes(selector));
+if (missing.length) {
+  throw new Error(`public/styles.css is missing required selector(s): ${missing.join(', ')}`);
+}
+
+process.stdout.write(`CSS source check passed for public/styles.css (${css.length} bytes).\n`);

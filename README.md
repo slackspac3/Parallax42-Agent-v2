@@ -13,6 +13,10 @@ This repo is the clean build surface for packaging the existing Parallax42 work 
 
 Hackathon positioning: this submission maps to **Use Case #21: Legal Intelligence / Compliance**. The primary workflow is enterprise agreement and vendor-evidence review: uploaded agreements, DPAs, MSAs, SOC/ISO/BCP evidence, and advisory legal-reference context are converted into a human-review decision pack. The Caselaw Access Project data path is implemented as advisory legal-reference memory, not as legal advice or automated approval.
 
+Agent positioning: the system is intentionally **L2 governed autonomy**. It can loop through intake, evidence retrieval, obligation mapping, risk/control analysis, and review-pack generation, but it stops at missing evidence, low output-rubric score, or accountable human approval. The council is expressed as agentic pairings such as Planner + Doer, Proposer + Critic, Context-Packer + Actor, and Evidence-Weaver + Synthesizer, with deterministic decisioning as the final owner.
+
+Memory is separated into scratchpad state, episodic audit/reviewer logs, and reusable advisory knowledge. Governed learning memory and reference intelligence can improve questions and reviewer suggestions, but they do not train a model or silently change the deterministic decision.
+
 The implementation now defaults agent execution through a dependency-light CrewAI Flow orchestration path with deterministic compliance decisions as the stable fallback. The stronger Parallax42 assets remain the source of truth for the live supplier-risk backend and are referenced in the submission dossier.
 
 ## Judge Quick Start

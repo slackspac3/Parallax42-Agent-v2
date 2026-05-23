@@ -35,6 +35,10 @@ test('review pack includes digest, evidence quality, retrieval audit, and human 
   assert.match(markdown, /Human approval required: yes/);
   assert.match(markdown, /Executive Memo/);
   assert.match(markdown, /Specialist Validation Trace/);
+  assert.match(markdown, /Governed Autonomy Model/);
+  assert.match(markdown, /Agent Loop Spec/);
+  assert.match(markdown, /Council Quality Rubric/);
+  assert.match(markdown, /Agentic Pairings/);
   assert.match(markdown, /Final decision owner: deterministic compliance engine/);
 
   const pdf = buildReviewPackPdf(pack);
@@ -46,4 +50,6 @@ test('review pack includes digest, evidence quality, retrieval audit, and human 
   assert.match(pdfText, /Decision Room/);
   assert.match(pdfText, /Evidence Intelligence/);
   assert.match(pdfText, /Council Trace/);
+  assert.match(pdfText, /Governed Agent Loop/);
+  assert.match(pdfText, /Quality Rubric/);
 });

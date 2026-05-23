@@ -4,7 +4,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
-const { buildCss } = require('./build-css');
 
 const assets = [
   'index.html',
@@ -21,8 +20,6 @@ const assets = [
   'config.js'
 ];
 const mirrors = [ROOT, path.join(ROOT, 'docs')];
-
-buildCss();
 
 for (const asset of assets) {
   const source = path.join(ROOT, 'public', asset);

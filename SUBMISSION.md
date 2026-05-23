@@ -19,6 +19,8 @@ The Compass gateway is required for smart chat intake and shared embeddings/advi
 
 Parallax42 applies Legal Intelligence to enterprise agreement and compliance-evidence review. The system reviews contracts, MSAs, DPAs, outsourcing arrangements, and supporting assurance evidence, then produces a human-review decision memo with risks, required actions, citations, and a deterministic specialist trace. CourtListener/CAP references are used only as advisory legal-reference memory for clause and risk comparison, citation checks, and reviewer questions; they are not legal advice and do not approve the case.
 
+The demo should be described as governed L2 autonomy, not unrestricted autonomous approval. The council can loop through intake, retrieval, obligation mapping, risk/control critique, and pack generation, then stops at human review, missing proof, or a low quality-rubric score. The review pack exposes the agent loop spec, agentic pairings, memory lanes, stop conditions, and 0-9 output rubric so judges can inspect the actual operating discipline.
+
 ## Local Quick Start
 
 ```bash
@@ -73,6 +75,9 @@ Compass compatibility:
 - Deterministic decision logic, blocker naming, controls, and human-approval boundary.
 - Evidence retrieval boundary and citation discipline.
 - Optional CrewAI-shaped orchestration and Compass advisory model path.
+- Governed agent-loop design: Planner + Doer, Proposer + Critic, Context-Packer + Actor, and Evidence-Weaver + Synthesizer pairings.
+- Council quality rubric across accuracy, appropriateness, and actionability.
+- Separated memory model: scratchpad, episodic log, and reusable advisory knowledge.
 - Audit traceability through local hash-chained JSONL.
 - Generated evidence artifacts under `evidence/`.
 - Use Case #21 legal-reference data path through `scripts/import-courtlistener-reference.js`, `scripts/import-cuad-reference.js`, legacy `scripts/import-cap-legal-reference.js`, and `reference_context/legal/`.

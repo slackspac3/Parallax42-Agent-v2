@@ -30,6 +30,13 @@ test('decision room model presents business-first reviewer output', () => {
   assert.ok(model.why.length >= 1);
   assert.equal(model.agentFindings.length, 6);
   assert.ok(model.agentFindings.some((finding) => finding.name === 'Evidence Examiner'));
+  assert.equal(model.agenticPairings.length, 4);
+  assert.equal(model.autonomyModel.level, 'L2 governed loop with stops');
+  assert.ok(model.agentLoopSpec.plan.length <= 5);
+  assert.ok(model.agentLoopSpec.memory.some((lane) => lane.lane === 'Episodic log'));
+  assert.ok(model.qualityRubric.totalScore >= 0);
+  assert.equal(model.qualityRubric.threshold, 7);
+  assert.ok(model.stopConditions.some((condition) => /Human approval/i.test(condition)));
   assert.ok(model.requiredHumanActions.length >= 1);
   assert.equal(model.metrics.evidenceIds, run.evidenceIds.length);
 });
@@ -54,5 +61,7 @@ test('review pack embeds the decision room model for export consumers', () => {
   assert.equal(pack.decisionRoom.decision.finalDecisionOwner, 'deterministic compliance engine');
   assert.equal(pack.decisionRoom.decision.humanApprovalRequired, true);
   assert.equal(pack.decisionRoom.agentFindings.length, 6);
+  assert.equal(pack.agenticPairings.length, 4);
+  assert.equal(pack.agentLoopSpec.autonomy.level, 'L2 governed loop with stops');
+  assert.equal(pack.qualityRubric.scale, '0-9');
 });
-

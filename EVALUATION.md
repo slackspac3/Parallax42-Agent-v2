@@ -10,6 +10,12 @@ npm run qa
 
 This runs syntax checks, static page checks, unit tests, local benchmarks, and CrewAI dry-run validation. The application is a Node/CommonJS Vercel/static app, so there is no React, Vite, FastAPI, Docker, Redis, Postgres, or durable queue setup required for this QA path.
 
+For UI or demo-flow changes, add a human browser check on top of `npm run qa`: verify that the chat is usable, evidence states are visible, the decision room renders a business-first memo, and technical trace details are behind progressive disclosure. The intended validation split is visual, functional, and output quality:
+
+- Visual: no blank first-viewport states, clipped labels, or overlapping right-rail content.
+- Functional: chat intake, upload, council run, and export controls still work.
+- Output quality: the decision room shows decision, rationale, risks, evidence, agent pairings, human actions, stop conditions, and raw technical details only after expansion.
+
 ## Live Local/Hosted Consistency Check
 
 Run this only when `.env.local` contains the same server-side values used by the hosted demo:
@@ -29,6 +35,8 @@ npm test
 ```
 
 The unit tests cover the Node library and API-adjacent behavior under `tests/unit/`. They are the fastest check when changing `lib/`, API handlers, or export/retrieval behavior.
+
+The decision-room and review-pack tests also assert the governed agent loop: L2 autonomy, agentic pairings, 0-9 quality rubric, separated memory lanes, and human stop conditions. These tests are meant to keep the hackathon story tied to real packaged artifacts rather than only UI copy.
 
 ## Benchmarks
 

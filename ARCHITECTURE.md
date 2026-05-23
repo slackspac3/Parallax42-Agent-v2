@@ -21,6 +21,15 @@ Browser cockpit
 
 The deterministic compliance engine owns final decision status, blocker naming, approval readiness, and required controls. Compass gateway LLM access is required for the smart chat intake planner; if the gateway token is missing, the UI reports smart intake unavailable instead of silently dropping into pattern-only chat. CrewAI is dry-run/orchestration-shaped by default, and Compass advisory outputs remain non-authoritative for compliance approval.
 
+The autonomy model is L2 governed autonomy: the system can iterate through intake, retrieval, obligation mapping, risk/control critique, and pack generation, but it stops when the case lacks evidence, the 0-9 council-quality rubric is below threshold, or human approval is required. The visible council is framed as deterministic specialist validation with agentic pairings:
+
+- Planner + Doer: intake planning and case normalization.
+- Proposer + Critic: obligation mapping challenged by risk/control analysis.
+- Context-Packer + Actor: evidence packaging into deterministic decisioning.
+- Evidence-Weaver + Synthesizer: cited findings converted into an audit-ready pack.
+
+Each run carries an explicit loop spec: goal, plan, tools and fail modes, memory lanes, quality rubric, stop conditions, run log, and guardrails.
+
 ## Frontend, API, And Library Layout
 
 | Area | Path | Current role |
@@ -50,6 +59,14 @@ Browser sends case/evidence metadata and sanitized excerpts
 ```
 
 The default vector provider is local-file storage for demo and development. Qdrant REST is optional when `P42_VECTOR_STORE_PROVIDER=qdrant` and the required Qdrant environment variables are configured. Governance references and reference-intelligence samples are stored as `governance_reference` chunks and are advisory context only. CourtListener and CAP records are legal-reference memory for clause/risk comparison, citation verification, and reviewer questions; they are not legal advice, not jurisdiction-specific advice, and not an approval source. Local OCR/document parsing is not implemented in this repository; browser-side state may include metadata, excerpts, and retrieved snippets for the visible review experience, but not embedding vectors. Any production document extraction boundary should be added as a server-side service before storing retrievable chunks.
+
+Memory is intentionally separated:
+
+- Scratchpad: current case draft, active question, latest intent, and missing facts.
+- Episodic log: audit trace, evidence IDs, decision events, and reviewer feedback.
+- Reusable knowledge: reference intelligence, governed prior-case patterns, and control suggestions.
+
+Only the deterministic engine can change the final decision. Memory and LLM outputs remain advisory unless encoded into deterministic inputs and then re-evaluated by the council.
 
 ## Audit And Security Model
 
