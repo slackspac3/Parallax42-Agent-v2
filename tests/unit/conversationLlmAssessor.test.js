@@ -888,3 +888,74 @@ test('conversation LLM assessor preserves naturalResponse for chat response gene
     global.fetch = originalFetch;
   }
 });
+
+test('conversation renderer returns Compass naturalResponse directly end-to-end', async () => {
+  const originalFetch = global.fetch;
+  const naturalResponse = 'I reviewed the Managed Platform Integration Services Agreement context and will focus the review on data protection, privileged access, and continuity. Which of those should I prioritize first?';
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1'
+    }, async () => {
+      global.fetch = async () => ({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({
+          model: 'gpt-5.1',
+          choices: [{
+            message: {
+              content: JSON.stringify({
+                intent: 'case_context',
+                requestType: 'agreement_review',
+                workflowType: 'contract_risk_review',
+                documentTypes: ['agreement'],
+                reviewTarget: 'Managed Platform Integration Services Agreement',
+                reviewScope: 'data protection, privileged access, and continuity',
+                recommendedFirstAction: 'ask_scope',
+                conversationStage: 'document_uploaded',
+                assistantSummary: 'The managed platform agreement needs a focused review.',
+                nextBestQuestion: 'Which review area should I prioritize first?',
+                naturalResponse,
+                confidence: 0.92,
+                caseUpdate: {
+                  documentTypes: ['agreement'],
+                  evidenceSignals: ['uploaded agreement'],
+                  riskSignals: ['privileged access', 'personal data', 'business continuity']
+                }
+              })
+            }
+          }]
+        })
+      });
+
+      const assessed = await assessConversationWithLlm({
+        message: 'I uploaded the managed platform agreement.',
+        eventType: 'evidence_uploaded',
+        caseDraft: {
+          documents: [{
+            title: 'Managed Platform Integration Services Agreement',
+            documentType: 'agreement',
+            extractionStatus: 'backend_parsed',
+            summary: 'Agreement with data processing, implementation access, and continuity obligations.'
+          }]
+        }
+      });
+
+      const rendered = processConversation({
+        message: 'I uploaded the managed platform agreement.',
+        eventType: 'evidence_uploaded',
+        caseDraft: assessed.caseDraft,
+        llmAssessment: assessed.llmAssessment
+      }, { runtime: 'deterministic' });
+
+      assert.equal(assessed.llmAssessment.naturalResponse, naturalResponse);
+      assert.equal(rendered.reply, naturalResponse);
+      assert.ok(!/^Got it|^Next question|I captured/i.test(rendered.reply));
+      assert.equal(rendered.nlp.llmAssessment.naturalResponse, naturalResponse);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
