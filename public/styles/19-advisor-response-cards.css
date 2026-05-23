@@ -4,17 +4,44 @@
 .advisor-response-card {
   padding: 16px;
   border-radius: var(--r-md);
-  border: 1px solid rgba(34,227,180,0.2);
+  border: 1px solid rgba(34,227,180,0.22);
   background:
-    linear-gradient(135deg, rgba(34,227,180,0.08), rgba(96,165,250,0.03)),
-    rgba(4,8,16,0.7);
+    radial-gradient(ellipse 80% 80% at 12% 0%, rgba(34,227,180,0.1), transparent 62%),
+    linear-gradient(135deg, rgba(34,227,180,0.07), rgba(96,165,250,0.035)),
+    color-mix(in srgb, var(--bg) 78%, transparent);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.035);
+  backdrop-filter: blur(18px);
   animation: message-in 300ms var(--ease) both;
+}
+
+.advisor-natural-response {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(34,227,180,0.24);
+  background:
+    radial-gradient(ellipse 70% 90% at 100% 0%, rgba(96,165,250,0.09), transparent 58%),
+    linear-gradient(145deg, rgba(34,227,180,0.08), rgba(255,255,255,0.018)),
+    color-mix(in srgb, var(--bg) 80%, transparent);
+}
+
+.advisor-natural-response::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, rgba(34,227,180,0.12), transparent);
+  opacity: 0.42;
+  transform: translateX(-100%);
+  animation: advisor-card-sheen 5.6s var(--ease) infinite;
 }
 
 .advisor-response-head {
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
   margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .advisor-response-head strong {
@@ -57,6 +84,8 @@
   border-radius: var(--r-sm);
   border: 1px solid rgba(251,191,36,0.22);
   background: rgba(251,191,36,0.055);
+  position: relative;
+  z-index: 1;
 }
 
 .advisor-next-question strong {

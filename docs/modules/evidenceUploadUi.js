@@ -67,6 +67,7 @@
       return step.id === stepId;
     });
     if (normalizedPhase === 'error') return stepIndex <= pipelineSteps.length - 2 ? 'error' : 'queued';
+    if (normalizedPhase === 'ready') return stepIndex <= phaseIndex ? 'complete' : 'queued';
     if (stepIndex < phaseIndex) return 'complete';
     if (stepIndex === phaseIndex) return 'active';
     return 'queued';
@@ -120,6 +121,23 @@
     const phase = inferredPhase(settings);
     const boundedProgress = Math.max(4, Math.min(100, Math.round(Number(settings.progress) || 4)));
     const visibleFiles = Array.from(settings.files || []).slice(0, 3);
+    const analysisItems = Array.from(settings.analysisItems || settings.files || [])
+      .map(function toAnalysisItem(file) {
+        const summary = cleanText(file.summary || file.excerpt || file.semantic_summary || '');
+        const signals = Array.isArray(file.signals) ? file.signals.filter(Boolean) : [];
+        const evidenceIds = Array.isArray(file.documentEvidenceIds) ? file.documentEvidenceIds.filter(Boolean) : [];
+        const documentType = cleanText(file.documentType || file.sourceType || '');
+        if (!summary && !signals.length && !evidenceIds.length && !documentType) return null;
+        return {
+          title: cleanText(file.title || file.fileName || file.name || 'Evidence document'),
+          documentType: documentType ? humanize(documentType) : 'Document',
+          summary: summary ? summarizeEvidenceText(summary, 420) : 'No concise document summary was returned. Use the extracted signals and citations below, or ask the advisor to focus the review.',
+          signals,
+          evidenceIds
+        };
+      })
+      .filter(Boolean)
+      .slice(0, 3);
     const state = settings.state || 'working';
     const elapsed = elapsedLabel(settings);
     node.dataset.state = state;
@@ -157,6 +175,38 @@
               return `<span>${escapeHtml(file.name || file.fileName || file.title || 'Evidence file')}</span>`;
             }).join('')}
           </div>
+        ` : ''}
+        ${analysisItems.length ? `
+          <details class="evidence-analysis-panel" open>
+            <summary>
+              <span>Document analysis summary</span>
+              <b>${escapeHtml(analysisItems.length === 1 ? '1 file analysed' : `${analysisItems.length} files analysed`)}</b>
+            </summary>
+            <div class="evidence-analysis-tabs" aria-hidden="true">
+              <span class="is-active">Summary</span>
+              <span>Signals</span>
+              <span>What to answer</span>
+            </div>
+            <div class="evidence-analysis-list">
+              ${analysisItems.map(function renderAnalysis(item) {
+                return `
+                  <article>
+                    <div class="evidence-analysis-head">
+                      <span>${escapeHtml(item.documentType)}</span>
+                      <strong>${escapeHtml(item.title)}</strong>
+                    </div>
+                    <p>${escapeHtml(item.summary)}</p>
+                    <div class="evidence-analysis-chips">
+                      ${(item.signals.length ? item.signals : ['awaiting focused review']).slice(0, 8).map(function renderSignal(signal) {
+                        return `<span>${escapeHtml(signal)}</span>`;
+                      }).join('')}
+                    </div>
+                    <small>${escapeHtml(item.evidenceIds.length ? `${item.evidenceIds.length} extracted evidence reference${item.evidenceIds.length === 1 ? '' : 's'}` : 'Use this summary to answer the next question; say unknown if the owner or geography is not known.')}</small>
+                  </article>
+                `;
+              }).join('')}
+            </div>
+          </details>
         ` : ''}
         <div class="pipeline-telemetry" aria-hidden="true">
           <span>parser session</span>

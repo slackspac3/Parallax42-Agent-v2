@@ -167,6 +167,40 @@ test('conversation uses activeQuestion to resolve a terse owner answer when rend
   assert.ok(!result.questions.some((question) => /business owner|accountable business unit|workflow owner/i.test(question)));
 });
 
+test('conversation reply uses Compass naturalResponse when available', () => {
+  const naturalResponse = 'I’ll record Finance as the accountable owner for the access-report review. Which geography or regulatory perimeter should I apply?';
+  const result = processConversation({
+    message: 'Finance',
+    eventType: 'user_answer',
+    caseDraft: {
+      brief: 'Review access reports during onboarding.',
+      activeQuestion: 'Who is the accountable business owner for this case?',
+      questions: ['Who is the accountable business owner for this case?']
+    },
+    llmAssessment: {
+      provider: 'compass_gateway',
+      model: 'gpt-5.1',
+      used: true,
+      advisoryOnly: true,
+      intent: 'owner_answer',
+      requestType: 'security_assurance_review',
+      workflowType: 'security_assurance_review',
+      recommendedFirstAction: 'ask_geography',
+      conversationStage: 'asking_clarification',
+      assistantSummary: 'Finance owns the access-report review.',
+      nextBestQuestion: 'Which geography or regulatory perimeter should I apply?',
+      naturalResponse,
+      confidence: 0.91,
+      caseUpdate: {
+        businessUnit: 'Finance'
+      }
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.reply, naturalResponse);
+  assert.equal(result.nlp.llmAssessment.naturalResponse, naturalResponse);
+});
+
 test('conversation does not treat Finance as an owner when the active question is generic scope', () => {
   const result = processConversation({
     message: 'Finance',

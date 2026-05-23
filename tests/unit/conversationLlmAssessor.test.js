@@ -242,6 +242,7 @@ test('conversation LLM assessor requests JSON mode and handles OpenAI response o
         const body = JSON.parse(options.body);
         assert.equal(url, 'https://gateway.example/api/chat/completions');
         assert.deepEqual(body.response_format, { type: 'json_object' });
+        assert.equal(body.temperature, 0.4);
         return {
           ok: true,
           status: 200,
@@ -305,9 +306,18 @@ test('conversation LLM assessor sends full chat context for terse answer interpr
         assert.equal(prompt.eventType, 'user_answer');
         assert.equal(prompt.activeQuestion, 'What source evidence should I treat as proof for this decision?');
         assert.equal(prompt.currentDraft.activeQuestion, 'What source evidence should I treat as proof for this decision?');
-        assert.equal(prompt.conversationHistory.at(-2).role, 'assistant');
-        assert.match(prompt.conversationHistory.at(-2).text, /source evidence/i);
-        assert.match(prompt.currentDraft.conversationHistory.at(-2).text, /source evidence/i);
+        assert.equal(prompt.conversationHistory, undefined);
+        assert.equal(prompt.currentDraft.conversationHistory, undefined);
+        assert.equal(prompt.recentConversationTurnCount, 3);
+        assert.equal(body.temperature, 0.4);
+        assert.equal(body.messages.at(-3).role, 'user');
+        assert.match(body.messages.at(-3).content, /managed integration partner/i);
+        assert.equal(body.messages.at(-2).role, 'assistant');
+        assert.match(body.messages.at(-2).content, /source evidence/i);
+        assert.deepEqual(body.messages.at(-1), {
+          role: 'user',
+          content: 'we do not know at this point'
+        });
         return {
           ok: true,
           status: 200,
@@ -352,6 +362,79 @@ test('conversation LLM assessor sends full chat context for terse answer interpr
       assert.ok(result.caseDraft.knownGaps.includes('evidence'));
       assert.ok(result.caseDraft.recentlyAnsweredFields.evidence > 0);
       assert.equal(result.caseDraft.conversationHistory.length, 3);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('conversation LLM assessor sends only the latest six chat turns with latest user message last', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1'
+    }, async () => {
+      const history = [
+        { role: 'user', text: 'old turn 1' },
+        { role: 'assistant', text: 'old answer 1' },
+        { role: 'user', text: 'old turn 2' },
+        { role: 'assistant', text: 'old answer 2' },
+        { role: 'user', text: 'I have a managed integration partner to review.' },
+        { role: 'assistant', text: 'Which geography applies?' },
+        { role: 'user', text: 'UAE' },
+        { role: 'assistant', text: 'Who owns this review?' },
+        { role: 'user', text: 'Platform team' },
+        { role: 'assistant', text: 'What source evidence should I use?' },
+        { role: 'user', text: 'DPA is uploaded' }
+      ];
+      global.fetch = async (url, options) => {
+        const body = JSON.parse(options.body);
+        const prompt = JSON.parse(body.messages[1].content);
+        const chatMessages = body.messages.slice(2);
+        assert.equal(prompt.recentConversationTurnCount, 6);
+        assert.equal(chatMessages.length, 6);
+        assert.deepEqual(chatMessages.map((item) => item.role), ['assistant', 'user', 'assistant', 'user', 'assistant', 'user']);
+        assert.match(chatMessages[0].content, /geography/i);
+        assert.match(chatMessages[4].content, /source evidence/i);
+        assert.deepEqual(chatMessages.at(-1), { role: 'user', content: 'DPA is uploaded' });
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            model: 'gpt-5.1',
+            choices: [{
+              message: {
+                content: JSON.stringify({
+                  intent: 'evidence_answer',
+                  requestType: 'vendor_onboarding',
+                  workflowType: 'procurement_vendor_review',
+                  recommendedFirstAction: 'run_council',
+                  conversationStage: 'ready_for_council',
+                  assistantSummary: 'The uploaded DPA can be used as evidence.',
+                  naturalResponse: 'I’ll use the uploaded DPA as source evidence for the managed integration partner review.',
+                  confidence: 0.88,
+                  caseUpdate: {
+                    evidenceSignals: ['DPA is uploaded']
+                  }
+                })
+              }
+            }]
+          })
+        };
+      };
+
+      const result = await assessConversationWithLlm({
+        message: 'DPA is uploaded',
+        eventType: 'user_answer',
+        activeQuestion: 'What source evidence should I use?',
+        history
+      });
+
+      assert.equal(result.llmAssessment.used, true);
+      assert.ok(result.caseDraft.evidenceSignals.includes('DPA is uploaded'));
     });
   } finally {
     global.fetch = originalFetch;
@@ -489,7 +572,9 @@ test('conversation LLM assessor merges strict Compass JSON into the case draft',
         assert.equal(url, 'https://gateway.example/api/chat/completions');
         assert.equal(options.headers['x-parallax42-gateway-token'], 'test-token');
         assert.equal(body.model, 'gpt-5.1');
+        assert.equal(body.temperature, 0.4);
         assert.match(body.messages[1].content, /latestMessage/);
+        assert.deepEqual(body.messages.at(-1), { role: 'user', content: 'HR' });
         return {
           ok: true,
           status: 200,
@@ -738,6 +823,66 @@ test('conversation LLM assessor classifies document and clause review requests',
       assert.equal(assessed.caseDraft.llmIntake.requestType, 'clause_review');
       assert.equal(assessed.caseDraft.llmIntake.reviewScope, 'termination for convenience and liability cap');
       assert.equal(assessed.caseDraft.llmIntake.assistantSummary, 'This is a clause review; I need the clauses before metadata.');
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('conversation LLM assessor preserves naturalResponse for chat response generation', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1'
+    }, async () => {
+      global.fetch = async () => ({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({
+          model: 'gpt-5.1',
+          choices: [{
+            message: {
+              content: JSON.stringify({
+                intent: 'case_context',
+                requestType: 'agreement_review',
+                workflowType: 'contract_risk_review',
+                reviewTarget: 'Managed Platform Integration Services Agreement',
+                recommendedFirstAction: 'ask_scope',
+                conversationStage: 'document_uploaded',
+                assistantSummary: 'The managed platform agreement is ready for focused review.',
+                nextBestQuestion: 'Should I focus first on privacy, privileged access, commercial terms, or all material risks?',
+                naturalResponse: 'I’ve reviewed the uploaded Managed Platform Integration Services Agreement at intake level and can see privacy, privileged-access, and service-continuity themes. Should I focus first on privacy, privileged access, commercial terms, or all material risks?',
+                confidence: 0.88,
+                caseUpdate: {
+                  documentTypes: ['agreement'],
+                  riskSignals: ['privileged access', 'personal data']
+                }
+              })
+            }
+          }]
+        })
+      });
+
+      const result = await assessConversationWithLlm({
+        message: 'I uploaded the agreement.',
+        eventType: 'evidence_uploaded',
+        caseDraft: {
+          documents: [{
+            title: 'Managed Platform Integration Services Agreement',
+            documentType: 'agreement',
+            extractionStatus: 'backend_parsed',
+            summary: 'Agreement with data processing, implementation access, and continuity obligations.'
+          }]
+        }
+      });
+
+      assert.equal(result.llmAssessment.used, true);
+      assert.match(result.llmAssessment.naturalResponse, /Managed Platform Integration Services Agreement/);
+      assert.match(result.llmAssessment.naturalResponse, /Should I focus first/);
+      assert.equal(result.caseDraft.llmIntake.naturalResponse, result.llmAssessment.naturalResponse);
     });
   } finally {
     global.fetch = originalFetch;
