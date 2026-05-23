@@ -1382,18 +1382,20 @@ function renderAgentActivity(items = defaultAgentActivity) {
   }
   const focus = views.find((item) => item.id === councilFocusAgent) || active;
   const completed = views.filter((item) => item.status === 'complete').length;
-  const activeLabel = active?.status === 'active' ? active.label : 'Decision core';
+  const noActiveCase = activeRunMode === 'chat' && workspaceView === 'chat' && !hasChatContext() && !uploadedEvidence.length && !lastRuns.chat?.ok;
+  const activeLabel = noActiveCase ? 'Council' : active?.status === 'active' ? active.label : 'Decision core';
+  const activitySummary = noActiveCase ? 'queued for intake' : active?.status === 'active' ? 'is working' : 'is ready';
   agentActivity.innerHTML = `
     <details class="council-trace-details">
       <summary>
         <span>Executive council view</span>
-        <strong>${escapeHtml(activeLabel)} ${active?.status === 'active' ? 'is working' : 'is ready'}</strong>
+        <strong>${escapeHtml(activeLabel)} ${escapeHtml(activitySummary)}</strong>
       </summary>
     <div class="council-constellation">
       <div class="agent-activity-header">
         <div>
           <span class="eyebrow">Executive council view</span>
-          <strong>${escapeHtml(activeLabel)} ${active?.status === 'active' ? 'is working' : 'is ready'}</strong>
+          <strong>${escapeHtml(activeLabel)} ${escapeHtml(activitySummary)}</strong>
         </div>
         <small>Deterministic specialist validation</small>
       </div>
@@ -2115,6 +2117,12 @@ function renderEvidenceQueue(scenario = scenarios[currentScenarioKey]) {
 
 function renderCaseDraft() {
   const draft = chatCaseDraft || {};
+  if (!hasChatContext() && !uploadedEvidence.length && !lastRuns.chat?.ok) {
+    caseDraftPanel.innerHTML = '';
+    renderCaseIntelligence(draft, lastRuns.chat);
+    renderMissionWelcome();
+    return;
+  }
   const integrations = Array.isArray(draft.integrations) ? draft.integrations : [];
   const evidenceSignals = Array.isArray(draft.evidenceSignals) ? draft.evidenceSignals : [];
   const riskSignals = Array.isArray(draft.riskSignals) ? draft.riskSignals : [];
