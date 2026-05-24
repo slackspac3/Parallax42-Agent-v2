@@ -1,5 +1,7 @@
 'use strict';
 
+const { STANDARD_RUN_BODY_LIMIT_BYTES } = require('../lib/requestLimits');
+
 const DEFAULT_ALLOWED_ORIGINS = [
   'https://slackspac3.github.io',
   'http://127.0.0.1:3020',
@@ -31,19 +33,80 @@ function sendJson(req, res, statusCode, body, cors = {}) {
   res.status(statusCode).json(body);
 }
 
-async function readJsonRequest(req) {
-  if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
-    return req.body;
+function requestBodyTooLargeError(limitBytes) {
+  const error = new Error(`Request body exceeds the ${limitBytes} byte limit.`);
+  error.code = 'request_body_too_large';
+  error.statusCode = 413;
+  error.limitBytes = limitBytes;
+  return error;
+}
+
+function malformedJsonError() {
+  const error = new Error('Request body must be valid JSON.');
+  error.code = 'malformed_json';
+  error.statusCode = 400;
+  return error;
+}
+
+function parseJsonText(raw = '') {
+  const value = String(raw || '').trim();
+  if (!value) return {};
+  try {
+    return JSON.parse(value);
+  } catch {
+    throw malformedJsonError();
+  }
+}
+
+function assertBodyLimit(size, limitBytes) {
+  if (Number.isFinite(size) && size > limitBytes) {
+    throw requestBodyTooLargeError(limitBytes);
+  }
+}
+
+async function readJsonRequest(req, { limitBytes = STANDARD_RUN_BODY_LIMIT_BYTES } = {}) {
+  const limit = Number(limitBytes || STANDARD_RUN_BODY_LIMIT_BYTES);
+  const contentLength = Number(req.headers?.['content-length'] || 0);
+  assertBodyLimit(contentLength, limit);
+
+  if (Buffer.isBuffer(req.body)) {
+    assertBodyLimit(req.body.length, limit);
+    return parseJsonText(req.body.toString('utf8'));
   }
   if (typeof req.body === 'string') {
-    return req.body.trim() ? JSON.parse(req.body) : {};
+    assertBodyLimit(Buffer.byteLength(req.body, 'utf8'), limit);
+    return parseJsonText(req.body);
+  }
+  if (req.body && typeof req.body === 'object') {
+    assertBodyLimit(Buffer.byteLength(JSON.stringify(req.body), 'utf8'), limit);
+    return req.body;
   }
   const chunks = [];
+  let size = 0;
   for await (const chunk of req) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    size += buffer.length;
+    assertBodyLimit(size, limit);
+    chunks.push(buffer);
   }
-  const raw = Buffer.concat(chunks).toString('utf8').trim();
-  return raw ? JSON.parse(raw) : {};
+  return parseJsonText(Buffer.concat(chunks).toString('utf8'));
+}
+
+function jsonRequestErrorBody(error, fallback = {}) {
+  const statusCode = Number(error?.statusCode || error?.status || fallback.statusCode || 500);
+  const code = error?.code || fallback.error || (statusCode === 400 ? 'bad_request' : 'request_failed');
+  const body = {
+    ok: false,
+    error: code,
+    detail: error instanceof Error ? error.message : String(error || fallback.detail || 'Request failed.')
+  };
+  if (error?.limitBytes) body.limitBytes = error.limitBytes;
+  return { statusCode, body };
+}
+
+function sendJsonError(req, res, error, fallback = {}) {
+  const { statusCode, body } = jsonRequestErrorBody(error, fallback);
+  sendJson(req, res, statusCode, body, fallback.cors || {});
 }
 
 function methodGuard(req, res, methods = ['GET']) {
@@ -61,8 +124,13 @@ function methodGuard(req, res, methods = ['GET']) {
 
 module.exports = {
   allowedOrigins,
+  jsonRequestErrorBody,
+  malformedJsonError,
   methodGuard,
+  parseJsonText,
   readJsonRequest,
+  requestBodyTooLargeError,
   sendJson,
+  sendJsonError,
   setCors
 };

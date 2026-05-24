@@ -19,6 +19,14 @@ const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
 const { governanceReferenceHealth, indexGovernanceReference, searchGovernanceReferences } = require('./lib/governanceReferenceStore');
 const { readJsonBody, writeJson } = require('./lib/http');
 const {
+  ADMIN_BODY_LIMIT_BYTES,
+  CONVERSATION_BODY_LIMIT_BYTES,
+  EVIDENCE_INDEX_BODY_LIMIT_BYTES,
+  EVIDENCE_SEARCH_BODY_LIMIT_BYTES,
+  REVIEW_PACK_BODY_LIMIT_BYTES,
+  STANDARD_RUN_BODY_LIMIT_BYTES
+} = require('./lib/requestLimits');
+const {
   handleAgentRun,
   handleConversation,
   handleEvidenceIndex,
@@ -146,7 +154,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/run') {
-      const body = await readJsonBody(req, { limitBytes: 5_000_000 });
+      const body = await readJsonBody(req, { limitBytes: STANDARD_RUN_BODY_LIMIT_BYTES });
       const result = await handleStandardRun({ req, body, startedAt: Date.now() });
       writeJson(res, result.status, result.body);
       return;
@@ -172,7 +180,7 @@ const server = http.createServer(async (req, res) => {
         writeJson(res, auth.statusCode, auth.body);
         return;
       }
-      const body = await readJsonBody(req, { limitBytes: 200_000 });
+      const body = await readJsonBody(req, { limitBytes: ADMIN_BODY_LIMIT_BYTES });
       const result = updateFeatureFlags(body.features && typeof body.features === 'object' ? body.features : body, auth.actor);
       appendAuditRecord({
         actor: auth.actor,
@@ -263,7 +271,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/agent/run') {
-      const body = await readJsonBody(req, { limitBytes: 5_000_000 });
+      const body = await readJsonBody(req, { limitBytes: STANDARD_RUN_BODY_LIMIT_BYTES });
       const result = await handleAgentRun({ req, body });
       writeJson(res, result.status, result.body);
       return;
@@ -284,21 +292,21 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/conversation') {
-      const body = await readJsonBody(req, { limitBytes: 2_000_000 });
+      const body = await readJsonBody(req, { limitBytes: CONVERSATION_BODY_LIMIT_BYTES });
       const result = await handleConversation({ req, body });
       writeJson(res, result.status, result.body);
       return;
     }
 
     if (req.method === 'POST' && url.pathname === '/api/evidence/index') {
-      const body = await readJsonBody(req, { limitBytes: 5_000_000 });
+      const body = await readJsonBody(req, { limitBytes: EVIDENCE_INDEX_BODY_LIMIT_BYTES });
       const result = await handleEvidenceIndex({ req, body });
       writeJson(res, result.status, result.body);
       return;
     }
 
     if (req.method === 'POST' && url.pathname === '/api/evidence/search') {
-      const body = await readJsonBody(req, { limitBytes: 2_000_000 });
+      const body = await readJsonBody(req, { limitBytes: EVIDENCE_SEARCH_BODY_LIMIT_BYTES });
       const result = await handleEvidenceSearch({ req, body });
       writeJson(res, result.status, result.body);
       return;
@@ -310,7 +318,7 @@ const server = http.createServer(async (req, res) => {
         writeJson(res, auth.statusCode, auth.body);
         return;
       }
-      const body = await readJsonBody(req, { limitBytes: 5_000_000 });
+      const body = await readJsonBody(req, { limitBytes: EVIDENCE_INDEX_BODY_LIMIT_BYTES });
       const result = await indexGovernanceReference(body);
       appendAuditRecord({
         actor: auth.actor,
@@ -405,7 +413,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/export/review-pack') {
-      const body = await readJsonBody(req, { limitBytes: 3_000_000 });
+      const body = await readJsonBody(req, { limitBytes: REVIEW_PACK_BODY_LIMIT_BYTES });
       const result = await handleReviewPack({ req, body });
       writeJson(res, result.status, result.body);
       return;
@@ -418,9 +426,14 @@ const server = http.createServer(async (req, res) => {
 
     writeJson(res, 405, { error: 'Method not allowed' });
   } catch (error) {
-    writeJson(res, 500, {
-      error: error instanceof Error ? error.message : String(error || 'Unknown error')
-    });
+    const statusCode = Number(error?.statusCode || error?.status || 500);
+    const body = {
+      ok: false,
+      error: error?.code || (statusCode === 400 ? 'bad_request' : 'request_failed'),
+      detail: error instanceof Error ? error.message : String(error || 'Unknown error')
+    };
+    if (error?.limitBytes) body.limitBytes = error.limitBytes;
+    writeJson(res, statusCode, body);
   }
 });
 

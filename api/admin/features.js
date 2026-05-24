@@ -3,7 +3,8 @@
 const { appendAuditRecord } = require('../../lib/auditStore');
 const { buildFeatureStatus, updateFeatureFlags } = require('../../lib/adminFeatureFlags');
 const { authorizeRequest } = require('../../lib/rbac');
-const { methodGuard, readJsonRequest, sendJson } = require('../_http');
+const { ADMIN_BODY_LIMIT_BYTES } = require('../../lib/requestLimits');
+const { methodGuard, readJsonRequest, sendJson, sendJsonError } = require('../_http');
 
 module.exports = async function handler(req, res) {
   if (!methodGuard(req, res, ['GET', 'PATCH', 'POST'])) return;
@@ -18,7 +19,7 @@ module.exports = async function handler(req, res) {
       sendJson(req, res, auth.statusCode, auth.body);
       return;
     }
-    const body = await readJsonRequest(req);
+    const body = await readJsonRequest(req, { limitBytes: ADMIN_BODY_LIMIT_BYTES });
     const updates = body.features && typeof body.features === 'object' ? body.features : body;
     const result = updateFeatureFlags(updates, auth.actor);
     appendAuditRecord({
@@ -38,6 +39,10 @@ module.exports = async function handler(req, res) {
     });
     sendJson(req, res, 200, result);
   } catch (error) {
+    if (error?.statusCode) {
+      sendJsonError(req, res, error, { error: 'admin_features_failed' });
+      return;
+    }
     sendJson(req, res, 500, {
       ok: false,
       error: 'admin_features_failed',

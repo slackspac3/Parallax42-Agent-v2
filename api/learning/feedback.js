@@ -3,7 +3,8 @@
 const { appendAuditRecord } = require('../../lib/auditStore');
 const { recordReviewerFeedback } = require('../../lib/learningMemory');
 const { authorizeRequest } = require('../../lib/rbac');
-const { methodGuard, readJsonRequest, sendJson } = require('../_http');
+const { STANDARD_RUN_BODY_LIMIT_BYTES } = require('../../lib/requestLimits');
+const { methodGuard, readJsonRequest, sendJson, sendJsonError } = require('../_http');
 
 module.exports = async function handler(req, res) {
   if (!methodGuard(req, res, ['POST'])) return;
@@ -13,7 +14,7 @@ module.exports = async function handler(req, res) {
       sendJson(req, res, auth.statusCode, auth.body);
       return;
     }
-    const body = await readJsonRequest(req);
+    const body = await readJsonRequest(req, { limitBytes: STANDARD_RUN_BODY_LIMIT_BYTES });
     const result = await recordReviewerFeedback(body, { actor: auth.actor });
     appendAuditRecord({
       actor: auth.actor,
@@ -30,6 +31,10 @@ module.exports = async function handler(req, res) {
     });
     sendJson(req, res, 200, result);
   } catch (error) {
+    if (error?.statusCode) {
+      sendJsonError(req, res, error, { error: 'learning_feedback_failed' });
+      return;
+    }
     sendJson(req, res, 400, {
       error: 'learning_feedback_failed',
       detail: error instanceof Error ? error.message : String(error || 'Could not record learning feedback.')

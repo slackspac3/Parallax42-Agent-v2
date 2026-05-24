@@ -58,6 +58,8 @@ Browser sends case/evidence metadata and sanitized excerpts
   -> council retrieves evidence, governance references, and learning memory server-side
 ```
 
+Request boundaries intentionally separate file upload from JSON case metadata. Browser evidence files are capped at 30 MB per file and move through the parser relay as chunks, not as raw `/api/conversation` JSON. Parsed evidence metadata can use the evidence index JSON route up to 15 MB by default, while conversation, run, and review-pack JSON routes default to 8 MB. These limits keep complex cases usable without turning the chat API into a raw document transport.
+
 The default vector provider is local-file storage for demo and development. Qdrant REST is optional when `P42_VECTOR_STORE_PROVIDER=qdrant` and the required Qdrant environment variables are configured. Governance references and reference-intelligence samples are stored as `governance_reference` chunks and are advisory context only. CourtListener and CAP records are legal-reference memory for clause/risk comparison, citation verification, and reviewer questions; they are not legal advice, not jurisdiction-specific advice, and not an approval source. Local OCR/document parsing is not implemented in this repository; browser-side state may include metadata, excerpts, and retrieved snippets for the visible review experience, but not embedding vectors. Any production document extraction boundary should be added as a server-side service before storing retrievable chunks.
 
 Memory is intentionally separated:

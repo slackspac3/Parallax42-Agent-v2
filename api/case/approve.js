@@ -1,11 +1,16 @@
 'use strict';
 
 const { handleCaseApproval } = require('../../lib/caseApproval');
-const { methodGuard, readJsonRequest, sendJson } = require('../_http');
+const { STANDARD_RUN_BODY_LIMIT_BYTES } = require('../../lib/requestLimits');
+const { methodGuard, readJsonRequest, sendJson, sendJsonError } = require('../_http');
 
 module.exports = async function handler(req, res) {
   if (!methodGuard(req, res, ['POST'])) return;
-  const body = await readJsonRequest(req);
-  const result = await handleCaseApproval({ req, body });
-  sendJson(req, res, result.status, result.body);
+  try {
+    const body = await readJsonRequest(req, { limitBytes: STANDARD_RUN_BODY_LIMIT_BYTES });
+    const result = await handleCaseApproval({ req, body });
+    sendJson(req, res, result.status, result.body);
+  } catch (error) {
+    sendJsonError(req, res, error, { error: 'case_approval_failed' });
+  }
 };

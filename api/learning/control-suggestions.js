@@ -2,7 +2,8 @@
 
 const { getControlSuggestions } = require('../../lib/learningMemory');
 const { authorizeRequest } = require('../../lib/rbac');
-const { methodGuard, readJsonRequest, sendJson } = require('../_http');
+const { STANDARD_RUN_BODY_LIMIT_BYTES } = require('../../lib/requestLimits');
+const { methodGuard, readJsonRequest, sendJson, sendJsonError } = require('../_http');
 
 module.exports = async function handler(req, res) {
   if (!methodGuard(req, res, ['GET', 'POST'])) return;
@@ -12,9 +13,13 @@ module.exports = async function handler(req, res) {
       sendJson(req, res, auth.statusCode, auth.body);
       return;
     }
-    const body = req.method === 'POST' ? await readJsonRequest(req) : {};
+    const body = req.method === 'POST' ? await readJsonRequest(req, { limitBytes: STANDARD_RUN_BODY_LIMIT_BYTES }) : {};
     sendJson(req, res, 200, await getControlSuggestions(body));
   } catch (error) {
+    if (error?.statusCode) {
+      sendJsonError(req, res, error, { error: 'control_suggestions_failed' });
+      return;
+    }
     sendJson(req, res, 400, {
       error: 'control_suggestions_failed',
       detail: error instanceof Error ? error.message : String(error || 'Could not retrieve control suggestions.')

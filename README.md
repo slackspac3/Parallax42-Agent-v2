@@ -157,6 +157,14 @@ npm run capture:evidence
 
 The generated files land in `evidence/` and are safe to include in a submission pack because secrets and raw uploads are not stored there.
 
+## Request Size Boundaries
+
+Evidence files can be up to 30 MB per file in the browser cockpit. Large files are not sent as raw JSON: they are hashed client-side, split into 1 MB parser-relay chunks, parsed/OCRed behind the backend boundary, and then represented in chat as sanitized metadata and snippets.
+
+Parsed evidence index requests have a separate JSON limit of 15 MB by default. Conversation, standard run, agent run, and review-pack JSON requests default to 8 MB. These limits support complex case metadata while keeping raw document content on the chunked upload path.
+
+The JSON limits can be overridden with `CONVERSATION_BODY_LIMIT_BYTES`, `EVIDENCE_INDEX_BODY_LIMIT_BYTES`, `EVIDENCE_SEARCH_BODY_LIMIT_BYTES`, `REVIEW_PACK_BODY_LIMIT_BYTES`, `STANDARD_RUN_BODY_LIMIT_BYTES`, and `ADMIN_BODY_LIMIT_BYTES`.
+
 ## Deployment Surfaces
 
 - Static cockpit: `public/`, deployed by `.github/workflows/pages.yml`.
