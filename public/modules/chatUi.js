@@ -43,6 +43,13 @@
     return clean.slice(0, 180);
   }
 
+  function isFlowingProse(value) {
+    const clean = cleanText(value);
+    return clean.length > 60
+      && /[.!?]/.test(clean)
+      && !/^(next questions?:|gateway fallback:|smart intake unavailable\b)/i.test(clean);
+  }
+
   function assistantRawSummary(value) {
     const clean = cleanText(value);
     if (!clean) return 'I am updating the case draft.';
@@ -131,6 +138,36 @@
     return ['I am not sure yet', 'Use the uploaded document', 'Ask me the next question'];
   }
 
+  function normalizeHintChip(chip) {
+    if (typeof chip === 'string') {
+      const label = cleanText(chip);
+      return label ? { label, prompt: label } : null;
+    }
+    if (!chip || typeof chip !== 'object') return null;
+    const label = cleanText(chip.label || chip.prompt || chip.action);
+    const action = cleanText(chip.action);
+    const prompt = chip.prompt === undefined || chip.prompt === null ? label : String(chip.prompt);
+    if (!label || (!action && !cleanText(prompt))) return null;
+    return { label, action, prompt };
+  }
+
+  function renderAssistantHintChips(chips = []) {
+    const normalized = chips.map(normalizeHintChip).filter(Boolean).slice(0, 3);
+    if (!normalized.length) return '';
+    return `
+      <div class="advisor-hint-chips">
+        ${normalized.map((chip) => chip.action
+          ? `<button type="button" data-chat-action="${escapeHtml(chip.action)}">${escapeHtml(chip.label)}</button>`
+          : `<button type="button" data-hint-chip="${escapeHtml(chip.prompt)}">${escapeHtml(chip.label)}</button>`
+        ).join('')}
+      </div>
+    `;
+  }
+
+  function hasActionChip(chips = [], action = '') {
+    return chips.some((chip) => cleanText(normalizeHintChip(chip)?.action) === action);
+  }
+
   function renderAssistantTurn(message, context) {
     const state = context || {};
     if (state.smartIntakeUnavailable) {
@@ -154,10 +191,28 @@
       `;
     }
     const responseText = cleanText(state.responseText || state.acknowledgement || 'I updated the review context.');
+    const proseText = String((message && message.text) || state.responseText || '');
+    const suppliedChips = state.isLatest && Array.isArray(state.hintChips) && state.hintChips.length ? state.hintChips : [];
+    const runChipSupplied = hasActionChip(suppliedChips, 'run-council');
+    if (isFlowingProse(proseText)) {
+      return `
+        <div class="advisor-response-card advisor-natural-response advisor-chat-only">
+          <div class="advisor-prose-response">
+            <p>${escapeHtml(proseText)}</p>
+          </div>
+          ${state.canRun && !runChipSupplied ? `
+            <div class="assistant-next">
+              <button type="button" data-chat-action="run-council">Run council</button>
+            </div>
+          ` : ''}
+          ${renderAssistantHintChips(suppliedChips)}
+        </div>
+      `;
+    }
     const questionText = cleanText(state.question);
     const responseIncludesQuestion = questionText
       && responseText.toLowerCase().includes(questionText.toLowerCase().slice(0, Math.min(80, questionText.length)));
-    const chips = state.canRun || responseIncludesQuestion ? [] : hintChipsForQuestion(questionText);
+    const chips = suppliedChips.length ? suppliedChips : state.canRun || responseIncludesQuestion ? [] : hintChipsForQuestion(questionText);
     return `
       <div class="advisor-response-card advisor-natural-response advisor-chat-only">
         <div class="advisor-response-head">
@@ -169,12 +224,12 @@
             <span class="eyebrow">${escapeHtml(state.canRun ? 'Ready when you are' : 'Next question')}</span>
             <strong>${escapeHtml(state.canRun ? state.nextBestAction : questionText)}</strong>
             <p>${escapeHtml(state.canRun ? 'I can run the council now; human approval will still remain required.' : 'Short answer is fine. Say “unknown” if it is pending.')}</p>
-            ${chips.length ? `<div class="hint-chip-row">${chips.map((chip) => `<button type="button" class="hint-chip" data-hint-chip="${escapeHtml(chip)}">${escapeHtml(chip)}</button>`).join('')}</div>` : ''}
             <div class="assistant-next">
-              ${state.canRun ? '<button type="button" data-chat-action="run-council">Run council</button>' : ''}
+              ${state.canRun && !hasActionChip(chips, 'run-council') ? '<button type="button" data-chat-action="run-council">Run council</button>' : ''}
             </div>
           </div>
         ` : ''}
+        ${renderAssistantHintChips(chips)}
       </div>
     `;
   }
@@ -243,6 +298,7 @@
     assistantPreview,
     assistantRawSummary,
     chatCouncilActivityForDraft,
+    isFlowingProse,
     naturalizeAssistantLead,
     renderAssistantHistoryTurn,
     renderAssistantTurn,

@@ -26,6 +26,7 @@
 
   /* Brand palette */
   --accent: #22e3b4;
+  --mint: #22e3b4;
   --accent-dim: rgba(34, 227, 180, 0.12);
   --accent-mid: rgba(34, 227, 180, 0.24);
   --info:   #60a5fa;
@@ -4147,6 +4148,42 @@ pre {
   font-size: 13px;
   color: var(--muted);
   line-height: 1.55;
+}
+
+.advisor-prose-response {
+  padding: 4px 0 10px;
+}
+
+.advisor-prose-response p {
+  color: var(--text);
+  line-height: 1.65;
+  font-size: .95rem;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.advisor-hint-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.advisor-hint-chips button {
+  background: rgba(34,227,180,.08);
+  border: 1px solid rgba(34,227,180,.25);
+  color: var(--mint);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: .82rem;
+  cursor: pointer;
+  transition: background 180ms;
+}
+
+.advisor-hint-chips button:hover {
+  background: rgba(34,227,180,.16);
 }
 
 .advisor-system-warning {

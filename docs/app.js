@@ -150,6 +150,7 @@ let adminFeatureState = null;
 let humanReviewRecord = null;
 let chatCaseDraft = {};
 let chatRunReadiness = null;
+let chatMissingFields = [];
 let workspaceView = 'chat';
 let activeQuestion = 'What do you need reviewed?';
 let lastCouncilNarrative = null;
@@ -1954,11 +1955,32 @@ function assistantAcknowledgement(text = '') {
   return 'Tell me what needs review.';
 }
 
+function buildChatHintChips({ draft = {}, runReadiness = {}, missingFields = [], uploadedEvidence: evidence = [] } = {}) {
+  const missing = new Set([
+    ...(Array.isArray(missingFields) ? missingFields : []),
+    ...(Array.isArray(runReadiness?.executionBlockers) ? runReadiness.executionBlockers : [])
+  ].map((item) => String(item || '').toLowerCase()));
+  const chips = [];
+  if (missing.has('business_owner') || missing.has('business owner')) {
+    chips.push({ label: 'Add owner', prompt: 'The accountable owner is ' });
+  }
+  if (missing.has('geography')) {
+    chips.push({ label: 'Add geography', prompt: 'The geography is ' });
+  }
+  if ((missing.has('evidence') || missing.has('source evidence')) && !evidence.length) {
+    chips.push({ label: 'Add evidence summary', prompt: 'Evidence includes ' });
+  }
+  if (runReadiness?.runnable) {
+    chips.push({ label: 'Run council', action: 'run-council' });
+  }
+  return chips.slice(0, 3);
+}
+
 function renderThinkingLoader(message = {}) {
   return window.P42AppModules.chatUi.renderThinkingLoader(message);
 }
 
-function renderAssistantTurn(message = {}) {
+function renderAssistantTurn(message = {}, options = {}) {
   const canRun = Boolean(chatRunReadiness?.runnable);
   const smartIntakeUnavailable = /Compass gateway is not configured|Smart intake (?:received an invalid Compass response|could not get valid Compass JSON)/i.test(message.text || '');
   const question = message.displayedQuestion || assistantQuestionFromText(message.text);
@@ -1972,7 +1994,16 @@ function renderAssistantTurn(message = {}) {
     lastRunOk: Boolean(lastRuns.chat?.ok),
     nextBestAction: nextBestAction(),
     question,
+    rawText: message.text || '',
     responseText: message.text,
+    source: chatCaseDraft.llmIntake?.provider || lastRuns.chat?.nlp?.llmAssessment?.provider || '',
+    isLatest: Boolean(options.isLatest),
+    hintChips: buildChatHintChips({
+      draft: chatCaseDraft,
+      runReadiness: chatRunReadiness,
+      missingFields: chatMissingFields,
+      uploadedEvidence
+    }),
     smartIntakeUnavailable,
     unavailableMessage: message.text
   });
@@ -2103,6 +2134,7 @@ function resetChatCaseSession(options = {}) {
   evidenceIndexMeta = {};
   chatCaseDraft = {};
   chatRunReadiness = null;
+  chatMissingFields = [];
   activeQuestion = 'What do you need reviewed?';
   chatMessages = [
     {
@@ -2280,7 +2312,7 @@ function renderChatMessages() {
         ${message.pending
           ? renderThinkingLoader(message)
           : message.role === 'assistant' && index === latestAssistantIndex
-          ? renderAssistantTurn(message)
+          ? renderAssistantTurn(message, { isLatest: true })
           : message.role === 'assistant'
             ? renderAssistantHistoryTurn(message)
             : `<p>${escapeHtml(message.text)}</p>`}
@@ -2372,6 +2404,7 @@ function renderConversationState(result = {}) {
   const missing = Array.isArray(result.missingFields) ? result.missingFields : [];
   const runReadiness = result.runReadiness || {};
   chatRunReadiness = result.runReadiness || null;
+  chatMissingFields = missing;
   const draft = result.caseDraft || chatCaseDraft || {};
   const evidenceSignals = Array.isArray(draft.evidenceSignals) ? draft.evidenceSignals : [];
   const riskSignals = Array.isArray(draft.riskSignals) ? draft.riskSignals : [];
@@ -3548,6 +3581,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
       };
     }
     chatRunReadiness = result.runReadiness || null;
+    chatMissingFields = Array.isArray(result.missingFields) ? result.missingFields : [];
     pendingMessage.pending = false;
     pendingMessage.text = result.reply || 'The conversation step completed.';
     const llmAttempt = result.nlp?.llmAssessment || result.conversationPlan?.llmAssessment || {};
