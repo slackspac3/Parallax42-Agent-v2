@@ -13,6 +13,7 @@ const assets = [
   'modules/caseIntelligencePanel.js',
   'modules/decisionRoom.js',
   'modules/chatUi.js',
+  'modules/evidenceUploadPolicy.js',
   'modules/evidenceUploadUi.js',
   'appModules.js',
   'app.js',

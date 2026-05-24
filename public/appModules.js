@@ -9,6 +9,7 @@
     caseIntelligencePanel: registry.caseIntelligencePanel || registry.decisionRoom || {},
     chatUi: registry.chatUi || {},
     decisionRoom: registry.decisionRoom || {},
+    evidenceUploadPolicy: registry.evidenceUploadPolicy || {},
     evidenceUploadUi: registry.evidenceUploadUi || {},
     text: registry.text || {}
   };

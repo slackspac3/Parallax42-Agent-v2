@@ -80,6 +80,7 @@
     if (/embed|index|vector|retrieval/.test(value)) return 'embed';
     if (/parse|ocr|extract|clause|semantic/.test(value)) return 'parse';
     if (/upload|stream|register/.test(value)) return 'upload';
+    if (/session|open|hash/.test(value)) return value.includes('hash') ? 'queue' : 'session';
     return 'queue';
   }
 

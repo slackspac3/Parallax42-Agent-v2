@@ -11,7 +11,8 @@ const {
   SMART_INTAKE_INVALID_RESPONSE_MESSAGE,
   SMART_INTAKE_UNAVAILABLE_MESSAGE,
   assessConversationWithLlm,
-  extractChatContent
+  extractChatContent,
+  retryDelayMs
 } = require('../../lib/conversationLlmAssessor');
 
 function withEnv(overrides, fn) {
@@ -73,7 +74,9 @@ test('conversation LLM assessor treats Compass gateway errors as visible smart i
       COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
       COMPASS_GATEWAY_TOKEN: 'test-token',
       CONVERSATION_LLM_MODEL: 'gpt-5.1',
-      CONVERSATION_LLM_MAX_ATTEMPTS: '3'
+      CONVERSATION_LLM_MAX_ATTEMPTS: '3',
+      CONVERSATION_LLM_MAX_RETRY_DELAY_MS: '1',
+      CONVERSATION_LLM_RETRY_JITTER_MS: '0'
     }, async () => {
       let calls = 0;
       global.fetch = async () => ({
@@ -114,7 +117,9 @@ test('conversation LLM assessor retries transient Compass failure before succeed
       COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
       COMPASS_GATEWAY_TOKEN: 'test-token',
       CONVERSATION_LLM_MODEL: 'gpt-5.1',
-      CONVERSATION_LLM_MAX_ATTEMPTS: '3'
+      CONVERSATION_LLM_MAX_ATTEMPTS: '3',
+      CONVERSATION_LLM_MAX_RETRY_DELAY_MS: '1',
+      CONVERSATION_LLM_RETRY_JITTER_MS: '0'
     }, async () => {
       let calls = 0;
       global.fetch = async () => {
@@ -171,6 +176,135 @@ test('conversation LLM assessor retries transient Compass failure before succeed
   }
 });
 
+test('conversation LLM retry policy caps 429 delay and records metadata', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1',
+      CONVERSATION_LLM_MAX_ATTEMPTS: '2',
+      CONVERSATION_LLM_BACKOFF_BASE_MS: '1000',
+      CONVERSATION_LLM_RATE_LIMIT_MAX_RETRY_DELAY_MS: '25',
+      CONVERSATION_LLM_RETRY_JITTER_MS: '0'
+    }, async () => {
+      assert.equal(retryDelayMs(1, { status: 429 }), 25);
+      let calls = 0;
+      global.fetch = async (url, options) => {
+        calls += 1;
+        const body = JSON.parse(options.body);
+        if (calls === 1) {
+          return {
+            ok: false,
+            status: 429,
+            text: async () => 'too many requests'
+          };
+        }
+        if (!body.response_format) {
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              model: 'gpt-5.1',
+              choices: [{ message: { content: 'I captured the supplier review context. Which geography applies?' } }]
+            })
+          };
+        }
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            model: 'gpt-5.1',
+            choices: [{
+              message: {
+                content: JSON.stringify({
+                  intent: 'case_context',
+                  requestType: 'supplier_risk',
+                  workflowType: 'supplier_risk_review',
+                  recommendedFirstAction: 'ask_geography',
+                  conversationStage: 'asking_clarification',
+                  assistantSummary: 'This is a supplier review.',
+                  confidence: 0.81,
+                  nextBestQuestion: 'Which geography applies?',
+                  caseUpdate: { riskSignals: ['supplier risk'] }
+                })
+              }
+            }]
+          })
+        };
+      };
+
+      const result = await assessConversationWithLlm({
+        message: 'Assess a supplier review.'
+      });
+
+      assert.equal(result.llmAssessment.used, true);
+      assert.equal(result.llmAssessment.attemptCount, 2);
+      assert.equal(result.llmAssessment.attempts[0].status, 'rate_limited');
+      assert.equal(result.llmAssessment.attempts[0].delayMs, 25);
+      assert.equal(result.llmAssessment.attempts[0].retryAfterUsed, false);
+      assert.equal(result.llmAssessment.attempts[0].fastFailTriggered, false);
+      assert.equal(result.llmAssessment.attempts[1].delayMs, 0);
+      assert.equal(calls, 3);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('conversation LLM retry policy honors short Retry-After values only', async () => {
+  await withEnv({
+    CONVERSATION_LLM_BACKOFF_BASE_MS: '1000',
+    CONVERSATION_LLM_RATE_LIMIT_MAX_RETRY_DELAY_MS: '2000',
+    CONVERSATION_LLM_RETRY_JITTER_MS: '0'
+  }, async () => {
+    assert.equal(retryDelayMs(1, { status: 429, retryAfter: '1' }), 1000);
+    assert.equal(retryDelayMs(1, { status: 429, retryAfter: '3' }), 1000);
+  });
+});
+
+test('conversation LLM fast fail stops long retry loops', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1',
+      CONVERSATION_LLM_MAX_ATTEMPTS: '5',
+      CONVERSATION_LLM_FAST_FAIL_MS: '10',
+      CONVERSATION_LLM_MAX_RETRY_DELAY_MS: '1500',
+      CONVERSATION_LLM_RETRY_JITTER_MS: '0'
+    }, async () => {
+      let calls = 0;
+      global.fetch = async () => {
+        calls += 1;
+        return {
+          ok: false,
+          status: 503,
+          text: async () => 'temporarily unavailable'
+        };
+      };
+
+      const result = await assessConversationWithLlm({
+        message: 'Assess a supplier review.'
+      });
+
+      assert.equal(result.llmAssessment.used, false);
+      assert.equal(result.llmAssessment.smartIntakeUnavailable, true);
+      assert.equal(result.llmAssessment.attemptCount, 1);
+      assert.equal(result.llmAssessment.maxAttempts, 5);
+      assert.equal(result.llmAssessment.attempts[0].fastFailTriggered, true);
+      assert.equal(result.llmAssessment.attempts[0].delayMs, 0);
+      assert.equal(result.llmAssessment.attempts[0].retryable, false);
+      assert.equal(calls, 1);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test('conversation LLM assessor calls Compass even if legacy compassLlmCalls feature flag is off', async () => {
   const originalFetch = global.fetch;
   try {
@@ -179,7 +313,8 @@ test('conversation LLM assessor calls Compass even if legacy compassLlmCalls fea
       P42_FEATURE_COMPASS_LLM_CALLS: '0',
       COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
       COMPASS_GATEWAY_TOKEN: 'test-token',
-      CONVERSATION_LLM_MODEL: 'gpt-5.1'
+      CONVERSATION_LLM_MODEL: 'gpt-5.1',
+      CONVERSATION_LLM_RETRY_JITTER_MS: '0'
     }, async () => {
       let called = false;
       global.fetch = async () => {
@@ -585,6 +720,10 @@ test('conversation LLM assessor retries malformed Compass output with compact JS
       assert.equal(requests[2].max_tokens, 400);
       assert.equal(result.llmAssessment.used, true);
       assert.equal(result.llmAssessment.retriedAfterInvalidJson, true);
+      assert.equal(result.llmAssessment.attempts[0].status, 'invalid_json');
+      assert.equal(result.llmAssessment.attempts[0].delayMs, 0);
+      assert.equal(result.llmAssessment.attempts[0].fastFailTriggered, false);
+      assert.equal(result.llmAssessment.attempts[0].retryAfterUsed, false);
       assert.match(result.llmAssessment.naturalResponse, /managed integration partner review/i);
       assert.equal(result.llmAssessment.requestType, 'supplier_risk');
       assert.ok(result.caseDraft.integrations.includes('Oracle ERP'));

@@ -149,7 +149,7 @@
               <label class="upload-zone" id="evidenceDropzone">
                 <input id="evidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.doc,.docx,text/*,application/json,text/csv,application/pdf" />
                 <span>Drop or select evidence files</span>
-                <small>PDF/DOCX evidence is sent to the configured parser relay; embeddings and vector chunks stay server-side.</small>
+                <small>Up to 30 MB per file. Large files are chunked through the parser relay; embeddings stay server-side.</small>
               </label>
               <div id="evidenceIngestionStatus" class="ingestion-status">No uploaded evidence yet.</div>
             </section>
@@ -199,6 +199,7 @@
                   <label class="chat-evidence-picker">
                     Evidence files
                     <input id="chatEvidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.docx,text/*,application/json,text/csv,application/pdf" />
+                    <small>Up to 30 MB per file. Large files are chunked through the parser relay; embeddings stay server-side.</small>
                   </label>
                   <div id="chatAttachmentStatus" class="attachment-status" aria-live="polite">No files attached.</div>
                   <div id="chatAttachmentList" class="chat-attachment-list" aria-live="polite"></div>
@@ -412,6 +413,7 @@
     <script src="modules/caseIntelligencePanel.js"></script>
     <script src="modules/decisionRoom.js"></script>
     <script src="modules/chatUi.js"></script>
+    <script src="modules/evidenceUploadPolicy.js"></script>
     <script src="modules/evidenceUploadUi.js"></script>
     <script src="appModules.js"></script>
     <script src="app.js"></script>

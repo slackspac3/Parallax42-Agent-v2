@@ -285,13 +285,16 @@ const fallbackStages = [
 
 const readableEvidenceExtensions = new Set(['txt', 'md', 'markdown', 'json', 'csv', 'log']);
 const backendParsedEvidenceExtensions = new Set(['pdf', 'docx', 'txt', 'md', 'markdown', 'json', 'csv', 'log']);
+const maxEvidenceFileBytes = 30 * 1024 * 1024;
+const maxEvidenceBatchBytes = 90 * 1024 * 1024;
 const textEvidenceSampleBytes = 180 * 1024;
 const defaultUploadChunkBytes = 1024 * 1024;
 const evidencePipelineSteps = [
-  { id: 'queue', label: 'Queued' },
-  { id: 'upload', label: 'Uploaded' },
-  { id: 'parse', label: 'Parsing / OCR' },
-  { id: 'embed', label: 'Embedding / indexing' },
+  { id: 'queue', label: 'Hashing evidence' },
+  { id: 'session', label: 'Opening parser session' },
+  { id: 'upload', label: 'Uploading chunks' },
+  { id: 'parse', label: 'Parser/OCR running' },
+  { id: 'embed', label: 'Embedding/indexing' },
   { id: 'ready', label: 'Citation-ready' }
 ];
 const evidenceSignalPatterns = [
@@ -558,6 +561,40 @@ function compactJson(value) {
   return window.P42AppModules.text.compactJson(value);
 }
 
+function evidenceUploadPolicy() {
+  return window.P42AppModules.evidenceUploadPolicy || {};
+}
+
+async function sha256File(file) {
+  if (typeof evidenceUploadPolicy().sha256File === 'function') {
+    return evidenceUploadPolicy().sha256File(file);
+  }
+  if (!window.crypto?.subtle?.digest) {
+    throw new Error('SHA-256 hashing is unavailable in this browser.');
+  }
+  const hash = await window.crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+  return Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function validateEvidenceFiles(files = []) {
+  if (typeof evidenceUploadPolicy().validateEvidenceFileSelection === 'function') {
+    return evidenceUploadPolicy().validateEvidenceFileSelection(files, {
+      maxFileBytes: maxEvidenceFileBytes,
+      maxBatchBytes: maxEvidenceBatchBytes
+    });
+  }
+  const selected = Array.from(files || []);
+  const oversized = selected.find((file) => Number(file.size || 0) > maxEvidenceFileBytes);
+  if (oversized) {
+    return { ok: false, message: `${oversized.name || 'Selected file'} exceeds the 30 MB per file max.` };
+  }
+  const totalBytes = selected.reduce((sum, file) => sum + Number(file.size || 0), 0);
+  if (totalBytes > maxEvidenceBatchBytes) {
+    return { ok: false, message: 'Selected evidence exceeds the 90 MB batch limit.' };
+  }
+  return { ok: true, files: selected, totalBytes };
+}
+
 function readJsonStorage(key, fallback = {}) {
   try {
     const raw = window.localStorage.getItem(key);
@@ -639,7 +676,7 @@ function signalsFromParsedDocument(document = {}) {
 
 function uploadedDocumentToEvidence(document = {}, index = 0) {
   const evidenceId = document.document_id || `UP-${String(index + 1).padStart(2, '0')}`;
-  const text = parsedDocumentText(document);
+  const text = parsedDocumentText(document).slice(0, textEvidenceSampleBytes);
   const signals = signalsFromParsedDocument(document);
   const summary = document.summary || document.semantic_parse?.semantic_summary || 'Document parsed by the Parallax42 backend.';
   return {
@@ -668,6 +705,28 @@ function stripEvidencePayloadForBrowser(item = {}) {
   item.excerpt = item.excerpt ? summarizeEvidenceText(item.excerpt, 180) : '';
   item.browserRetention = 'case_metadata_only';
   return item;
+}
+
+function evidenceMetadataForConversation(item = {}) {
+  if (!item || typeof item !== 'object') return item;
+  const copy = { ...item };
+  delete copy.text;
+  delete copy.semanticParse;
+  copy.summary = summarizeEvidenceText(copy.summary || '', 420);
+  copy.excerpt = summarizeEvidenceText(copy.excerpt || copy.summary || '', 180);
+  copy.browserRetention = copy.browserRetention || 'case_metadata_only';
+  return copy;
+}
+
+function chatCaseDraftForConversation(draft = chatCaseDraft) {
+  return {
+    ...draft,
+    documents: Array.isArray(draft.documents) ? draft.documents.map(evidenceMetadataForConversation) : []
+  };
+}
+
+function uploadedEvidenceForConversation(items = uploadedEvidence) {
+  return Array.isArray(items) ? items.map(evidenceMetadataForConversation) : [];
 }
 
 function indexableEvidenceText(item = {}) {
@@ -883,6 +942,22 @@ async function uploadEvidenceFilesToBackend(files = [], onProgress = () => {}) {
 
   onProgress({
     phase: 'queue',
+    progress: 4,
+    title: 'Hashing evidence',
+    detail: 'Computing SHA-256 digests before opening the parser relay session.',
+    files: selected
+  });
+  const uploadFiles = typeof evidenceUploadPolicy().buildUploadInitFiles === 'function'
+    ? await evidenceUploadPolicy().buildUploadInitFiles(selected, { hashFile: sha256File })
+    : await Promise.all(selected.map(async (file) => ({
+        file_name: file.name,
+        content_type: file.type || 'application/octet-stream',
+        file_size_bytes: file.size,
+        sha256: await sha256File(file)
+      })));
+
+  onProgress({
+    phase: 'session',
     progress: 8,
     title: 'Opening parser session',
     detail: 'Preparing secure chunked upload for backend document intelligence.',
@@ -896,12 +971,7 @@ async function uploadEvidenceFilesToBackend(files = [], onProgress = () => {}) {
       text: chatCaseDraft.brief || 'Compliance chat evidence upload.',
       current_case: currentCaseForDocumentParser(),
       chunk_size_bytes: defaultUploadChunkBytes,
-      files: selected.map((file) => ({
-        file_name: file.name,
-        content_type: file.type || 'application/octet-stream',
-        file_size_bytes: file.size,
-        sha256: ''
-      }))
+      files: uploadFiles
     })
   });
 
@@ -934,7 +1004,7 @@ async function uploadEvidenceFilesToBackend(files = [], onProgress = () => {}) {
       onProgress({
         phase: 'upload',
         progress: 12 + (uploadedChunks / totalChunks) * 34,
-        title: 'Streaming evidence',
+        title: 'Uploading chunks',
         detail: `Uploading ${file.name} · chunk ${chunkIndex + 1} of ${fileSession.total_chunks}`,
         metric: `${uploadedChunks}/${totalChunks}`,
         files: selected
@@ -945,7 +1015,7 @@ async function uploadEvidenceFilesToBackend(files = [], onProgress = () => {}) {
   onProgress({
     phase: 'parse',
     progress: 52,
-    title: 'Parser assembling file',
+    title: 'Parser/OCR running',
     detail: 'The backend is reassembling chunks and starting semantic document analysis.',
     files: selected
   });
@@ -964,7 +1034,7 @@ async function uploadEvidenceFilesToBackend(files = [], onProgress = () => {}) {
     onProgress({
       phase: 'parse',
       progress: Math.min(82, 54 + ((Date.now() - startedAt) / 240000) * 28),
-      title: 'Document intelligence running',
+      title: 'Parser/OCR running',
       detail: `Backend parser status: ${lastStatus.status || 'working'}. Extracting clauses, entities, obligations, and risk signals.`,
       metric: lastStatus.status || 'parsing',
       files: selected
@@ -976,7 +1046,7 @@ async function uploadEvidenceFilesToBackend(files = [], onProgress = () => {}) {
       onProgress({
         phase: 'parse',
         progress: 86,
-        title: 'Semantic parse received',
+        title: 'Parser/OCR running',
         detail: 'Parser returned structured document evidence. Preparing embedding index.',
         files: selected
       });
@@ -1002,7 +1072,7 @@ async function extractEvidenceFile(file, index, { allowBrowserText = false } = {
   }
 
   const summary = extractedText
-    ? summarizeEvidenceText(extractedText)
+    ? `Sampled text only: ${summarizeEvidenceText(extractedText)}`
     : `Evidence registered without browser parsing: ${file.name}. Full text extraction is reserved for backend document processing.`;
   const signals = detectEvidenceSignals(`${file.name} ${summary} ${extractedText}`);
 
@@ -1021,10 +1091,29 @@ async function extractEvidenceFile(file, index, { allowBrowserText = false } = {
 }
 
 async function ingestEvidenceFiles(files = []) {
+  const validation = validateEvidenceFiles(files);
+  if (!validation.ok) {
+    const message = validation.message || 'Evidence upload rejected.';
+    evidenceIngestionStatus.textContent = message;
+    if (activeRunMode === 'chat') {
+      setAttachmentStatus(message, 'error');
+      renderEvidencePipelineStatus({
+        phase: 'error',
+        progress: 0,
+        title: 'Evidence upload rejected',
+        detail: message,
+        state: 'error',
+        files: Array.from(files || [])
+      });
+    }
+    if (evidenceInput) evidenceInput.value = '';
+    if (chatEvidenceInput) chatEvidenceInput.value = '';
+    return;
+  }
   const selected = Array.from(files).slice(0, 8);
   if (!selected.length) return;
   const fileLabel = `${selected.length} evidence file${selected.length === 1 ? '' : 's'}`;
-  evidenceIngestionStatus.textContent = `Preparing ${fileLabel}...`;
+  evidenceIngestionStatus.textContent = `Preparing ${fileLabel}... 30 MB per file max.`;
   if (activeRunMode === 'chat') {
     renderEvidencePipelineStatus({
       phase: 'queue',
@@ -1054,8 +1143,8 @@ async function ingestEvidenceFiles(files = []) {
         renderEvidencePipelineStatus({
           phase: 'upload',
           progress: 12,
-          title: 'Backend parser online',
-          detail: 'Streaming evidence in small chunks; parsing, OCR, and clause extraction stay behind the backend boundary.',
+          title: 'Opening parser session',
+          detail: 'Large evidence is chunked through the parser relay; parsing, OCR, and clause extraction stay behind the backend boundary.',
           files: backendFiles
         });
         renderAgentActivity([
@@ -1109,7 +1198,7 @@ async function ingestEvidenceFiles(files = []) {
         });
       }
       await yieldToBrowser();
-      extracted.push(await extractEvidenceFile(file, offset + extracted.length, { allowBrowserText: false }));
+      extracted.push(await extractEvidenceFile(file, offset + extracted.length, { allowBrowserText: readableEvidenceExtensions.has(fileExtension(file.name)) }));
       await yieldToBrowser();
     }
 
@@ -1121,7 +1210,7 @@ async function ingestEvidenceFiles(files = []) {
         renderEvidencePipelineStatus({
           phase: 'embed',
           progress: 88,
-          title: 'Building retrieval memory',
+          title: 'Embedding/indexing',
           detail: 'Embedding parsed evidence with text-embedding-3-large through the shared gateway.',
           metric: 'embedding',
           files: extracted
@@ -1141,9 +1230,9 @@ async function ingestEvidenceFiles(files = []) {
         const localFallback = /local|none|metadata/.test(provider);
         if (activeRunMode === 'chat') {
           renderEvidencePipelineStatus({
-            phase: 'ready',
-            progress: 100,
-            title: 'Evidence retrieval ready',
+          phase: 'ready',
+          progress: 100,
+          title: 'Evidence retrieval ready',
             detail: `${indexResult?.index?.chunkCount || indexResult?.chunking?.chunkCount || indexedChunkCount()} embedded chunks are ready for council citations. ${evidenceIndexStorageSummary(indexResult)}`,
             metric: localFallback ? 'local fallback' : 'indexed',
             files: extracted,
@@ -2217,7 +2306,7 @@ function currentFormPayload() {
     brief: data.get('brief'),
     businessUnit: data.get('businessUnit'),
     geography: data.get('geography'),
-    documents: activeRunMode === 'live' ? [manualDocument, ...uploadedEvidence] : [manualDocument],
+    documents: activeRunMode === 'live' ? [manualDocument, ...uploadedEvidenceForConversation()] : [manualDocument],
     integrations: scenario.integrations
   };
 }
@@ -3421,6 +3510,7 @@ function startChatThinkingProgress(message = {}, options = {}) {
         { delay: 0, title: 'Thinking', detail: 'Sending the full conversation context to Compass GPT-5.1 for smart intake.', attempt: 'Compass attempt 1' },
         { delay: 1100, title: 'Structuring', detail: 'Building a compact JSON plan for intent, case updates, and the next best question.', attempt: 'Compass attempt 1' },
         { delay: 2300, title: 'Formulating', detail: 'Writing the natural advisor response from the structured plan.', attempt: 'Compass prose' },
+        { delay: 3400, title: 'Still working', detail: 'Still working on the smart intake...', attempt: 'Compass' },
         { delay: 5200, title: 'Final verification', detail: 'Checking the response before showing it in the chat.', attempt: 'Compass verification' }
       ];
   message.startedAt = message.startedAt || Date.now();
@@ -3434,18 +3524,6 @@ function startChatThinkingProgress(message = {}, options = {}) {
     message.attemptLabel = step.attempt;
     renderChatMessages();
   }, step.delay));
-  if (!councilMode) {
-    timers.push(window.setTimeout(() => {
-      if (!message.pending) return;
-      message.retried = true;
-      message.attemptCount = Math.max(2, Number(message.attemptCount || 1));
-      message.thinkingStepIndex = message.thinkingSteps.length;
-      message.phaseTitle = 'Retrying smart intake';
-      message.phaseDetail = 'Gateway took longer than expected; retrying with a compact recovery prompt.';
-      message.attemptLabel = 'Compass attempt 2';
-      renderChatMessages();
-    }, 3400));
-  }
   const elapsedTimer = window.setInterval(() => {
     if (!message.pending) return;
     message.elapsedSeconds = Math.max(0, Math.round((Date.now() - message.startedAt) / 1000));
@@ -3539,7 +3617,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message,
-        caseDraft: chatCaseDraft,
+        caseDraft: chatCaseDraftForConversation(),
         activeQuestion: questionAtTurnStart,
         eventType,
         history: chatMessages
@@ -3551,7 +3629,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
             displayedQuestion: item.displayedQuestion || '',
             answeringQuestion: item.answeringQuestion || ''
           })),
-        uploadedEvidence,
+        uploadedEvidence: uploadedEvidenceForConversation(),
         retrievalQuery: options.forceRun ? retrievalQueryFromDraft() : '',
         forceRun: Boolean(options.forceRun)
       })
@@ -3585,8 +3663,10 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     pendingMessage.pending = false;
     pendingMessage.text = result.reply || 'The conversation step completed.';
     const llmAttempt = result.nlp?.llmAssessment || result.conversationPlan?.llmAssessment || {};
-    if (llmAttempt.retried && Number(llmAttempt.attemptCount || 0) > 1) {
-      pendingMessage.retryNote = `Smart intake took ${llmAttempt.attemptCount} attempts — response may be slower than usual.`;
+    const llmAttempts = Array.isArray(llmAttempt.attempts) ? llmAttempt.attempts : [];
+    const llmAttemptCount = Number(llmAttempt.attemptCount || llmAttempts.length || 0);
+    if (llmAttempt.retried || llmAttemptCount > 1) {
+      pendingMessage.retryNote = `Retrying smart intake used ${llmAttemptCount || llmAttempts.length} attempts before this response.`;
     }
     pendingMessage.displayedQuestion = (Array.isArray(result.questions) && result.questions[0])
       ? result.questions[0]
