@@ -111,12 +111,15 @@
     const draft = settings.draft || {};
     const evidence = Array.isArray(settings.uploadedEvidence) ? settings.uploadedEvidence : [];
     const indexMeta = settings.evidenceIndexMeta || {};
+    const indexValidation = settings.evidenceIndexValidation || {};
     const docCount = Array.isArray(draft.documents) ? draft.documents.length : 0;
     const uploadedCount = evidence.length;
     const indexed = Number((draft.indexedEvidence && draft.indexedEvidence.chunkCount) || indexMeta.chunkCount || 0);
     const metadataOnly = evidence.filter(function isMetadataOnly(item) {
       return item.extractionStatus === 'binary_registered';
     }).length;
+    if (indexValidation.status === 'expired') return 'Previous evidence index expired';
+    if (indexed && indexValidation.status === 'not_checked') return `${indexed} chunk${indexed === 1 ? '' : 's'} pending validation`;
     if (indexed) return `${indexed} citation-ready chunk${indexed === 1 ? '' : 's'}`;
     if (metadataOnly) return `${metadataOnly} metadata-only file${metadataOnly === 1 ? '' : 's'}`;
     if (docCount || uploadedCount) return `${docCount || uploadedCount} evidence item${(docCount || uploadedCount) === 1 ? '' : 's'} captured`;

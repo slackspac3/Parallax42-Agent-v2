@@ -6,6 +6,7 @@ const storageKeys = {
   mode: 'p42:api-mode',
   relayUrl: 'p42:relay-url',
   backendUrl: 'p42:backend-url',
+  adminBearerToken: 'p42:admin-bearer-token',
   evidenceIndexMeta: 'p42:evidence-index-meta'
 };
 
@@ -78,6 +79,7 @@ const resetConfig = document.querySelector('#resetConfig');
 const apiMode = document.querySelector('#apiMode');
 const relayUrl = document.querySelector('#relayUrl');
 const backendUrl = document.querySelector('#backendUrl');
+const adminBearerToken = document.querySelector('#adminBearerToken');
 const runModeButtons = document.querySelectorAll('.mode-tab[data-run-mode]');
 const casePanelEyebrow = document.querySelector('#casePanelEyebrow');
 const casePanelTitle = document.querySelector('#casePanelTitle');
@@ -148,7 +150,12 @@ let currentScenarioKey = 'exportControl';
 let playbackTimers = [];
 let uploadedEvidence = [];
 let evidenceIndexMeta = {};
+let evidenceIndexValidation = {
+  status: 'not_checked',
+  detail: 'No restored evidence index metadata has been checked.'
+};
 let adminFeatureState = null;
+let adminStatusState = null;
 let humanReviewRecord = null;
 let chatCaseDraft = {};
 let chatRunReadiness = null;
@@ -291,6 +298,7 @@ const maxEvidenceFileBytes = 30 * 1024 * 1024;
 const maxEvidenceBatchBytes = 90 * 1024 * 1024;
 const textEvidenceSampleBytes = 180 * 1024;
 const defaultUploadChunkBytes = 1024 * 1024;
+const conversationPayloadHistoryTurns = 12;
 const evidencePipelineSteps = [
   { id: 'queue', label: 'Hashing evidence' },
   { id: 'session', label: 'Opening parser session' },
@@ -427,6 +435,13 @@ function backendApiUrl(path) {
 
 function backendApiFetch(path, options = {}) {
   return fetchJson(backendApiUrl(path), options);
+}
+
+function adminMutationHeaders(headers = {}) {
+  const token = readStorage(storageKeys.adminBearerToken).trim();
+  return token
+    ? { ...headers, Authorization: `Bearer ${token}` }
+    : headers;
 }
 
 function statusClass(value = '') {
@@ -571,6 +586,10 @@ function evidenceUploadPolicy() {
   return window.P42AppModules.evidenceUploadPolicy || {};
 }
 
+function evidenceIndexRestorePolicy() {
+  return window.P42AppModules.evidenceIndexRestore || {};
+}
+
 async function sha256File(file) {
   if (typeof evidenceUploadPolicy().sha256File === 'function') {
     return evidenceUploadPolicy().sha256File(file);
@@ -630,11 +649,74 @@ async function restoreEvidenceIndexFromStorage() {
   const meta = readJsonStorage(storageKeys.evidenceIndexMeta, {});
   if (!meta.caseId) return;
   evidenceIndexMeta = meta;
+  evidenceIndexValidation = {
+    status: 'not_checked',
+    detail: 'Restored evidence metadata has not been validated yet.'
+  };
   chatCaseDraft = {
     ...chatCaseDraft,
     caseId: meta.caseId,
     indexedEvidence: meta
   };
+  validateRestoredEvidenceIndex(meta);
+}
+
+function applyEvidenceIndexValidationResult(result = {}) {
+  evidenceIndexValidation = result.validation || evidenceIndexValidation;
+  evidenceIndexMeta = result.evidenceIndexMeta || {};
+  chatCaseDraft = result.chatCaseDraft || chatCaseDraft;
+  if (result.shouldClearStorage) {
+    removeStorage(storageKeys.evidenceIndexMeta);
+    setAttachmentStatus(result.warning || 'Previous evidence index expired; re-upload evidence for semantic retrieval.', 'warning');
+    if (evidenceIngestionStatus) {
+      evidenceIngestionStatus.textContent = result.warning || 'Previous evidence index expired; re-upload evidence for semantic retrieval.';
+    }
+  }
+  renderChatMessages();
+  renderContextStrength();
+  renderChatAttachments();
+  renderAdminStatus(adminStatusState);
+}
+
+async function validateRestoredEvidenceIndex(meta = evidenceIndexMeta) {
+  if (!meta?.caseId) return null;
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeout = controller ? window.setTimeout(() => controller.abort(), 2500) : null;
+  try {
+    const response = await apiFetch('/api/evidence/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      ...(controller ? { signal: controller.signal } : {}),
+      body: JSON.stringify({
+        caseId: meta.caseId,
+        purpose: 'restore_index_validation',
+        query: 'evidence availability check',
+        topK: 1
+      })
+    });
+    const reconcile = evidenceIndexRestorePolicy().reconcileRestoredEvidenceIndexValidation;
+    const result = typeof reconcile === 'function'
+      ? reconcile({ meta, draft: chatCaseDraft, response })
+      : {
+          validation: { status: 'valid', detail: 'Restored evidence metadata was validated.' },
+          evidenceIndexMeta: meta,
+          chatCaseDraft,
+          shouldClearStorage: false
+        };
+    applyEvidenceIndexValidationResult(result);
+    return result.validation;
+  } catch (error) {
+    evidenceIndexValidation = {
+      status: 'not_checked',
+      detail: error?.name === 'AbortError'
+        ? 'Restored evidence index validation timed out; semantic retrieval will be checked again when needed.'
+        : 'Restored evidence index validation could not complete.'
+    };
+    renderAdminStatus(adminStatusState);
+    return evidenceIndexValidation;
+  } finally {
+    if (timeout) window.clearTimeout(timeout);
+  }
 }
 
 function ensureChatCaseId() {
@@ -713,22 +795,46 @@ function stripEvidencePayloadForBrowser(item = {}) {
   return item;
 }
 
+function conversationPayloadPolicy() {
+  return window.P42AppModules.conversationPayload || {};
+}
+
 function evidenceMetadataForConversation(item = {}) {
+  const policy = conversationPayloadPolicy();
+  if (typeof policy.sanitizeUploadedEvidenceForConversationPayload === 'function') {
+    return policy.sanitizeUploadedEvidenceForConversationPayload([item])[0] || {};
+  }
   if (!item || typeof item !== 'object') return item;
-  const copy = { ...item };
-  delete copy.text;
-  delete copy.semanticParse;
-  copy.summary = summarizeEvidenceText(copy.summary || '', 420);
-  copy.excerpt = summarizeEvidenceText(copy.excerpt || copy.summary || '', 180);
-  copy.browserRetention = copy.browserRetention || 'case_metadata_only';
-  return copy;
+  return {
+    evidenceId: item.evidenceId || '',
+    title: item.title || item.fileName || item.evidenceId || '',
+    fileName: item.fileName || item.title || item.evidenceId || '',
+    sizeBytes: item.sizeBytes || 0,
+    extractionStatus: item.extractionStatus || '',
+    documentType: item.documentType || '',
+    summary: summarizeEvidenceText(item.summary || '', 420),
+    excerpt: summarizeEvidenceText(item.excerpt || item.summary || '', 180),
+    signals: item.signals || [],
+    indexedChunkIds: item.indexedChunkIds || []
+  };
+}
+
+function sanitizeDraftForConversationPayload(draft = chatCaseDraft) {
+  const policy = conversationPayloadPolicy();
+  if (typeof policy.sanitizeDraftForConversationPayload === 'function') {
+    return policy.sanitizeDraftForConversationPayload(draft);
+  }
+  return {
+    ...draft,
+    documents: Array.isArray(draft.documents) ? draft.documents.map((document) => ({
+      ...evidenceMetadataForConversation(document),
+      text: summarizeEvidenceText(document.text || '', 1000)
+    })) : []
+  };
 }
 
 function chatCaseDraftForConversation(draft = chatCaseDraft) {
-  return {
-    ...draft,
-    documents: Array.isArray(draft.documents) ? draft.documents.map(evidenceMetadataForConversation) : []
-  };
+  return sanitizeDraftForConversationPayload(draft);
 }
 
 function uploadedEvidenceForConversation(items = uploadedEvidence) {
@@ -765,6 +871,12 @@ function applyServerEvidenceIndex(result = {}) {
     browserEmbeddingsRetained: false
   };
   writeJsonStorage(storageKeys.evidenceIndexMeta, evidenceIndexMeta);
+  evidenceIndexValidation = {
+    status: Number(evidenceIndexMeta.chunkCount || 0) ? 'valid' : 'not_checked',
+    detail: Number(evidenceIndexMeta.chunkCount || 0)
+      ? `${evidenceIndexMeta.chunkCount} evidence chunk${evidenceIndexMeta.chunkCount === 1 ? '' : 's'} available for semantic retrieval.`
+      : 'Evidence metadata was stored, but no semantic chunks were reported.'
+  };
   chatCaseDraft = {
     ...chatCaseDraft,
     indexedEvidence: evidenceIndexMeta
@@ -824,6 +936,15 @@ async function indexEvidenceForRetrieval(items = []) {
   return result;
 }
 
+function parserWaitCopy(status = 'working', elapsedMs = 0) {
+  const seconds = Math.max(0, Math.round(Number(elapsedMs || 0) / 1000));
+  const statusText = status || 'working';
+  if (seconds > 60) {
+    return `Waiting for parser. Backend status: ${statusText}. Still processing; large files can take longer.`;
+  }
+  return `Waiting for parser. Backend status: ${statusText}.`;
+}
+
 function evidenceIndexProvider(result = {}) {
   return String(result.index?.provider || result.indexingProvider || result.provider || evidenceIndexMeta.provider || '').toLowerCase();
 }
@@ -868,7 +989,7 @@ function retrievalDocumentsFromMatches(matches = []) {
 }
 
 async function retrieveIndexedEvidenceForCouncil() {
-  const indexedChunkCount = Number(chatCaseDraft.indexedEvidence?.chunkCount || evidenceIndexMeta.chunkCount || 0);
+  const indexedChunkCount = indexedChunkCountForRetrieval();
   if (!indexedChunkCount) return null;
   const caseId = ensureChatCaseId();
   const query = retrievalQueryFromDraft();
@@ -886,6 +1007,13 @@ async function retrieveIndexedEvidenceForCouncil() {
     })
   });
   const matches = Array.isArray(result.matches) ? result.matches : [];
+  if (result.index && Number(result.index.chunkCount || 0) === 0 && matches.length === 0) {
+    const reconcile = evidenceIndexRestorePolicy().reconcileRestoredEvidenceIndexValidation;
+    if (typeof reconcile === 'function') {
+      applyEvidenceIndexValidationResult(reconcile({ meta: evidenceIndexMeta, draft: chatCaseDraft, response: result }));
+    }
+    return null;
+  }
   const retrievedDocs = retrievalDocumentsFromMatches(matches);
   const existingDocuments = Array.isArray(chatCaseDraft.documents) ? chatCaseDraft.documents : [];
   const nonRetrieved = existingDocuments.filter((doc) => doc.extractionStatus !== 'retrieved_chunk');
@@ -1018,11 +1146,14 @@ async function uploadEvidenceFilesToBackend(files = [], onProgress = () => {}) {
     }
   }
 
+  const parserStartedAt = Date.now();
   onProgress({
     phase: 'parse',
     progress: 52,
-    title: 'Parser/OCR running',
-    detail: 'The backend is reassembling chunks and starting semantic document analysis.',
+    title: 'Waiting for parser',
+    detail: 'Chunks are uploaded. Waiting for backend parsing, OCR, and clause extraction to finish.',
+    metric: 'waiting',
+    startedAt: parserStartedAt,
     files: selected
   });
 
@@ -1032,17 +1163,18 @@ async function uploadEvidenceFilesToBackend(files = [], onProgress = () => {}) {
     body: JSON.stringify({ upload_id: session.upload_id })
   });
 
-  const startedAt = Date.now();
   let lastStatus = null;
-  while (Date.now() - startedAt < 240000) {
+  while (Date.now() - parserStartedAt < 240000) {
     await new Promise((resolve) => window.setTimeout(resolve, 2000));
     lastStatus = await backendApiFetch(`/case/assist/upload/status?upload_id=${encodeURIComponent(session.upload_id)}`);
+    const elapsedMs = Date.now() - parserStartedAt;
     onProgress({
       phase: 'parse',
-      progress: Math.min(82, 54 + ((Date.now() - startedAt) / 240000) * 28),
-      title: 'Parser/OCR running',
-      detail: `Backend parser status: ${lastStatus.status || 'working'}. Extracting clauses, entities, obligations, and risk signals.`,
-      metric: lastStatus.status || 'parsing',
+      progress: 54,
+      title: 'Waiting for parser',
+      detail: parserWaitCopy(lastStatus.status || 'working', elapsedMs),
+      metric: elapsedMs > 60000 ? 'still processing' : lastStatus.status || 'waiting',
+      startedAt: parserStartedAt,
       files: selected
     });
     if (lastStatus.status === 'failed') {
@@ -1052,8 +1184,9 @@ async function uploadEvidenceFilesToBackend(files = [], onProgress = () => {}) {
       onProgress({
         phase: 'parse',
         progress: 86,
-        title: 'Parser/OCR running',
+        title: 'Parser complete',
         detail: 'Parser returned structured document evidence. Preparing embedding index.',
+        startedAt: parserStartedAt,
         files: selected
       });
       const output = await backendApiFetch(`/case/assist/upload/result?upload_id=${encodeURIComponent(session.upload_id)}`);
@@ -1641,7 +1774,8 @@ function evidenceStatusSummary(draft = chatCaseDraft) {
   return window.P42AppModules.caseIntelligencePanel.evidenceStatusSummary({
     draft,
     uploadedEvidence,
-    evidenceIndexMeta
+    evidenceIndexMeta,
+    evidenceIndexValidation
   });
 }
 
@@ -1676,6 +1810,30 @@ function advisorySpecialistsFor(result = lastRuns.chat) {
 
 function memoryProviderLabel(draft = chatCaseDraft) {
   return draft.indexedEvidence?.provider || evidenceIndexMeta.provider || 'local-file fallback';
+}
+
+function rollingSummaryStatus(draft = chatCaseDraft) {
+  return cleanEvidenceText(draft?.memorySummary || draft?.conversationSummary) ? 'enabled' : 'disabled';
+}
+
+function contextRetainedRows(draft = chatCaseDraft, indexedChunks = 0) {
+  return [
+    ['Recent turns retained', `${conversationPayloadHistoryTurns}`],
+    ['Rolling summary', rollingSummaryStatus(draft)],
+    ['Evidence chunks indexed', `${Number(indexedChunks || draft?.indexedEvidence?.chunkCount || evidenceIndexMeta.chunkCount || 0) || 0}`]
+  ];
+}
+
+function contextRetainedHtml(draft = chatCaseDraft, indexedChunks = 0) {
+  const rows = contextRetainedRows(draft, indexedChunks);
+  return `
+    <details class="intel-detail-pack context-retained-block" open>
+      <summary><span>Context retained</span><b>${escapeHtml(rows[1][1])}</b></summary>
+      <div class="memory-status-grid">
+        ${rows.map(([label, value]) => `<span>${escapeHtml(label)}</span><b>${escapeHtml(value)}</b>`).join('')}
+      </div>
+    </details>
+  `;
 }
 
 function addPreviewSignal(items = [], value = '') {
@@ -1847,6 +2005,7 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
         <span class="eyebrow">Next best action</span>
         <strong>Describe what decision or review you need from this evidence.</strong>
       </div>
+      ${contextRetainedHtml(draft, chunks)}
       <details class="intel-detail-pack human-boundary-card" open>
         <summary><span>Human review boundary</span><b>locked</b></summary>
         <strong>No council decision has started.</strong>
@@ -1909,6 +2068,7 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
       <span class="eyebrow">Next best action</span>
       <strong>${escapeHtml(nextBestAction(draft, result))}</strong>
     </div>
+    ${contextRetainedHtml(draft, indexedChunks)}
     <details class="intel-detail-pack risk-domain-block">
       <summary><span>Risk signals</span><b>${escapeHtml(risks.length || 0)}</b></summary>
       <div class="intel-chips">
@@ -2050,12 +2210,16 @@ function assistantAcknowledgement(text = '') {
   return 'Tell me what needs review.';
 }
 
-function buildChatHintChips({ draft = {}, runReadiness = {}, missingFields = [], uploadedEvidence: evidence = [] } = {}) {
+function buildChatHintChips({ draft = {}, runReadiness = {}, missingFields = [], uploadedEvidence: evidence = [], smartIntakeDegraded = false } = {}) {
   const missing = new Set([
     ...(Array.isArray(missingFields) ? missingFields : []),
     ...(Array.isArray(runReadiness?.executionBlockers) ? runReadiness.executionBlockers : [])
   ].map((item) => String(item || '').toLowerCase()));
   const chips = [];
+  if (smartIntakeDegraded) {
+    chips.push({ label: 'Retry smart intake', action: 'retry-smart-intake' });
+    chips.push({ label: 'Continue deterministic', action: 'continue-deterministic' });
+  }
   if (missing.has('business_owner') || missing.has('business owner')) {
     chips.push({ label: 'Add owner', prompt: 'The accountable owner is ' });
   }
@@ -2075,9 +2239,14 @@ function renderThinkingLoader(message = {}) {
   return window.P42AppModules.chatUi.renderThinkingLoader(message);
 }
 
+function latestUserChatMessage() {
+  return [...chatMessages].reverse().find((message) => message?.role === 'user' && message.text);
+}
+
 function renderAssistantTurn(message = {}, options = {}) {
   const canRun = Boolean(chatRunReadiness?.runnable);
   const smartIntakeUnavailable = /Compass gateway is not configured|Smart intake (?:received an invalid Compass response|could not get valid Compass JSON)/i.test(message.text || '');
+  const smartIntakeDegraded = Boolean(message.smartIntakeDegraded);
   const question = message.displayedQuestion || assistantQuestionFromText(message.text);
   if (question && !message.displayedQuestion) message.displayedQuestion = question;
   const acknowledgement = assistantAcknowledgement(message.text);
@@ -2097,9 +2266,12 @@ function renderAssistantTurn(message = {}, options = {}) {
       draft: chatCaseDraft,
       runReadiness: chatRunReadiness,
       missingFields: chatMissingFields,
-      uploadedEvidence
+      uploadedEvidence,
+      smartIntakeDegraded
     }),
     smartIntakeUnavailable,
+    smartIntakeDegraded,
+    degradedMessage: message.degradedMessage,
     unavailableMessage: message.text
   });
 }
@@ -2152,6 +2324,13 @@ function syncUploadedEvidenceIntoChatDraft() {
 
 function indexedChunkCount() {
   return Number(chatCaseDraft.indexedEvidence?.chunkCount || evidenceIndexMeta.chunkCount || 0);
+}
+
+function indexedChunkCountForRetrieval() {
+  if ((chatCaseDraft.indexedEvidence?.caseId || evidenceIndexMeta.caseId) && evidenceIndexValidation.status !== 'valid') {
+    return 0;
+  }
+  return indexedChunkCount();
 }
 
 function renderModeIdle(mode = activeRunMode) {
@@ -2227,6 +2406,10 @@ function resetChatCaseSession(options = {}) {
   lastCouncilNarrative = null;
   uploadedEvidence = [];
   evidenceIndexMeta = {};
+  evidenceIndexValidation = {
+    status: 'not_checked',
+    detail: 'No restored evidence index metadata has been checked.'
+  };
   chatCaseDraft = {};
   chatRunReadiness = null;
   chatMissingFields = [];
@@ -2470,7 +2653,7 @@ function promptForChatContext() {
   setRunMode('chat', { skipRender: true });
   const lastMessage = chatMessages.at(-1)?.text || '';
   const hasBinaryOnlyEvidence = uploadedEvidence.some((item) => item.extractionStatus === 'binary_registered');
-  const hasIndexedEvidence = Boolean(indexedChunkCount());
+  const hasIndexedEvidence = Boolean(indexedChunkCountForRetrieval());
   const guidance = uploadedEvidence.length
     ? hasBinaryOnlyEvidence
       ? 'I have the file registered. What should I review it against?'
@@ -2648,6 +2831,7 @@ function hydrateConfigForm() {
   apiMode.value = config.configuredMode;
   relayUrl.value = config.relayUrl;
   backendUrl.value = config.backendUrl;
+  if (adminBearerToken) adminBearerToken.value = readStorage(storageKeys.adminBearerToken);
   updateJsonLinks();
 }
 
@@ -3517,11 +3701,10 @@ function startChatThinkingProgress(message = {}, options = {}) {
         { delay: 4300, title: 'Formulating decision room', detail: 'Preparing the executive memo, required actions, and audit handoff.', attempt: '' }
       ]
     : [
-        { delay: 0, title: 'Thinking', detail: 'Sending the full conversation context to Compass GPT-5.1 for smart intake.', attempt: 'Compass attempt 1' },
-        { delay: 1100, title: 'Structuring', detail: 'Building a compact JSON plan for intent, case updates, and the next best question.', attempt: 'Compass attempt 1' },
-        { delay: 2300, title: 'Formulating', detail: 'Writing the natural advisor response from the structured plan.', attempt: 'Compass prose' },
-        { delay: 3400, title: 'Still working', detail: 'Still working on the smart intake...', attempt: 'Compass' },
-        { delay: 5200, title: 'Final verification', detail: 'Checking the response before showing it in the chat.', attempt: 'Compass verification' }
+        { delay: 0, title: 'Working', detail: 'Reading your message and updating the working case.', attempt: '' },
+        { delay: 1200, title: 'Checking context', detail: 'Reviewing case facts, evidence metadata, and the current question.', attempt: '' },
+        { delay: 2800, title: 'Still working', detail: 'Waiting for the intake response from the API.', attempt: '' },
+        { delay: 5200, title: 'Preparing reply', detail: 'The request is still in progress; I will show retry details only if the API reports them.', attempt: '' }
       ];
   message.startedAt = message.startedAt || Date.now();
   message.elapsedSeconds = 0;
@@ -3578,11 +3761,13 @@ async function submitChatMessage(rawMessage = '', options = {}) {
       : 'Reading the request, updating the case draft, and planning the next agent step...',
     pending: true,
     thinkingStepIndex: 0,
-    phaseTitle: options.forceRun ? 'Checking readiness' : 'Thinking',
+    phaseTitle: options.forceRun ? 'Checking readiness' : options.retrySmartIntake ? 'Checking smart intake' : 'Working',
     phaseDetail: options.forceRun
       ? 'Reviewing the case draft and human approval boundary.'
-      : 'Sending the full conversation context to Compass GPT-5.1 for smart intake.',
-    attemptLabel: options.forceRun ? '' : 'Compass attempt 1'
+      : options.retrySmartIntake
+        ? 'Sending the last user turn back through the intake API.'
+      : 'Reading your message and updating the working case.',
+    attemptLabel: ''
   };
   chatMessages.push(pendingMessage);
   renderChatMessages();
@@ -3605,7 +3790,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   ]);
 
   try {
-    const serverChunkCount = indexedChunkCount();
+    const serverChunkCount = indexedChunkCountForRetrieval();
     if (options.forceRun && serverChunkCount) {
       pendingMessage.text = 'Preparing server-side evidence retrieval before council execution...';
       flowProgress.style.width = '24%';
@@ -3632,7 +3817,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
         eventType,
         history: chatMessages
           .filter((item) => item && !item.pending && (item.role === 'user' || item.role === 'assistant'))
-          .slice(-12)
+          .slice(-conversationPayloadHistoryTurns)
           .map((item) => ({
             role: item.role,
             text: item.text || '',
@@ -3641,7 +3826,8 @@ async function submitChatMessage(rawMessage = '', options = {}) {
           })),
         uploadedEvidence: uploadedEvidenceForConversation(),
         retrievalQuery: options.forceRun ? retrievalQueryFromDraft() : '',
-        forceRun: Boolean(options.forceRun)
+        forceRun: Boolean(options.forceRun),
+        retrySmartIntake: Boolean(options.retrySmartIntake)
       })
     });
     const returnedDraft = result.caseDraft || {};
@@ -3675,8 +3861,12 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     const llmAttempt = result.nlp?.llmAssessment || result.conversationPlan?.llmAssessment || {};
     const llmAttempts = Array.isArray(llmAttempt.attempts) ? llmAttempt.attempts : [];
     const llmAttemptCount = Number(llmAttempt.attemptCount || llmAttempts.length || 0);
-    if (llmAttempt.retried || llmAttemptCount > 1) {
-      pendingMessage.retryNote = `Retrying smart intake used ${llmAttemptCount || llmAttempts.length} attempts before this response.`;
+    if (llmAttempt.retried) {
+      pendingMessage.retryNote = `Smart intake used ${llmAttemptCount || llmAttempts.length} attempts before this response.`;
+    }
+    if (llmAttempt.smartIntakeDegraded || result.conversationPlan?.smartIntakeDegraded) {
+      pendingMessage.smartIntakeDegraded = true;
+      pendingMessage.degradedMessage = llmAttempt.userMessage || result.conversationPlan?.userMessage || 'Compass is busy, so I used deterministic intake for this turn. You can keep going or retry smart intake.';
     }
     pendingMessage.displayedQuestion = (Array.isArray(result.questions) && result.questions[0])
       ? result.questions[0]
@@ -4041,8 +4231,8 @@ function renderCapabilityFallbacks(results = []) {
 }
 
 function adminStatusCard(label, status, detail) {
-  const healthy = /ready|configured|active|enforced|qdrant|hash|ok|available|enabled/i.test(`${status} ${detail}`);
-  const warning = /audit|local|fallback|disabled|missing|not configured|not active|not enforced/i.test(`${status} ${detail}`) && !healthy;
+  const healthy = /ready|configured|active|enforced|qdrant|hash|ok|available|enabled|per file|recent turns|server-side retained/i.test(`${status} ${detail}`);
+  const warning = /audit|local|fallback|disabled|missing|not checked|not configured|not active|not enforced/i.test(`${status} ${detail}`) && !healthy;
   const className = healthy ? 'is-ready' : warning ? 'is-warning' : 'is-danger';
   return `
     <article class="admin-status-card ${className}">
@@ -4055,16 +4245,24 @@ function adminStatusCard(label, status, detail) {
 
 function renderAdminStatus(status = {}) {
   if (!adminStatusDashboard) return;
-  const vector = status.vector || {};
-  const gateway = status.gateway || {};
-  const parserRelay = status.parserRelay || {};
-  const runtime = status.runtime || {};
-  const auth = status.auth || {};
-  const audit = status.audit || {};
+  const safeStatus = status || {};
+  const vector = safeStatus.vector || {};
+  const gateway = safeStatus.gateway || {};
+  const parserRelay = safeStatus.parserRelay || {};
+  const runtime = safeStatus.runtime || {};
+  const auth = safeStatus.auth || {};
+  const audit = safeStatus.audit || {};
+  const indexStatus = evidenceIndexValidation.status === 'not_checked' ? 'not checked' : evidenceIndexValidation.status || 'not checked';
+  const evidenceProvider = evidenceIndexMeta.provider || vector.provider || 'local-file fallback';
   const cards = [
     adminStatusCard('Auth mode', auth.enforced ? 'enforced' : auth.mode || 'audit', auth.enforced ? 'RBAC policy blocks unauthorized actions.' : 'Audit-mode records actor context without blocking the demo.'),
     adminStatusCard('Audit chain', audit.hashChained ? 'hash-chained' : 'not verified', audit.provider || 'local-jsonl'),
     adminStatusCard('Vector memory', vector.provider || 'local-file', vector.qdrantConfigured ? `Qdrant collection ${vector.collection || 'configured'}` : 'Local-file fallback is demo-grade.'),
+    adminStatusCard('Evidence index', indexStatus, evidenceIndexValidation.detail || 'Restored evidence index metadata has not been checked.'),
+    adminStatusCard('Evidence limits', `${formatBytes(maxEvidenceFileBytes)} per file`, `Batch ${formatBytes(maxEvidenceBatchBytes)} · chunk size ${formatBytes(defaultUploadChunkBytes)}.`),
+    adminStatusCard('Conversation context', `${conversationPayloadHistoryTurns} recent turns`, `Rolling summary ${rollingSummaryStatus(chatCaseDraft)}.`),
+    adminStatusCard('Evidence index provider', evidenceProvider, `${indexedChunkCount()} indexed chunk${indexedChunkCount() === 1 ? '' : 's'} currently referenced by the browser.`),
+    adminStatusCard('Evidence boundary', 'server-side retained', 'Full evidence text and embeddings stay server-side after parser/indexing. Conversation calls send IDs, statuses, summaries, snippets, and retrieval matches only.'),
     adminStatusCard('Compass gateway', gateway.configured ? 'required / configured' : 'required / missing', gateway.configured ? 'Required smart intake, advisory LLM, and embeddings boundary is configured.' : 'Compass gateway is not configured — smart intake is unavailable. Contact your administrator.'),
     adminStatusCard('Parser relay', parserRelay.configured ? 'configured' : 'default relay', parserRelay.featureEnabled === false ? 'Disabled by admin switch.' : 'External parser/OCR boundary is requested when available.'),
     adminStatusCard('CrewAI runtime', runtime.liveCrewAIEnabled ? 'requested' : runtime.default || 'crewai_llm', runtime.liveLlmAdvisoryEnabled ? 'Live advisory specialists enabled.' : 'Deterministic decision owner remains active.')
@@ -4077,6 +4275,7 @@ async function loadAdminStatus() {
   adminStatusDashboard.innerHTML = '<article class="admin-status-card is-loading"><span>Runtime status</span><strong>Checking</strong><p>Loading safe admin readiness signals...</p></article>';
   try {
     const status = await apiFetch('/api/admin/status');
+    adminStatusState = status;
     renderAdminStatus(status);
     return status;
   } catch (error) {
@@ -4131,6 +4330,20 @@ function renderAdminFeatureControls(status = adminFeatureState) {
   }).join('');
 }
 
+function showAdminMutationRequired(message = 'Admin token required to change settings.') {
+  if (!adminFeatureControls) return;
+  adminFeatureControls.querySelectorAll('[data-feature-toggle]').forEach((button) => {
+    button.disabled = true;
+    button.setAttribute('aria-disabled', 'true');
+  });
+  adminFeatureControls.insertAdjacentHTML('afterbegin', `
+    <article class="feature-toggle-row is-auth-required">
+      <strong>Admin authorization required</strong>
+      <p>${escapeHtml(message)}</p>
+    </article>
+  `);
+}
+
 async function loadAdminFeatures() {
   if (!adminFeatureControls) return null;
   try {
@@ -4157,7 +4370,7 @@ async function setAdminFeature(featureId, enabled) {
   try {
     const status = await apiFetch('/api/admin/features', {
       method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
+      headers: adminMutationHeaders({ 'content-type': 'application/json' }),
       body: JSON.stringify({ features: { [featureId]: enabled } })
     });
     renderAdminFeatureControls(status);
@@ -4167,6 +4380,12 @@ async function setAdminFeature(featureId, enabled) {
     if (button) {
       button.disabled = false;
       button.textContent = enabled ? 'Off' : 'On';
+    }
+    const status = Number(error?.status || error?.body?.status || 0);
+    if (status === 401 || status === 403) {
+      renderAdminFeatureControls(adminFeatureState);
+      showAdminMutationRequired('Admin token required to change settings.');
+      return;
     }
     const message = error instanceof Error ? error.message : 'feature update failed';
     adminFeatureControls.insertAdjacentHTML('afterbegin', `
@@ -4396,6 +4615,18 @@ chatMessagesEl?.addEventListener('click', (event) => {
   const action = event.target?.closest?.('[data-chat-action]')?.dataset?.chatAction;
   if (action === 'run-council') {
     submitChatMessage(chatInput.value || 'run it', { forceRun: true });
+  } else if (action === 'retry-smart-intake') {
+    const lastUser = latestUserChatMessage();
+    const message = lastUser?.text || chatInput.value || '';
+    if (message) {
+      submitChatMessage(message, {
+        retrySmartIntake: true,
+        silentUser: true,
+        activeQuestion: lastUser?.answeringQuestion || activeQuestion || chatCaseDraft.activeQuestion || ''
+      });
+    }
+  } else if (action === 'continue-deterministic') {
+    chatInput?.focus();
   }
 });
 
@@ -4414,6 +4645,7 @@ runtimeConfig.addEventListener('submit', (event) => {
   writeStorage(storageKeys.mode, apiMode.value);
   writeStorage(storageKeys.relayUrl, stripTrailingSlash(relayUrl.value));
   writeStorage(storageKeys.backendUrl, stripTrailingSlash(backendUrl.value));
+  writeStorage(storageKeys.adminBearerToken, adminBearerToken?.value?.trim() || '');
   loadDeploymentStatus();
   loadReadiness();
   loadBenchmarks();
@@ -4424,6 +4656,7 @@ resetConfig.addEventListener('click', () => {
   writeStorage(storageKeys.mode, '');
   writeStorage(storageKeys.relayUrl, '');
   writeStorage(storageKeys.backendUrl, '');
+  writeStorage(storageKeys.adminBearerToken, '');
   hydrateConfigForm();
   loadDeploymentStatus();
   loadReadiness();
@@ -4437,6 +4670,11 @@ adminFeatureControls?.addEventListener('click', (event) => {
   const featureId = button.dataset.featureToggle;
   const current = adminFeatureState?.features?.find((feature) => feature.id === featureId);
   setAdminFeature(featureId, !(current?.enabled));
+});
+
+adminBearerToken?.addEventListener('change', () => {
+  writeStorage(storageKeys.adminBearerToken, adminBearerToken.value.trim());
+  renderAdminFeatureControls(adminFeatureState);
 });
 
 refreshAdminAuditLog?.addEventListener('click', () => {

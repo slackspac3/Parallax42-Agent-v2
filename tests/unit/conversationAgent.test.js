@@ -7,6 +7,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 const { processConversation } = require('../../lib/conversationAgent');
+const { SMART_INTAKE_DEGRADED_MESSAGE } = require('../../lib/conversationLlmAssessor');
 const { indexEvidenceServerSide } = require('../../lib/evidenceVectorStore');
 const { recordReviewerFeedback } = require('../../lib/learningMemory');
 const { enrichConversationWithServerRetrieval } = require('../../lib/serverSideRetrieval');
@@ -305,6 +306,76 @@ test('conversation executes the agent workflow when the draft is complete', () =
   assert.equal(result.run.decision.status, 'not_ready');
   assert.ok(result.actions.some((action) => action.id === 'agent_workflow' && action.status === 'complete'));
   assert.match(result.reply, /Decision:/i);
+});
+
+test('conversation force run is not blocked when smart intake is degraded and draft is runnable', () => {
+  let runtimeCalls = 0;
+  const result = processConversation({
+    forceRun: true,
+    message: 'run it',
+    caseDraft: {
+      caseId: 'case-degraded-run',
+      supplierName: 'PayrollCo',
+      businessUnit: 'HR',
+      geography: 'UAE',
+      brief: 'Payroll outsourcing supplier handling employee payroll data for UAE employees.',
+      integrations: ['Payroll/HRIS'],
+      documents: [
+        {
+          evidenceId: 'DOC-1',
+          title: 'Signed DPA',
+          summary: 'Signed DPA and SOC 2 report are available for review.',
+          signals: ['DPA', 'SOC 2']
+        }
+      ],
+      evidenceSignals: ['DPA', 'SOC 2'],
+      riskSignals: ['personal data', 'outsourced service']
+    },
+    conversationPlan: {
+      usedLlm: false,
+      smartIntakeDegraded: true,
+      userMessage: SMART_INTAKE_DEGRADED_MESSAGE,
+      source: 'compass_degraded_fallback',
+      shouldRunCouncil: true
+    },
+    llmAssessment: {
+      provider: 'compass_gateway',
+      used: false,
+      smartIntakeDegraded: true,
+      compassFailureType: 'rate_limit',
+      reason: 'Compass gateway rate limited the smart intake request.',
+      userMessage: SMART_INTAKE_DEGRADED_MESSAGE,
+      attempts: [{ attempt: 1, status: 'rate_limited', httpStatus: 429 }],
+      attemptCount: 1,
+      maxAttempts: 3
+    }
+  }, {
+    runtime: 'deterministic',
+    runAgentWithRuntime: (casePayload) => {
+      runtimeCalls += 1;
+      return {
+        ok: true,
+        case: { caseId: casePayload.caseId },
+        decision: {
+          status: 'ready',
+          recommendation: 'Ready for human approval',
+          rationale: 'Injected runtime.'
+        },
+        gaps: [],
+        evidenceIds: ['DOC-1'],
+        trace: [],
+        runtime: { actualRuntime: 'deterministic' }
+      };
+    }
+  });
+
+  assert.equal(runtimeCalls, 1);
+  assert.equal(result.shouldRun, true);
+  assert.equal(result.readyToRun, true);
+  assert.equal(result.run.ok, true);
+  assert.equal(result.caseDraft.smartIntakeDegraded, true);
+  assert.ok(result.actions.some((action) => action.id === 'llm_intake_assessment' && action.status === 'degraded'));
+  assert.ok(result.actions.some((action) => action.id === 'agent_workflow' && action.status === 'complete'));
 });
 
 test('conversation preserves indexed retrieval context through council execution', () => {

@@ -8,6 +8,7 @@ const path = require('node:path');
 
 const { processConversation } = require('../../lib/conversationAgent');
 const {
+  SMART_INTAKE_DEGRADED_MESSAGE,
   SMART_INTAKE_INVALID_RESPONSE_MESSAGE,
   SMART_INTAKE_UNAVAILABLE_MESSAGE,
   assessConversationWithLlm,
@@ -60,6 +61,7 @@ test('conversation LLM assessor reports smart intake unavailable when Compass to
       assert.equal(result.llmAssessment.userMessage, SMART_INTAKE_UNAVAILABLE_MESSAGE);
       assert.equal(result.llmAssessment.requiresCompass, true);
       assert.equal(result.llmAssessment.smartIntakeUnavailable, true);
+      assert.equal(result.llmAssessment.compassFailureType, 'missing_configuration');
       assert.equal(result.caseDraft, undefined);
     });
   } finally {
@@ -98,12 +100,97 @@ test('conversation LLM assessor treats Compass gateway errors as visible smart i
       assert.equal(result.llmAssessment.userMessage, SMART_INTAKE_UNAVAILABLE_MESSAGE);
       assert.equal(result.llmAssessment.requiresCompass, true);
       assert.equal(result.llmAssessment.smartIntakeUnavailable, true);
+      assert.equal(result.llmAssessment.compassFailureType, 'gateway_failure');
       assert.match(result.llmAssessment.detail, /bad gateway|502/i);
       assert.equal(calls, 3);
       assert.equal(result.llmAssessment.attemptCount, 3);
       assert.equal(result.llmAssessment.attempts.length, 3);
       assert.equal(result.llmAssessment.attempts[0].retryable, true);
       assert.equal(result.llmAssessment.attempts[2].retryable, false);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('conversation LLM assessor distinguishes Compass auth failures from missing configuration', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'expired-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1',
+      CONVERSATION_LLM_MAX_ATTEMPTS: '3'
+    }, async () => {
+      let calls = 0;
+      global.fetch = async () => {
+        calls += 1;
+        return {
+          ok: false,
+          status: 401,
+          headers: { get: () => '' },
+          text: async () => JSON.stringify({ error: 'unauthorized' })
+        };
+      };
+
+      const result = await assessConversationWithLlm({
+        message: 'I have an agreement to review'
+      });
+
+      assert.equal(result.llmAssessment.used, false);
+      assert.equal(result.llmAssessment.smartIntakeUnavailable, true);
+      assert.equal(result.llmAssessment.smartIntakeDegraded, false);
+      assert.equal(result.llmAssessment.compassFailureType, 'auth_failure');
+      assert.equal(result.llmAssessment.userMessage, SMART_INTAKE_UNAVAILABLE_MESSAGE);
+      assert.equal(result.llmAssessment.attemptCount, 1);
+      assert.equal(calls, 1);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('conversation LLM assessor degrades to deterministic intake on Compass rate limit', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1',
+      CONVERSATION_LLM_MAX_ATTEMPTS: '2',
+      CONVERSATION_LLM_RATE_LIMIT_MAX_RETRY_DELAY_MS: '1',
+      CONVERSATION_LLM_RETRY_JITTER_MS: '0'
+    }, async () => {
+      let calls = 0;
+      global.fetch = async () => ({
+        ok: false,
+        status: 429,
+        headers: { get: () => '' },
+        text: async () => {
+          calls += 1;
+          return JSON.stringify({ error: 'rate limit exceeded' });
+        }
+      });
+
+      const result = await assessConversationWithLlm({
+        message: 'Assess a payroll outsourcing supplier',
+        caseDraft: {
+          businessUnit: 'HR',
+          geography: 'UAE',
+          brief: 'Assess payroll outsourcing for employee data.'
+        }
+      });
+
+      assert.equal(calls, 2);
+      assert.equal(result.llmAssessment.used, false);
+      assert.equal(result.llmAssessment.smartIntakeUnavailable, false);
+      assert.equal(result.llmAssessment.smartIntakeDegraded, true);
+      assert.equal(result.llmAssessment.compassFailureType, 'rate_limit');
+      assert.equal(result.llmAssessment.userMessage, SMART_INTAKE_DEGRADED_MESSAGE);
+      assert.equal(result.llmAssessment.status, 429);
+      assert.equal(result.caseDraft.businessUnit, 'HR');
     });
   } finally {
     global.fetch = originalFetch;
@@ -293,7 +380,10 @@ test('conversation LLM fast fail stops long retry loops', async () => {
       });
 
       assert.equal(result.llmAssessment.used, false);
-      assert.equal(result.llmAssessment.smartIntakeUnavailable, true);
+      assert.equal(result.llmAssessment.smartIntakeUnavailable, false);
+      assert.equal(result.llmAssessment.smartIntakeDegraded, true);
+      assert.equal(result.llmAssessment.compassFailureType, 'timeout_slow');
+      assert.equal(result.llmAssessment.userMessage, SMART_INTAKE_DEGRADED_MESSAGE);
       assert.equal(result.llmAssessment.attemptCount, 1);
       assert.equal(result.llmAssessment.maxAttempts, 5);
       assert.equal(result.llmAssessment.attempts[0].fastFailTriggered, true);
@@ -868,6 +958,7 @@ test('conversation LLM assessor reports malformed Compass output accurately', as
       assert.equal(result.llmAssessment.reason, SMART_INTAKE_INVALID_RESPONSE_MESSAGE);
       assert.equal(result.llmAssessment.invalidCompassResponse, true);
       assert.equal(result.llmAssessment.requiresCompass, false);
+      assert.equal(result.llmAssessment.compassFailureType, 'invalid_json');
       assert.match(result.llmAssessment.detail, /not valid JSON/i);
       assert.equal(result.llmAssessment.attemptCount, 2);
     });

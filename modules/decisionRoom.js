@@ -479,6 +479,7 @@
               <p>${escapeHtml(businessDecisionSummary(result))}</p>
               <div class="decision-room-actions">
                 <button type="button" data-report-action="export-review-pack">Export review pack PDF</button>
+                <button type="button" class="secondary-action decision-room-rerun" data-report-action="run-council">Re-run council</button>
                 <button type="button" data-report-action="continue-conversation">Continue conversation</button>
                 <span>Reviewer artifact only; no operational approval is granted.</span>
               </div>
@@ -536,6 +537,7 @@
             </div>
             <div class="decision-room-actions compact">
               <button type="button" data-report-action="export-review-pack">Export review pack PDF</button>
+              <button type="button" class="secondary-action decision-room-rerun" data-report-action="run-council">Re-run council</button>
               <button type="button" data-report-action="continue-conversation">Continue conversation</button>
             </div>
           </div>

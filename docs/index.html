@@ -151,6 +151,11 @@
                 <input id="evidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.doc,.docx,text/*,application/json,text/csv,application/pdf" />
                 <span>Drop or select evidence files</span>
                 <small>Up to 30 MB per file. Large files are chunked through the parser relay; embeddings stay server-side.</small>
+                <div class="upload-limit-strip" aria-label="Upload limits">
+                  <b>Files up to 30 MB</b>
+                  <b>Large files are chunked</b>
+                  <b>Full text stays server-side</b>
+                </div>
               </label>
               <div id="evidenceIngestionStatus" class="ingestion-status">No uploaded evidence yet.</div>
             </section>
@@ -201,6 +206,11 @@
                     Evidence files
                     <input id="chatEvidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.docx,text/*,application/json,text/csv,application/pdf" />
                     <small>Up to 30 MB per file. Large files are chunked through the parser relay; embeddings stay server-side.</small>
+                    <div class="upload-limit-strip" aria-label="Upload limits">
+                      <b>Files up to 30 MB</b>
+                      <b>Large files are chunked</b>
+                      <b>Full text stays server-side</b>
+                    </div>
                   </label>
                   <div id="chatAttachmentStatus" class="attachment-status" aria-live="polite">No files attached.</div>
                   <div id="chatAttachmentList" class="chat-attachment-list" aria-live="polite"></div>
@@ -386,6 +396,11 @@
                   Parallax42 backend URL
                   <input name="backendUrl" id="backendUrl" autocomplete="off" />
                 </label>
+                <label>
+                  Admin bearer token
+                  <input name="adminBearerToken" id="adminBearerToken" type="password" autocomplete="off" placeholder="Optional private demo token" />
+                  <small>Used only for admin setting changes. Normal agent, conversation, and evidence calls do not receive this token.</small>
+                </label>
                 <div class="form-actions">
                   <button type="submit">Save runtime</button>
                   <button type="button" id="resetConfig" class="secondary-button">Reset</button>
@@ -398,6 +413,10 @@
                 <span class="eyebrow">Runtime status</span>
                 <strong>Admin readiness</strong>
                 <p>Safe configuration signals only; no secrets or raw environment values are exposed.</p>
+              </div>
+              <div class="admin-runtime-boundary-note">
+                <strong>Full evidence retained server-side</strong>
+                <p>Conversation requests carry evidence IDs, parser status, summaries, snippets, and retrieval matches. Raw parsed documents and embeddings stay behind the server boundary.</p>
               </div>
               <div id="adminStatusDashboard" class="admin-status-grid" aria-live="polite"></div>
             </section>
@@ -448,6 +467,8 @@
     <script src="modules/caseIntelligencePanel.js"></script>
     <script src="modules/decisionRoom.js"></script>
     <script src="modules/chatUi.js"></script>
+    <script src="modules/conversationPayload.js"></script>
+    <script src="modules/evidenceIndexRestore.js"></script>
     <script src="modules/evidenceUploadPolicy.js"></script>
     <script src="modules/evidenceUploadUi.js"></script>
     <script src="appModules.js"></script>

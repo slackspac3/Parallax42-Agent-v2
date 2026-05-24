@@ -79,15 +79,12 @@
           ['Formulating', 'Preparing the decision room and reviewer handoff']
         ]
       : [
-          ['Thinking', 'Reading your message and updating the working case'],
-          ['Analysing', 'Extracting owner, geography, data, integrations, evidence, and risk signals'],
-          ['Retrieving', 'Checking indexed evidence before asking for anything missing'],
-          ['Formulating', 'Choosing one useful next question']
+          ['Working', 'Reading your message and updating the working case'],
+          ['Checking context', 'Reviewing case facts, evidence metadata, and the current question'],
+          ['Still working', 'Waiting for the intake response from the API'],
+          ['Preparing reply', 'The request is still in progress']
         ];
-    const retrying = Boolean(message && message.retried && Number(message.attemptCount || 0) > 1);
-    const visibleSteps = retrying && !steps.some((step) => cleanText(Array.isArray(step) ? step[0] : step.label).match(/retrying smart intake/i))
-      ? steps.concat([{ label: 'Retrying smart intake', detail: 'Gateway took longer than expected; using a compact recovery prompt.', tone: 'warning' }])
-      : steps;
+    const visibleSteps = steps;
     const activeIndex = Math.max(0, Math.min(visibleSteps.length - 1, Number(message && message.thinkingStepIndex || 0)));
     const activeStep = visibleSteps[activeIndex] || visibleSteps[0] || [];
     const attemptLabel = cleanText(message && message.attemptLabel);
@@ -168,6 +165,16 @@
     return chips.some((chip) => cleanText(normalizeHintChip(chip)?.action) === action);
   }
 
+  function renderSmartIntakeDegraded(state = {}) {
+    if (!state.smartIntakeDegraded) return '';
+    return `
+      <div class="advisor-degraded-note">
+        <strong>Smart intake degraded</strong>
+        <p>${escapeHtml(state.degradedMessage || 'Compass is busy, so deterministic intake handled this turn.')}</p>
+      </div>
+    `;
+  }
+
   function renderAssistantTurn(message, context) {
     const state = context || {};
     if (state.smartIntakeUnavailable) {
@@ -197,6 +204,7 @@
     if (isFlowingProse(proseText)) {
       return `
         <div class="advisor-response-card advisor-natural-response advisor-chat-only">
+          ${renderSmartIntakeDegraded(state)}
           <div class="advisor-prose-response">
             <p>${escapeHtml(proseText)}</p>
           </div>
@@ -215,6 +223,7 @@
     const chips = suppliedChips.length ? suppliedChips : state.canRun || responseIncludesQuestion ? [] : hintChipsForQuestion(questionText);
     return `
       <div class="advisor-response-card advisor-natural-response advisor-chat-only">
+        ${renderSmartIntakeDegraded(state)}
         <div class="advisor-response-head">
           <p class="advisor-natural-copy">${escapeHtml(responseText)}</p>
           ${message && message.retryNote ? `<small class="intake-retry-note">${escapeHtml(message.retryNote)}</small>` : ''}

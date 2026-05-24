@@ -2,13 +2,13 @@
 
 const { appendAuditRecord } = require('../../lib/auditStore');
 const { runQdrantSmokeTest } = require('../../lib/evidenceVectorStore');
-const { authorizeRequest } = require('../../lib/rbac');
+const { authorizeAdminMutation } = require('../../lib/rbac');
 const { methodGuard, sendJson } = require('../_http');
 
 module.exports = async function handler(req, res) {
   if (!methodGuard(req, res, ['POST'])) return;
   try {
-    const auth = await authorizeRequest(req, 'agent:run');
+    const auth = await authorizeAdminMutation(req);
     if (!auth.ok) {
       sendJson(req, res, auth.statusCode, auth.body);
       return;

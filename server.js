@@ -35,7 +35,7 @@ const {
   handleStandardRun
 } = require('./lib/httpHandlers');
 const { findSimilarCases, getControlSuggestions, learningMemoryHealth, recordReviewerFeedback } = require('./lib/learningMemory');
-const { authHealth, authorizeRequest } = require('./lib/rbac');
+const { authHealth, authorizeAdminMutation, authorizeRequest } = require('./lib/rbac');
 const { backendRelayHandler } = require('./api/_backendRelay');
 
 const PORT = Number(process.env.PORT || 3020);
@@ -175,7 +175,7 @@ const server = http.createServer(async (req, res) => {
         writeJson(res, 200, buildFeatureStatus());
         return;
       }
-      const auth = await authorizeRequest(req, 'agent:run');
+      const auth = await authorizeAdminMutation(req);
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
         return;
@@ -202,7 +202,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/admin/qdrant-smoke') {
-      const auth = await authorizeRequest(req, 'agent:run');
+      const auth = await authorizeAdminMutation(req);
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
         return;

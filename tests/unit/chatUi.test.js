@@ -74,3 +74,17 @@ test('renderAssistantTurn prefers supplied latest hint chips with chat handlers'
   assert.doesNotMatch(html, /data-intel-prompt/);
   assert.doesNotMatch(html, /UAE and India/);
 });
+
+test('renderThinkingLoader does not invent retry progress before backend metadata returns', () => {
+  const chatUi = loadChatUiModule();
+  const html = chatUi.renderThinkingLoader({
+    text: 'Reading the request, updating the case draft, and planning the next agent step...',
+    retried: true,
+    attemptCount: 2,
+    pending: true
+  });
+
+  assert.match(html, /Waiting for the intake response from the API/);
+  assert.doesNotMatch(html, /Retrying smart intake/);
+  assert.doesNotMatch(html, /compact recovery prompt/);
+});

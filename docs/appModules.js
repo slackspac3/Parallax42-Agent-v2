@@ -8,7 +8,9 @@
     appState: registry.appState || {},
     caseIntelligencePanel: registry.caseIntelligencePanel || registry.decisionRoom || {},
     chatUi: registry.chatUi || {},
+    conversationPayload: registry.conversationPayload || {},
     decisionRoom: registry.decisionRoom || {},
+    evidenceIndexRestore: registry.evidenceIndexRestore || {},
     evidenceUploadPolicy: registry.evidenceUploadPolicy || {},
     evidenceUploadUi: registry.evidenceUploadUi || {},
     text: registry.text || {}

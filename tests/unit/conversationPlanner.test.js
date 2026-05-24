@@ -8,6 +8,7 @@ const path = require('node:path');
 
 const { buildConversationPlan, planConversationTurn } = require('../../lib/conversationPlanner');
 const {
+  SMART_INTAKE_DEGRADED_MESSAGE,
   SMART_INTAKE_INVALID_RESPONSE_MESSAGE,
   SMART_INTAKE_UNAVAILABLE_MESSAGE
 } = require('../../lib/conversationLlmAssessor');
@@ -87,6 +88,39 @@ test('conversation planner distinguishes malformed Compass output from missing c
   assert.equal(plan.userMessage, SMART_INTAKE_INVALID_RESPONSE_MESSAGE);
   assert.equal(plan.nextQuestion, SMART_INTAKE_INVALID_RESPONSE_MESSAGE);
   assert.equal(plan.shouldRunCouncil, false);
+});
+
+test('conversation planner uses deterministic fallback when smart intake is degraded', () => {
+  const plan = buildConversationPlan({
+    message: 'run it',
+    forceRun: true,
+    caseDraft: {
+      supplierName: 'PayrollCo',
+      businessUnit: 'HR',
+      geography: 'UAE',
+      brief: 'Payroll outsourcing supplier handling employee data.',
+      documents: [{ title: 'DPA', summary: 'Signed DPA available.' }]
+    },
+    llmAssessment: {
+      used: false,
+      smartIntakeUnavailable: false,
+      smartIntakeDegraded: true,
+      compassFailureType: 'rate_limit',
+      userMessage: SMART_INTAKE_DEGRADED_MESSAGE,
+      reason: SMART_INTAKE_DEGRADED_MESSAGE,
+      attempts: [{ attempt: 1, status: 'rate_limited', httpStatus: 429 }],
+      attemptCount: 1,
+      maxAttempts: 3
+    }
+  });
+
+  assert.equal(plan.source, 'compass_degraded_fallback');
+  assert.equal(plan.smartIntakeUnavailable, false);
+  assert.equal(plan.smartIntakeDegraded, true);
+  assert.equal(plan.nextBestAction, 'deterministic_fallback');
+  assert.equal(plan.userMessage, SMART_INTAKE_DEGRADED_MESSAGE);
+  assert.equal(plan.shouldRunCouncil, true);
+  assert.equal(plan.aiUsage.fallbackUsed, true);
 });
 
 test('conversation planner calls Compass after retrieval context is prepared', async () => {
