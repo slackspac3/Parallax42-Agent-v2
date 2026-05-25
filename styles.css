@@ -546,7 +546,7 @@ nav a {
   font-size: 13px;
   font-weight: 600;
   color: var(--muted);
-  transition: color var(--t), background var(--t);
+  transition: color var(--t), background var(--t), box-shadow var(--t);
 }
 
 nav a:hover {
@@ -558,6 +558,51 @@ nav a.is-active,
 nav a[aria-current="page"] {
   color: var(--accent);
   background: rgba(34, 227, 180, 0.08);
+}
+
+.topbar nav a {
+  position: relative;
+  outline: none;
+}
+
+.topbar nav a::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 2px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: 0;
+  transform: scaleX(0.55);
+  transform-origin: center;
+  transition: opacity var(--t), transform var(--t), box-shadow var(--t);
+  pointer-events: none;
+}
+
+.topbar nav a:hover {
+  color: rgba(234, 244, 255, 0.9);
+  background: rgba(234, 244, 255, 0.055);
+}
+
+.topbar nav a:focus-visible {
+  color: var(--text);
+  background: rgba(125, 211, 252, 0.075);
+  box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.42);
+}
+
+.topbar nav a.is-active,
+.topbar nav a[aria-current="page"] {
+  color: var(--accent);
+  background: rgba(34, 227, 180, 0.065);
+}
+
+.topbar nav a.is-active::after,
+.topbar nav a[aria-current="page"]::after {
+  opacity: 1;
+  transform: scaleX(1);
+  box-shadow: 0 0 12px rgba(34, 227, 180, 0.46);
 }
 
 .topbar-status {
@@ -4888,12 +4933,29 @@ body:not([data-run-complete="true"]) .decision-room-rerun {
     color: rgba(234, 244, 255, 0.58);
     font-size: 15px;
     font-weight: 750;
+    background: transparent;
+  }
+
+  .topbar nav a::after {
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  .topbar nav a:hover {
+    color: rgba(234, 244, 255, 0.92);
+    background: transparent;
+  }
+
+  .topbar nav a:focus-visible {
+    color: var(--text);
+    background: rgba(125, 211, 252, 0.06);
+    box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.38);
   }
 
   .topbar nav a.is-active,
   .topbar nav a[aria-current="page"] {
     color: var(--accent);
-    border-bottom: 2px solid var(--accent);
     background: transparent;
   }
 

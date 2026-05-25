@@ -31,6 +31,7 @@ for (const file of required) {
 }
 
 const html = fs.readFileSync(path.join(ROOT, 'public/index.html'), 'utf8');
+const css = fs.readFileSync(path.join(ROOT, 'public/styles.css'), 'utf8');
 for (const asset of [
   'config.js',
   'modules/text.js',
@@ -72,6 +73,32 @@ for (const [href, section] of Object.entries(navSections)) {
   if (!tag.includes(`data-main-section="${section}"`)) {
     throw new Error(`Topbar link ${href} must declare data-main-section="${section}"`);
   }
+}
+
+if (/\.topbar\s+nav\s+a:first-child/.test(css)) {
+  throw new Error('Topbar active state must not rely on .topbar nav a:first-child.');
+}
+
+for (const section of Object.values(navSections)) {
+  const sectionSelectors = {
+    agent: 'body[data-main-section="agent"] .command-center',
+    evidence: 'body[data-main-section="evidence"] .evidence-board',
+    audit: 'body[data-main-section="audit"] .audit-section',
+    admin: 'body[data-main-section="admin"] .admin-section',
+    hardening: 'body[data-main-section="hardening"] .hardening-section'
+  };
+  const selector = sectionSelectors[section];
+  if (!css.includes(selector)) {
+    throw new Error(`Desktop navigation CSS is missing active display rule: ${selector}`);
+  }
+}
+
+if (!css.includes('body[data-main-section] .command-center')) {
+  throw new Error('Desktop navigation CSS must hide inactive workbench sections through data-main-section rules.');
+}
+
+if (!css.includes('body[data-workspace-view="output"] .command-center')) {
+  throw new Error('Council Output view must have a run-mode-independent workspace display rule.');
 }
 
 process.stdout.write('GitHub Pages asset check passed.\n');

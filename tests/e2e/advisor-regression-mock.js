@@ -40,17 +40,33 @@ function baseDraft(overrides = {}) {
   };
 }
 
-function mockRunResult() {
+function mockRunResult(caseContext = {}) {
+  const supplierName = caseContext.supplierName || 'Managed Platform Integration Partner';
+  const businessUnit = caseContext.businessUnit || 'Finance';
+  const geography = caseContext.geography || 'UAE';
+  const integrations = Array.isArray(caseContext.integrations) && caseContext.integrations.length
+    ? caseContext.integrations
+    : ['Microsoft 365', 'Okta', 'SAP', 'Workday', 'Salesforce'];
+  const documents = Array.isArray(caseContext.documents) && caseContext.documents.length
+    ? caseContext.documents.map((doc, index) => ({
+        evidenceId: doc.evidenceId || `UP-MOCK-${String(index + 1).padStart(2, '0')}`,
+        title: doc.title || doc.fileName || 'Managed platform integration services agreement',
+        extractionStatus: doc.extractionStatus || 'mocked'
+      }))
+    : [{ evidenceId: 'UP-MOCK-01', title: 'Managed platform integration services agreement' }];
+  const primaryEvidenceId = documents[0]?.evidenceId || 'UP-MOCK-01';
+  const slug = supplierName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 42) || 'mock';
+
   return {
     ok: true,
     mode: 'crewai_flow',
     case: {
-      caseId: 'case-e2e-001',
-      supplierName: 'Managed Platform Integration Partner',
-      businessUnit: 'Finance',
-      geography: 'UAE',
-      integrations: ['Microsoft 365', 'Okta', 'SAP', 'Workday', 'Salesforce'],
-      documents: [{ evidenceId: 'UP-MOCK-01', title: 'Managed platform integration services agreement' }]
+      caseId: caseContext.caseId || `case-e2e-${slug}`,
+      supplierName,
+      businessUnit,
+      geography,
+      integrations,
+      documents
     },
     decision: {
       status: 'conditional',
@@ -79,13 +95,13 @@ function mockRunResult() {
         action: 'Reviewer must confirm named access owner and approval evidence.'
       }
     ],
-    evidenceIds: ['UP-MOCK-01', 'DOC-CITE-01'],
+    evidenceIds: [primaryEvidenceId, 'DOC-CITE-01'],
     citations: [
       {
-        evidenceId: 'UP-MOCK-01',
+        evidenceId: primaryEvidenceId,
         citationId: 'DOC-CITE-01',
-        title: 'Managed platform agreement',
-        text: 'Agreement includes DPA, retention schedule, service continuity, and privileged access obligations.',
+        title: documents[0]?.title || 'Managed platform agreement',
+        text: `${supplierName} evidence includes DPA, retention schedule, service continuity, and privileged access obligations.`,
         score: 0.91,
         signals: ['DPA', 'retention', 'privileged access']
       }
@@ -97,9 +113,9 @@ function mockRunResult() {
       matchCount: 1,
       matches: [
         {
-          evidenceId: 'UP-MOCK-01',
-          title: 'Managed platform agreement',
-          text: 'DPA, retention, and privileged access clauses were recovered from the uploaded service agreement.',
+          evidenceId: primaryEvidenceId,
+          title: documents[0]?.title || 'Managed platform agreement',
+          text: `DPA, retention, and privileged access clauses were recovered for ${supplierName}.`,
           score: 0.91
         }
       ]
@@ -133,7 +149,13 @@ function conversationResponse(body = {}) {
       }),
       conversationPlan: { usedLlm: true, nextBestAction: 'run_council' },
       nlp: { llmAssessment: { used: true, model: 'gpt-5.1', requestType: 'supplier_risk' } },
-      run: mockRunResult()
+      run: mockRunResult({
+        supplierName: body.caseDraft?.supplierName || 'Managed Platform Integration Partner',
+        businessUnit: body.caseDraft?.businessUnit || 'Finance',
+        geography: body.caseDraft?.geography || 'UAE',
+        integrations: body.caseDraft?.integrations,
+        documents: body.caseDraft?.documents
+      })
     };
   }
 
@@ -232,8 +254,9 @@ async function installMocks(page, records) {
   });
 
   await page.route('**/api/agent/run', async (route) => {
-    records.agentRun.push(route.request().postDataJSON());
-    await route.fulfill(jsonResponse(mockRunResult()));
+    const body = route.request().postDataJSON();
+    records.agentRun.push(body);
+    await route.fulfill(jsonResponse(mockRunResult(body)));
   });
 
   await page.route('**/api/evidence/index', async (route) => {
@@ -353,9 +376,33 @@ async function assertMainSectionVisible(page, section, selector, pattern) {
 
 async function assertCouncilOutputVisible(page) {
   await page.waitForFunction(() => document.body.dataset.workspaceView === 'output', null, { timeout: 5000 });
+  await page.waitForFunction(() => document.body.dataset.runComplete === 'true', null, { timeout: 5000 });
   await assertVisibleText(page, '#workflow', /Executive decision room|Human approval required|Deterministic compliance engine/i);
   const specialistTextLength = await page.locator('#specialistList').evaluate((node) => (node.textContent || '').trim().length);
   assert.ok(specialistTextLength > 0, 'specialistList should contain decision output');
+  const state = await page.evaluate(() => ({
+    workspaceView: document.body.dataset.workspaceView,
+    runComplete: document.body.dataset.runComplete,
+    hasDecisionOutput: document.body.classList.contains('has-decision-output')
+  }));
+  assert.deepEqual(state, {
+    workspaceView: 'output',
+    runComplete: 'true',
+    hasDecisionOutput: true
+  });
+}
+
+async function assertCouncilOutputEmptyState(page) {
+  await page.locator('#councilOutputTab').click();
+  await page.waitForFunction(() => (
+    document.body.dataset.workspaceView === 'output'
+      && document.body.dataset.runComplete === 'false'
+      && /Decision room is empty|Run the council/i.test(document.querySelector('#workflow')?.textContent || '')
+  ), null, { timeout: 5000 });
+  await assertVisibleText(page, '#workflow', /Decision room is empty|Run the council/i);
+  await assertVisibleText(page, '#specialistList', /Run the council to generate the executive output|Back to Advisor/i);
+  const outputTextLength = await page.locator('#specialistList').evaluate((node) => (node.textContent || '').trim().length);
+  assert.ok(outputTextLength > 0, 'empty Council Output state should not be blank');
 }
 
 async function main() {
@@ -384,6 +431,7 @@ async function main() {
       await assertFirstViewportLayout(page);
 
       await page.setViewportSize({ width: 1440, height: 900 });
+      await assertCouncilOutputEmptyState(page);
       const primaryNav = page.getByRole('navigation', { name: 'Primary' });
       await primaryNav.getByRole('link', { name: 'Admin' }).click();
       await assertMainSectionVisible(page, 'admin', '#admin', /Admin Console/i);
@@ -455,6 +503,7 @@ async function main() {
       await assertVisibleText(page, '#workflow', /Executive decision room|Export review pack PDF|Deterministic compliance engine/i);
       await page.locator('#councilOutputTab').click();
       await assertCouncilOutputVisible(page);
+      await assertVisibleText(page, '#specialistList', /Managed platform integration services agreement/i);
 
       await primaryNav.getByRole('link', { name: 'Admin' }).click();
       await assertMainSectionVisible(page, 'admin', '#admin', /Admin Console/i);
@@ -464,13 +513,16 @@ async function main() {
       await assertMainSectionVisible(page, 'agent', '#run', /Compliance advisor/i);
       await page.locator('#councilOutputTab').click();
       await assertCouncilOutputVisible(page);
+      await assertVisibleText(page, '#specialistList', /Managed platform integration services agreement/i);
 
+      const demoRunCountBefore = records.agentRun.length;
       await page.locator('#demoModeTab').click();
       await page.locator('[data-scenario="financeVendor"]').click();
       await page.waitForFunction(() => document.body.dataset.runComplete === 'true', null, { timeout: 12_000 });
       await page.locator('#councilOutputTab').click();
       await assertCouncilOutputVisible(page);
-      assert.ok(records.agentRun.length >= 1, 'demo council run should call the agent run API');
+      await assertVisibleText(page, '#specialistList', /Treasury Ops Platform/i);
+      assert.ok(records.agentRun.length > demoRunCountBefore, 'demo council run should call the agent run API');
 
       diagnostics.assertClean();
     });
