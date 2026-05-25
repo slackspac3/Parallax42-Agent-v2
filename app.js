@@ -114,6 +114,8 @@ const benchmarkSummary = document.querySelector('#benchmarkSummary');
 const deploymentStatus = document.querySelector('#deploymentStatus');
 const capabilityFallbacks = document.querySelector('#capabilityFallbacks');
 const adminStatusDashboard = document.querySelector('#adminStatusDashboard');
+const copyAdminDiagnostics = document.querySelector('#copyAdminDiagnostics');
+const adminDiagnosticsCopyStatus = document.querySelector('#adminDiagnosticsCopyStatus');
 const adminFeatureControls = document.querySelector('#adminFeatureControls');
 const adminAuditLog = document.querySelector('#adminAuditLog');
 const refreshAdminAuditLog = document.querySelector('#refreshAdminAuditLog');
@@ -299,6 +301,31 @@ const maxEvidenceBatchBytes = 90 * 1024 * 1024;
 const textEvidenceSampleBytes = 180 * 1024;
 const defaultUploadChunkBytes = 1024 * 1024;
 const conversationPayloadHistoryTurns = 12;
+const fallbackRequestLimitBytes = {
+  conversation: 8 * 1024 * 1024,
+  evidenceIndex: 15 * 1024 * 1024,
+  evidenceSearch: 4 * 1024 * 1024,
+  reviewPack: 8 * 1024 * 1024,
+  standardRun: 8 * 1024 * 1024,
+  admin: 512 * 1024
+};
+const fallbackLlmRetrySettings = {
+  maxAttempts: 3,
+  fastFailMs: 6500,
+  backoffBaseMs: 600,
+  maxRetryDelayMs: 1500,
+  rateLimitMaxRetryDelayMs: 2000,
+  retryJitterMs: 150
+};
+const fallbackContextSettings = {
+  historyTurns: 20,
+  turnMaxChars: 1200,
+  recentTurnsForPrompt: conversationPayloadHistoryTurns,
+  compactRecentTurnsForPrompt: 6,
+  briefMaxChars: 2500,
+  documentSummaryMaxChars: 900,
+  memorySummaryMaxChars: 2500
+};
 const evidencePipelineSteps = [
   { id: 'queue', label: 'Hashing evidence' },
   { id: 'session', label: 'Opening parser session' },
@@ -526,6 +553,78 @@ function formatBytes(bytes = 0) {
   return window.P42AppModules.evidenceUploadUi.formatBytes(bytes);
 }
 
+function formatInteger(value = 0) {
+  const number = Math.max(0, Math.round(Number(value || 0)));
+  return number.toLocaleString();
+}
+
+function numericSetting(value, fallback, options = {}) {
+  const raw = value && typeof value === 'object'
+    ? value.bytes || value.limitBytes || value.value || value.sizeBytes
+    : value;
+  const number = Number(raw);
+  const minimum = options.allowZero ? 0 : 1;
+  return Number.isFinite(number) && number >= minimum ? Math.round(number) : fallback;
+}
+
+function clientFallbackOperationalSettings() {
+  return {
+    requestLimits: { ...fallbackRequestLimitBytes },
+    uploadTargetLimits: {
+      maxFileBytes: maxEvidenceFileBytes,
+      maxBatchBytes: maxEvidenceBatchBytes,
+      chunkSizeBytes: defaultUploadChunkBytes
+    },
+    llmRetry: { ...fallbackLlmRetrySettings },
+    context: { ...fallbackContextSettings }
+  };
+}
+
+function adminOperationalSettings(status = adminStatusState) {
+  const fallback = clientFallbackOperationalSettings();
+  const settings = status?.settings || status?.operationalSettings || {};
+  const requestLimits = settings.requestLimits || {};
+  const uploadTargetLimits = settings.uploadTargetLimits || {};
+  const llmRetry = settings.llmRetry || {};
+  const context = settings.context || {};
+  return {
+    requestLimits: {
+      conversation: numericSetting(requestLimits.conversation, fallback.requestLimits.conversation),
+      evidenceIndex: numericSetting(requestLimits.evidenceIndex, fallback.requestLimits.evidenceIndex),
+      evidenceSearch: numericSetting(requestLimits.evidenceSearch, fallback.requestLimits.evidenceSearch),
+      reviewPack: numericSetting(requestLimits.reviewPack, fallback.requestLimits.reviewPack),
+      standardRun: numericSetting(requestLimits.standardRun, fallback.requestLimits.standardRun),
+      admin: numericSetting(requestLimits.admin, fallback.requestLimits.admin)
+    },
+    uploadTargetLimits: {
+      maxFileBytes: numericSetting(uploadTargetLimits.maxFileBytes, fallback.uploadTargetLimits.maxFileBytes),
+      maxBatchBytes: numericSetting(uploadTargetLimits.maxBatchBytes, fallback.uploadTargetLimits.maxBatchBytes),
+      chunkSizeBytes: numericSetting(uploadTargetLimits.chunkSizeBytes, fallback.uploadTargetLimits.chunkSizeBytes)
+    },
+    llmRetry: {
+      maxAttempts: numericSetting(llmRetry.maxAttempts, fallback.llmRetry.maxAttempts),
+      fastFailMs: numericSetting(llmRetry.fastFailMs, fallback.llmRetry.fastFailMs, { allowZero: true }),
+      backoffBaseMs: numericSetting(llmRetry.backoffBaseMs, fallback.llmRetry.backoffBaseMs, { allowZero: true }),
+      maxRetryDelayMs: numericSetting(llmRetry.maxRetryDelayMs, fallback.llmRetry.maxRetryDelayMs, { allowZero: true }),
+      rateLimitMaxRetryDelayMs: numericSetting(llmRetry.rateLimitMaxRetryDelayMs, fallback.llmRetry.rateLimitMaxRetryDelayMs, { allowZero: true }),
+      retryJitterMs: numericSetting(llmRetry.retryJitterMs, fallback.llmRetry.retryJitterMs, { allowZero: true })
+    },
+    context: {
+      historyTurns: numericSetting(context.historyTurns, fallback.context.historyTurns),
+      turnMaxChars: numericSetting(context.turnMaxChars, fallback.context.turnMaxChars),
+      recentTurnsForPrompt: numericSetting(context.recentTurnsForPrompt, fallback.context.recentTurnsForPrompt),
+      compactRecentTurnsForPrompt: numericSetting(context.compactRecentTurnsForPrompt, fallback.context.compactRecentTurnsForPrompt),
+      briefMaxChars: numericSetting(context.briefMaxChars, fallback.context.briefMaxChars),
+      documentSummaryMaxChars: numericSetting(context.documentSummaryMaxChars, fallback.context.documentSummaryMaxChars),
+      memorySummaryMaxChars: numericSetting(context.memorySummaryMaxChars, fallback.context.memorySummaryMaxChars)
+    }
+  };
+}
+
+function uploadTargetLimitsForClient() {
+  return adminOperationalSettings(adminStatusState).uploadTargetLimits;
+}
+
 function cleanEvidenceText(value = '') {
   return window.P42AppModules.evidenceUploadUi.cleanEvidenceText(value);
 }
@@ -602,20 +701,21 @@ async function sha256File(file) {
 }
 
 function validateEvidenceFiles(files = []) {
+  const uploadLimits = uploadTargetLimitsForClient();
   if (typeof evidenceUploadPolicy().validateEvidenceFileSelection === 'function') {
     return evidenceUploadPolicy().validateEvidenceFileSelection(files, {
-      maxFileBytes: maxEvidenceFileBytes,
-      maxBatchBytes: maxEvidenceBatchBytes
+      maxFileBytes: uploadLimits.maxFileBytes,
+      maxBatchBytes: uploadLimits.maxBatchBytes
     });
   }
   const selected = Array.from(files || []);
-  const oversized = selected.find((file) => Number(file.size || 0) > maxEvidenceFileBytes);
+  const oversized = selected.find((file) => Number(file.size || 0) > uploadLimits.maxFileBytes);
   if (oversized) {
-    return { ok: false, message: `${oversized.name || 'Selected file'} exceeds the 30 MB per file max.` };
+    return { ok: false, message: `${oversized.name || 'Selected file'} exceeds the ${formatBytes(uploadLimits.maxFileBytes)} per file max.` };
   }
   const totalBytes = selected.reduce((sum, file) => sum + Number(file.size || 0), 0);
-  if (totalBytes > maxEvidenceBatchBytes) {
-    return { ok: false, message: 'Selected evidence exceeds the 90 MB batch limit.' };
+  if (totalBytes > uploadLimits.maxBatchBytes) {
+    return { ok: false, message: `Selected evidence exceeds the ${formatBytes(uploadLimits.maxBatchBytes)} batch limit.` };
   }
   return { ok: true, files: selected, totalBytes };
 }
@@ -1104,7 +1204,7 @@ async function uploadEvidenceFilesToBackend(files = [], onProgress = () => {}) {
     body: JSON.stringify({
       text: chatCaseDraft.brief || 'Compliance chat evidence upload.',
       current_case: currentCaseForDocumentParser(),
-      chunk_size_bytes: defaultUploadChunkBytes,
+      chunk_size_bytes: uploadTargetLimitsForClient().chunkSizeBytes,
       files: uploadFiles
     })
   });
@@ -1252,7 +1352,7 @@ async function ingestEvidenceFiles(files = []) {
   const selected = Array.from(files).slice(0, 8);
   if (!selected.length) return;
   const fileLabel = `${selected.length} evidence file${selected.length === 1 ? '' : 's'}`;
-  evidenceIngestionStatus.textContent = `Preparing ${fileLabel}... 30 MB per file max.`;
+  evidenceIngestionStatus.textContent = `Preparing ${fileLabel}... ${formatBytes(uploadTargetLimitsForClient().maxFileBytes)} per file max.`;
   if (activeRunMode === 'chat') {
     renderEvidencePipelineStatus({
       phase: 'queue',
@@ -4231,7 +4331,7 @@ function renderCapabilityFallbacks(results = []) {
 }
 
 function adminStatusCard(label, status, detail) {
-  const healthy = /ready|configured|active|enforced|qdrant|hash|ok|available|enabled|per file|recent turns|server-side retained/i.test(`${status} ${detail}`);
+  const healthy = /ready|configured|active|enforced|qdrant|hash|ok|available|enabled|per file|conversation|request|attempts|history turns|chars|server-side retained/i.test(`${status} ${detail}`);
   const warning = /audit|local|fallback|disabled|missing|not checked|not configured|not active|not enforced/i.test(`${status} ${detail}`) && !healthy;
   const className = healthy ? 'is-ready' : warning ? 'is-warning' : 'is-danger';
   return `
@@ -4246,6 +4346,11 @@ function adminStatusCard(label, status, detail) {
 function renderAdminStatus(status = {}) {
   if (!adminStatusDashboard) return;
   const safeStatus = status || {};
+  const settings = adminOperationalSettings(safeStatus);
+  const requestLimits = settings.requestLimits;
+  const uploadTargetLimits = settings.uploadTargetLimits;
+  const llmRetry = settings.llmRetry;
+  const context = settings.context;
   const vector = safeStatus.vector || {};
   const gateway = safeStatus.gateway || {};
   const parserRelay = safeStatus.parserRelay || {};
@@ -4255,12 +4360,19 @@ function renderAdminStatus(status = {}) {
   const indexStatus = evidenceIndexValidation.status === 'not_checked' ? 'not checked' : evidenceIndexValidation.status || 'not checked';
   const evidenceProvider = evidenceIndexMeta.provider || vector.provider || 'local-file fallback';
   const cards = [
+    ...(safeStatus.statusError
+      ? [adminStatusCard('Runtime status', 'fallback values', safeStatus.statusError)]
+      : []),
     adminStatusCard('Auth mode', auth.enforced ? 'enforced' : auth.mode || 'audit', auth.enforced ? 'RBAC policy blocks unauthorized actions.' : 'Audit-mode records actor context without blocking the demo.'),
     adminStatusCard('Audit chain', audit.hashChained ? 'hash-chained' : 'not verified', audit.provider || 'local-jsonl'),
+    adminStatusCard('Request limits', `conversation ${formatBytes(requestLimits.conversation)}`, `Standard run ${formatBytes(requestLimits.standardRun)} · admin ${formatBytes(requestLimits.admin)}.`),
+    adminStatusCard('Evidence request limits', `index ${formatBytes(requestLimits.evidenceIndex)}`, `Search ${formatBytes(requestLimits.evidenceSearch)} · review pack ${formatBytes(requestLimits.reviewPack)}.`),
     adminStatusCard('Vector memory', vector.provider || 'local-file', vector.qdrantConfigured ? `Qdrant collection ${vector.collection || 'configured'}` : 'Local-file fallback is demo-grade.'),
     adminStatusCard('Evidence index', indexStatus, evidenceIndexValidation.detail || 'Restored evidence index metadata has not been checked.'),
-    adminStatusCard('Evidence limits', `${formatBytes(maxEvidenceFileBytes)} per file`, `Batch ${formatBytes(maxEvidenceBatchBytes)} · chunk size ${formatBytes(defaultUploadChunkBytes)}.`),
-    adminStatusCard('Conversation context', `${conversationPayloadHistoryTurns} recent turns`, `Rolling summary ${rollingSummaryStatus(chatCaseDraft)}.`),
+    adminStatusCard('Upload targets', `${formatBytes(uploadTargetLimits.maxFileBytes)} per file`, `Batch ${formatBytes(uploadTargetLimits.maxBatchBytes)} · chunk size ${formatBytes(uploadTargetLimits.chunkSizeBytes)}.`),
+    adminStatusCard('LLM retry policy', `${formatInteger(llmRetry.maxAttempts)} attempts`, `Fast fail ${formatInteger(llmRetry.fastFailMs)} ms · retry cap ${formatInteger(llmRetry.maxRetryDelayMs)} ms · rate-limit cap ${formatInteger(llmRetry.rateLimitMaxRetryDelayMs)} ms · jitter ${formatInteger(llmRetry.retryJitterMs)} ms.`),
+    adminStatusCard('Context caps', `${formatInteger(context.historyTurns)} history turns`, `Prompt uses ${formatInteger(context.recentTurnsForPrompt)} recent turns · ${formatInteger(context.turnMaxChars)} chars per turn.`),
+    adminStatusCard('Context summaries', `brief ${formatInteger(context.briefMaxChars)} chars`, `Document ${formatInteger(context.documentSummaryMaxChars)} chars · memory ${formatInteger(context.memorySummaryMaxChars)} chars · rolling summary ${rollingSummaryStatus(chatCaseDraft)}.`),
     adminStatusCard('Evidence index provider', evidenceProvider, `${indexedChunkCount()} indexed chunk${indexedChunkCount() === 1 ? '' : 's'} currently referenced by the browser.`),
     adminStatusCard('Evidence boundary', 'server-side retained', 'Full evidence text and embeddings stay server-side after parser/indexing. Conversation calls send IDs, statuses, summaries, snippets, and retrieval matches only.'),
     adminStatusCard('Compass gateway', gateway.configured ? 'required / configured' : 'required / missing', gateway.configured ? 'Required smart intake, advisory LLM, and embeddings boundary is configured.' : 'Compass gateway is not configured — smart intake is unavailable. Contact your administrator.'),
@@ -4268,6 +4380,54 @@ function renderAdminStatus(status = {}) {
     adminStatusCard('CrewAI runtime', runtime.liveCrewAIEnabled ? 'requested' : runtime.default || 'crewai_llm', runtime.liveLlmAdvisoryEnabled ? 'Live advisory specialists enabled.' : 'Deterministic decision owner remains active.')
   ];
   adminStatusDashboard.innerHTML = cards.join('');
+}
+
+function redactSensitiveDiagnostics(value) {
+  if (Array.isArray(value)) return value.map(redactSensitiveDiagnostics);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => {
+      if (/token|secret|password|authorization|bearer|api[_-]?key|client[_-]?secret/i.test(key)) {
+        return [key, '[redacted]'];
+      }
+      return [key, redactSensitiveDiagnostics(item)];
+    }));
+  }
+  return value;
+}
+
+function adminDiagnosticPayload() {
+  const status = adminStatusState && typeof adminStatusState === 'object'
+    ? adminStatusState
+    : { status: 'not_loaded', settings: clientFallbackOperationalSettings() };
+  return redactSensitiveDiagnostics({
+    copiedAt: new Date().toISOString(),
+    adminStatus: {
+      ...status,
+      settings: adminOperationalSettings(status)
+    }
+  });
+}
+
+async function copyAdminDiagnosticJson() {
+  if (!copyAdminDiagnostics) return;
+  const originalLabel = copyAdminDiagnostics.textContent;
+  const payload = `${JSON.stringify(adminDiagnosticPayload(), null, 2)}\n`;
+  try {
+    await navigator.clipboard.writeText(payload);
+    copyAdminDiagnostics.textContent = 'Copied';
+    if (adminDiagnosticsCopyStatus) {
+      adminDiagnosticsCopyStatus.textContent = 'Safe diagnostic JSON copied.';
+    }
+  } catch (error) {
+    if (adminDiagnosticsCopyStatus) {
+      adminDiagnosticsCopyStatus.textContent = error instanceof Error ? error.message : 'Copy failed.';
+    }
+  } finally {
+    window.setTimeout(() => {
+      copyAdminDiagnostics.textContent = originalLabel || 'Copy diagnostic JSON';
+      if (adminDiagnosticsCopyStatus) adminDiagnosticsCopyStatus.textContent = '';
+    }, 1800);
+  }
 }
 
 async function loadAdminStatus() {
@@ -4279,13 +4439,12 @@ async function loadAdminStatus() {
     renderAdminStatus(status);
     return status;
   } catch (error) {
-    adminStatusDashboard.innerHTML = `
-      <article class="admin-status-card is-danger">
-        <span>Runtime status</span>
-        <strong>unavailable</strong>
-        <p>${escapeHtml(error instanceof Error ? error.message : 'Could not load admin status.')}</p>
-      </article>
-    `;
+    adminStatusState = {
+      status: 'unavailable',
+      statusError: error instanceof Error ? error.message : 'Could not load admin status.',
+      settings: clientFallbackOperationalSettings()
+    };
+    renderAdminStatus(adminStatusState);
     return null;
   }
 }
@@ -4679,6 +4838,10 @@ adminBearerToken?.addEventListener('change', () => {
 
 refreshAdminAuditLog?.addEventListener('click', () => {
   loadAuditLog();
+});
+
+copyAdminDiagnostics?.addEventListener('click', () => {
+  copyAdminDiagnosticJson();
 });
 
 sampleRun.addEventListener('click', () => {

@@ -25,7 +25,7 @@
       return {
         ok: false,
         reason: 'file_too_large',
-        message: `${oversized.name || 'Selected file'} is ${formatBytes(oversized.size)}. Evidence uploads are limited to 30 MB per file max.`
+        message: `${oversized.name || 'Selected file'} is ${formatBytes(oversized.size)}. Evidence uploads are limited to ${formatBytes(fileLimit)} per file max.`
       };
     }
     const totalBytes = selected.reduce((sum, file) => sum + Number(file.size || 0), 0);
@@ -33,7 +33,7 @@
       return {
         ok: false,
         reason: 'batch_too_large',
-        message: `Selected evidence totals ${formatBytes(totalBytes)}. Upload up to 90 MB per batch.`
+        message: `Selected evidence totals ${formatBytes(totalBytes)}. Upload up to ${formatBytes(batchLimit)} per batch.`
       };
     }
     return { ok: true, files: selected, totalBytes };

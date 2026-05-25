@@ -8,6 +8,9 @@ const { readJsonBody } = require('../../lib/http');
 const {
   ADMIN_BODY_LIMIT_BYTES,
   CONVERSATION_BODY_LIMIT_BYTES,
+  EVIDENCE_UPLOAD_CHUNK_SIZE_BYTES,
+  EVIDENCE_UPLOAD_MAX_BATCH_BYTES,
+  EVIDENCE_UPLOAD_MAX_FILE_BYTES,
   EVIDENCE_INDEX_BODY_LIMIT_BYTES,
   EVIDENCE_SEARCH_BODY_LIMIT_BYTES,
   REVIEW_PACK_BODY_LIMIT_BYTES,
@@ -51,6 +54,9 @@ test('request limit defaults match documented JSON boundaries', () => {
   assert.equal(REVIEW_PACK_BODY_LIMIT_BYTES, 8 * 1024 * 1024);
   assert.equal(STANDARD_RUN_BODY_LIMIT_BYTES, 8 * 1024 * 1024);
   assert.equal(ADMIN_BODY_LIMIT_BYTES, 512 * 1024);
+  assert.equal(EVIDENCE_UPLOAD_MAX_FILE_BYTES, 30 * 1024 * 1024);
+  assert.equal(EVIDENCE_UPLOAD_MAX_BATCH_BYTES, 90 * 1024 * 1024);
+  assert.equal(EVIDENCE_UPLOAD_CHUNK_SIZE_BYTES, 1024 * 1024);
 });
 
 test('request limit env overrides accept byte and mb values', () => {

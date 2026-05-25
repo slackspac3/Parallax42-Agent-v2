@@ -2843,6 +2843,25 @@ body:not([data-run-complete="true"]) .decision-room-rerun {
   margin-bottom: 12px;
 }
 
+.admin-panel-title-row {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-panel-title-row .secondary-button {
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+.admin-copy-status {
+  min-height: 16px;
+  color: var(--accent);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .admin-runtime-boundary-note {
   display: grid;
   gap: 4px;
@@ -3427,6 +3446,8 @@ body:not([data-run-complete="true"]) .decision-room-rerun {
   .mode-tabs { flex-wrap: wrap; }
   .mode-tabs::before { width: 100%; }
   .mode-tab { flex: 1 1 130px; min-width: 0; }
+  .admin-panel-title-row { display: grid; }
+  .admin-panel-title-row .secondary-button { justify-self: start; white-space: normal; }
 
   .chat-suggestions { grid-template-columns: 1fr; }
   /* on mobile keep the same logical order — input at bottom */

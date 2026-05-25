@@ -410,9 +410,15 @@
 
             <section class="admin-console-panel">
               <div class="admin-panel-heading">
-                <span class="eyebrow">Runtime status</span>
-                <strong>Admin readiness</strong>
-                <p>Safe configuration signals only; no secrets or raw environment values are exposed.</p>
+                <div class="admin-panel-title-row">
+                  <div>
+                    <span class="eyebrow">Runtime status</span>
+                    <strong>Admin readiness</strong>
+                    <p>Safe configuration signals only; no secrets or raw environment values are exposed.</p>
+                  </div>
+                  <button type="button" id="copyAdminDiagnostics" class="secondary-button">Copy diagnostic JSON</button>
+                </div>
+                <small id="adminDiagnosticsCopyStatus" class="admin-copy-status" aria-live="polite"></small>
               </div>
               <div class="admin-runtime-boundary-note">
                 <strong>Full evidence retained server-side</strong>
