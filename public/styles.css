@@ -539,6 +539,8 @@ nav {
 }
 
 nav a {
+  display: inline-flex;
+  align-items: center;
   padding: 6px 12px;
   border-radius: var(--r-sm);
   font-size: 13px;
@@ -550,6 +552,12 @@ nav a {
 nav a:hover {
   color: var(--text);
   background: rgba(255, 255, 255, 0.05);
+}
+
+nav a.is-active,
+nav a[aria-current="page"] {
+  color: var(--accent);
+  background: rgba(34, 227, 180, 0.08);
 }
 
 .topbar-status {
@@ -4868,9 +4876,11 @@ body:not([data-run-complete="true"]) .decision-room-rerun {
     font-weight: 750;
   }
 
-  .topbar nav a:first-child {
+  .topbar nav a.is-active,
+  .topbar nav a[aria-current="page"] {
     color: var(--accent);
     border-bottom: 2px solid var(--accent);
+    background: transparent;
   }
 
   .topbar-status span {
@@ -5645,6 +5655,41 @@ body:not([data-run-complete="true"]) .decision-room-rerun {
   .admin-section,
   .hardening-section {
     display: none;
+  }
+
+  body[data-main-section] .command-center,
+  body[data-main-section] .evidence-board,
+  body[data-main-section] .audit-section,
+  body[data-main-section] .admin-section,
+  body[data-main-section] .hardening-section {
+    display: none;
+  }
+
+  body[data-main-section="agent"] .command-center,
+  body[data-main-section="agent"][data-run-mode="chat"] .command-center {
+    display: grid;
+  }
+
+  body[data-main-section="evidence"] .evidence-board,
+  body[data-main-section="audit"] .audit-section,
+  body[data-main-section="admin"] .admin-section,
+  body[data-main-section="hardening"] .hardening-section {
+    display: block;
+    width: 100%;
+    height: calc(100svh - 64px);
+    margin: 0;
+    padding: 28px 36px 64px;
+    overflow-y: auto;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    box-shadow: none;
+    scrollbar-gutter: stable;
+  }
+
+  body[data-main-section="evidence"] .evidence-board {
+    display: grid;
+    align-content: start;
   }
 }
 

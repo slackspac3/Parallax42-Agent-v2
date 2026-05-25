@@ -190,7 +190,7 @@ function conversationResponse(body = {}) {
 
   if (/dont know|don't know|not sure|unknown|do not know/i.test(body.message || '') && /geography|regulatory/i.test(activeQuestion)) {
     return {
-      reply: 'I marked geography as pending and will keep it as a reviewer gap.',
+      reply: 'I marked geography as pending and will keep it as a reviewer gap. What source evidence should I treat as proof for this decision?',
       questions: ['What source evidence should I treat as proof for this decision?'],
       runReadiness: { runnable: false, score: 0.52, missingFields: ['evidence'] },
       caseDraft: baseDraft({
@@ -245,6 +245,40 @@ async function installMocks(page, records) {
         { chunkId: 'UP-MOCK-01_CHUNK_04', evidenceId: 'UP-MOCK-01' }
       ],
       index: { provider: 'qdrant', chunkCount: 4, evidenceIds: ['UP-MOCK-01'] }
+    }));
+  });
+
+  await page.route('**/api/evidence/search', async (route) => {
+    await route.fulfill(jsonResponse({
+      ok: true,
+      provider: 'qdrant',
+      matches: []
+    }));
+  });
+
+  await page.route('**/api/benchmarks', async (route) => {
+    await route.fulfill(jsonResponse({
+      summary: {
+        passed: 4,
+        cases: 4,
+        passRate: 1,
+        p95DurationMs: 42
+      },
+      results: []
+    }));
+  });
+
+  await page.route('**/api/readiness', async (route) => {
+    await route.fulfill(jsonResponse({
+      submissionReadiness: {
+        sovereignModelBoundary: 'ready',
+        auditTraceability: 'ready',
+        rbac: 'ready',
+        evidenceRetrieval: 'ready',
+        benchmarks: 'ready',
+        responsibleAi: 'ready',
+        videoDemo: 'ready'
+      }
     }));
   });
 
@@ -306,6 +340,12 @@ async function sendMessage(page, message) {
   await page.locator('#chatInput').press('Enter');
 }
 
+async function assertMainSectionVisible(page, section, selector, pattern) {
+  await page.waitForFunction((expected) => document.body.dataset.mainSection === expected, section, { timeout: 5000 });
+  assert.equal(await page.locator(selector).isVisible(), true, `${selector} should be visible for ${section}`);
+  await assertVisibleText(page, selector, pattern);
+}
+
 async function main() {
   const server = await startServerIfNeeded({
     port: PORT,
@@ -330,6 +370,21 @@ async function main() {
       await page.waitForSelector('#chatInput');
       await assertNonBlankWorkbench(page);
       await assertFirstViewportLayout(page);
+
+      await page.setViewportSize({ width: 1440, height: 900 });
+      const primaryNav = page.getByRole('navigation', { name: 'Primary' });
+      await primaryNav.getByRole('link', { name: 'Admin' }).click();
+      await assertMainSectionVisible(page, 'admin', '#admin', /Admin Console/i);
+      await primaryNav.getByRole('link', { name: 'Audit Pack' }).click();
+      await assertMainSectionVisible(page, 'audit', '#audit', /Artifacts a reviewer can inspect/i);
+      await primaryNav.getByRole('link', { name: 'Hardening' }).click();
+      await assertMainSectionVisible(page, 'hardening', '#hardening', /Production hardening/i);
+      await primaryNav.getByRole('link', { name: 'Evidence' }).click();
+      await assertMainSectionVisible(page, 'evidence', '#evidence', /Evidence graph/i);
+      await primaryNav.getByRole('link', { name: 'Agent' }).click();
+      await assertMainSectionVisible(page, 'agent', '#run', /Compliance advisor/i);
+      assert.equal(await page.locator('#chatInput').isVisible(), true, 'Advisor chat input should be visible after returning to Agent');
+      await page.setViewportSize({ width: 1440, height: 1000 });
 
       await page.evaluate(() => {
         window.localStorage.setItem('p42:evidence-index-meta', JSON.stringify({
@@ -375,7 +430,7 @@ async function main() {
       await assertVisibleText(page, '#chatMessages', /upload the agreement/i);
 
       await page.locator('#chatEvidenceInput').setInputFiles(FIXTURE);
-      await assertVisibleText(page, '#chatMessages', /Run council to produce|service agreement first|ready when you are/i, { timeout: 20_000 });
+      await assertVisibleText(page, '#chatMessages', /Run council to produce|service agreement first|ready when you are|indexed citation-ready evidence/i, { timeout: 20_000 });
       assert.equal(records.conversation.at(-1).eventType, 'evidence_uploaded');
       assert.equal(records.conversation.at(-1).activeQuestion, '');
       assert.ok(records.evidenceIndex.length >= 1, 'evidence indexing API should be called after upload');

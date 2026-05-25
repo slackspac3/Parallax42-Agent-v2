@@ -80,6 +80,7 @@ const apiMode = document.querySelector('#apiMode');
 const relayUrl = document.querySelector('#relayUrl');
 const backendUrl = document.querySelector('#backendUrl');
 const adminBearerToken = document.querySelector('#adminBearerToken');
+const topbarSectionLinks = document.querySelectorAll('.topbar nav a[data-main-section]');
 const runModeButtons = document.querySelectorAll('.mode-tab[data-run-mode]');
 const casePanelEyebrow = document.querySelector('#casePanelEyebrow');
 const casePanelTitle = document.querySelector('#casePanelTitle');
@@ -160,6 +161,8 @@ let adminFeatureState = null;
 let adminStatusState = null;
 let humanReviewRecord = null;
 let chatCaseDraft = {};
+let activeMainSection = 'agent';
+document.body.dataset.mainSection = activeMainSection;
 let chatRunReadiness = null;
 let chatMissingFields = [];
 let workspaceView = 'chat';
@@ -1591,6 +1594,97 @@ function ensureDecisionRoomVisible() {
     renderRun(outputRun);
   } else {
     renderDecisionRoomEmptyState('No council output has been generated yet. Return to Advisor, describe the case, then run the council.');
+  }
+}
+
+const mainSections = new Set(['agent', 'evidence', 'audit', 'admin', 'hardening']);
+const mainSectionHash = {
+  agent: '#run',
+  evidence: '#evidence',
+  audit: '#audit',
+  admin: '#admin',
+  hardening: '#hardening'
+};
+
+function mainSectionFromHash(hash = window.location.hash) {
+  const cleanHash = String(hash || '').toLowerCase();
+  if (cleanHash === '#evidence') return 'evidence';
+  if (cleanHash === '#audit') return 'audit';
+  if (cleanHash === '#admin') return 'admin';
+  if (cleanHash === '#hardening') return 'hardening';
+  return 'agent';
+}
+
+function isCompactMainLayout() {
+  return window.matchMedia('(max-width: 1180px)').matches;
+}
+
+function updateTopbarSectionState(section) {
+  topbarSectionLinks.forEach((link) => {
+    const selected = link.dataset.mainSection === section;
+    link.classList.toggle('is-active', selected);
+    if (selected) {
+      link.setAttribute('aria-current', 'page');
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  });
+}
+
+function updateMainSectionHash(section, replace = false) {
+  const hash = mainSectionHash[section] || mainSectionHash.agent;
+  if (window.location.hash === hash) return;
+  const nextUrl = `${window.location.pathname}${window.location.search}${hash}`;
+  window.history[replace ? 'replaceState' : 'pushState']({ mainSection: section }, '', nextUrl);
+}
+
+function scrollMainSectionIntoView(section, behavior = 'smooth') {
+  const selector = mainSectionHash[section] || mainSectionHash.agent;
+  const node = document.querySelector(selector);
+  if (!node) return;
+  if (isCompactMainLayout()) {
+    node.scrollIntoView({ behavior, block: 'start' });
+    return;
+  }
+  if (section !== 'agent' && typeof node.scrollTo === 'function') {
+    node.scrollTo({ top: 0, behavior: 'auto' });
+  }
+}
+
+function refreshMainSection(section) {
+  if (section === 'admin') {
+    loadDeploymentStatus();
+    loadAdminStatus();
+    loadAdminFeatures();
+    loadAuditLog();
+  } else if (section === 'hardening') {
+    loadReadiness();
+    loadBenchmarks();
+  } else if (section === 'audit') {
+    ensureDecisionRoomVisible();
+  }
+}
+
+function setMainSection(section = 'agent', options = {}) {
+  const nextSection = mainSections.has(section) ? section : 'agent';
+  activeMainSection = nextSection;
+  document.body.dataset.mainSection = activeMainSection;
+  updateTopbarSectionState(activeMainSection);
+  if (options.updateHash) {
+    updateMainSectionHash(activeMainSection, Boolean(options.replaceHash));
+  }
+  if (activeMainSection === 'agent') {
+    setRunMode('chat', { skipRender: true });
+    setWorkspaceView('chat');
+    renderChatMessages();
+    renderContextStrength();
+    renderChatAttachments();
+  }
+  if (options.refresh !== false) {
+    refreshMainSection(activeMainSection);
+  }
+  if (options.scroll !== false) {
+    window.requestAnimationFrame(() => scrollMainSectionIntoView(activeMainSection, options.behavior || 'smooth'));
   }
 }
 
@@ -4613,14 +4707,35 @@ async function loadDeploymentStatus() {
   loadAdminFeatures();
 }
 
+topbarSectionLinks.forEach((link) => {
+  link.addEventListener('click', (event) => {
+    event.preventDefault();
+    setMainSection(link.dataset.mainSection, { updateHash: true, scroll: true, refresh: true });
+  });
+});
+
+window.addEventListener('popstate', () => {
+  setMainSection(mainSectionFromHash(), { updateHash: false, scroll: true, refresh: true, behavior: 'auto' });
+});
+
+window.addEventListener('hashchange', () => {
+  setMainSection(mainSectionFromHash(), { updateHash: false, scroll: true, refresh: true, behavior: 'auto' });
+});
+
 runModeButtons.forEach((button) => {
   button.addEventListener('click', () => {
+    if (activeMainSection !== 'agent') {
+      setMainSection('agent', { updateHash: true, scroll: false, refresh: false });
+    }
     if (button.dataset.runMode === 'chat') setWorkspaceView('chat');
     setRunMode(button.dataset.runMode);
   });
 });
 
 councilOutputTab?.addEventListener('click', () => {
+  if (activeMainSection !== 'agent') {
+    setMainSection('agent', { updateHash: true, scroll: false, refresh: false });
+  }
   setRunMode('chat', { skipRender: true });
   setWorkspaceView('output');
   const outputRun = lastRuns.chat?.ok ? lastRuns.chat : lastRun?.ok ? lastRun : null;
@@ -4957,6 +5072,7 @@ function animateNetwork() {
 setRunMode('chat');
 applyScenario(currentScenarioKey);
 hydrateConfigForm();
+setMainSection(mainSectionFromHash(), { updateHash: false, scroll: true, refresh: false, behavior: 'auto' });
 restoreEvidenceIndexFromStorage().then(() => {
   renderChatMessages();
   renderContextStrength();

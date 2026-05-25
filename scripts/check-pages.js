@@ -51,4 +51,25 @@ for (const asset of [
   }
 }
 
+const navSections = {
+  '#run': 'agent',
+  '#evidence': 'evidence',
+  '#audit': 'audit',
+  '#admin': 'admin',
+  '#hardening': 'hardening'
+};
+
+for (const [href, section] of Object.entries(navSections)) {
+  const hrefIndex = html.indexOf(`href="${href}"`);
+  if (hrefIndex === -1) {
+    throw new Error(`public/index.html is missing topbar link ${href}`);
+  }
+  const tagStart = html.lastIndexOf('<a ', hrefIndex);
+  const tagEnd = html.indexOf('>', hrefIndex);
+  const tag = tagStart >= 0 && tagEnd >= 0 ? html.slice(tagStart, tagEnd + 1) : '';
+  if (!tag.includes(`data-main-section="${section}"`)) {
+    throw new Error(`Topbar link ${href} must declare data-main-section="${section}"`);
+  }
+}
+
 process.stdout.write('GitHub Pages asset check passed.\n');
