@@ -231,6 +231,11 @@ async function installMocks(page, records) {
     await route.fulfill(jsonResponse(conversationResponse(body)));
   });
 
+  await page.route('**/api/agent/run', async (route) => {
+    records.agentRun.push(route.request().postDataJSON());
+    await route.fulfill(jsonResponse(mockRunResult()));
+  });
+
   await page.route('**/api/evidence/index', async (route) => {
     records.evidenceIndex.push(route.request().postDataJSON());
     await route.fulfill(jsonResponse({
@@ -346,6 +351,13 @@ async function assertMainSectionVisible(page, section, selector, pattern) {
   await assertVisibleText(page, selector, pattern);
 }
 
+async function assertCouncilOutputVisible(page) {
+  await page.waitForFunction(() => document.body.dataset.workspaceView === 'output', null, { timeout: 5000 });
+  await assertVisibleText(page, '#workflow', /Executive decision room|Human approval required|Deterministic compliance engine/i);
+  const specialistTextLength = await page.locator('#specialistList').evaluate((node) => (node.textContent || '').trim().length);
+  assert.ok(specialistTextLength > 0, 'specialistList should contain decision output');
+}
+
 async function main() {
   const server = await startServerIfNeeded({
     port: PORT,
@@ -360,7 +372,7 @@ async function main() {
   });
   const browser = await chromium.launch({ headless: process.env.PLAYWRIGHT_HEADLESS !== '0' });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-  const records = { conversation: [], evidenceIndex: [], backend: [] };
+  const records = { agentRun: [], conversation: [], evidenceIndex: [], backend: [] };
   const diagnostics = attachBrowserDiagnostics(page, { baseUrl: BASE_URL });
 
   try {
@@ -441,6 +453,24 @@ async function main() {
       await page.waitForFunction(() => document.body.dataset.workspaceView === 'output', null, { timeout: 12_000 });
       await assertVisibleText(page, '#specialistList', /Human approval|Required Reviewer Actions|Evidence Quality|Specialist Collaboration/i);
       await assertVisibleText(page, '#workflow', /Executive decision room|Export review pack PDF|Deterministic compliance engine/i);
+      await page.locator('#councilOutputTab').click();
+      await assertCouncilOutputVisible(page);
+
+      await primaryNav.getByRole('link', { name: 'Admin' }).click();
+      await assertMainSectionVisible(page, 'admin', '#admin', /Admin Console/i);
+      await primaryNav.getByRole('link', { name: 'Hardening' }).click();
+      await assertMainSectionVisible(page, 'hardening', '#hardening', /Production hardening/i);
+      await primaryNav.getByRole('link', { name: 'Agent' }).click();
+      await assertMainSectionVisible(page, 'agent', '#run', /Compliance advisor/i);
+      await page.locator('#councilOutputTab').click();
+      await assertCouncilOutputVisible(page);
+
+      await page.locator('#demoModeTab').click();
+      await page.locator('[data-scenario="financeVendor"]').click();
+      await page.waitForFunction(() => document.body.dataset.runComplete === 'true', null, { timeout: 12_000 });
+      await page.locator('#councilOutputTab').click();
+      await assertCouncilOutputVisible(page);
+      assert.ok(records.agentRun.length >= 1, 'demo council run should call the agent run API');
 
       diagnostics.assertClean();
     });

@@ -148,6 +148,8 @@ const lastRuns = {
   live: null,
   chat: null
 };
+let latestCompletedRunMode = null;
+let latestCompletedRun = null;
 let activeRunMode = 'chat';
 let currentScenarioKey = 'exportControl';
 let playbackTimers = [];
@@ -1570,12 +1572,49 @@ function clearPlaybackTimers() {
   playbackTimers = [];
 }
 
-function setWorkspaceView(view = 'chat') {
+function completedRunRegistry() {
+  return window.P42AppModules.completedRunRegistry || {};
+}
+
+function isCompletedRun(run) {
+  return typeof completedRunRegistry().isCompletedRun === 'function'
+    ? completedRunRegistry().isCompletedRun(run)
+    : Boolean(run?.ok);
+}
+
+function registerCompletedRun(runMode = activeRunMode, result = null) {
+  if (!isCompletedRun(result)) return result;
+  const mode = ['demo', 'live', 'chat'].includes(runMode) ? runMode : activeRunMode;
+  lastRuns[mode] = result;
+  lastRun = result;
+  latestCompletedRunMode = mode;
+  latestCompletedRun = result;
+  return result;
+}
+
+function getLatestCompletedRun(preferredMode = '') {
+  if (typeof completedRunRegistry().selectLatestCompletedRun === 'function') {
+    return completedRunRegistry().selectLatestCompletedRun({
+      lastRuns,
+      latestCompletedRun,
+      lastRun
+    }, preferredMode);
+  }
+  if (preferredMode && isCompletedRun(lastRuns[preferredMode])) return lastRuns[preferredMode];
+  if (isCompletedRun(latestCompletedRun)) return latestCompletedRun;
+  if (isCompletedRun(lastRuns.chat)) return lastRuns.chat;
+  if (isCompletedRun(lastRuns.live)) return lastRuns.live;
+  if (isCompletedRun(lastRuns.demo)) return lastRuns.demo;
+  if (isCompletedRun(lastRun)) return lastRun;
+  return null;
+}
+
+function setWorkspaceView(view = 'chat', options = {}) {
   workspaceView = view === 'output' ? 'output' : 'chat';
   document.body.dataset.workspaceView = workspaceView;
   councilOutputTab?.classList.toggle('is-active', workspaceView === 'output');
-  if (workspaceView === 'output' && activeRunMode !== 'chat') {
-    setRunMode('chat', { skipRender: true });
+  if (workspaceView !== 'output' && !options.preserveRunComplete && !getLatestCompletedRun(activeRunMode)) {
+    document.body.dataset.runComplete = 'false';
   }
   if (workspaceView === 'output') {
     window.requestAnimationFrame(() => {
@@ -1589,11 +1628,36 @@ function ensureDecisionRoomVisible() {
   if (workspaceView !== 'output' || !specialistList) return;
   const visibleText = cleanEvidenceText(specialistList.textContent || '');
   if (visibleText) return;
-  const outputRun = lastRuns.chat?.ok ? lastRuns.chat : lastRun?.ok ? lastRun : null;
+  const outputRun = getLatestCompletedRun(activeRunMode);
   if (outputRun) {
-    renderRun(outputRun);
+    renderRun(outputRun, { finalVisible: true, runMode: latestCompletedRunMode || activeRunMode });
   } else {
     renderDecisionRoomEmptyState('No council output has been generated yet. Return to Advisor, describe the case, then run the council.');
+  }
+}
+
+function showCouncilOutput() {
+  const outputRun = getLatestCompletedRun(activeRunMode);
+  clearPlaybackTimers();
+  if (activeMainSection !== 'agent') {
+    setMainSection('agent', {
+      updateHash: true,
+      scroll: false,
+      refresh: false,
+      restoreAdvisor: false
+    });
+  }
+  setWorkspaceView('output', { preserveRunComplete: true });
+  if (outputRun) {
+    lastRun = outputRun;
+    renderRun(outputRun, {
+      finalVisible: true,
+      runMode: latestCompletedRunMode || activeRunMode
+    });
+    document.body.classList.add('has-decision-output');
+    document.body.dataset.runComplete = 'true';
+  } else {
+    renderDecisionRoomEmptyState('Run the council from Advisor, Replay, or Evidence to produce the executive decision room.');
   }
 }
 
@@ -1673,7 +1737,7 @@ function setMainSection(section = 'agent', options = {}) {
   if (options.updateHash) {
     updateMainSectionHash(activeMainSection, Boolean(options.replaceHash));
   }
-  if (activeMainSection === 'agent') {
+  if (activeMainSection === 'agent' && options.restoreAdvisor !== false) {
     setRunMode('chat', { skipRender: true });
     setWorkspaceView('chat');
     renderChatMessages();
@@ -2531,7 +2595,7 @@ function renderModeIdle(mode = activeRunMode) {
   const copy = runModeCopy[mode] || runModeCopy.demo;
   lastRun = lastRuns[mode];
   if (lastRun?.ok && !(mode === 'chat' && workspaceView === 'chat')) {
-    renderRun(lastRun);
+    renderRun(lastRun, { runMode: mode });
     if (mode === 'chat') renderChatMessages();
     return;
   }
@@ -2585,7 +2649,7 @@ function renderModeIdle(mode = activeRunMode) {
 }
 
 function resetChatCaseSession(options = {}) {
-  const hasCompletedRun = Boolean(lastRuns.chat?.ok || (activeRunMode === 'chat' && lastRun?.ok));
+  const hasCompletedRun = Boolean(getLatestCompletedRun(activeRunMode));
   const hasConversation = chatMessages.length > 1 || hasChatContext() || uploadedEvidence.length;
   if (!options.skipConfirm && (hasCompletedRun || hasConversation)) {
     const shouldReset = window.confirm('Start a new case? Your current conversation and council output will be cleared.');
@@ -2596,6 +2660,10 @@ function resetChatCaseSession(options = {}) {
   document.title = DEFAULT_DOCUMENT_TITLE;
   lastRun = null;
   lastRuns.chat = null;
+  lastRuns.demo = null;
+  lastRuns.live = null;
+  latestCompletedRunMode = null;
+  latestCompletedRun = null;
   humanReviewRecord = null;
   lastCouncilNarrative = null;
   uploadedEvidence = [];
@@ -2647,7 +2715,9 @@ function setRunMode(mode = 'demo', options = {}) {
     setWorkspaceView('chat');
   }
   document.body.dataset.runMode = activeRunMode;
-  document.body.dataset.runComplete = 'false';
+  if (!options.preserveRunComplete) {
+    document.body.dataset.runComplete = 'false';
+  }
   runModeButtons.forEach((button) => {
     const selected = button.dataset.runMode === activeRunMode;
     button.classList.toggle('is-active', selected);
@@ -3151,7 +3221,10 @@ function renderDecisionRoomEmptyState(message = 'Run the council from Advisor, R
       <span class="eyebrow">No decision memo yet</span>
       <strong>Run the council to generate the executive output.</strong>
       <p>${escapeHtml(message)}</p>
-      <button type="button" class="primary-action" data-report-action="run-council">Run council</button>
+      <div class="decision-room-empty-actions">
+        <button type="button" class="primary-action" data-report-action="run-council">Run council</button>
+        <button type="button" class="secondary-button" data-report-action="continue-conversation">Back to Advisor</button>
+      </div>
     </article>
   `;
   domainList.innerHTML = '<article class="empty-row">Domain coverage appears after the obligation mapper runs.</article>';
@@ -3233,8 +3306,7 @@ function renderRunResult(result, options = {}) {
   }
 
   if (finalVisible) {
-    lastRun = result;
-    lastRuns[activeRunMode] = result;
+    registerCompletedRun(options.runMode || activeRunMode, result);
   }
   document.body.classList.toggle('has-decision-output', Boolean(finalVisible && result.ok));
   document.body.dataset.runComplete = finalVisible && result.ok ? 'true' : 'false';
@@ -3814,17 +3886,18 @@ function buildExecReviewHtml(result = lastRun) {
 </html>`;
 }
 
-function playResult(result) {
+function playResult(result, options = {}) {
   clearPlaybackTimers();
   const stages = getStages(result);
-  renderRun(result, { stageIndex: -1, activeIndex: 0, finalVisible: false });
+  const runMode = options.runMode || activeRunMode;
+  renderRun(result, { stageIndex: -1, activeIndex: 0, finalVisible: false, runMode });
   stages.forEach((stage, index) => {
     playbackTimers.push(window.setTimeout(() => {
-      renderRun(result, { stageIndex: index, activeIndex: index, finalVisible: false });
+      renderRun(result, { stageIndex: index, activeIndex: index, finalVisible: false, runMode });
     }, 420 + (index * 520)));
   });
   playbackTimers.push(window.setTimeout(() => {
-    renderRun(result, { stageIndex: stages.length - 1, finalVisible: true });
+    renderRun(result, { stageIndex: stages.length - 1, finalVisible: true, runMode });
   }, 620 + (stages.length * 520)));
 }
 
@@ -3854,15 +3927,16 @@ async function runAgent(payload, options = {}) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
+    if (result?.ok) registerCompletedRun(runMode, result);
     if (runMode !== activeRunMode) {
       lastRuns[runMode] = result;
       loadAuditLog();
       return result;
     }
     if (options.playback) {
-      playResult(result);
+      playResult(result, { runMode });
     } else {
-      renderRun(result);
+      renderRun(result, { runMode });
     }
     loadAuditLog();
     return result;
@@ -4067,9 +4141,8 @@ async function submitChatMessage(rawMessage = '', options = {}) {
       : assistantQuestionFromText(pendingMessage.text);
     renderChatMessages();
     if (result.run?.ok) {
-      lastRuns.chat = result.run;
-      lastRun = result.run;
-      playResult(result.run);
+      registerCompletedRun('chat', result.run);
+      playResult(result.run, { runMode: 'chat' });
       loadAuditLog();
     } else {
       renderConversationState(result);
@@ -4171,8 +4244,7 @@ async function recordHumanReview() {
     });
     humanReviewRecord = recorded;
     result.humanReviewRecorded = recorded;
-    lastRun = result;
-    lastRuns[activeRunMode] = result;
+    registerCompletedRun(latestCompletedRunMode || activeRunMode, result);
     approvalButton.textContent = 'Human review recorded';
     approvalButton.disabled = true;
     approvalButton.removeAttribute('data-review-action');
@@ -4733,17 +4805,7 @@ runModeButtons.forEach((button) => {
 });
 
 councilOutputTab?.addEventListener('click', () => {
-  if (activeMainSection !== 'agent') {
-    setMainSection('agent', { updateHash: true, scroll: false, refresh: false });
-  }
-  setRunMode('chat', { skipRender: true });
-  setWorkspaceView('output');
-  const outputRun = lastRuns.chat?.ok ? lastRuns.chat : lastRun?.ok ? lastRun : null;
-  if (outputRun) {
-    renderRun(outputRun);
-  } else {
-    renderDecisionRoomEmptyState('Run the council from Advisor, Replay, or Evidence to produce the executive decision room.');
-  }
+  showCouncilOutput();
 });
 
 specialistList?.addEventListener('click', (event) => {

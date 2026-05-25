@@ -617,6 +617,13 @@ body[data-run-mode="chat"][data-workspace-view="output"] .command-center {
 
 body[data-run-mode="chat"][data-workspace-view="chat"] .runway { display: none; }
 body[data-run-mode="chat"][data-workspace-view="output"] .case-panel { display: none; }
+body[data-workspace-view="output"] .command-center {
+  grid-template-areas:
+    "tabs tabs"
+    "runway decision";
+}
+body[data-workspace-view="output"] .case-panel { display: none; }
+body[data-workspace-view="output"] .runway { display: grid; }
 
 /* Mode visibility */
 body[data-run-mode="demo"] .mode-live-only,
@@ -2742,6 +2749,13 @@ body:not([data-run-complete="true"]) .decision-room-rerun {
   color: var(--muted);
   font-size: 15px;
   line-height: 1.55;
+}
+
+.decision-room-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
 }
 
 .decision-room-empty.is-error {
