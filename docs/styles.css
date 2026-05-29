@@ -1441,6 +1441,54 @@ body[data-run-mode="chat"] .runway { align-content: start; gap: 16px; }
 
 .run-actions button { width: 100%; }
 
+.run-history-control {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.run-history-control span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.run-history-control select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  background: rgba(4, 12, 11, 0.86);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  padding: 0 10px;
+}
+
+.run-history-control select:disabled {
+  color: var(--muted);
+  opacity: 0.72;
+}
+
+.run-history-control select:focus-visible {
+  outline: 2px solid rgba(34,227,180,0.72);
+  outline-offset: 2px;
+}
+
+.run-trace-id {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 /* Progress bar */
 .run-progress {
   height: 2px;
@@ -3540,7 +3588,14 @@ body:not([data-run-complete="true"]) .decision-room-rerun {
 
   h1 { font-size: 32px; }
   .runway-top, .stage-console { grid-template-columns: 1fr; }
-  .run-actions { flex-direction: row; }
+  .run-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .run-history-control {
+    flex: 1 1 100%;
+  }
 
   .constellation-stage { aspect-ratio: 4 / 3; }
   .council-focus-card dl { grid-template-columns: 1fr; }
@@ -4992,8 +5047,7 @@ body:not([data-run-complete="true"]) .decision-room-rerun {
     animation: none;
   }
 
-  body[data-workspace-view="output"] .command-center,
-  body[data-run-complete="true"] .command-center {
+  body[data-workspace-view="output"] .command-center {
     grid-template-areas: "tabs runway decision";
   }
 
@@ -5724,6 +5778,29 @@ body:not([data-run-complete="true"]) .decision-room-rerun {
   .runway {
     grid-area: runway;
     overflow-y: auto;
+  }
+
+  body[data-main-section="agent"][data-workspace-view="output"] .command-center,
+  body[data-main-section="agent"][data-workspace-view="output"][data-run-mode="chat"] .command-center {
+    display: grid;
+    grid-template-areas: "tabs runway decision";
+  }
+
+  body[data-main-section="agent"][data-workspace-view="output"] .case-panel {
+    display: none;
+  }
+
+  body[data-main-section="agent"][data-workspace-view="output"] .runway {
+    display: grid;
+    grid-area: runway;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  body[data-main-section="agent"][data-workspace-view="output"] .decision-rail {
+    display: flex;
+    grid-area: decision;
   }
 
   .evidence-board,

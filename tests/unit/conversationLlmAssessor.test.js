@@ -528,6 +528,73 @@ test('conversation LLM assessor requests JSON mode and handles OpenAI response o
   }
 });
 
+test('conversation LLM assessor does not accept invented owner or geography updates', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1',
+      CONVERSATION_LLM_MAX_ATTEMPTS: '1'
+    }, async () => {
+      global.fetch = async (url, options) => {
+        const body = JSON.parse(options.body);
+        if (!body.response_format) {
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              model: 'gpt-5.1',
+              choices: [{ message: { content: 'I can assess the supplier risk. Who owns this review internally?' } }]
+            })
+          };
+        }
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            model: 'gpt-5.1',
+            choices: [{
+              message: {
+                content: JSON.stringify({
+                  intent: 'case_context',
+                  requestType: 'vendor_onboarding',
+                  workflowType: 'supplier_risk_review',
+                  recommendedFirstAction: 'ask_owner',
+                  conversationStage: 'asking_clarification',
+                  confidence: 0.92,
+                  nextBestQuestion: 'Who owns this review internally?',
+                  caseUpdate: {
+                    supplierName: 'managed integration partner',
+                    businessUnit: 'Group Technology Risk',
+                    geography: 'UAE',
+                    integrations: ['Oracle ERP'],
+                    riskSignals: ['privileged access']
+                  }
+                })
+              }
+            }]
+          })
+        };
+      };
+
+      const assessed = await assessConversationWithLlm({
+        message: 'Assess a managed integration partner connecting Oracle ERP with privileged access.'
+      });
+
+      assert.equal(assessed.llmAssessment.used, true);
+      assert.equal(assessed.caseDraft.supplierName, 'managed integration partner');
+      assert.equal(assessed.caseDraft.businessUnit, undefined);
+      assert.equal(assessed.caseDraft.geography, undefined);
+      assert.ok(assessed.caseDraft.integrations.includes('Oracle ERP'));
+      assert.ok(assessed.caseDraft.riskSignals.includes('privileged access'));
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test('conversation LLM assessor sends full chat context for terse answer interpretation', async () => {
   const originalFetch = global.fetch;
   try {

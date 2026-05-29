@@ -8,8 +8,32 @@ const { runComplianceAgent } = require('../../lib/complianceAgent');
 test('blocks empty cases before domain work', () => {
   const result = runComplianceAgent({});
   assert.equal(result.ok, false);
+  assert.match(result.runId, /^run_\d{14}_case-/);
+  assert.equal(result.trace[0].payload.runId, result.runId);
   assert.match(result.message, /brief or service description/i);
   assert.equal(result.trace.at(-1).eventType, 'run_blocked');
+});
+
+test('assigns unique run IDs to completed council runs', () => {
+  const baseCase = {
+    businessUnit: 'Procurement',
+    geography: 'UAE',
+    supplierName: 'Traceable Supplier',
+    brief: 'Renew a low criticality consulting supplier with no personal data access and no system integration.',
+    documents: [
+      {
+        title: 'Compliance pack',
+        summary: 'Signed contract, approval authority, security assurance review, and no personal data processing statement.'
+      }
+    ]
+  };
+  const first = runComplianceAgent(baseCase);
+  const second = runComplianceAgent(baseCase);
+  assert.equal(first.ok, true);
+  assert.equal(second.ok, true);
+  assert.match(first.runId, /^run_\d{14}_case-/);
+  assert.notEqual(first.runId, second.runId);
+  assert.equal(first.trace[0].payload.runId, first.runId);
 });
 
 test('detects privacy, AI, continuity, and third-party controls', () => {

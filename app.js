@@ -7,7 +7,8 @@ const storageKeys = {
   relayUrl: 'p42:relay-url',
   backendUrl: 'p42:backend-url',
   adminBearerToken: 'p42:admin-bearer-token',
-  evidenceIndexMeta: 'p42:evidence-index-meta'
+  evidenceIndexMeta: 'p42:evidence-index-meta',
+  runHistory: 'p42:run-history'
 };
 
 const scenarios = {
@@ -74,6 +75,7 @@ const runtimeConfig = document.querySelector('#runtimeConfig');
 const sampleRun = document.querySelector('#sampleRun');
 const exportRun = document.querySelector('#exportRun');
 const execReviewPack = document.querySelector('#execReviewPack');
+const runHistorySelect = document.querySelector('#runHistorySelect');
 const formRunButton = document.querySelector('#formRunButton');
 const resetConfig = document.querySelector('#resetConfig');
 const apiMode = document.querySelector('#apiMode');
@@ -150,6 +152,7 @@ const lastRuns = {
 };
 let latestCompletedRunMode = null;
 let latestCompletedRun = null;
+let completedRunHistory = [];
 let activeRunMode = 'chat';
 let currentScenarioKey = 'exportControl';
 let playbackTimers = [];
@@ -1582,14 +1585,140 @@ function isCompletedRun(run) {
     : Boolean(run?.ok);
 }
 
-function registerCompletedRun(runMode = activeRunMode, result = null) {
-  if (!isCompletedRun(result)) return result;
-  const mode = ['demo', 'live', 'chat'].includes(runMode) ? runMode : activeRunMode;
+const RUN_HISTORY_LIMIT = 12;
+
+function makeClientRunId(result = {}, mode = activeRunMode) {
+  const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
+  const casePart = cleanText(result.case?.caseId || result.case?.supplierName || mode || 'case')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 24) || 'case';
+  const random = Math.random().toString(36).slice(2, 8);
+  return `run_${stamp}_${casePart}_${random}`;
+}
+
+function ensureRunId(result = null, mode = activeRunMode) {
+  if (!result || typeof result !== 'object') return result;
+  if (!cleanText(result.runId)) result.runId = makeClientRunId(result, mode);
+  return result;
+}
+
+function normalizeHistoryMode(mode = activeRunMode) {
+  return ['demo', 'live', 'chat'].includes(mode) ? mode : activeRunMode;
+}
+
+function buildRunHistoryRecord(mode = activeRunMode, result = null) {
+  const normalizedMode = normalizeHistoryMode(mode);
+  const run = ensureRunId(result, normalizedMode);
+  if (!isCompletedRun(run) || !cleanText(run.runId)) return null;
+  const completedAt = cleanText(run.completedAt || run.timestamp || '') || new Date().toISOString();
+  const supplierName = cleanText(run.case?.supplierName || run.case?.serviceDescription || run.case?.brief || '');
+  const caseId = cleanText(run.case?.caseId || '');
+  const decision = cleanText(run.decision?.recommendation || run.decision?.status || '');
+  return {
+    runId: cleanText(run.runId),
+    mode: normalizedMode,
+    caseId,
+    supplierName,
+    decision,
+    completedAt,
+    gapCount: Array.isArray(run.gaps) ? run.gaps.length : 0,
+    evidenceCount: Array.isArray(run.evidenceIds) ? run.evidenceIds.length : 0,
+    result: run
+  };
+}
+
+function loadCompletedRunHistory() {
+  const records = readJsonStorage(storageKeys.runHistory, []);
+  if (!Array.isArray(records)) return [];
+  return records
+    .filter((record) => record && cleanText(record.runId) && isCompletedRun(record.result))
+    .slice(0, RUN_HISTORY_LIMIT);
+}
+
+function saveCompletedRunHistory() {
+  const records = completedRunHistory.slice(0, RUN_HISTORY_LIMIT);
+  writeJsonStorage(storageKeys.runHistory, records);
+}
+
+function formatRunHistoryTime(value = '') {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'recent';
+  try {
+    return date.toLocaleString([], {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch {
+    return value.slice(0, 16) || 'recent';
+  }
+}
+
+function runHistoryLabel(record = {}) {
+  const subject = cleanText(record.supplierName || record.caseId || 'Council run');
+  const trace = cleanText(record.runId).slice(-10);
+  return `${subject} | ${record.mode || 'run'} | ${formatRunHistoryTime(record.completedAt)} | ${trace}`;
+}
+
+function renderRunHistorySelect(selectedRunId = '') {
+  if (!runHistorySelect) return;
+  if (!completedRunHistory.length) {
+    runHistorySelect.innerHTML = '<option value="">No completed runs</option>';
+    runHistorySelect.disabled = true;
+    return;
+  }
+  const selected = cleanText(selectedRunId || latestCompletedRun?.runId || completedRunHistory[0]?.runId);
+  runHistorySelect.disabled = false;
+  runHistorySelect.innerHTML = completedRunHistory.map((record) => `
+    <option value="${escapeHtml(record.runId)}">${escapeHtml(runHistoryLabel(record))}</option>
+  `).join('');
+  if (selected && completedRunHistory.some((record) => record.runId === selected)) {
+    runHistorySelect.value = selected;
+  }
+}
+
+function rememberCompletedRun(mode = activeRunMode, result = null) {
+  const record = buildRunHistoryRecord(mode, result);
+  if (!record) return result;
+  const existing = completedRunHistory.find((entry) => entry.runId === record.runId);
+  if (existing?.completedAt && !cleanText(record.result?.completedAt || record.result?.timestamp || '')) {
+    record.completedAt = existing.completedAt;
+  }
+  completedRunHistory = [
+    record,
+    ...completedRunHistory.filter((entry) => entry.runId !== record.runId)
+  ].slice(0, RUN_HISTORY_LIMIT);
+  saveCompletedRunHistory();
+  renderRunHistorySelect(record.runId);
+  return record.result;
+}
+
+function restoreRunFromHistory(runId = '') {
+  const record = completedRunHistory.find((entry) => entry.runId === runId);
+  if (!record?.result) return;
+  const mode = normalizeHistoryMode(record.mode);
+  const result = ensureRunId(record.result, mode);
   lastRuns[mode] = result;
   lastRun = result;
   latestCompletedRunMode = mode;
   latestCompletedRun = result;
-  return result;
+  renderRunHistorySelect(result.runId);
+  setRunMode(mode, { skipRender: true, preserveRunComplete: true });
+  showCouncilOutput();
+}
+
+function registerCompletedRun(runMode = activeRunMode, result = null) {
+  if (!isCompletedRun(result)) return result;
+  const mode = ['demo', 'live', 'chat'].includes(runMode) ? runMode : activeRunMode;
+  const completed = rememberCompletedRun(mode, result);
+  lastRuns[mode] = completed;
+  lastRun = completed;
+  latestCompletedRunMode = mode;
+  latestCompletedRun = completed;
+  return completed;
 }
 
 function getLatestCompletedRun(preferredMode = '') {
@@ -3498,6 +3627,7 @@ function renderArtifactPreview(result, options = {}) {
   const domains = Array.isArray(result.domains) ? result.domains : [];
   const gaps = Array.isArray(result.gaps) ? result.gaps : [];
   const evidenceIds = Array.isArray(result.evidenceIds) ? result.evidenceIds : [];
+  const runId = cleanText(result.runId || '');
   const documents = evidenceDocuments(result);
   const citations = Array.isArray(result.citations) ? result.citations : [];
   const retrieval = result.retrievalContext || {};
@@ -3514,6 +3644,7 @@ function renderArtifactPreview(result, options = {}) {
       <div class="artifact-header">
         <span class="eyebrow">review package</span>
         <strong>${escapeHtml(result.case?.caseId || 'case pending')}</strong>
+        ${runId ? `<small class="run-trace-id">Run ${escapeHtml(runId)}</small>` : ''}
       </div>
       <div class="artifact-primary-action">
         <button type="button" data-report-action="export-review-pack">Download review pack (PDF)</button>
@@ -3545,6 +3676,7 @@ function renderArtifactPreview(result, options = {}) {
         <span>Advisory specialists</span><b>${escapeHtml(advisorySpecialists.length ? `${advisorySpecialists.length} attached` : llmOutput?.outputAvailable ? 'attached' : 'not requested')}</b>
         <span>Evidence quality</span><b>${escapeHtml(humanize(evidenceQuality.status || 'not scored'))}</b>
         <span>Runtime</span><b>${escapeHtml(formatRuntime(result.runtime?.actualRuntime || result.mode || 'unknown'))}</b>
+        ${runId ? `<span>Run trace</span><b>${escapeHtml(runId)}</b>` : ''}
       </div>
       <div class="reviewer-next">
         <span class="eyebrow">next reviewer steps</span>
@@ -3560,6 +3692,7 @@ function renderArtifactPreview(result, options = {}) {
     <div class="artifact-header">
       <span class="eyebrow">${ready ? 'export ready' : 'assembling'}</span>
       <strong>${escapeHtml(result.case?.caseId || 'case pending')}</strong>
+      ${runId ? `<small class="run-trace-id">Run ${escapeHtml(runId)}</small>` : ''}
     </div>
     <div class="artifact-grid">
       <span>Decision</span><b>${escapeHtml(ready ? result.decision.recommendation : 'pending final review')}</b>
@@ -3607,6 +3740,7 @@ function buildExecReviewPack(result = lastRun) {
     '',
     `Generated: ${new Date().toISOString()}`,
     `Case ID: ${caseInfo.caseId || 'unassigned'}`,
+    `Run trace: ${result.runId || 'unassigned'}`,
     '',
     '## Decision',
     '',
@@ -3715,6 +3849,7 @@ function buildExecReviewHtml(result = lastRun) {
   const caseRows = [
     ['Business unit', caseInfo.businessUnit], ['Geography', caseInfo.geography],
     ['Integrations', (caseInfo.integrations || []).join(', ')], ['Case ID', caseInfo.caseId],
+    ['Run trace', result.runId],
     ['Evidence quality', humanize(evidenceQuality.status)], ['RAG chunks searched', retrieval.chunkCount || 0],
     ['Semantic matches', retrieval.matchCount || retrieval.matches?.length || 0],
     ['Runtime', formatRuntime(result.runtime?.actualRuntime || result.mode || 'unknown')],
@@ -4808,6 +4943,10 @@ councilOutputTab?.addEventListener('click', () => {
   showCouncilOutput();
 });
 
+runHistorySelect?.addEventListener('change', () => {
+  restoreRunFromHistory(runHistorySelect.value);
+});
+
 specialistList?.addEventListener('click', (event) => {
   const action = event.target?.closest?.('[data-report-action]')?.dataset?.reportAction;
   if (action === 'export-review-pack') {
@@ -5036,7 +5175,7 @@ exportRun.addEventListener('click', () => {
     }, 1400);
     return;
   }
-  downloadJson(`p42-audit-pack-${lastRun.case?.caseId || 'demo'}.json`, {
+  downloadJson(`p42-audit-pack-${lastRun.runId || lastRun.case?.caseId || 'demo'}.json`, {
     exportedAt: new Date().toISOString(),
     service: 'parallax42-compliance-intelligence-agent',
     evidenceManifest: evidenceDocuments(lastRun),
@@ -5062,15 +5201,15 @@ execReviewPack?.addEventListener('click', async () => {
     });
     if (response.pdfBase64) {
       downloadBase64(
-        response.fileName || `p42-exec-review-${lastRun.case?.caseId || 'case'}.pdf`,
+        response.fileName || `p42-exec-review-${lastRun.runId || lastRun.case?.caseId || 'case'}.pdf`,
         response.pdfBase64,
         response.contentType || 'application/pdf'
       );
     } else {
-      downloadText(`p42-exec-review-${lastRun.case?.caseId || 'case'}.html`, buildExecReviewHtml(lastRun), 'text/html');
+      downloadText(`p42-exec-review-${lastRun.runId || lastRun.case?.caseId || 'case'}.html`, buildExecReviewHtml(lastRun), 'text/html');
     }
   } catch {
-    downloadText(`p42-exec-review-${lastRun.case?.caseId || 'case'}.html`, buildExecReviewHtml(lastRun), 'text/html');
+    downloadText(`p42-exec-review-${lastRun.runId || lastRun.case?.caseId || 'case'}.html`, buildExecReviewHtml(lastRun), 'text/html');
   } finally {
     execReviewPack.disabled = false;
     execReviewPack.textContent = 'Exec review pack';
@@ -5131,6 +5270,8 @@ function animateNetwork() {
   draw();
 }
 
+completedRunHistory = loadCompletedRunHistory();
+renderRunHistorySelect();
 setRunMode('chat');
 applyScenario(currentScenarioKey);
 hydrateConfigForm();

@@ -48,10 +48,12 @@ test('conversation NLP extracts a draft and asks contextual follow-up questions'
   assert.equal(result.ok, true);
   assert.equal(result.mode, 'conversation_nlp');
   assert.equal(result.caseDraft.geography, '');
-  assert.equal(result.caseDraft.businessUnit, 'Group Technology Risk');
+  assert.equal(result.caseDraft.businessUnit, '');
   assert.ok(result.caseDraft.integrations.includes('Azure AD'));
   assert.ok(result.caseDraft.riskSignals.includes('personal data'));
-  assert.ok(result.questions.some((question) => /geography|regulatory perimeter|UAE/i.test(question)));
+  assert.ok(result.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
+  assert.ok(result.missingFields.includes('business_owner'));
+  assert.ok(result.missingFields.includes('geography'));
   assert.equal(result.run, null);
 });
 
@@ -477,16 +479,52 @@ test('conversation NLP handles export-control hardware import cases', () => {
   }, { runtime: 'deterministic' });
 
   assert.equal(result.ok, true);
-  assert.equal(result.caseDraft.businessUnit, 'Trade Compliance And Export Controls');
+  assert.equal(result.caseDraft.businessUnit, '');
   assert.equal(result.caseDraft.geography, 'UAE and Singapore');
   assert.ok(result.caseDraft.integrations.includes('Firmware support channel'));
   assert.ok(result.caseDraft.riskSignals.includes('export control'));
   assert.ok(result.caseDraft.riskSignals.includes('remote support access'));
   assert.ok(!result.caseDraft.riskSignals.includes('AI/model use'));
   assert.ok(!result.caseDraft.evidenceSignals.includes('end-use certificate'));
+  assert.ok(result.missingFields.includes('business_owner'));
   assert.ok(result.missingFields.includes('export_control_evidence'));
   assert.ok(result.questions.some((question) => /upload the export control pack|classify it|analyze it first/i.test(question)));
-  assert.ok(!result.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
+});
+
+test('conversation force-run does not execute when owner and geography are missing', () => {
+  let runCount = 0;
+  const result = processConversation({
+    message: 'run it',
+    forceRun: true,
+    caseDraft: {
+      supplierName: 'Managed Integration Partner',
+      brief: 'Assess a managed integration partner connecting Oracle ERP and Workday with privileged implementation access.',
+      integrations: ['Oracle ERP', 'Workday'],
+      documents: [{
+        evidenceId: 'UP-01',
+        title: 'Integration agreement',
+        extractionStatus: 'backend_parsed',
+        summary: 'Agreement includes DPA, privileged access controls, and support terms.',
+        signals: ['DPA', 'identity and access']
+      }],
+      evidenceSignals: ['DPA', 'identity and access'],
+      riskSignals: ['personal data', 'privileged access']
+    }
+  }, {
+    runtime: 'deterministic',
+    runAgentWithRuntime: () => {
+      runCount += 1;
+      return { ok: true };
+    }
+  });
+
+  assert.equal(runCount, 0);
+  assert.equal(result.shouldRun, false);
+  assert.equal(result.run, null);
+  assert.equal(result.runReadiness.runnable, false);
+  assert.ok(result.runReadiness.executionBlockers.includes('business_owner'));
+  assert.ok(result.runReadiness.executionBlockers.includes('geography'));
+  assert.ok(result.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
 });
 
 test('conversation run readiness allows council with core intake while preserving advisory gaps', () => {
@@ -530,7 +568,7 @@ test('conversation treats broad unknown phrases as contextual answers without lo
     caseDraft: first.caseDraft
   }, { runtime: 'deterministic' });
 
-  assert.ok(second.questions.some((question) => /evidence is available|contract terms|DPA|SOC 2/i.test(question)));
+  assert.ok(second.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
   assert.ok(!second.questions.some((question) => /payroll-vendor proof/i.test(question)));
 
   const third = processConversation({
@@ -542,9 +580,9 @@ test('conversation treats broad unknown phrases as contextual answers without lo
     caseDraft: third.caseDraft
   }, { runtime: 'deterministic' });
 
-  assert.ok(third.caseDraft.knownGaps.includes('evidence'));
+  assert.ok(third.caseDraft.knownGaps.includes('business_owner'));
+  assert.ok(third.questions.some((question) => /evidence is available|contract terms|DPA|SOC 2/i.test(question)));
   assert.ok(fourth.caseDraft.knownGaps.includes('evidence'));
-  assert.ok(!third.questions.some((question) => /source evidence|evidence is available|contract terms|SOC 2|DPA/i.test(question)));
   assert.equal(fourth.questions.length, 0);
 });
 

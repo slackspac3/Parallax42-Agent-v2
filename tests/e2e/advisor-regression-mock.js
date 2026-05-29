@@ -17,6 +17,7 @@ const {
 const PORT = Number(process.env.PLAYWRIGHT_PORT || 3141);
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${PORT}`;
 const FIXTURE = path.join(ROOT, 'test-fixtures', 'compliance-documents', '04_managed_platform_integration_services_agreement.pdf');
+let mockRunCounter = 0;
 
 function jsonResponse(body, status = 200) {
   return {
@@ -41,6 +42,7 @@ function baseDraft(overrides = {}) {
 }
 
 function mockRunResult(caseContext = {}) {
+  mockRunCounter += 1;
   const supplierName = caseContext.supplierName || 'Managed Platform Integration Partner';
   const businessUnit = caseContext.businessUnit || 'Finance';
   const geography = caseContext.geography || 'UAE';
@@ -59,6 +61,7 @@ function mockRunResult(caseContext = {}) {
 
   return {
     ok: true,
+    runId: `run_e2e_${String(mockRunCounter).padStart(3, '0')}`,
     mode: 'crewai_flow',
     case: {
       caseId: caseContext.caseId || `case-e2e-${slug}`,
@@ -284,6 +287,41 @@ async function installMocks(page, records) {
     }));
   });
 
+  await page.route('**/api/audit/recent**', async (route) => {
+    await route.fulfill(jsonResponse({
+      ok: true,
+      records: []
+    }));
+  });
+
+  await page.route('**/api/admin/status', async (route) => {
+    await route.fulfill(jsonResponse({
+      ok: true,
+      status: 'mocked',
+      runtime: { default: 'crewai_llm', liveCrewAIEnabled: false, liveLlmAdvisoryEnabled: false },
+      vectorStore: { provider: 'qdrant', configured: true },
+      parserRelay: { configured: true, featureEnabled: true },
+      audit: { available: true },
+      settings: {}
+    }));
+  });
+
+  await page.route('**/api/admin/features', async (route) => {
+    await route.fulfill(jsonResponse({
+      ok: true,
+      features: []
+    }));
+  });
+
+  await page.route('**/api/health', async (route) => {
+    await route.fulfill(jsonResponse({
+      ok: true,
+      status: 'healthy',
+      service: 'mock-compliance-api',
+      agentRuntime: { configuredRuntime: 'crewai_llm' }
+    }));
+  });
+
   await page.route('**/api/benchmarks', async (route) => {
     await route.fulfill(jsonResponse({
       summary: {
@@ -377,7 +415,17 @@ async function assertMainSectionVisible(page, section, selector, pattern) {
 async function assertCouncilOutputVisible(page) {
   await page.waitForFunction(() => document.body.dataset.workspaceView === 'output', null, { timeout: 5000 });
   await page.waitForFunction(() => document.body.dataset.runComplete === 'true', null, { timeout: 5000 });
+  assert.equal(await page.locator('#workflow').isVisible(), true, 'Council Output runway should be visible');
+  assert.equal(await page.locator('#specialistList').isVisible(), true, 'Decision Room output should be visible');
+  const workflowBox = await page.locator('#workflow').boundingBox();
+  const specialistBox = await page.locator('#specialistList').boundingBox();
+  assert.ok(workflowBox && workflowBox.width > 300 && workflowBox.height > 300, 'Council Output runway should have visible dimensions');
+  assert.ok(specialistBox && specialistBox.width > 300 && specialistBox.height > 120, 'Decision Room output should have visible dimensions');
   await assertVisibleText(page, '#workflow', /Executive decision room|Human approval required|Deterministic compliance engine/i);
+  assert.equal(await page.locator('#runHistorySelect').isEnabled(), true, 'run history selector should be enabled after a completed run');
+  const selectedRunId = await page.locator('#runHistorySelect').inputValue();
+  assert.match(selectedRunId, /^run_/, 'completed run should have a traceable run ID');
+  await assertVisibleText(page, '#artifactPreview', new RegExp(selectedRunId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   const specialistTextLength = await page.locator('#specialistList').evaluate((node) => (node.textContent || '').trim().length);
   assert.ok(specialistTextLength > 0, 'specialistList should contain decision output');
   const state = await page.evaluate(() => ({
@@ -523,6 +571,15 @@ async function main() {
       await assertCouncilOutputVisible(page);
       await assertVisibleText(page, '#specialistList', /Treasury Ops Platform/i);
       assert.ok(records.agentRun.length > demoRunCountBefore, 'demo council run should call the agent run API');
+      assert.ok(await page.locator('#runHistorySelect option').count() >= 2, 'recent run history should keep previous completed runs');
+      const chatRunId = await page.locator('#runHistorySelect option')
+        .filter({ hasText: 'Managed platform integration services agreement' })
+        .first()
+        .getAttribute('value');
+      assert.match(chatRunId || '', /^run_/, 'chat run should remain selectable from run history');
+      await page.locator('#runHistorySelect').selectOption(chatRunId);
+      await assertCouncilOutputVisible(page);
+      await assertVisibleText(page, '#specialistList', /Managed platform integration services agreement/i);
 
       diagnostics.assertClean();
     });
