@@ -134,6 +134,7 @@ const caseIntelDetails = document.querySelector('#caseIntelDetails');
 const chatMessagesEl = document.querySelector('#chatMessages');
 const chatForm = document.querySelector('#chatForm');
 const chatInput = document.querySelector('#chatInput');
+const chatInputCounter = document.querySelector('#chatInputCounter');
 const chatRunNow = document.querySelector('#chatRunNow');
 const chatEvidenceInput = document.querySelector('#chatEvidenceInput');
 const chatEvidencePicker = document.querySelector('.chat-evidence-picker');
@@ -310,6 +311,7 @@ const maxEvidenceFileBytes = 30 * 1024 * 1024;
 const maxEvidenceBatchBytes = 90 * 1024 * 1024;
 const textEvidenceSampleBytes = 180 * 1024;
 const defaultUploadChunkBytes = 1024 * 1024;
+const chatInputMaxChars = 64000;
 const conversationPayloadHistoryTurns = 12;
 const fallbackRequestLimitBytes = {
   conversation: 8 * 1024 * 1024,
@@ -572,6 +574,16 @@ function formatBytes(bytes = 0) {
 function formatInteger(value = 0) {
   const number = Math.max(0, Math.round(Number(value || 0)));
   return number.toLocaleString();
+}
+
+function updateChatInputCounter() {
+  if (!chatInput || !chatInputCounter) return;
+  if (!chatInput.maxLength || chatInput.maxLength < 0) chatInput.maxLength = chatInputMaxChars;
+  const max = chatInput.maxLength > 0 ? chatInput.maxLength : chatInputMaxChars;
+  const length = chatInput.value.length;
+  const remaining = max - length;
+  chatInputCounter.textContent = `${formatInteger(length)} / ${formatInteger(max)} chars`;
+  chatInputCounter.dataset.state = remaining < 0 ? 'over' : length >= Math.floor(max * 0.9) ? 'near' : 'ok';
 }
 
 function numericSetting(value, fallback, options = {}) {
@@ -1802,7 +1814,7 @@ function showCouncilOutput() {
     document.body.classList.add('has-decision-output');
     document.body.dataset.runComplete = 'true';
   } else {
-    renderDecisionRoomEmptyState('Run the council from Advisor, Replay, or Evidence to produce the executive decision room.');
+    renderDecisionRoomEmptyState();
   }
 }
 
@@ -2596,6 +2608,18 @@ function assistantQuestionFromText(text = '') {
   return normalizeAssistantQuestion(detectedQuestion || fallbackQuestion());
 }
 
+function structuredAssistantQuestion(...candidates) {
+  for (const value of candidates) {
+    const candidate = cleanEvidenceText(value).replace(/^next question:\s*/i, '');
+    if (!candidate || candidate.length < 12) continue;
+    if (candidate.endsWith('?')) return normalizeAssistantQuestion(candidate);
+    if (/^(who|what|which|where|when|how|can|does|do|is|are|should)\b/i.test(candidate)) {
+      return normalizeAssistantQuestion(`${candidate}?`);
+    }
+  }
+  return '';
+}
+
 function normalizeAssistantQuestion(question = '') {
   const text = cleanEvidenceText(question);
   if (!text) return text;
@@ -2662,7 +2686,7 @@ function renderAssistantTurn(message = {}, options = {}) {
   const smartIntakeUnavailable = Boolean(message.smartIntakeUnavailable) || legacyUnavailableText;
   const smartIntakeDegraded = Boolean(message.smartIntakeDegraded);
   const smartIntakeDiagnostic = Boolean(message.smartIntakeDiagnostic || message.invalidCompassResponse);
-  const question = message.displayedQuestion || assistantQuestionFromText(message.text);
+  const question = message.displayedQuestion || message.nextBestQuestion || assistantQuestionFromText(message.text);
   if (question && !message.displayedQuestion) message.displayedQuestion = question;
   const acknowledgement = assistantAcknowledgement(message.text);
   return window.P42AppModules.chatUi.renderAssistantTurn(message, {
@@ -2676,6 +2700,7 @@ function renderAssistantTurn(message = {}, options = {}) {
     rawText: message.text || '',
     responseText: message.text,
     source: chatCaseDraft.llmIntake?.provider || lastRuns.chat?.nlp?.llmAssessment?.provider || '',
+    preferNaturalResponse: Boolean(message.generatedByCompass || message.compassNaturalResponse),
     isLatest: Boolean(options.isLatest),
     hintChips: buildChatHintChips({
       draft: chatCaseDraft,
@@ -2843,6 +2868,7 @@ function resetChatCaseSession(options = {}) {
   ];
   removeStorage(storageKeys.evidenceIndexMeta);
   if (chatInput) chatInput.value = '';
+  updateChatInputCounter();
   if (chatEvidenceInput) chatEvidenceInput.value = '';
   if (evidenceInput) evidenceInput.value = '';
   if (evidenceIngestionStatus) evidenceIngestionStatus.textContent = 'No uploaded evidence yet.';
@@ -3046,6 +3072,9 @@ function chatMessageSignature(message = {}, index = -1, latestAssistantIndex = -
     smartIntakeDiagnostic: Boolean(message.smartIntakeDiagnostic || message.invalidCompassResponse),
     unavailableMessage: message.unavailableMessage || '',
     degradedMessage: message.degradedMessage || '',
+    generatedByCompass: Boolean(message.generatedByCompass),
+    compassNaturalResponse: Boolean(message.compassNaturalResponse),
+    nextBestQuestion: message.nextBestQuestion || '',
     latestAssistant: message.role === 'assistant' && index === latestAssistantIndex,
     context: chatRenderContextSignature(message, index, latestAssistantIndex)
   });
@@ -3438,7 +3467,7 @@ async function loadCouncilNarrative(result = {}) {
   }
 }
 
-function renderDecisionRoomEmptyState(message = 'Run the council from Advisor, Replay, or Evidence to produce the executive decision room.') {
+function renderDecisionRoomEmptyState(message = 'Run the council from the chat workspace, Replay, or Evidence to produce the executive decision room.') {
   document.body.classList.remove('has-decision-output');
   document.body.dataset.runComplete = 'false';
   runwayTitle.textContent = 'Decision Room';
@@ -3463,7 +3492,7 @@ function renderDecisionRoomEmptyState(message = 'Run the council from Advisor, R
       <p>${escapeHtml(message)}</p>
       <div class="decision-room-empty-actions">
         <button type="button" class="primary-action" data-report-action="run-council">Run council</button>
-        <button type="button" class="secondary-button" data-report-action="continue-conversation">Back to Advisor</button>
+        <button type="button" class="secondary-button" data-report-action="continue-conversation">Back to case builder</button>
       </div>
     </article>
   `;
@@ -4256,6 +4285,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     window.clearTimeout(liveCasePreviewTimer);
     liveCasePreviewTimer = null;
   }
+  updateChatInputCounter();
   setRunMode('chat', { skipRender: true });
   clearPlaybackTimers();
   if (!options.silentUser && !options.forceRun && hasSubstantiveReviewRequestText(message)) {
@@ -4291,6 +4321,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   renderChatMessages();
   const stopThinkingProgress = startChatThinkingProgress(pendingMessage, options);
   chatInput.value = '';
+  updateChatInputCounter();
   sampleRun.disabled = true;
   chatRunNow.disabled = true;
   chatForm.querySelector('button[type="submit"]').disabled = true;
@@ -4384,6 +4415,15 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     const smartIntakeUnavailable = Boolean(llmAttempt.smartIntakeUnavailable || conversationPlan.smartIntakeUnavailable);
     const smartIntakeDegraded = Boolean(llmAttempt.smartIntakeDegraded || conversationPlan.smartIntakeDegraded);
     const invalidCompassResponse = Boolean(llmAttempt.invalidCompassResponse || conversationPlan.source === 'compass_invalid_response');
+    const structuredQuestion = structuredAssistantQuestion(
+      llmAttempt.nextBestQuestion,
+      conversationPlan.nextQuestion,
+      returnedDraft.llmIntake?.nextBestQuestion,
+      returnedDraft.conversationPlan?.nextQuestion
+    );
+    pendingMessage.generatedByCompass = Boolean(llmAttempt.used || conversationPlan.usedLlm);
+    pendingMessage.compassNaturalResponse = Boolean(llmAttempt.naturalResponse && pendingMessage.text === llmAttempt.naturalResponse);
+    pendingMessage.nextBestQuestion = structuredQuestion;
     pendingMessage.smartIntakeUnavailable = smartIntakeUnavailable;
     pendingMessage.smartIntakeDegraded = smartIntakeDegraded;
     pendingMessage.smartIntakeDiagnostic = invalidCompassResponse;
@@ -4407,9 +4447,9 @@ async function submitChatMessage(rawMessage = '', options = {}) {
           ? 'Compass returned a malformed structured response; deterministic intake handled this turn.'
           : 'Compass is busy, so I used deterministic intake for this turn. You can keep going or retry smart intake.');
     }
-    pendingMessage.displayedQuestion = (Array.isArray(result.questions) && result.questions[0])
-      ? result.questions[0]
-      : assistantQuestionFromText(pendingMessage.text);
+    pendingMessage.displayedQuestion = structuredQuestion
+      || (Array.isArray(result.questions) && result.questions[0])
+      || assistantQuestionFromText(pendingMessage.text);
     renderChatMessages();
     if (result.run?.ok) {
       registerCompletedRun('chat', result.run);
@@ -5202,6 +5242,7 @@ chatInput?.addEventListener('keydown', (event) => {
 });
 
 chatInput?.addEventListener('input', () => {
+  updateChatInputCounter();
   scheduleLiveCasePreview();
 });
 
@@ -5209,6 +5250,7 @@ caseIntelDetails?.addEventListener('click', (event) => {
   const prompt = event.target?.closest?.('[data-intel-prompt]')?.dataset?.intelPrompt;
   if (!prompt || !chatInput) return;
   chatInput.value = prompt;
+  updateChatInputCounter();
   updateLiveCasePreview();
   chatInput.focus();
 });
@@ -5221,6 +5263,7 @@ chatMessagesEl?.addEventListener('click', (event) => {
   const hint = event.target?.closest?.('[data-hint-chip]')?.dataset?.hintChip;
   if (hint && chatInput) {
     chatInput.value = hint;
+    updateChatInputCounter();
     updateLiveCasePreview();
     chatInput.focus();
     return;
@@ -5410,6 +5453,7 @@ function animateNetwork() {
 
 completedRunHistory = loadCompletedRunHistory();
 renderRunHistorySelect();
+updateChatInputCounter();
 setRunMode('chat');
 applyScenario(currentScenarioKey);
 hydrateConfigForm();

@@ -53,6 +53,45 @@ test('renderAssistantTurn keeps flowing prose intact in the latest assistant car
   assert.doesNotMatch(html, /advisor-next-question/);
 });
 
+test('renderAssistantTurn keeps short Compass natural responses when explicitly flagged', () => {
+  const chatUi = loadChatUiModule();
+  const prose = 'Owner recorded.';
+
+  const html = chatUi.renderAssistantTurn({ text: prose }, {
+    canRun: false,
+    chatMessageCount: 4,
+    hasChatContext: true,
+    isLatest: true,
+    preferNaturalResponse: true,
+    responseText: prose,
+    source: 'compass_gateway'
+  });
+
+  assert.match(html, /advisor-prose-response/);
+  assert.match(html, /Owner recorded\./);
+  assert.doesNotMatch(html, /Got it/);
+});
+
+test('renderAssistantTurn keeps short Compass prose and still shows structured next question', () => {
+  const chatUi = loadChatUiModule();
+  const prose = 'I understand this as a managed integration partner review.';
+
+  const html = chatUi.renderAssistantTurn({ text: prose }, {
+    canRun: false,
+    chatMessageCount: 4,
+    hasChatContext: true,
+    isLatest: true,
+    preferNaturalResponse: true,
+    question: 'Who is the accountable business owner for this case?',
+    responseText: prose,
+    source: 'compass_gateway'
+  });
+
+  assert.match(html, /I understand this as a managed integration partner review\./);
+  assert.match(html, /Who is the accountable business owner/);
+  assert.match(html, /Short answer is fine/);
+});
+
 test('renderAssistantTurn prefers supplied latest hint chips with chat handlers', () => {
   const chatUi = loadChatUiModule();
   const html = chatUi.renderAssistantTurn({ text: 'I updated the review context.' }, {

@@ -200,7 +200,8 @@
                 <form id="chatForm" class="chat-form">
                   <label>
                     Message
-                    <textarea id="chatInput" rows="5" title="Press Enter to send · Shift+Enter for a new line · Cmd/Ctrl+Enter to run council" placeholder="Example: assess a healthcare analytics vendor using patient data, Microsoft 365, and cross-border processing."></textarea>
+                    <textarea id="chatInput" rows="5" maxlength="64000" aria-describedby="chatInputCounter" title="Press Enter to send · Shift+Enter for a new line · Cmd/Ctrl+Enter to run council" placeholder="Example: assess a healthcare analytics vendor using patient data, Microsoft 365, and cross-border processing."></textarea>
+                    <small id="chatInputCounter" class="chat-input-counter" aria-live="polite">0 / 64,000 chars</small>
                   </label>
                   <label class="chat-evidence-picker">
                     Evidence files

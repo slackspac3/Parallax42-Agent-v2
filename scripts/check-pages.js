@@ -76,6 +76,14 @@ for (const [href, section] of Object.entries(navSections)) {
   }
 }
 
+if (!html.includes('id="chatInputCounter"')) {
+  throw new Error('Chat composer must expose a visible character counter.');
+}
+
+if (!/id="chatInput"[^>]*maxlength="64000"/.test(html)) {
+  throw new Error('Chat composer textarea must declare the client-side character limit.');
+}
+
 if (/\.topbar\s+nav\s+a:first-child/.test(css)) {
   throw new Error('Topbar active state must not rely on .topbar nav a:first-child.');
 }

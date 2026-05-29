@@ -50,6 +50,13 @@
       && !/^(next questions?:|gateway fallback:|smart intake unavailable\b)/i.test(clean);
   }
 
+  function isNaturalResponseCandidate(value) {
+    const clean = cleanText(value);
+    return clean.length >= 12
+      && /[.!?]/.test(clean)
+      && !/^(next questions?:|gateway fallback:|smart intake unavailable\b|smart intake degraded\b)/i.test(clean);
+  }
+
   function assistantRawSummary(value) {
     const clean = cleanText(value);
     if (!clean) return 'I am updating the case draft.';
@@ -205,13 +212,23 @@
     const proseText = String((message && message.text) || state.responseText || '');
     const suppliedChips = state.isLatest && Array.isArray(state.hintChips) && state.hintChips.length ? state.hintChips : [];
     const runChipSupplied = hasActionChip(suppliedChips, 'run-council');
-    if (isFlowingProse(proseText)) {
+    const questionText = cleanText(state.question);
+    const responseIncludesQuestion = questionText
+      && responseText.toLowerCase().includes(questionText.toLowerCase().slice(0, Math.min(80, questionText.length)));
+    if (isFlowingProse(proseText) || (state.preferNaturalResponse && isNaturalResponseCandidate(proseText))) {
       return `
         <div class="advisor-response-card advisor-natural-response advisor-chat-only">
           ${renderSmartIntakeDegraded(state)}
           <div class="advisor-prose-response">
             <p>${escapeHtml(proseText)}</p>
           </div>
+          ${!state.canRun && questionText && !responseIncludesQuestion ? `
+            <div class="advisor-next-question">
+              <span class="eyebrow">Next question</span>
+              <strong>${escapeHtml(questionText)}</strong>
+              <p>Short answer is fine. Say “unknown” if it is pending.</p>
+            </div>
+          ` : ''}
           ${state.canRun && !runChipSupplied ? `
             <div class="assistant-next">
               <button type="button" data-chat-action="run-council">Run council</button>
@@ -221,9 +238,6 @@
         </div>
       `;
     }
-    const questionText = cleanText(state.question);
-    const responseIncludesQuestion = questionText
-      && responseText.toLowerCase().includes(questionText.toLowerCase().slice(0, Math.min(80, questionText.length)));
     const chips = suppliedChips.length ? suppliedChips : state.canRun || responseIncludesQuestion ? [] : hintChipsForQuestion(questionText);
     return `
       <div class="advisor-response-card advisor-natural-response advisor-chat-only">
@@ -312,6 +326,7 @@
     assistantRawSummary,
     chatCouncilActivityForDraft,
     isFlowingProse,
+    isNaturalResponseCandidate,
     naturalizeAssistantLead,
     renderAssistantHistoryTurn,
     renderAssistantTurn,

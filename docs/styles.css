@@ -1261,6 +1261,23 @@ body[data-run-mode="chat"] .runway { align-content: start; gap: 16px; }
 
 .chat-form textarea { min-height: 100px; border-radius: var(--r-md); }
 
+.chat-input-counter {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.chat-input-counter[data-state="near"] {
+  color: var(--warning);
+}
+
+.chat-input-counter[data-state="over"] {
+  color: var(--danger);
+}
+
 .form-actions {
   display: flex;
   gap: 8px;
@@ -5424,6 +5441,12 @@ body:not([data-run-complete="true"]) .decision-room-rerun {
     color: rgba(234, 244, 255, 0.58);
     font-size: 12px;
     font-weight: 850;
+  }
+
+  .chat-input-counter {
+    margin-top: 3px;
+    font-size: 10px;
+    letter-spacing: 0;
   }
 
   .chat-form textarea {

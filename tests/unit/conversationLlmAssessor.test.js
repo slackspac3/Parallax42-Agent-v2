@@ -993,6 +993,22 @@ test('rolling conversation summary is deterministic and bounded', () => {
   assert.ok(summary.length <= 2500);
 });
 
+test('rolling conversation summary keeps foundational facts alongside recent facts', () => {
+  const summary = buildRollingConversationSummary([
+    { role: 'assistant', text: 'Who is the accountable owner?' },
+    { role: 'user', text: 'The accountable owner is Group Technology Risk.' },
+    { role: 'assistant', text: 'Who is the accountable owner?' },
+    { role: 'user', text: 'The accountable owner is Procurement Operations.' },
+    { role: 'assistant', text: 'Who is the accountable owner?' },
+    { role: 'user', text: 'The accountable owner is Regional Finance.' },
+    { role: 'assistant', text: 'Who is the accountable owner?' },
+    { role: 'user', text: 'The accountable owner is Temporary Intake Desk.' }
+  ]);
+
+  assert.match(summary, /Accountable owner: Group Technology Risk/i);
+  assert.match(summary, /Temporary Intake Desk/i);
+});
+
 test('conversation LLM assessor degrades gracefully on malformed Compass output', async () => {
   const originalFetch = global.fetch;
   try {

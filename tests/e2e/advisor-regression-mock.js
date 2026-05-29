@@ -448,7 +448,7 @@ async function assertCouncilOutputEmptyState(page) {
       && /Decision room is empty|Run the council/i.test(document.querySelector('#workflow')?.textContent || '')
   ), null, { timeout: 5000 });
   await assertVisibleText(page, '#workflow', /Decision room is empty|Run the council/i);
-  await assertVisibleText(page, '#specialistList', /Run the council to generate the executive output|Back to Advisor/i);
+  await assertVisibleText(page, '#specialistList', /Run the council to generate the executive output|Back to case builder/i);
   const outputTextLength = await page.locator('#specialistList').evaluate((node) => (node.textContent || '').trim().length);
   assert.ok(outputTextLength > 0, 'empty Council Output state should not be blank');
 }
