@@ -9,7 +9,7 @@ const path = require('node:path');
 const { buildConversationPlan, planConversationTurn } = require('../../lib/conversationPlanner');
 const {
   SMART_INTAKE_DEGRADED_MESSAGE,
-  SMART_INTAKE_MALFORMED_DEGRADED_MESSAGE,
+  SMART_INTAKE_MALFORMED_DIAGNOSTIC_MESSAGE,
   SMART_INTAKE_UNAVAILABLE_MESSAGE
 } = require('../../lib/conversationLlmAssessor');
 
@@ -75,19 +75,19 @@ test('conversation planner falls back deterministically on malformed Compass out
     llmAssessment: {
       used: false,
       smartIntakeUnavailable: false,
-      smartIntakeDegraded: true,
+      smartIntakeDegraded: false,
       invalidCompassResponse: true,
-      userMessage: SMART_INTAKE_MALFORMED_DEGRADED_MESSAGE,
-      reason: SMART_INTAKE_MALFORMED_DEGRADED_MESSAGE
+      userMessage: '',
+      reason: SMART_INTAKE_MALFORMED_DIAGNOSTIC_MESSAGE
     }
   });
 
   assert.equal(plan.source, 'compass_invalid_response');
   assert.equal(plan.nextBestAction, 'deterministic_fallback');
   assert.equal(plan.smartIntakeUnavailable, false);
-  assert.equal(plan.smartIntakeDegraded, true);
+  assert.equal(plan.smartIntakeDegraded, false);
   assert.equal(plan.requiresCompass, false);
-  assert.equal(plan.userMessage, SMART_INTAKE_MALFORMED_DEGRADED_MESSAGE);
+  assert.equal(plan.userMessage, '');
   assert.equal(plan.nextQuestion, '');
   assert.equal(plan.shouldRunCouncil, false);
 });

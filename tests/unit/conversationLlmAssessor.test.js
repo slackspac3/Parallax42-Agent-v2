@@ -10,7 +10,7 @@ const { processConversation } = require('../../lib/conversationAgent');
 const {
   SMART_INTAKE_DEGRADED_MESSAGE,
   SMART_INTAKE_INVALID_RESPONSE_MESSAGE,
-  SMART_INTAKE_MALFORMED_DEGRADED_MESSAGE,
+  SMART_INTAKE_MALFORMED_DIAGNOSTIC_MESSAGE,
   SMART_INTAKE_UNAVAILABLE_MESSAGE,
   assessConversationWithLlm,
   buildRollingConversationSummary,
@@ -1022,12 +1022,12 @@ test('conversation LLM assessor degrades gracefully on malformed Compass output'
 
       assert.equal(calls, 2);
       assert.equal(result.llmAssessment.used, false);
-      assert.equal(result.llmAssessment.userMessage, SMART_INTAKE_MALFORMED_DEGRADED_MESSAGE);
-      assert.equal(result.llmAssessment.reason, SMART_INTAKE_MALFORMED_DEGRADED_MESSAGE);
+      assert.equal(result.llmAssessment.userMessage, '');
+      assert.equal(result.llmAssessment.reason, SMART_INTAKE_MALFORMED_DIAGNOSTIC_MESSAGE);
       assert.equal(result.llmAssessment.invalidCompassResponse, true);
       assert.equal(result.llmAssessment.requiresCompass, false);
       assert.equal(result.llmAssessment.smartIntakeUnavailable, false);
-      assert.equal(result.llmAssessment.smartIntakeDegraded, true);
+      assert.equal(result.llmAssessment.smartIntakeDegraded, false);
       assert.equal(result.llmAssessment.compassFailureType, 'invalid_json');
       assert.match(result.llmAssessment.detail, /not valid JSON/i);
       assert.equal(result.llmAssessment.attemptCount, 2);
