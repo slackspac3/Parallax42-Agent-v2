@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 
-const { authorizeRequest, normalizeRole, rolesFromClaims } = require('../../lib/rbac');
+const { authMode, authorizeRequest, normalizeRole, rolesFromClaims } = require('../../lib/rbac');
 
 function base64Url(value) {
   return Buffer.from(JSON.stringify(value))
@@ -28,7 +28,7 @@ function signHs256(payload, secret = 'test-secret') {
 
 function restoreEnv(snapshot) {
   for (const key of Object.keys(process.env)) {
-    if (key.startsWith('P42_AUTH') || key.startsWith('P42_JWT') || key.startsWith('P42_ENTRA') || key === 'ENTRA_CLIENT_ID') {
+    if (key.startsWith('P42_AUTH') || key.startsWith('P42_JWT') || key.startsWith('P42_ENTRA') || key === 'ENTRA_CLIENT_ID' || key === 'AUTH_MODE' || key === 'NODE_ENV' || key === 'VERCEL' || key === 'P42_ALLOW_INSECURE_AUTH_MODE' || key === 'P42_ALLOW_AUDIT_AUTH_IN_PRODUCTION') {
       delete process.env[key];
     }
   }
@@ -79,6 +79,29 @@ test('enforced RBAC blocks valid JWT without permitted role', async () => {
     assert.equal(result.ok, false);
     assert.equal(result.statusCode, 403);
     assert.equal(result.body.error, 'insufficient_role');
+  } finally {
+    restoreEnv(snapshot);
+  }
+});
+
+test('production defaults to enforced auth unless explicitly allowed', async () => {
+  const snapshot = { ...process.env };
+  try {
+    delete process.env.P42_AUTH_MODE;
+    delete process.env.AUTH_MODE;
+    delete process.env.P42_ALLOW_INSECURE_AUTH_MODE;
+    process.env.NODE_ENV = 'production';
+
+    assert.equal(authMode(), 'enforced');
+    const result = await authorizeRequest({ headers: {} }, 'audit:read');
+    assert.equal(result.ok, false);
+    assert.equal(result.statusCode, 401);
+
+    process.env.P42_AUTH_MODE = 'audit';
+    assert.equal(authMode(), 'enforced');
+
+    process.env.P42_ALLOW_INSECURE_AUTH_MODE = '1';
+    assert.equal(authMode(), 'audit');
   } finally {
     restoreEnv(snapshot);
   }

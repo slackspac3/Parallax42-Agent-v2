@@ -122,4 +122,12 @@ if (/chatMessagesEl\.innerHTML\s*=\s*chatMessages\.map/.test(app)) {
   throw new Error('Chat messages must not rebuild the full transcript DOM on every render.');
 }
 
+if (!app.includes('function readAdminBearerToken()') || !app.includes('window.sessionStorage.setItem(key, value)')) {
+  throw new Error('Admin bearer token must use sessionStorage rather than persistent localStorage.');
+}
+
+if (/writeStorage\(storageKeys\.adminBearerToken,\s*adminBearerToken/.test(app)) {
+  throw new Error('Admin bearer token must not be written through persistent localStorage helpers.');
+}
+
 process.stdout.write('GitHub Pages asset check passed.\n');

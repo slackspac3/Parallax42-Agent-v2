@@ -396,6 +396,42 @@ function writeStorage(key, value) {
   }
 }
 
+function readSessionStorage(key, fallback = '') {
+  try {
+    return window.sessionStorage.getItem(key) || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeSessionStorage(key, value) {
+  try {
+    if (value) {
+      window.sessionStorage.setItem(key, value);
+    } else {
+      window.sessionStorage.removeItem(key);
+    }
+  } catch {
+    // Session storage is optional for embedded/browser privacy modes.
+  }
+}
+
+function readAdminBearerToken() {
+  const sessionToken = readSessionStorage(storageKeys.adminBearerToken);
+  if (sessionToken) return sessionToken;
+  const persistedToken = readStorage(storageKeys.adminBearerToken);
+  if (persistedToken) {
+    writeStorage(storageKeys.adminBearerToken, '');
+    writeSessionStorage(storageKeys.adminBearerToken, persistedToken);
+  }
+  return persistedToken;
+}
+
+function writeAdminBearerToken(value = '') {
+  writeStorage(storageKeys.adminBearerToken, '');
+  writeSessionStorage(storageKeys.adminBearerToken, String(value || '').trim());
+}
+
 function stripTrailingSlash(value, fallback = '') {
   return String(value || fallback || '').trim().replace(/\/+$/, '');
 }
@@ -483,7 +519,7 @@ function backendApiFetch(path, options = {}) {
 }
 
 function adminMutationHeaders(headers = {}) {
-  const token = readStorage(storageKeys.adminBearerToken).trim();
+  const token = readAdminBearerToken().trim();
   return token
     ? { ...headers, Authorization: `Bearer ${token}` }
     : headers;
@@ -3364,7 +3400,7 @@ function hydrateConfigForm() {
   apiMode.value = config.configuredMode;
   relayUrl.value = config.relayUrl;
   backendUrl.value = config.backendUrl;
-  if (adminBearerToken) adminBearerToken.value = readStorage(storageKeys.adminBearerToken);
+  if (adminBearerToken) adminBearerToken.value = readAdminBearerToken();
   updateJsonLinks();
 }
 
@@ -5301,7 +5337,7 @@ runtimeConfig.addEventListener('submit', (event) => {
   writeStorage(storageKeys.mode, apiMode.value);
   writeStorage(storageKeys.relayUrl, stripTrailingSlash(relayUrl.value));
   writeStorage(storageKeys.backendUrl, stripTrailingSlash(backendUrl.value));
-  writeStorage(storageKeys.adminBearerToken, adminBearerToken?.value?.trim() || '');
+  writeAdminBearerToken(adminBearerToken?.value || '');
   loadDeploymentStatus();
   loadReadiness();
   loadBenchmarks();
@@ -5312,7 +5348,7 @@ resetConfig.addEventListener('click', () => {
   writeStorage(storageKeys.mode, '');
   writeStorage(storageKeys.relayUrl, '');
   writeStorage(storageKeys.backendUrl, '');
-  writeStorage(storageKeys.adminBearerToken, '');
+  writeAdminBearerToken('');
   hydrateConfigForm();
   loadDeploymentStatus();
   loadReadiness();
@@ -5329,7 +5365,7 @@ adminFeatureControls?.addEventListener('click', (event) => {
 });
 
 adminBearerToken?.addEventListener('change', () => {
-  writeStorage(storageKeys.adminBearerToken, adminBearerToken.value.trim());
+  writeAdminBearerToken(adminBearerToken.value);
   renderAdminFeatureControls(adminFeatureState);
 });
 

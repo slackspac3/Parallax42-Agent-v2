@@ -158,6 +158,135 @@ test('server-side evidence search retrieves stored chunks by case id before gate
   }
 });
 
+test('authenticated evidence indexes are scoped by actor to prevent cross-user case id access', async () => {
+  const originalFetch = global.fetch;
+  const storeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'p42-vector-actor-scope-'));
+  const seen = [];
+  const actorA = { authenticated: true, id: 'user-a', username: 'user-a@example.com' };
+  const actorB = { authenticated: true, id: 'user-b', username: 'user-b@example.com' };
+  try {
+    await withEnv({
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      P42_VECTOR_STORE_PROVIDER: 'local_file',
+      P42_VECTOR_STORE_DIR: storeDir,
+      P42_WORKSPACE_ID: undefined,
+      P42_PROJECT_ID: undefined,
+      P42_TRUST_CLIENT_VECTOR_NAMESPACE: undefined,
+      QDRANT_URL: '',
+      P42_VECTOR_DB_URL: ''
+    }, async () => {
+      global.fetch = async (url, options) => {
+        const body = JSON.parse(options.body);
+        seen.push({ url, body });
+        if (url.endsWith('/evidence/index')) {
+          assert.match(body.workspaceId, /^parallax42:actor:/);
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              ok: true,
+              context: { caseId: body.caseId, workspaceId: body.workspaceId, projectId: body.projectId },
+              chunking: { chunkCount: 1 },
+              chunks: [{
+                chunkId: 'chk_actor_1',
+                evidenceId: 'DOC-A',
+                text: 'Actor A confidential evidence.',
+                embedding: [0.4, 0.5]
+              }]
+            })
+          };
+        }
+        assert.equal(url, 'https://gateway.example/api/evidence/search');
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            ok: true,
+            matches: [{ chunkId: 'chk_actor_1', evidenceId: 'DOC-A', score: 0.9 }]
+          })
+        };
+      };
+
+      const index = await indexEvidenceServerSide({
+        caseId: 'shared-case-id',
+        workspaceId: 'attacker-selected-workspace',
+        documents: [{ evidenceId: 'DOC-A', text: 'Actor A confidential evidence.' }]
+      }, { actor: actorA });
+      assert.equal(index.index.actorScoped, true);
+
+      const actorAResult = await searchEvidenceServerSide({
+        caseId: 'shared-case-id',
+        query: 'confidential evidence'
+      }, { actor: actorA });
+      assert.equal(actorAResult.matches.length, 1);
+      assert.equal(actorAResult.index.actorScoped, true);
+
+      const actorBResult = await searchEvidenceServerSide({
+        caseId: 'shared-case-id',
+        query: 'confidential evidence'
+      }, { actor: actorB });
+      assert.equal(actorBResult.matches.length, 0);
+      assert.equal(actorBResult.index.actorScoped, true);
+      assert.equal(seen.filter((call) => call.url.endsWith('/evidence/search')).length, 1);
+    });
+  } finally {
+    global.fetch = originalFetch;
+    fs.rmSync(storeDir, { recursive: true, force: true });
+  }
+});
+
+test('client request cannot trigger qdrant workspace fallback search', async () => {
+  const originalFetch = global.fetch;
+  const qdrantSearchBodies = [];
+  try {
+    await withEnv({
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      P42_VECTOR_STORE_PROVIDER: 'qdrant',
+      QDRANT_URL: 'https://qdrant.example',
+      QDRANT_COLLECTION: 'p42_test_collection',
+      P42_ALLOW_WORKSPACE_VECTOR_FALLBACK: undefined
+    }, async () => {
+      global.fetch = async (url, options = {}) => {
+        if (url === 'https://gateway.example/api/embeddings') {
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              model: 'text-embedding-3-large',
+              data: [{ embedding: [0.3, 0.2, 0.1] }]
+            })
+          };
+        }
+        if (url === 'https://qdrant.example/collections/p42_test_collection/points/search') {
+          const body = JSON.parse(options.body);
+          qdrantSearchBodies.push(body);
+          assert.ok(body.filter.must.some((item) => item.key === 'caseId' && item.match.value === 'case-qdrant'));
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({ result: [] })
+          };
+        }
+        throw new Error(`Unexpected fetch ${url}`);
+      };
+
+      const result = await searchEvidenceServerSide({
+        caseId: 'case-qdrant',
+        query: 'DPA retention',
+        allowWorkspaceFallback: true
+      });
+
+      assert.equal(result.matches.length, 0);
+      assert.equal(result.index.fallbackScope, 'case');
+      assert.equal(qdrantSearchBodies.length, 1);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test('conversation force-run enrichment performs retrieval server-side by case id', async () => {
   const originalFetch = global.fetch;
   const storeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'p42-conversation-retrieval-'));

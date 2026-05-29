@@ -7,11 +7,16 @@ const { gatewayHealth } = require('../lib/compassGatewayClient');
 const { evidenceVectorStoreHealth } = require('../lib/evidenceVectorStore');
 const { governanceReferenceHealth } = require('../lib/governanceReferenceStore');
 const { learningMemoryHealth } = require('../lib/learningMemory');
-const { authHealth } = require('../lib/rbac');
+const { authHealth, authorizeRequest } = require('../lib/rbac');
 const { methodGuard, sendJson } = require('./_http');
 
 module.exports = async function handler(req, res) {
   if (!methodGuard(req, res, ['GET'])) return;
+  const auth = await authorizeRequest(req, 'health:read');
+  if (!auth.ok) {
+    sendJson(req, res, auth.statusCode, auth.body);
+    return;
+  }
   sendJson(req, res, 200, {
     ok: true,
     service: 'parallax42-compliance-intelligence-agent',

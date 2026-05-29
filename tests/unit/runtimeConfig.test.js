@@ -46,7 +46,11 @@ test('runtime config exposes safe defaults without secrets', async () => {
     OPENAI_BASE_URL: undefined,
     QDRANT_URL: undefined,
     QDRANT_API_KEY: undefined,
-    PARALLAX42_BACKEND_URL: undefined
+    PARALLAX42_BACKEND_URL: undefined,
+    NODE_ENV: undefined,
+    VERCEL: undefined,
+    P42_AUTH_MODE: undefined,
+    P42_ALLOW_INSECURE_AUTH_MODE: undefined
   }, async () => {
     const gateway = gatewayConfig();
     assert.equal(gateway.baseUrl, DEFAULT_GATEWAY_BASE_URL);
@@ -66,6 +70,18 @@ test('runtime config exposes safe defaults without secrets', async () => {
     const runtime = runtimeConfig();
     assert.equal(runtime.authMode, 'audit');
     assert.equal(runtime.liveCrewAiRequested, false);
+  });
+});
+
+test('runtime config reports enforced auth by default in production', async () => {
+  await withEnv({
+    NODE_ENV: 'production',
+    VERCEL: undefined,
+    P42_AUTH_MODE: undefined,
+    P42_ALLOW_INSECURE_AUTH_MODE: undefined,
+    P42_ALLOW_AUDIT_AUTH_IN_PRODUCTION: undefined
+  }, async () => {
+    assert.equal(runtimeConfig().authMode, 'enforced');
   });
 });
 
@@ -100,4 +116,3 @@ test('runtime config detects gateway, qdrant, parser, and live CrewAI settings',
     assert.equal(runtimeConfig().authMode, 'enforced');
   });
 });
-

@@ -1,9 +1,17 @@
 'use strict';
 
 const { isFeatureEnabled } = require('../lib/adminFeatureFlags');
+const { authorizeRequest } = require('../lib/rbac');
+const {
+  EVIDENCE_INDEX_BODY_LIMIT_BYTES,
+  EVIDENCE_UPLOAD_CHUNK_SIZE_BYTES,
+  STANDARD_RUN_BODY_LIMIT_BYTES,
+  parseByteLimit
+} = require('../lib/requestLimits');
 const { sendJson, setCors } = require('./_http');
 
 const REQUEST_TIMEOUT_MS = 120000;
+const RELAY_RESPONSE_LIMIT_BYTES = parseByteLimit('BACKEND_RELAY_RESPONSE_LIMIT_BYTES', EVIDENCE_INDEX_BODY_LIMIT_BYTES);
 const DEFAULT_BACKEND_URL = 'https://api.parallax42.bhavukarora.com';
 const RELAY_PREFIX = '/api/backend';
 
@@ -58,16 +66,78 @@ function isRouteAllowed(method = 'GET', pathWithSearch = '/') {
   return ALLOWED_ROUTES.has(routeKey(method, pathWithSearch));
 }
 
-async function requestBody(req) {
+function requestLimitForPath(pathWithSearch = '/') {
+  const pathOnly = String(pathWithSearch || '/').split('?')[0];
+  if (pathOnly === '/case/assist/upload/chunk') {
+    return EVIDENCE_UPLOAD_CHUNK_SIZE_BYTES + (256 * 1024);
+  }
+  if (pathOnly.startsWith('/case/assist/upload')) {
+    return EVIDENCE_INDEX_BODY_LIMIT_BYTES;
+  }
+  return STANDARD_RUN_BODY_LIMIT_BYTES;
+}
+
+function relayBodyTooLargeError(limitBytes, target = 'request') {
+  const error = new Error(`Backend relay ${target} exceeds the ${limitBytes} byte limit.`);
+  error.code = 'backend_relay_body_too_large';
+  error.statusCode = 413;
+  error.limitBytes = limitBytes;
+  return error;
+}
+
+function assertRelayBodyLimit(size, limitBytes, target = 'request') {
+  if (Number.isFinite(size) && size > limitBytes) {
+    throw relayBodyTooLargeError(limitBytes, target);
+  }
+}
+
+async function requestBody(req, { limitBytes = STANDARD_RUN_BODY_LIMIT_BYTES } = {}) {
   if (req.method === 'GET' || req.method === 'HEAD') return undefined;
-  if (Buffer.isBuffer(req.body)) return req.body;
-  if (typeof req.body === 'string') return Buffer.from(req.body);
-  if (req.body && typeof req.body === 'object') return Buffer.from(JSON.stringify(req.body));
+  const contentLength = Number(req.headers?.['content-length'] || 0);
+  assertRelayBodyLimit(contentLength, limitBytes);
+  if (Buffer.isBuffer(req.body)) {
+    assertRelayBodyLimit(req.body.length, limitBytes);
+    return req.body;
+  }
+  if (typeof req.body === 'string') {
+    const body = Buffer.from(req.body);
+    assertRelayBodyLimit(body.length, limitBytes);
+    return body;
+  }
+  if (req.body && typeof req.body === 'object') {
+    const body = Buffer.from(JSON.stringify(req.body));
+    assertRelayBodyLimit(body.length, limitBytes);
+    return body;
+  }
   const chunks = [];
+  let size = 0;
   for await (const chunk of req) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    size += buffer.length;
+    assertRelayBodyLimit(size, limitBytes);
+    chunks.push(buffer);
   }
   return chunks.length ? Buffer.concat(chunks) : undefined;
+}
+
+async function readResponseBody(response, { limitBytes = RELAY_RESPONSE_LIMIT_BYTES } = {}) {
+  if (!response.body || typeof response.body.getReader !== 'function') {
+    const body = Buffer.from(await response.arrayBuffer());
+    assertRelayBodyLimit(body.length, limitBytes, 'response');
+    return body;
+  }
+  const reader = response.body.getReader();
+  const chunks = [];
+  let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const buffer = Buffer.from(value);
+    size += buffer.length;
+    assertRelayBodyLimit(size, limitBytes, 'response');
+    chunks.push(buffer);
+  }
+  return chunks.length ? Buffer.concat(chunks) : Buffer.alloc(0);
 }
 
 function forwardedHeaders(req) {
@@ -85,14 +155,14 @@ async function forward(req, pathWithSearch) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
-    const body = await requestBody(req);
+    const body = await requestBody(req, { limitBytes: requestLimitForPath(pathWithSearch) });
     const response = await fetch(`${backendBaseUrl()}${pathWithSearch}`, {
       method: req.method,
       headers: forwardedHeaders(req),
       body,
       signal: controller.signal
     });
-    const responseBody = Buffer.from(await response.arrayBuffer());
+    const responseBody = await readResponseBody(response);
     return {
       ok: true,
       status: response.status,
@@ -100,6 +170,18 @@ async function forward(req, pathWithSearch) {
       body: responseBody
     };
   } catch (error) {
+    if (error?.statusCode === 413) {
+      return {
+        ok: false,
+        status: 413,
+        body: {
+          error: error.code,
+          detail: error.message,
+          limitBytes: error.limitBytes,
+          service: 'p42-compliance-backend-relay'
+        }
+      };
+    }
     if (error && error.name === 'AbortError') {
       return {
         ok: false,
@@ -133,6 +215,11 @@ async function backendRelayHandler(req, res) {
   }
 
   const pathWithSearch = relayPath(req);
+  const auth = await authorizeRequest(req, 'agent:run');
+  if (!auth.ok) {
+    sendJson(req, res, auth.statusCode, auth.body);
+    return;
+  }
   if (!isFeatureEnabled('externalParserRelay')) {
     sendJson(req, res, 503, {
       error: 'parser_relay_disabled',
@@ -168,6 +255,7 @@ module.exports = {
   backendRelayHandler,
   isRouteAllowed,
   normaliseRelayPath,
+  requestLimitForPath,
   relayPath,
   routeKey
 };

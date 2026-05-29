@@ -39,6 +39,9 @@ async function withAdminEnv(overrides, fn) {
     'P42_ADMIN_FEATURE_CONFIG_PATH',
     'AGENT_AUDIT_DIR',
     'P42_AUTH_MODE',
+    'NODE_ENV',
+    'VERCEL',
+    'P42_ALLOW_INSECURE_AUTH_MODE',
     'P42_DEMO_BEARER_TOKEN',
     'P42_DEMO_ROLES',
     'P42_DEMO_ACTOR'
@@ -69,6 +72,20 @@ test('audit mode anonymous GET admin status succeeds', async () => {
     assert.equal(res.statusCode, 200);
     assert.equal(res.body.status, 'ok');
     assert.equal(res.body.auth.mode, 'audit');
+  });
+});
+
+test('enforced mode missing token cannot read admin status or feature inventory', async () => {
+  await withAdminEnv({ P42_AUTH_MODE: 'enforced' }, async () => {
+    const statusRes = mockResponse();
+    await adminStatusHandler({ method: 'GET', headers: {} }, statusRes);
+    assert.equal(statusRes.statusCode, 401);
+    assert.equal(statusRes.body.error, 'authentication_required');
+
+    const featuresRes = mockResponse();
+    await adminFeaturesHandler({ method: 'GET', headers: {} }, featuresRes);
+    assert.equal(featuresRes.statusCode, 401);
+    assert.equal(featuresRes.body.error, 'authentication_required');
   });
 });
 

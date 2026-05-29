@@ -23,6 +23,18 @@ test('audit redaction removes secret-looking values recursively', () => {
   assert.equal(result.rows[0].password, '[redacted]');
 });
 
+test('audit redaction removes diagnostic stack details and local paths', () => {
+  const result = redact({
+    runtime: {
+      fallbackReason: 'Traceback (most recent call last):\n  File "/Users/example/app/crewai_adapter/compliance_flow.py", line 1, in <module>\nModuleNotFoundError: No module named crewai'
+    },
+    note: 'See /Users/example/app/private/file.txt for local debug output.'
+  });
+
+  assert.equal(result.runtime.fallbackReason, '[diagnostic details redacted]');
+  assert.equal(result.note, 'See [local-path] for local debug output.');
+});
+
 test('audit records are append-only and hash chained', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p42-audit-test-'));
   const auditPath = path.join(dir, 'agent_audit.jsonl');

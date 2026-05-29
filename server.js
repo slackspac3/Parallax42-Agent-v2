@@ -121,6 +121,11 @@ const server = http.createServer(async (req, res) => {
 
   try {
     if (req.method === 'GET' && (url.pathname === '/api/health' || url.pathname === '/health')) {
+      const auth = await authorizeRequest(req, 'health:read');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
       writeJson(res, 200, {
         ok: true,
         service: 'parallax42-compliance-intelligence-agent',
@@ -166,12 +171,22 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && url.pathname === '/api/admin/status') {
+      const auth = await authorizeRequest(req, 'health:read');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
       writeJson(res, 200, buildAdminStatus());
       return;
     }
 
     if ((req.method === 'GET' || req.method === 'PATCH' || req.method === 'POST') && url.pathname === '/api/admin/features') {
       if (req.method === 'GET') {
+        const auth = await authorizeRequest(req, 'health:read');
+        if (!auth.ok) {
+          writeJson(res, auth.statusCode, auth.body);
+          return;
+        }
         writeJson(res, 200, buildFeatureStatus());
         return;
       }
@@ -285,6 +300,11 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/case/narrative') {
+      const auth = await authorizeRequest(req, 'agent:run');
+      if (!auth.ok) {
+        writeJson(res, auth.statusCode, auth.body);
+        return;
+      }
       const body = await readJsonBody(req, { limitBytes: 1_500_000 });
       const narrative = await buildCouncilNarrative(body.result || body.run || body);
       writeJson(res, 200, narrative);
