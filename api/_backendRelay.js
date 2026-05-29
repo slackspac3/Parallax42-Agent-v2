@@ -8,7 +8,7 @@ const {
   STANDARD_RUN_BODY_LIMIT_BYTES,
   parseByteLimit
 } = require('../lib/requestLimits');
-const { sendJson, setCors } = require('./_http');
+const { rateLimitGuard, sendJson, setCors } = require('./_http');
 
 const REQUEST_TIMEOUT_MS = 120000;
 const RELAY_RESPONSE_LIMIT_BYTES = parseByteLimit('BACKEND_RELAY_RESPONSE_LIMIT_BYTES', EVIDENCE_INDEX_BODY_LIMIT_BYTES);
@@ -215,6 +215,7 @@ async function backendRelayHandler(req, res) {
   }
 
   const pathWithSearch = relayPath(req);
+  if (!rateLimitGuard(req, res, 'backendRelay', { cors: { methods: 'GET,POST,OPTIONS' } })) return;
   const auth = await authorizeRequest(req, 'agent:run');
   if (!auth.ok) {
     sendJson(req, res, auth.statusCode, auth.body);

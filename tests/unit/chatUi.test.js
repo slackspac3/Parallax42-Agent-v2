@@ -31,7 +31,7 @@ test('isFlowingProse accepts complete natural prose and rejects deterministic la
   assert.equal(chatUi.isFlowingProse('I reviewed the uploaded agreement and will focus on data protection, privileged access, and continuity. Which area should I prioritize first?'), true);
   assert.equal(chatUi.isFlowingProse('Next question: Which geography should I apply?'), false);
   assert.equal(chatUi.isFlowingProse('Gateway fallback: I could not reach Compass, so I used deterministic intake.'), false);
-  assert.equal(chatUi.isFlowingProse('Short but complete.'), false);
+  assert.equal(chatUi.isFlowingProse('Short but complete.'), true);
 });
 
 test('renderAssistantTurn keeps flowing prose intact in the latest assistant card', () => {
@@ -63,6 +63,24 @@ test('renderAssistantTurn keeps short Compass natural responses when explicitly 
     hasChatContext: true,
     isLatest: true,
     preferNaturalResponse: true,
+    responseText: prose,
+    source: 'compass_gateway'
+  });
+
+  assert.match(html, /advisor-prose-response/);
+  assert.match(html, /Owner recorded\./);
+  assert.doesNotMatch(html, /Got it/);
+});
+
+test('renderAssistantTurn keeps short natural responses without generic fallback', () => {
+  const chatUi = loadChatUiModule();
+  const prose = 'Owner recorded.';
+
+  const html = chatUi.renderAssistantTurn({ text: prose }, {
+    canRun: false,
+    chatMessageCount: 4,
+    hasChatContext: true,
+    isLatest: true,
     responseText: prose,
     source: 'compass_gateway'
   });

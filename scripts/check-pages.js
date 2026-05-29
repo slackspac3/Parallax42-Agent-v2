@@ -130,4 +130,12 @@ if (/writeStorage\(storageKeys\.adminBearerToken,\s*adminBearerToken/.test(app))
   throw new Error('Admin bearer token must not be written through persistent localStorage helpers.');
 }
 
+if (!app.includes('function mergeChatCaseDraft(') || /chatCaseDraft\s*=\s*\{\s*\.\.\.chatCaseDraft,\s*\.\.\.returnedDraft/.test(app)) {
+  throw new Error('Chat case draft updates must use mergeChatCaseDraft instead of last-writer-wins async spreads.');
+}
+
+if (!app.includes('storageKeys.chatSession') || !app.includes('window.sessionStorage.setItem(key, JSON.stringify(value))')) {
+  throw new Error('Active chat state must have session-scoped refresh recovery.');
+}
+
 process.stdout.write('GitHub Pages asset check passed.\n');

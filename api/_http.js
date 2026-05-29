@@ -1,6 +1,7 @@
 'use strict';
 
 const { STANDARD_RUN_BODY_LIMIT_BYTES } = require('../lib/requestLimits');
+const { checkRateLimit } = require('../lib/rateLimiter');
 
 const DEFAULT_ALLOWED_ORIGINS = [
   'https://slackspac3.github.io',
@@ -109,6 +110,16 @@ function sendJsonError(req, res, error, fallback = {}) {
   sendJson(req, res, statusCode, body, fallback.cors || {});
 }
 
+function rateLimitGuard(req, res, policyName = 'default', options = {}) {
+  const result = checkRateLimit(req, policyName, options);
+  if (result.ok) return true;
+  setCors(req, res, options.cors || {});
+  res.setHeader('retry-after', String(result.retryAfterSeconds));
+  res.setHeader('content-type', 'application/json; charset=utf-8');
+  res.status(result.statusCode).json(result.body);
+  return false;
+}
+
 function methodGuard(req, res, methods = ['GET']) {
   if (req.method === 'OPTIONS') {
     setCors(req, res, { methods: methods.concat('OPTIONS').join(',') });
@@ -128,6 +139,7 @@ module.exports = {
   malformedJsonError,
   methodGuard,
   parseJsonText,
+  rateLimitGuard,
   readJsonRequest,
   requestBodyTooLargeError,
   sendJson,

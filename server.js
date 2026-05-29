@@ -36,6 +36,7 @@ const {
 } = require('./lib/httpHandlers');
 const { findSimilarCases, getControlSuggestions, learningMemoryHealth, recordReviewerFeedback } = require('./lib/learningMemory');
 const { authHealth, authorizeAdminMutation, authorizeRequest } = require('./lib/rbac');
+const { checkRateLimit } = require('./lib/rateLimiter');
 const { backendRelayHandler } = require('./api/_backendRelay');
 
 const PORT = Number(process.env.PORT || 3020);
@@ -84,6 +85,14 @@ function queryObject(searchParams) {
   return query;
 }
 
+function localRateLimitGuard(req, res, policyName = 'default') {
+  const result = checkRateLimit(req, policyName);
+  if (result.ok) return true;
+  res.setHeader('Retry-After', String(result.retryAfterSeconds));
+  writeJson(res, result.statusCode, result.body);
+  return false;
+}
+
 function localRelayResponse(res) {
   let statusCode = 200;
   return {
@@ -121,6 +130,7 @@ const server = http.createServer(async (req, res) => {
 
   try {
     if (req.method === 'GET' && (url.pathname === '/api/health' || url.pathname === '/health')) {
+      if (!localRateLimitGuard(req, res, 'healthRead')) return;
       const auth = await authorizeRequest(req, 'health:read');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
@@ -159,6 +169,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/run') {
+      if (!localRateLimitGuard(req, res, 'standardRun')) return;
       const body = await readJsonBody(req, { limitBytes: STANDARD_RUN_BODY_LIMIT_BYTES });
       const result = await handleStandardRun({ req, body, startedAt: Date.now() });
       writeJson(res, result.status, result.body);
@@ -171,6 +182,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && url.pathname === '/api/admin/status') {
+      if (!localRateLimitGuard(req, res, 'adminRead')) return;
       const auth = await authorizeRequest(req, 'health:read');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
@@ -181,6 +193,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if ((req.method === 'GET' || req.method === 'PATCH' || req.method === 'POST') && url.pathname === '/api/admin/features') {
+      if (!localRateLimitGuard(req, res, req.method === 'GET' ? 'adminRead' : 'adminMutation')) return;
       if (req.method === 'GET') {
         const auth = await authorizeRequest(req, 'health:read');
         if (!auth.ok) {
@@ -217,6 +230,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/admin/qdrant-smoke') {
+      if (!localRateLimitGuard(req, res, 'adminMutation')) return;
       const auth = await authorizeAdminMutation(req);
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
@@ -243,6 +257,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && url.pathname === '/api/readiness') {
+      if (!localRateLimitGuard(req, res, 'healthRead')) return;
       const auth = await authorizeRequest(req, 'readiness:read');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
@@ -253,6 +268,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && url.pathname === '/api/benchmarks') {
+      if (!localRateLimitGuard(req, res, 'healthRead')) return;
       const auth = await authorizeRequest(req, 'benchmarks:read');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
@@ -263,6 +279,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && url.pathname === '/api/demo/golden') {
+      if (!localRateLimitGuard(req, res, 'healthRead')) return;
       const auth = await authorizeRequest(req, 'demo:read');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
@@ -273,6 +290,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && url.pathname === '/api/audit/recent') {
+      if (!localRateLimitGuard(req, res, 'adminRead')) return;
       const auth = await authorizeRequest(req, 'audit:read');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
@@ -286,6 +304,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/agent/run') {
+      if (!localRateLimitGuard(req, res, 'standardRun')) return;
       const body = await readJsonBody(req, { limitBytes: STANDARD_RUN_BODY_LIMIT_BYTES });
       const result = await handleAgentRun({ req, body });
       writeJson(res, result.status, result.body);
@@ -293,6 +312,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/case/approve') {
+      if (!localRateLimitGuard(req, res, 'standardRun')) return;
       const body = await readJsonBody(req, { limitBytes: 1_000_000 });
       const result = await handleCaseApproval({ req, body });
       writeJson(res, result.status, result.body);
@@ -300,6 +320,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/case/narrative') {
+      if (!localRateLimitGuard(req, res, 'caseNarrative')) return;
       const auth = await authorizeRequest(req, 'agent:run');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
@@ -312,6 +333,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/conversation') {
+      if (!localRateLimitGuard(req, res, 'conversation')) return;
       const body = await readJsonBody(req, { limitBytes: CONVERSATION_BODY_LIMIT_BYTES });
       const result = await handleConversation({ req, body });
       writeJson(res, result.status, result.body);
@@ -319,6 +341,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/evidence/index') {
+      if (!localRateLimitGuard(req, res, 'evidenceIndex')) return;
       const body = await readJsonBody(req, { limitBytes: EVIDENCE_INDEX_BODY_LIMIT_BYTES });
       const result = await handleEvidenceIndex({ req, body });
       writeJson(res, result.status, result.body);
@@ -326,6 +349,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/evidence/search') {
+      if (!localRateLimitGuard(req, res, 'evidenceSearch')) return;
       const body = await readJsonBody(req, { limitBytes: EVIDENCE_SEARCH_BODY_LIMIT_BYTES });
       const result = await handleEvidenceSearch({ req, body });
       writeJson(res, result.status, result.body);
@@ -333,6 +357,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/reference/index') {
+      if (!localRateLimitGuard(req, res, 'evidenceIndex')) return;
       const auth = await authorizeRequest(req, 'agent:run');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
@@ -360,6 +385,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/reference/search') {
+      if (!localRateLimitGuard(req, res, 'evidenceSearch')) return;
       const auth = await authorizeRequest(req, 'agent:run');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
@@ -386,6 +412,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/learning/feedback') {
+      if (!localRateLimitGuard(req, res, 'standardRun')) return;
       const auth = await authorizeRequest(req, 'agent:run');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
@@ -411,6 +438,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/learning/similar-cases') {
+      if (!localRateLimitGuard(req, res, 'evidenceSearch')) return;
       const auth = await authorizeRequest(req, 'agent:run');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
@@ -422,6 +450,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if ((req.method === 'GET' || req.method === 'POST') && url.pathname === '/api/learning/control-suggestions') {
+      if (!localRateLimitGuard(req, res, 'evidenceSearch')) return;
       const auth = await authorizeRequest(req, 'agent:run');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
@@ -433,6 +462,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/export/review-pack') {
+      if (!localRateLimitGuard(req, res, 'reviewPack')) return;
       const body = await readJsonBody(req, { limitBytes: REVIEW_PACK_BODY_LIMIT_BYTES });
       const result = await handleReviewPack({ req, body });
       writeJson(res, result.status, result.body);

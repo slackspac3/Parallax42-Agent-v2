@@ -3,10 +3,11 @@
 const { appendAuditRecord } = require('../../lib/auditStore');
 const { runQdrantSmokeTest } = require('../../lib/evidenceVectorStore');
 const { authorizeAdminMutation } = require('../../lib/rbac');
-const { methodGuard, sendJson } = require('../_http');
+const { methodGuard, rateLimitGuard, sendJson } = require('../_http');
 
 module.exports = async function handler(req, res) {
   if (!methodGuard(req, res, ['POST'])) return;
+  if (!rateLimitGuard(req, res, 'adminMutation')) return;
   try {
     const auth = await authorizeAdminMutation(req);
     if (!auth.ok) {

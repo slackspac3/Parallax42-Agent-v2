@@ -9,6 +9,8 @@ This review found eight high-confidence security issues. The most dangerous clas
 
 The PR-ready fixes in this branch harden production auth defaults, add read guards to status/admin/health routes, require authorization before parser relay and Compass narrative calls, add relay body/response limits, scope evidence vector storage by authenticated actor, stop trusting client-triggered workspace fallback searches, redact diagnostics in audit records, move admin bearer token storage from `localStorage` to `sessionStorage`, and add prompt-injection guardrails to Compass prompts.
 
+Follow-up hardening also adds lightweight per-client rate limiting for expensive API paths, session-scoped chat refresh recovery, merge-based chat draft updates to avoid async last-writer-wins state loss, short Compass prose preservation, stale council-output integrity checks, and transient upload chunk retries.
+
 No committed raw Compass token, private key, or hardcoded production credential was found. Frontend direct Compass calls were not found; Compass calls remain server-side through `lib/compassGatewayClient.js`.
 
 ## Top 10 Most Dangerous Findings
@@ -238,7 +240,7 @@ Issue status: Defense-in-depth; fixed in this branch.
 3. Continue evidence isolation work: make authenticated tenant/workspace identity explicit if Parallax42 becomes multi-tenant beyond actor-scoped demo usage.
 4. Add CSP headers at Vercel/edge level and evaluate Trusted Types for the frontend because many reviewed UI paths still use HTML string rendering.
 5. Add security regression fixtures for prompt-injection evidence and retrieval poisoning.
-6. Add rate limiting or gateway-level abuse controls for LLM, parser relay, evidence indexing, and review-pack export endpoints.
+6. Add edge/WAF-level rate limiting in front of the in-process limiter for LLM, parser relay, evidence indexing, and review-pack export endpoints.
 7. Add structured error classes so client-visible errors never include stack traces by construction.
 
 ## PR-Ready Fixes Implemented
@@ -251,6 +253,11 @@ Issue status: Defense-in-depth; fixed in this branch.
 - Audit store redacts diagnostic strings and local filesystem paths.
 - Admin bearer token storage moved from persistent `localStorage` to session-scoped storage with legacy migration cleanup.
 - Compass prompt construction now marks uploaded summaries, retrieval snippets, memory, and user text as untrusted evidence.
+- Expensive API paths now use a lightweight in-process per-client rate limiter with route-specific policies.
+- Active chat state now has session-scoped refresh recovery without persisting admin tokens or raw evidence.
+- Chat case draft updates now use merge semantics for async upload/chat responses instead of last-writer-wins spreads.
+- Council Output now refuses to silently render a completed run whose case ID conflicts with the active draft unless the user explicitly restores it from run history.
+- Upload chunks now retry transient `429`, timeout, and `5xx` failures before falling back.
 
 ## Automated Security Tests Added or Updated
 
@@ -262,10 +269,12 @@ Issue status: Defense-in-depth; fixed in this branch.
 - `tests/unit/caseNarrativeRoute.test.js` - case narrative endpoint requires auth.
 - `tests/unit/auditStore.test.js` - diagnostic/path redaction.
 - `scripts/check-pages.js` - admin bearer token must use `sessionStorage`, not persistent localStorage helpers.
+- `tests/unit/rateLimiter.test.js` - per-client rate limiting blocks over-limit callers and isolates client buckets.
+- `tests/unit/chatUi.test.js` - short natural prose such as "Owner recorded." renders as prose instead of a generic fallback.
 
 ## CI Tests to Add Next
 
-- Route auth matrix: enumerate all `api/**` handlers and local `server.js` routes, run with `P42_AUTH_MODE=enforced`, and assert anonymous requests are rejected except explicitly public assets/metadata.
+- Route auth/rate-limit matrix: enumerate all `api/**` handlers and local `server.js` routes, run with `P42_AUTH_MODE=enforced`, and assert anonymous requests are rejected except explicitly public assets/metadata while over-limit callers receive `429`.
 - Relay streaming test: send chunked request body larger than the per-route limit and assert `413` without upstream fetch.
 - XSS regression tests: feed AI/evidence strings containing HTML/event handlers into chat, decision room, admin audit, and review-pack renderers and assert escaped text nodes.
 - Prompt injection fixture: upload/index a document containing instructions to override system policy and assert Compass prompt construction includes the untrusted-evidence boundary.

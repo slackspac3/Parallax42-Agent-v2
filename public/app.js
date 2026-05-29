@@ -8,7 +8,8 @@ const storageKeys = {
   backendUrl: 'p42:backend-url',
   adminBearerToken: 'p42:admin-bearer-token',
   evidenceIndexMeta: 'p42:evidence-index-meta',
-  runHistory: 'p42:run-history'
+  runHistory: 'p42:run-history',
+  chatSession: 'p42:chat-session'
 };
 
 const scenarios = {
@@ -175,6 +176,7 @@ let workspaceView = 'chat';
 let activeQuestion = 'What do you need reviewed?';
 let lastCouncilNarrative = null;
 let liveCasePreviewTimer = null;
+let chatSessionSaveTimer = null;
 let renderedChatMessageSignatures = [];
 let chatMessages = [
   {
@@ -312,7 +314,9 @@ const maxEvidenceBatchBytes = 90 * 1024 * 1024;
 const textEvidenceSampleBytes = 180 * 1024;
 const defaultUploadChunkBytes = 1024 * 1024;
 const chatInputMaxChars = 64000;
+const chatMessageLimit = 80;
 const conversationPayloadHistoryTurns = 12;
+const uploadChunkMaxAttempts = 3;
 const fallbackRequestLimitBytes = {
   conversation: 8 * 1024 * 1024,
   evidenceIndex: 15 * 1024 * 1024,
@@ -707,6 +711,34 @@ function yieldToBrowser() {
   });
 }
 
+function delay(ms = 0) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+function isRetryableUploadFailure(status = 0) {
+  return status === 429 || status === 408 || status >= 500;
+}
+
+async function uploadChunkWithRetry(url, options = {}, context = {}) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= uploadChunkMaxAttempts; attempt += 1) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok) return response;
+      const detail = await response.text();
+      lastError = new Error(detail || `Chunk upload failed for ${context.fileName || 'evidence file'}.`);
+      if (!isRetryableUploadFailure(response.status) || attempt >= uploadChunkMaxAttempts) throw lastError;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error || 'Chunk upload failed.'));
+      if (attempt >= uploadChunkMaxAttempts) throw lastError;
+    }
+    await delay(350 * attempt);
+  }
+  throw lastError || new Error(`Chunk upload failed for ${context.fileName || 'evidence file'}.`);
+}
+
 function setAttachmentStatus(message = '', state = 'idle') {
   if (!chatAttachmentStatus) return;
   chatAttachmentStatus.classList.remove('has-pipeline');
@@ -817,6 +849,115 @@ function removeStorage(key) {
   }
 }
 
+function readSessionJsonStorage(key, fallback = {}) {
+  try {
+    const raw = window.sessionStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeSessionJsonStorage(key, value) {
+  try {
+    window.sessionStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Session-scoped recovery state is helpful, not required.
+  }
+}
+
+function removeSessionStorage(key) {
+  try {
+    window.sessionStorage.removeItem(key);
+  } catch {
+    // Ignore storage failures in privacy modes.
+  }
+}
+
+function chatSessionPayload() {
+  return {
+    savedAt: new Date().toISOString(),
+    chatCaseDraft: sanitizeDraftForConversationPayload(chatCaseDraft),
+    chatMessages: chatMessages
+      .filter((message) => message && !message.pending)
+      .slice(-chatMessageLimit)
+      .map((message) => ({
+        role: message.role,
+        text: message.text || '',
+        displayedQuestion: message.displayedQuestion || '',
+        answeringQuestion: message.answeringQuestion || '',
+        generatedByCompass: Boolean(message.generatedByCompass),
+        compassNaturalResponse: Boolean(message.compassNaturalResponse),
+        nextBestQuestion: message.nextBestQuestion || '',
+        smartIntakeUnavailable: Boolean(message.smartIntakeUnavailable),
+        smartIntakeDegraded: Boolean(message.smartIntakeDegraded),
+        smartIntakeDiagnostic: Boolean(message.smartIntakeDiagnostic),
+        degradedMessage: message.degradedMessage || '',
+        unavailableMessage: message.unavailableMessage || ''
+      })),
+    uploadedEvidence: uploadedEvidenceForConversation(),
+    evidenceIndexMeta,
+    evidenceIndexValidation,
+    activeQuestion,
+    chatRunReadiness,
+    chatMissingFields
+  };
+}
+
+function saveChatSession() {
+  const hasSessionState = chatMessages.length > 1
+    || hasChatContext()
+    || uploadedEvidence.length
+    || Object.keys(evidenceIndexMeta || {}).length;
+  if (!hasSessionState) {
+    removeSessionStorage(storageKeys.chatSession);
+    return;
+  }
+  writeSessionJsonStorage(storageKeys.chatSession, chatSessionPayload());
+}
+
+function scheduleChatSessionSave() {
+  if (chatSessionSaveTimer) window.clearTimeout(chatSessionSaveTimer);
+  chatSessionSaveTimer = window.setTimeout(() => {
+    chatSessionSaveTimer = null;
+    saveChatSession();
+  }, 150);
+}
+
+function restoreChatSession() {
+  const session = readSessionJsonStorage(storageKeys.chatSession, null);
+  if (!session || typeof session !== 'object') return false;
+  if (Array.isArray(session.chatMessages) && session.chatMessages.length) {
+    chatMessages = session.chatMessages
+      .filter((message) => message && (message.role === 'user' || message.role === 'assistant'))
+      .slice(-chatMessageLimit);
+  }
+  if (session.chatCaseDraft && typeof session.chatCaseDraft === 'object') {
+    chatCaseDraft = session.chatCaseDraft;
+  }
+  uploadedEvidence = Array.isArray(session.uploadedEvidence)
+    ? session.uploadedEvidence.map((item) => stripEvidencePayloadForBrowser({ ...item })).slice(-12)
+    : uploadedEvidence;
+  evidenceIndexMeta = session.evidenceIndexMeta && typeof session.evidenceIndexMeta === 'object'
+    ? session.evidenceIndexMeta
+    : evidenceIndexMeta;
+  evidenceIndexValidation = session.evidenceIndexValidation && typeof session.evidenceIndexValidation === 'object'
+    ? session.evidenceIndexValidation
+    : evidenceIndexValidation;
+  activeQuestion = cleanEvidenceText(session.activeQuestion || activeQuestion);
+  chatRunReadiness = session.chatRunReadiness || chatRunReadiness;
+  chatMissingFields = Array.isArray(session.chatMissingFields) ? session.chatMissingFields : chatMissingFields;
+  return true;
+}
+
+function clearChatSessionStorage() {
+  if (chatSessionSaveTimer) {
+    window.clearTimeout(chatSessionSaveTimer);
+    chatSessionSaveTimer = null;
+  }
+  removeSessionStorage(storageKeys.chatSession);
+}
+
 async function restoreEvidenceIndexFromStorage() {
   const meta = readJsonStorage(storageKeys.evidenceIndexMeta, {});
   if (!meta.caseId) return;
@@ -825,18 +966,17 @@ async function restoreEvidenceIndexFromStorage() {
     status: 'not_checked',
     detail: 'Restored evidence metadata has not been validated yet.'
   };
-  chatCaseDraft = {
-    ...chatCaseDraft,
+  mergeChatCaseDraft({
     caseId: meta.caseId,
     indexedEvidence: meta
-  };
+  });
   validateRestoredEvidenceIndex(meta);
 }
 
 function applyEvidenceIndexValidationResult(result = {}) {
   evidenceIndexValidation = result.validation || evidenceIndexValidation;
   evidenceIndexMeta = result.evidenceIndexMeta || {};
-  chatCaseDraft = result.chatCaseDraft || chatCaseDraft;
+  if (result.chatCaseDraft) mergeChatCaseDraft(result.chatCaseDraft);
   if (result.shouldClearStorage) {
     removeStorage(storageKeys.evidenceIndexMeta);
     setAttachmentStatus(result.warning || 'Previous evidence index expired; re-upload evidence for semantic retrieval.', 'warning');
@@ -893,10 +1033,7 @@ async function validateRestoredEvidenceIndex(meta = evidenceIndexMeta) {
 
 function ensureChatCaseId() {
   if (!chatCaseDraft.caseId) {
-    chatCaseDraft = {
-      ...chatCaseDraft,
-      caseId: `case_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
-    };
+    mergeChatCaseDraft({ caseId: `case_${Date.now()}_${Math.random().toString(36).slice(2, 7)}` });
   }
   return chatCaseDraft.caseId;
 }
@@ -1013,6 +1150,75 @@ function uploadedEvidenceForConversation(items = uploadedEvidence) {
   return Array.isArray(items) ? items.map(evidenceMetadataForConversation) : [];
 }
 
+function meaningfulDraftValue(value = '') {
+  const clean = cleanEvidenceText(value);
+  return Boolean(clean) && !/^(needed|unknown|not sure|pending|n\/a|none|null|undefined)$/i.test(clean);
+}
+
+function mergeDraftText(current = '', next = '') {
+  return meaningfulDraftValue(next) ? cleanEvidenceText(next) : current;
+}
+
+function mergeDraftArray(current = [], next = [], limit = 24) {
+  return unique([
+    ...(Array.isArray(current) ? current : []),
+    ...(Array.isArray(next) ? next : [])
+  ]).slice(-limit);
+}
+
+function mergeDraftDocuments(current = [], next = [], limit = 18) {
+  const byId = new Map();
+  [...(Array.isArray(current) ? current : []), ...(Array.isArray(next) ? next : [])].forEach((doc) => {
+    if (!doc || typeof doc !== 'object') return;
+    const key = doc.evidenceId || doc.chunkId || doc.title || doc.fileName || JSON.stringify(doc).slice(0, 80);
+    byId.set(key, { ...(byId.get(key) || {}), ...doc });
+  });
+  return Array.from(byId.values()).slice(-limit);
+}
+
+function mergeDocumentContext(current = {}, next = {}) {
+  return {
+    ...current,
+    ...next,
+    supplierName: mergeDraftText(current.supplierName, next.supplierName),
+    businessUnit: mergeDraftText(current.businessUnit, next.businessUnit),
+    geography: mergeDraftText(current.geography, next.geography),
+    serviceDescription: mergeDraftText(current.serviceDescription, next.serviceDescription)
+  };
+}
+
+function mergeChatCaseDraft(patch = {}, options = {}) {
+  if (!patch || typeof patch !== 'object') return chatCaseDraft;
+  const base = options.base && typeof options.base === 'object' ? options.base : chatCaseDraft || {};
+  const merged = {
+    ...base,
+    ...patch,
+    caseId: mergeDraftText(base.caseId, patch.caseId),
+    supplierName: mergeDraftText(base.supplierName, patch.supplierName),
+    businessUnit: mergeDraftText(base.businessUnit, patch.businessUnit),
+    geography: mergeDraftText(base.geography, patch.geography),
+    brief: mergeDraftText(base.brief, patch.brief),
+    integrations: mergeDraftArray(base.integrations, patch.integrations, 18),
+    riskSignals: mergeDraftArray(base.riskSignals, patch.riskSignals, 24),
+    evidenceSignals: mergeDraftArray(base.evidenceSignals, patch.evidenceSignals, 32),
+    knownGaps: mergeDraftArray(base.knownGaps, patch.knownGaps, 24),
+    missingFields: mergeDraftArray(base.missingFields, patch.missingFields, 18),
+    documents: mergeDraftDocuments(base.documents, patch.documents, 18),
+    documentContext: mergeDocumentContext(base.documentContext || {}, patch.documentContext || {}),
+    questions: mergeDraftArray(base.questions, patch.questions, 24),
+    askedQuestions: mergeDraftArray(base.askedQuestions, patch.askedQuestions, 32),
+    caseRequestStarted: options.forceCaseRequestStarted === false
+      ? false
+      : Boolean(base.caseRequestStarted || patch.caseRequestStarted)
+  };
+  if (!patch.indexedEvidence) merged.indexedEvidence = base.indexedEvidence;
+  if (!patch.retrievalContext) merged.retrievalContext = base.retrievalContext;
+  if (!Object.prototype.hasOwnProperty.call(patch, 'activeQuestion')) merged.activeQuestion = base.activeQuestion;
+  chatCaseDraft = merged;
+  scheduleChatSessionSave();
+  return chatCaseDraft;
+}
+
 function indexableEvidenceText(item = {}) {
   return cleanEvidenceText([
     item.text,
@@ -1049,10 +1255,9 @@ function applyServerEvidenceIndex(result = {}) {
       ? `${evidenceIndexMeta.chunkCount} evidence chunk${evidenceIndexMeta.chunkCount === 1 ? '' : 's'} available for semantic retrieval.`
       : 'Evidence metadata was stored, but no semantic chunks were reported.'
   };
-  chatCaseDraft = {
-    ...chatCaseDraft,
+  mergeChatCaseDraft({
     indexedEvidence: evidenceIndexMeta
-  };
+  });
   return evidenceIndexMeta;
 }
 
@@ -1189,8 +1394,7 @@ async function retrieveIndexedEvidenceForCouncil() {
   const retrievedDocs = retrievalDocumentsFromMatches(matches);
   const existingDocuments = Array.isArray(chatCaseDraft.documents) ? chatCaseDraft.documents : [];
   const nonRetrieved = existingDocuments.filter((doc) => doc.extractionStatus !== 'retrieved_chunk');
-  chatCaseDraft = {
-    ...chatCaseDraft,
+  mergeChatCaseDraft({
     documents: [...nonRetrieved, ...retrievedDocs].slice(-18),
     retrievalContext: {
       query,
@@ -1206,7 +1410,7 @@ async function retrieveIndexedEvidenceForCouncil() {
         metadata: match.metadata || {}
       }))
     }
-  };
+  });
   return result;
 }
 
@@ -1215,8 +1419,7 @@ function applyCaseAssistOutput(output = {}, offset = uploadedEvidence.length) {
   const parsed = documents.map((document, index) => uploadedDocumentToEvidence(document, offset + index));
   if (output.extracted_case) {
     const caseRequestStarted = hasCaseRequestContext(chatCaseDraft);
-    chatCaseDraft = {
-      ...chatCaseDraft,
+    mergeChatCaseDraft({
       supplierName: output.extracted_case.supplier_name || chatCaseDraft.supplierName,
       businessUnit: caseRequestStarted ? (output.extracted_case.business_unit || chatCaseDraft.businessUnit) : chatCaseDraft.businessUnit,
       geography: caseRequestStarted ? (output.extracted_case.geography || chatCaseDraft.geography) : chatCaseDraft.geography,
@@ -1237,7 +1440,7 @@ function applyCaseAssistOutput(output = {}, offset = uploadedEvidence.length) {
         ...(Array.isArray(output.evidence_checklist) ? output.evidence_checklist : []),
         ...(Array.isArray(output.missing_inputs) ? output.missing_inputs : [])
       ]) : (chatCaseDraft.riskSignals || [])
-    };
+    }, { forceCaseRequestStarted: caseRequestStarted });
   }
   return parsed;
 }
@@ -1297,15 +1500,11 @@ async function uploadEvidenceFilesToBackend(files = [], onProgress = () => {}) {
       form.append('file_id', fileSession.file_id);
       form.append('chunk_index', String(chunkIndex));
       form.append('chunk', file.slice(start, end), `${file.name}.part-${chunkIndex}`);
-      const response = await fetch(backendApiUrl('/case/assist/upload/chunk'), {
+      const response = await uploadChunkWithRetry(backendApiUrl('/case/assist/upload/chunk'), {
         method: 'POST',
         headers: { accept: 'application/json' },
         body: form
-      });
-      if (!response.ok) {
-        const detail = await response.text();
-        throw new Error(detail || `Chunk upload failed for ${file.name}.`);
-      }
+      }, { fileName: file.name, chunkIndex });
       uploadedChunks += 1;
       onProgress({
         phase: 'upload',
@@ -1771,7 +1970,7 @@ function restoreRunFromHistory(runId = '') {
   latestCompletedRun = result;
   renderRunHistorySelect(result.runId);
   setRunMode(mode, { skipRender: true, preserveRunComplete: true });
-  showCouncilOutput();
+  showCouncilOutput({ allowCaseMismatch: true });
 }
 
 function registerCompletedRun(runMode = activeRunMode, result = null) {
@@ -1802,6 +2001,89 @@ function getLatestCompletedRun(preferredMode = '') {
   return null;
 }
 
+function runCaseId(run = {}) {
+  return cleanEvidenceText(run.case?.caseId || run.caseId || run.context?.caseId || '');
+}
+
+function runCaseLabel(run = {}) {
+  return cleanEvidenceText(run.case?.supplierName || run.case?.brief || run.case?.caseId || run.runId || 'completed run');
+}
+
+function currentDraftCaseId() {
+  return cleanEvidenceText(chatCaseDraft.caseId || '');
+}
+
+function normalizedIdentity(value = '') {
+  return cleanEvidenceText(value).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function documentIdentitySet(documents = []) {
+  return new Set((Array.isArray(documents) ? documents : [])
+    .flatMap((doc) => [doc.evidenceId, doc.sourceEvidenceId, doc.title, doc.fileName])
+    .map(normalizedIdentity)
+    .filter(Boolean));
+}
+
+function caseIdentityOverlap(run = {}) {
+  const currentSupplier = normalizedIdentity(chatCaseDraft.supplierName || chatCaseDraft.documentContext?.supplierName);
+  const completedSupplier = normalizedIdentity(run.case?.supplierName || run.case?.brief);
+  if (currentSupplier && completedSupplier && (currentSupplier === completedSupplier || currentSupplier.includes(completedSupplier) || completedSupplier.includes(currentSupplier))) {
+    return true;
+  }
+  const currentDocs = documentIdentitySet(chatCaseDraft.documents);
+  const completedDocs = documentIdentitySet(run.case?.documents);
+  for (const key of currentDocs) {
+    if (completedDocs.has(key)) return true;
+  }
+  return false;
+}
+
+function councilRunHasCaseConflict(run = {}) {
+  const currentId = currentDraftCaseId();
+  const completedId = runCaseId(run);
+  return Boolean(currentId && completedId && currentId !== completedId && !caseIdentityOverlap(run));
+}
+
+function uniqueCompletedRunCandidates(candidates = []) {
+  const seen = new Set();
+  return candidates.filter((run) => {
+    if (!isCompletedRun(run)) return false;
+    const key = run.runId || `${runCaseId(run)}:${runCaseLabel(run)}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function getCouncilOutputRun() {
+  const preferred = getLatestCompletedRun(activeRunMode);
+  if (activeRunMode !== 'chat' && isCompletedRun(preferred)) return preferred;
+  const candidates = uniqueCompletedRunCandidates([
+    preferred,
+    latestCompletedRun,
+    lastRuns.chat,
+    lastRuns.live,
+    lastRuns.demo,
+    lastRun
+  ]);
+  return candidates.find((run) => !councilRunHasCaseConflict(run)) || candidates[0] || null;
+}
+
+function councilOutputIntegrity(run = {}, options = {}) {
+  if (!run || !isCompletedRun(run)) {
+    return { ok: false, message: 'No completed council output is available yet.' };
+  }
+  if (options.allowCaseMismatch) return { ok: true };
+  if (councilRunHasCaseConflict(run)) {
+    const currentId = currentDraftCaseId();
+    return {
+      ok: false,
+      message: `The latest completed council run is for ${runCaseLabel(run)}, but the active case draft is ${currentId}. Select the previous run from history or run the council again for this case.`
+    };
+  }
+  return { ok: true };
+}
+
 function setWorkspaceView(view = 'chat', options = {}) {
   workspaceView = view === 'output' ? 'output' : 'chat';
   document.body.dataset.workspaceView = workspaceView;
@@ -1817,20 +2099,24 @@ function setWorkspaceView(view = 'chat', options = {}) {
   }
 }
 
-function ensureDecisionRoomVisible() {
+function ensureDecisionRoomVisible(options = {}) {
   if (workspaceView !== 'output' || !specialistList) return;
   const visibleText = cleanEvidenceText(specialistList.textContent || '');
   if (visibleText) return;
-  const outputRun = getLatestCompletedRun(activeRunMode);
-  if (outputRun) {
+  const outputRun = getCouncilOutputRun();
+  const integrity = councilOutputIntegrity(outputRun, {
+    ...options,
+    allowCaseMismatch: options.allowCaseMismatch || activeRunMode !== 'chat'
+  });
+  if (outputRun && integrity.ok) {
     renderRun(outputRun, { finalVisible: true, runMode: latestCompletedRunMode || activeRunMode });
   } else {
-    renderDecisionRoomEmptyState('No council output has been generated yet. Return to Advisor, describe the case, then run the council.');
+    renderDecisionRoomEmptyState(integrity.message || 'No council output has been generated yet. Return to Advisor, describe the case, then run the council.');
   }
 }
 
-function showCouncilOutput() {
-  const outputRun = getLatestCompletedRun(activeRunMode);
+function showCouncilOutput(options = {}) {
+  const outputRun = options.allowCaseMismatch ? getLatestCompletedRun(activeRunMode) : getCouncilOutputRun();
   clearPlaybackTimers();
   if (activeMainSection !== 'agent') {
     setMainSection('agent', {
@@ -1841,7 +2127,11 @@ function showCouncilOutput() {
     });
   }
   setWorkspaceView('output', { preserveRunComplete: true });
-  if (outputRun) {
+  const integrity = councilOutputIntegrity(outputRun, {
+    ...options,
+    allowCaseMismatch: options.allowCaseMismatch || activeRunMode !== 'chat'
+  });
+  if (outputRun && integrity.ok) {
     lastRun = outputRun;
     renderRun(outputRun, {
       finalVisible: true,
@@ -1850,7 +2140,7 @@ function showCouncilOutput() {
     document.body.classList.add('has-decision-output');
     document.body.dataset.runComplete = 'true';
   } else {
-    renderDecisionRoomEmptyState();
+    renderDecisionRoomEmptyState(integrity.message);
   }
 }
 
@@ -2676,6 +2966,9 @@ function assistantAcknowledgement(text = '') {
   if (/I understand this as|I’m treating this as|I'm treating this as/i.test(clean)) {
     return naturalizeAssistantLead(clean) || 'I updated the review context.';
   }
+  if (window.P42AppModules.chatUi.isNaturalResponseCandidate?.(clean)) {
+    return naturalizeAssistantLead(clean) || clean.slice(0, 180);
+  }
   if (chatRunReadiness?.runnable) return 'I have enough context to prepare the decision room.';
   if (indexedChunkCount()) return 'I added the evidence to the case.';
   if (hasChatContext()) return 'Got it. I’m building the case.';
@@ -2756,15 +3049,15 @@ function renderAssistantTurn(message = {}, options = {}) {
 function persistActiveQuestion(question = '') {
   const clean = cleanEvidenceText(question);
   activeQuestion = clean;
-  chatCaseDraft = {
-    ...chatCaseDraft,
+  const draft = mergeChatCaseDraft({
     activeQuestion: clean,
     questions: clean ? [clean] : [],
     askedQuestions: unique([
       ...(chatCaseDraft.askedQuestions || []),
       ...(clean ? [clean] : [])
     ]).slice(-24)
-  };
+  });
+  if (!clean) draft.questions = [];
   return clean;
 }
 
@@ -2792,11 +3085,10 @@ function syncUploadedEvidenceIntoChatDraft() {
     ...(chatCaseDraft.evidenceSignals || []),
     ...uploadedEvidence.flatMap((doc) => doc.signals || [])
   ]);
-  chatCaseDraft = {
-    ...chatCaseDraft,
+  mergeChatCaseDraft({
     documents: Array.from(byId.values()).slice(-12),
     evidenceSignals
-  };
+  });
 }
 
 function indexedChunkCount() {
@@ -2903,6 +3195,7 @@ function resetChatCaseSession(options = {}) {
     }
   ];
   removeStorage(storageKeys.evidenceIndexMeta);
+  clearChatSessionStorage();
   if (chatInput) chatInput.value = '';
   updateChatInputCounter();
   if (chatEvidenceInput) chatEvidenceInput.value = '';
@@ -3161,12 +3454,21 @@ function patchChatMessageDom(latestAssistantIndex = -1) {
   }
 }
 
+function trimChatMessages() {
+  if (chatMessages.length <= chatMessageLimit) return;
+  const pinnedIntro = chatMessages[0]?.role === 'assistant' ? [chatMessages[0]] : [];
+  const recent = chatMessages.slice(-(chatMessageLimit - pinnedIntro.length));
+  chatMessages = [...pinnedIntro, ...recent];
+}
+
 function renderChatMessages() {
+  trimChatMessages();
   refreshActiveQuestionFromLatestAssistant();
   renderCaseDraft();
   renderContextStrength();
   renderChatAttachments();
   patchChatMessageDom(latestAssistantMessageIndex());
+  scheduleChatSessionSave();
 }
 
 function hasChatContext() {
@@ -4325,10 +4627,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   setRunMode('chat', { skipRender: true });
   clearPlaybackTimers();
   if (!options.silentUser && !options.forceRun && hasSubstantiveReviewRequestText(message)) {
-    chatCaseDraft = {
-      ...chatCaseDraft,
-      caseRequestStarted: true
-    };
+    mergeChatCaseDraft({ caseRequestStarted: true });
   }
   syncUploadedEvidenceIntoChatDraft();
   const eventType = cleanEvidenceText(options.eventType || (options.forceRun ? 'run_request' : activeQuestion ? 'user_answer' : 'user_message'));
@@ -4417,8 +4716,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     });
     const returnedDraft = result.caseDraft || {};
     if (eventType === 'evidence_uploaded' && !chatCaseDraft.caseRequestStarted) {
-      chatCaseDraft = {
-        ...chatCaseDraft,
+      mergeChatCaseDraft({
         documents: returnedDraft.documents || chatCaseDraft.documents,
         evidenceSignals: unique([...(chatCaseDraft.evidenceSignals || []), ...(returnedDraft.evidenceSignals || [])]),
         indexedEvidence: returnedDraft.indexedEvidence || chatCaseDraft.indexedEvidence,
@@ -4431,13 +4729,9 @@ async function submitChatMessage(rawMessage = '', options = {}) {
           serviceDescription: returnedDraft.brief || chatCaseDraft.documentContext?.serviceDescription || ''
         },
         caseRequestStarted: false
-      };
+      }, { forceCaseRequestStarted: false });
     } else {
-      chatCaseDraft = {
-        ...chatCaseDraft,
-        ...returnedDraft,
-        caseRequestStarted: Boolean(chatCaseDraft.caseRequestStarted || returnedDraft.caseRequestStarted)
-      };
+      mergeChatCaseDraft(returnedDraft);
     }
     chatRunReadiness = result.runReadiness || null;
     chatMissingFields = Array.isArray(result.missingFields) ? result.missingFields : [];
@@ -5488,6 +5782,7 @@ function animateNetwork() {
 }
 
 completedRunHistory = loadCompletedRunHistory();
+restoreChatSession();
 renderRunHistorySelect();
 updateChatInputCounter();
 setRunMode('chat');

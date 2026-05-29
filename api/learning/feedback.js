@@ -4,10 +4,11 @@ const { appendAuditRecord } = require('../../lib/auditStore');
 const { recordReviewerFeedback } = require('../../lib/learningMemory');
 const { authorizeRequest } = require('../../lib/rbac');
 const { STANDARD_RUN_BODY_LIMIT_BYTES } = require('../../lib/requestLimits');
-const { methodGuard, readJsonRequest, sendJson, sendJsonError } = require('../_http');
+const { methodGuard, rateLimitGuard, readJsonRequest, sendJson, sendJsonError } = require('../_http');
 
 module.exports = async function handler(req, res) {
   if (!methodGuard(req, res, ['POST'])) return;
+  if (!rateLimitGuard(req, res, 'standardRun')) return;
   try {
     const auth = await authorizeRequest(req, 'agent:run');
     if (!auth.ok) {

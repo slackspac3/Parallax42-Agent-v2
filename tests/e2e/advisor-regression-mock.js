@@ -551,7 +551,7 @@ async function main() {
       await assertVisibleText(page, '#workflow', /Executive decision room|Export review pack PDF|Deterministic compliance engine/i);
       await page.locator('#councilOutputTab').click();
       await assertCouncilOutputVisible(page);
-      await assertVisibleText(page, '#specialistList', /Managed platform integration services agreement/i);
+      await assertVisibleText(page, '#specialistList', /Managed platform integration services/i);
 
       await primaryNav.getByRole('link', { name: 'Admin' }).click();
       await assertMainSectionVisible(page, 'admin', '#admin', /Admin Console/i);
@@ -561,7 +561,7 @@ async function main() {
       await assertMainSectionVisible(page, 'agent', '#run', /Compliance advisor/i);
       await page.locator('#councilOutputTab').click();
       await assertCouncilOutputVisible(page);
-      await assertVisibleText(page, '#specialistList', /Managed platform integration services agreement/i);
+      await assertVisibleText(page, '#specialistList', /Managed platform integration services/i);
 
       const demoRunCountBefore = records.agentRun.length;
       await page.locator('#demoModeTab').click();

@@ -3,10 +3,11 @@
 const { getControlSuggestions } = require('../../lib/learningMemory');
 const { authorizeRequest } = require('../../lib/rbac');
 const { STANDARD_RUN_BODY_LIMIT_BYTES } = require('../../lib/requestLimits');
-const { methodGuard, readJsonRequest, sendJson, sendJsonError } = require('../_http');
+const { methodGuard, rateLimitGuard, readJsonRequest, sendJson, sendJsonError } = require('../_http');
 
 module.exports = async function handler(req, res) {
   if (!methodGuard(req, res, ['GET', 'POST'])) return;
+  if (!rateLimitGuard(req, res, 'evidenceSearch')) return;
   try {
     const auth = await authorizeRequest(req, 'agent:run');
     if (!auth.ok) {

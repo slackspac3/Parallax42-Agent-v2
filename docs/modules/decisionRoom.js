@@ -466,6 +466,14 @@
     const approvalRequired = humanApprovalRequired(result);
     const advisorySummary = cleanText(llmOutput?.summary || '');
     const executiveBridge = advisorySummary || businessDecisionSummary(result);
+    const primaryDocumentTitle = cleanText(result?.case?.documents?.[0]?.title || result?.case?.documents?.[0]?.fileName || '');
+    const primaryDocumentDisplay = primaryDocumentTitle
+      ? humanize(primaryDocumentTitle.replace(/\.[a-z0-9]+$/i, '').replace(/^\d+\s*/, ''))
+      : '';
+    const supplierName = cleanText(result?.case?.supplierName || '');
+    const caseReviewed = primaryDocumentDisplay && !supplierName.toLowerCase().includes(primaryDocumentDisplay.toLowerCase())
+      ? `${supplierName || 'Current case'} · ${primaryDocumentDisplay}`
+      : supplierName || primaryDocumentDisplay || 'Current case';
     return `
       <section class="business-summary council-report decision-room-shell ${tone}">
         <article class="decision-room-hero report-section">
@@ -491,6 +499,7 @@
             </aside>
           </div>
           <div class="human-boundary">
+            <div><span>Case reviewed</span><strong>${escapeHtml(caseReviewed)}</strong></div>
             <div><span>Human approval</span><strong>${escapeHtml(approvalRequired ? 'Required' : 'Review required')}</strong></div>
             <div><span>Approval mode</span><strong>No auto-approval</strong></div>
             <div><span>Reviewer focus</span><strong>${escapeHtml(gaps.length ? `${gaps.length} required action${gaps.length === 1 ? '' : 's'}` : 'Confirm accountable owner')}</strong></div>

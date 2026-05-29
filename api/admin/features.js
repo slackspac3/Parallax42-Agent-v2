@@ -4,10 +4,11 @@ const { appendAuditRecord } = require('../../lib/auditStore');
 const { buildFeatureStatus, updateFeatureFlags } = require('../../lib/adminFeatureFlags');
 const { authorizeAdminMutation, authorizeRequest } = require('../../lib/rbac');
 const { ADMIN_BODY_LIMIT_BYTES } = require('../../lib/requestLimits');
-const { methodGuard, readJsonRequest, sendJson, sendJsonError } = require('../_http');
+const { methodGuard, rateLimitGuard, readJsonRequest, sendJson, sendJsonError } = require('../_http');
 
 module.exports = async function handler(req, res) {
   if (!methodGuard(req, res, ['GET', 'PATCH', 'POST'])) return;
+  if (!rateLimitGuard(req, res, req.method === 'GET' ? 'adminRead' : 'adminMutation')) return;
   try {
     if (req.method === 'GET') {
       const auth = await authorizeRequest(req, 'health:read');

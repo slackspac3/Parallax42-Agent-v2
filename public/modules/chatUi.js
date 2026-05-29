@@ -45,7 +45,7 @@
 
   function isFlowingProse(value) {
     const clean = cleanText(value);
-    return clean.length > 60
+    return clean.length >= 12
       && /[.!?]/.test(clean)
       && !/^(next questions?:|gateway fallback:|smart intake unavailable\b)/i.test(clean);
   }
