@@ -380,6 +380,33 @@ test('conversation force run is not blocked when smart intake is degraded and dr
   assert.ok(result.actions.some((action) => action.id === 'agent_workflow' && action.status === 'complete'));
 });
 
+test('conversation exposes malformed Compass output as structured advisory metadata', () => {
+  const result = processConversation({
+    message: 'Assess a managed integration partner with privileged implementation access.',
+    conversationPlan: {
+      usedLlm: false,
+      source: 'compass_invalid_response',
+      smartIntakeUnavailable: false,
+      smartIntakeDegraded: false,
+      shouldRunCouncil: false
+    },
+    llmAssessment: {
+      provider: 'compass_gateway',
+      used: false,
+      invalidCompassResponse: true,
+      compassFailureType: 'invalid_json',
+      reason: 'Compass returned a malformed structured response; deterministic intake handled this turn.',
+      attempts: [{ attempt: 1, status: 'invalid_json' }],
+      attemptCount: 1,
+      maxAttempts: 3
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.nlp.llmAssessment.invalidCompassResponse, true);
+  assert.equal(result.nlp.llmAssessment.compassFailureType, 'invalid_json');
+  assert.equal(result.conversationPlan.source, 'compass_invalid_response');
+});
+
 test('conversation preserves indexed retrieval context through council execution', () => {
   const result = processConversation({
     forceRun: true,

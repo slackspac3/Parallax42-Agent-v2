@@ -32,6 +32,7 @@ for (const file of required) {
 
 const html = fs.readFileSync(path.join(ROOT, 'public/index.html'), 'utf8');
 const css = fs.readFileSync(path.join(ROOT, 'public/styles.css'), 'utf8');
+const app = fs.readFileSync(path.join(ROOT, 'public/app.js'), 'utf8');
 for (const asset of [
   'config.js',
   'modules/text.js',
@@ -99,6 +100,18 @@ if (!css.includes('body[data-main-section] .command-center')) {
 
 if (!css.includes('body[data-workspace-view="output"] .command-center')) {
   throw new Error('Council Output view must have a run-mode-independent workspace display rule.');
+}
+
+if (!app.includes('function scheduleLiveCasePreview()')) {
+  throw new Error('Live case preview input handling must use a debounced scheduler.');
+}
+
+if (/chatInput\?\.\s*addEventListener\('input'[\s\S]{0,120}updateLiveCasePreview\(\)/.test(app)) {
+  throw new Error('Live case preview must not run the full preview renderer on every input event.');
+}
+
+if (/chatMessagesEl\.innerHTML\s*=\s*chatMessages\.map/.test(app)) {
+  throw new Error('Chat messages must not rebuild the full transcript DOM on every render.');
 }
 
 process.stdout.write('GitHub Pages asset check passed.\n');

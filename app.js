@@ -173,6 +173,8 @@ let chatMissingFields = [];
 let workspaceView = 'chat';
 let activeQuestion = 'What do you need reviewed?';
 let lastCouncilNarrative = null;
+let liveCasePreviewTimer = null;
+let renderedChatMessageSignatures = [];
 let chatMessages = [
   {
     role: 'assistant',
@@ -324,6 +326,12 @@ const fallbackLlmRetrySettings = {
   maxRetryDelayMs: 1500,
   rateLimitMaxRetryDelayMs: 2000,
   retryJitterMs: 150
+};
+const fallbackLlmTokenSettings = {
+  structuredMaxTokens: 800,
+  retryStructuredMaxTokens: 800,
+  naturalResponseMaxTokens: 900,
+  naturalResponseMaxChars: 3600
 };
 const fallbackContextSettings = {
   historyTurns: 20,
@@ -584,6 +592,7 @@ function clientFallbackOperationalSettings() {
       chunkSizeBytes: defaultUploadChunkBytes
     },
     llmRetry: { ...fallbackLlmRetrySettings },
+    llmTokens: { ...fallbackLlmTokenSettings },
     context: { ...fallbackContextSettings }
   };
 }
@@ -594,6 +603,7 @@ function adminOperationalSettings(status = adminStatusState) {
   const requestLimits = settings.requestLimits || {};
   const uploadTargetLimits = settings.uploadTargetLimits || {};
   const llmRetry = settings.llmRetry || {};
+  const llmTokens = settings.llmTokens || {};
   const context = settings.context || {};
   return {
     requestLimits: {
@@ -616,6 +626,12 @@ function adminOperationalSettings(status = adminStatusState) {
       maxRetryDelayMs: numericSetting(llmRetry.maxRetryDelayMs, fallback.llmRetry.maxRetryDelayMs, { allowZero: true }),
       rateLimitMaxRetryDelayMs: numericSetting(llmRetry.rateLimitMaxRetryDelayMs, fallback.llmRetry.rateLimitMaxRetryDelayMs, { allowZero: true }),
       retryJitterMs: numericSetting(llmRetry.retryJitterMs, fallback.llmRetry.retryJitterMs, { allowZero: true })
+    },
+    llmTokens: {
+      structuredMaxTokens: numericSetting(llmTokens.structuredMaxTokens, fallback.llmTokens.structuredMaxTokens),
+      retryStructuredMaxTokens: numericSetting(llmTokens.retryStructuredMaxTokens, fallback.llmTokens.retryStructuredMaxTokens),
+      naturalResponseMaxTokens: numericSetting(llmTokens.naturalResponseMaxTokens, fallback.llmTokens.naturalResponseMaxTokens),
+      naturalResponseMaxChars: numericSetting(llmTokens.naturalResponseMaxChars, fallback.llmTokens.naturalResponseMaxChars)
     },
     context: {
       historyTurns: numericSetting(context.historyTurns, fallback.context.historyTurns),
@@ -2140,7 +2156,8 @@ function evidenceStatusLabel(item = {}) {
     return window.P42AppModules.evidenceUploadUi.evidenceStatusLabel(item);
   }
   if (item.indexStatus === 'indexed') return 'citation-ready';
-  if (item.extractionStatus === 'backend_parsed' || item.extractionStatus === 'text_extracted' || item.extractionStatus === 'sampled_text') return 'parsed';
+  if (item.extractionStatus === 'sampled_text') return 'sampled text';
+  if (item.extractionStatus === 'backend_parsed' || item.extractionStatus === 'text_extracted') return 'parsed';
   if (item.extractionStatus === 'binary_registered') return 'metadata-only';
   if (item.extractionStatus) return humanize(item.extractionStatus);
   if (item.signals?.length) return item.signals.slice(0, 2).join(', ');
@@ -2321,6 +2338,14 @@ function currentLivePreviewDraft() {
 function updateLiveCasePreview() {
   if (activeRunMode !== 'chat' || workspaceView !== 'chat') return;
   renderCaseIntelligence(currentLivePreviewDraft(), lastRuns.chat);
+}
+
+function scheduleLiveCasePreview() {
+  if (liveCasePreviewTimer) window.clearTimeout(liveCasePreviewTimer);
+  liveCasePreviewTimer = window.setTimeout(() => {
+    liveCasePreviewTimer = null;
+    updateLiveCasePreview();
+  }, 300);
 }
 
 function updateDocumentTitle(draft = chatCaseDraft, result = lastRuns.chat) {
@@ -2632,8 +2657,11 @@ function latestUserChatMessage() {
 
 function renderAssistantTurn(message = {}, options = {}) {
   const canRun = Boolean(chatRunReadiness?.runnable);
-  const smartIntakeUnavailable = /Compass gateway is not configured|Smart intake (?:received an invalid Compass response|could not get valid Compass JSON)/i.test(message.text || '');
+  const legacyUnavailableText = !Object.prototype.hasOwnProperty.call(message, 'smartIntakeUnavailable')
+    && /Compass gateway is not configured|Smart intake (?:received an invalid Compass response|could not get valid Compass JSON)/i.test(message.text || '');
+  const smartIntakeUnavailable = Boolean(message.smartIntakeUnavailable) || legacyUnavailableText;
   const smartIntakeDegraded = Boolean(message.smartIntakeDegraded);
+  const smartIntakeDiagnostic = Boolean(message.smartIntakeDiagnostic || message.invalidCompassResponse);
   const question = message.displayedQuestion || assistantQuestionFromText(message.text);
   if (question && !message.displayedQuestion) message.displayedQuestion = question;
   const acknowledgement = assistantAcknowledgement(message.text);
@@ -2654,12 +2682,13 @@ function renderAssistantTurn(message = {}, options = {}) {
       runReadiness: chatRunReadiness,
       missingFields: chatMissingFields,
       uploadedEvidence,
-      smartIntakeDegraded
+      smartIntakeDegraded: smartIntakeDegraded || smartIntakeDiagnostic
     }),
     smartIntakeUnavailable,
-    smartIntakeDegraded,
+    smartIntakeDegraded: smartIntakeDegraded || smartIntakeDiagnostic,
+    smartIntakeDiagnostic,
     degradedMessage: message.degradedMessage,
-    unavailableMessage: message.text
+    unavailableMessage: message.unavailableMessage || message.text
   });
 }
 
@@ -2970,13 +2999,60 @@ function renderCaseDraft() {
   renderMissionWelcome();
 }
 
-function renderChatMessages() {
-  refreshActiveQuestionFromLatestAssistant();
-  renderCaseDraft();
-  renderContextStrength();
-  renderChatAttachments();
-  const latestAssistantIndex = chatMessages.map((message, index) => message.role === 'assistant' ? index : -1).filter((index) => index >= 0).pop();
-  chatMessagesEl.innerHTML = chatMessages.map((message, index) => `
+function latestAssistantMessageIndex() {
+  return chatMessages
+    .map((message, index) => message.role === 'assistant' ? index : -1)
+    .filter((index) => index >= 0)
+    .pop();
+}
+
+function chatRenderContextSignature(message = {}, index = -1, latestAssistantIndex = -1) {
+  if (message.role !== 'assistant' || index !== latestAssistantIndex) return '';
+  return JSON.stringify({
+    canRun: Boolean(chatRunReadiness?.runnable),
+    missingFields: chatMissingFields,
+    uploadedEvidence: uploadedEvidence.map((item) => ({
+      id: item.id || item.evidenceId || item.fileName || '',
+      extractionStatus: item.extractionStatus || '',
+      indexStatus: item.indexStatus || ''
+    })),
+    draft: {
+      caseRequestStarted: Boolean(chatCaseDraft.caseRequestStarted),
+      supplierName: chatCaseDraft.supplierName || '',
+      businessUnit: chatCaseDraft.businessUnit || '',
+      geography: chatCaseDraft.geography || '',
+      riskSignals: chatCaseDraft.riskSignals || [],
+      evidenceSignals: chatCaseDraft.evidenceSignals || [],
+      integrations: chatCaseDraft.integrations || []
+    },
+    hasChatContext: hasChatContext(),
+    lastRunOk: Boolean(lastRuns.chat?.ok),
+    messageCount: chatMessages.length,
+    nextBestAction: nextBestAction()
+  });
+}
+
+function chatMessageSignature(message = {}, index = -1, latestAssistantIndex = -1) {
+  return JSON.stringify({
+    role: message.role || '',
+    text: message.text || '',
+    pending: Boolean(message.pending),
+    thinkingStepIndex: Number(message.thinkingStepIndex || 0),
+    retryNote: message.retryNote || '',
+    displayedQuestion: message.displayedQuestion || '',
+    answeringQuestion: message.answeringQuestion || '',
+    smartIntakeUnavailable: Boolean(message.smartIntakeUnavailable),
+    smartIntakeDegraded: Boolean(message.smartIntakeDegraded),
+    smartIntakeDiagnostic: Boolean(message.smartIntakeDiagnostic || message.invalidCompassResponse),
+    unavailableMessage: message.unavailableMessage || '',
+    degradedMessage: message.degradedMessage || '',
+    latestAssistant: message.role === 'assistant' && index === latestAssistantIndex,
+    context: chatRenderContextSignature(message, index, latestAssistantIndex)
+  });
+}
+
+function renderChatMessageArticle(message = {}, index = -1, latestAssistantIndex = -1) {
+  return `
     <article class="chat-message is-${escapeHtml(message.role)} ${message.pending ? 'is-pending' : ''}">
       <strong>${message.role === 'user' ? 'You' : 'Advisor'}</strong>
       <div class="message-body">
@@ -2989,8 +3065,43 @@ function renderChatMessages() {
             : `<p>${escapeHtml(message.text)}</p>`}
       </div>
     </article>
-  `).join('');
-  chatMessagesEl.scrollTop = chatMessages.length <= 1 ? 0 : chatMessagesEl.scrollHeight;
+  `;
+}
+
+function patchChatMessageDom(latestAssistantIndex = -1) {
+  if (!chatMessagesEl) return;
+  const nextSignatures = chatMessages.map((message, index) => chatMessageSignature(message, index, latestAssistantIndex));
+  let changed = chatMessagesEl.children.length !== chatMessages.length
+    || renderedChatMessageSignatures.length !== nextSignatures.length;
+
+  while (chatMessagesEl.children.length > chatMessages.length) {
+    chatMessagesEl.lastElementChild.remove();
+    changed = true;
+  }
+
+  chatMessages.forEach((message, index) => {
+    if (renderedChatMessageSignatures[index] === nextSignatures[index] && chatMessagesEl.children[index]) return;
+    const html = renderChatMessageArticle(message, index, latestAssistantIndex);
+    if (chatMessagesEl.children[index]) {
+      chatMessagesEl.children[index].outerHTML = html;
+    } else {
+      chatMessagesEl.insertAdjacentHTML('beforeend', html);
+    }
+    changed = true;
+  });
+
+  renderedChatMessageSignatures = nextSignatures;
+  if (changed || chatMessages.length <= 1) {
+    chatMessagesEl.scrollTop = chatMessages.length <= 1 ? 0 : chatMessagesEl.scrollHeight;
+  }
+}
+
+function renderChatMessages() {
+  refreshActiveQuestionFromLatestAssistant();
+  renderCaseDraft();
+  renderContextStrength();
+  renderChatAttachments();
+  patchChatMessageDom(latestAssistantMessageIndex());
 }
 
 function hasChatContext() {
@@ -4141,6 +4252,10 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     promptForChatContext();
     return null;
   }
+  if (liveCasePreviewTimer) {
+    window.clearTimeout(liveCasePreviewTimer);
+    liveCasePreviewTimer = null;
+  }
   setRunMode('chat', { skipRender: true });
   clearPlaybackTimers();
   if (!options.silentUser && !options.forceRun && hasSubstantiveReviewRequestText(message)) {
@@ -4262,14 +4377,35 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     pendingMessage.pending = false;
     pendingMessage.text = result.reply || 'The conversation step completed.';
     const llmAttempt = result.nlp?.llmAssessment || result.conversationPlan?.llmAssessment || {};
+    const conversationPlan = result.conversationPlan || {};
     const llmAttempts = Array.isArray(llmAttempt.attempts) ? llmAttempt.attempts : [];
     const llmAttemptCount = Number(llmAttempt.attemptCount || llmAttempts.length || 0);
+    const llmMaxAttempts = Number(llmAttempt.maxAttempts || conversationPlan.aiUsage?.maxAttempts || 0);
+    const smartIntakeUnavailable = Boolean(llmAttempt.smartIntakeUnavailable || conversationPlan.smartIntakeUnavailable);
+    const smartIntakeDegraded = Boolean(llmAttempt.smartIntakeDegraded || conversationPlan.smartIntakeDegraded);
+    const invalidCompassResponse = Boolean(llmAttempt.invalidCompassResponse || conversationPlan.source === 'compass_invalid_response');
+    pendingMessage.smartIntakeUnavailable = smartIntakeUnavailable;
+    pendingMessage.smartIntakeDegraded = smartIntakeDegraded;
+    pendingMessage.smartIntakeDiagnostic = invalidCompassResponse;
+    pendingMessage.invalidCompassResponse = invalidCompassResponse;
+    pendingMessage.compassFailureType = llmAttempt.compassFailureType || conversationPlan.source || '';
     if (llmAttempt.retried) {
       pendingMessage.retryNote = `Smart intake used ${llmAttemptCount || llmAttempts.length} attempts before this response.`;
     }
-    if (llmAttempt.smartIntakeDegraded || result.conversationPlan?.smartIntakeDegraded) {
-      pendingMessage.smartIntakeDegraded = true;
-      pendingMessage.degradedMessage = llmAttempt.userMessage || result.conversationPlan?.userMessage || 'Compass is busy, so I used deterministic intake for this turn. You can keep going or retry smart intake.';
+    if (!llmAttempt.retried && llmAttemptCount > 1) {
+      pendingMessage.retryNote = `Smart intake tried ${llmAttemptCount}${llmMaxAttempts ? ` of ${llmMaxAttempts}` : ''} attempts before falling back.`;
+    }
+    if (smartIntakeUnavailable) {
+      pendingMessage.unavailableMessage = llmAttempt.userMessage || conversationPlan.userMessage || pendingMessage.text;
+    }
+    if (smartIntakeDegraded || invalidCompassResponse) {
+      pendingMessage.degradedMessage = llmAttempt.userMessage
+        || conversationPlan.userMessage
+        || llmAttempt.reason
+        || conversationPlan.reason
+        || (invalidCompassResponse
+          ? 'Compass returned a malformed structured response; deterministic intake handled this turn.'
+          : 'Compass is busy, so I used deterministic intake for this turn. You can keep going or retry smart intake.');
     }
     pendingMessage.displayedQuestion = (Array.isArray(result.questions) && result.questions[0])
       ? result.questions[0]
@@ -4651,6 +4787,7 @@ function renderAdminStatus(status = {}) {
   const requestLimits = settings.requestLimits;
   const uploadTargetLimits = settings.uploadTargetLimits;
   const llmRetry = settings.llmRetry;
+  const llmTokens = settings.llmTokens;
   const context = settings.context;
   const vector = safeStatus.vector || {};
   const gateway = safeStatus.gateway || {};
@@ -4672,6 +4809,7 @@ function renderAdminStatus(status = {}) {
     adminStatusCard('Evidence index', indexStatus, evidenceIndexValidation.detail || 'Restored evidence index metadata has not been checked.'),
     adminStatusCard('Upload targets', `${formatBytes(uploadTargetLimits.maxFileBytes)} per file`, `Batch ${formatBytes(uploadTargetLimits.maxBatchBytes)} · chunk size ${formatBytes(uploadTargetLimits.chunkSizeBytes)}.`),
     adminStatusCard('LLM retry policy', `${formatInteger(llmRetry.maxAttempts)} attempts`, `Fast fail ${formatInteger(llmRetry.fastFailMs)} ms · retry cap ${formatInteger(llmRetry.maxRetryDelayMs)} ms · rate-limit cap ${formatInteger(llmRetry.rateLimitMaxRetryDelayMs)} ms · jitter ${formatInteger(llmRetry.retryJitterMs)} ms.`),
+    adminStatusCard('LLM prose budget', `${formatInteger(llmTokens.naturalResponseMaxTokens)} response tokens`, `Structured ${formatInteger(llmTokens.structuredMaxTokens)} tokens · retry structured ${formatInteger(llmTokens.retryStructuredMaxTokens)} tokens · prose clamp ${formatInteger(llmTokens.naturalResponseMaxChars)} chars.`),
     adminStatusCard('Context caps', `${formatInteger(context.historyTurns)} history turns`, `Prompt uses ${formatInteger(context.recentTurnsForPrompt)} recent turns · ${formatInteger(context.turnMaxChars)} chars per turn.`),
     adminStatusCard('Context summaries', `brief ${formatInteger(context.briefMaxChars)} chars`, `Document ${formatInteger(context.documentSummaryMaxChars)} chars · memory ${formatInteger(context.memorySummaryMaxChars)} chars · rolling summary ${rollingSummaryStatus(chatCaseDraft)}.`),
     adminStatusCard('Evidence index provider', evidenceProvider, `${indexedChunkCount()} indexed chunk${indexedChunkCount() === 1 ? '' : 's'} currently referenced by the browser.`),
@@ -5064,7 +5202,7 @@ chatInput?.addEventListener('keydown', (event) => {
 });
 
 chatInput?.addEventListener('input', () => {
-  updateLiveCasePreview();
+  scheduleLiveCasePreview();
 });
 
 caseIntelDetails?.addEventListener('click', (event) => {

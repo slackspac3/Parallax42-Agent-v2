@@ -167,10 +167,14 @@
 
   function renderSmartIntakeDegraded(state = {}) {
     if (!state.smartIntakeDegraded) return '';
+    const heading = state.smartIntakeDiagnostic ? 'Smart intake diagnostic' : 'Smart intake degraded';
+    const fallback = state.smartIntakeDiagnostic
+      ? 'Compass returned a malformed structured response; deterministic intake handled this turn.'
+      : 'Compass is busy, so deterministic intake handled this turn.';
     return `
       <div class="advisor-degraded-note">
-        <strong>Smart intake degraded</strong>
-        <p>${escapeHtml(state.degradedMessage || 'Compass is busy, so deterministic intake handled this turn.')}</p>
+        <strong>${escapeHtml(heading)}</strong>
+        <p>${escapeHtml(state.degradedMessage || fallback)}</p>
       </div>
     `;
   }

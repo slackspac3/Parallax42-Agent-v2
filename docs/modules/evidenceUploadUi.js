@@ -223,7 +223,8 @@
   function evidenceStatusLabel(item) {
     const record = item || {};
     if (record.indexStatus === 'indexed') return 'citation-ready';
-    if (record.extractionStatus === 'backend_parsed' || record.extractionStatus === 'text_extracted' || record.extractionStatus === 'sampled_text') return 'parsed';
+    if (record.extractionStatus === 'sampled_text') return 'sampled text';
+    if (record.extractionStatus === 'backend_parsed' || record.extractionStatus === 'text_extracted') return 'parsed';
     if (record.extractionStatus === 'binary_registered') return 'metadata-only';
     if (record.extractionStatus) return humanize(record.extractionStatus);
     if (Array.isArray(record.signals) && record.signals.length) return record.signals.slice(0, 2).join(', ');

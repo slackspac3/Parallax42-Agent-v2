@@ -75,6 +75,26 @@ test('renderAssistantTurn prefers supplied latest hint chips with chat handlers'
   assert.doesNotMatch(html, /UAE and India/);
 });
 
+test('renderAssistantTurn shows structured smart-intake diagnostics without hiding prose', () => {
+  const chatUi = loadChatUiModule();
+  const prose = 'I captured the managed integration partner context and will continue with deterministic intake while Compass structured parsing is reviewed. Who is the accountable owner for this review?';
+
+  const html = chatUi.renderAssistantTurn({ text: prose }, {
+    canRun: false,
+    chatMessageCount: 3,
+    hasChatContext: true,
+    isLatest: true,
+    responseText: prose,
+    smartIntakeDegraded: true,
+    smartIntakeDiagnostic: true,
+    degradedMessage: 'Compass returned a malformed structured response; deterministic intake handled this turn.'
+  });
+
+  assert.match(html, /Smart intake diagnostic/);
+  assert.match(html, /malformed structured response/);
+  assert.match(html, /managed integration partner context/);
+});
+
 test('renderThinkingLoader does not invent retry progress before backend metadata returns', () => {
   const chatUi = loadChatUiModule();
   const html = chatUi.renderThinkingLoader({

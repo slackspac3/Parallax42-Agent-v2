@@ -470,7 +470,7 @@ test('conversation LLM assessor requests JSON mode and handles OpenAI response o
         assert.equal(url, 'https://gateway.example/api/chat/completions');
         if (!body.response_format) {
           assert.equal(body.temperature, 0.4);
-          assert.equal(body.max_tokens, 400);
+          assert.equal(body.max_tokens, 900);
           return {
             ok: true,
             status: 200,
@@ -1113,7 +1113,7 @@ test('conversation LLM assessor retries malformed Compass output with compact JS
       assert.equal(requests[1].max_tokens, 800);
       assert.equal(requests[2].response_format, undefined);
       assert.equal(requests[2].temperature, 0.4);
-      assert.equal(requests[2].max_tokens, 400);
+      assert.equal(requests[2].max_tokens, 900);
       assert.equal(result.llmAssessment.used, true);
       assert.equal(result.llmAssessment.retriedAfterInvalidJson, true);
       assert.equal(result.llmAssessment.attempts[0].status, 'invalid_json');
@@ -1474,6 +1474,75 @@ test('conversation LLM assessor preserves naturalResponse for chat response gene
       assert.match(result.llmAssessment.naturalResponse, /Managed Platform Integration Services Agreement/);
       assert.match(result.llmAssessment.naturalResponse, /Should I focus first/);
       assert.equal(result.caseDraft.llmIntake.naturalResponse, result.llmAssessment.naturalResponse);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('conversation LLM assessor allows complex natural prose beyond the old short clamp', async () => {
+  const originalFetch = global.fetch;
+  const longNaturalResponse = Array.from({ length: 12 }, (_, index) => (
+    `I captured review point ${index + 1} for the managed integration partner: Oracle ERP, Workday, ServiceNow, SharePoint, and Snowflake require privileged-access review, data-transfer checks, implementation controls, evidence mapping, and accountable owner confirmation.`
+  )).join(' ');
+  const requests = [];
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1'
+    }, async () => {
+      global.fetch = async (url, options) => {
+        const body = JSON.parse(options.body);
+        requests.push(body);
+        if (!body.response_format) {
+          assert.equal(body.max_tokens, 900);
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              model: 'gpt-5.1',
+              choices: [{ message: { content: longNaturalResponse } }]
+            })
+          };
+        }
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            model: 'gpt-5.1',
+            choices: [{
+              message: {
+                content: JSON.stringify({
+                  intent: 'case_context',
+                  requestType: 'supplier_risk',
+                  workflowType: 'saas_vendor_review',
+                  reviewTarget: 'managed integration partner',
+                  recommendedFirstAction: 'ask_owner',
+                  conversationStage: 'building_context',
+                  assistantSummary: 'This is a managed integration partner review.',
+                  nextBestQuestion: 'Who is the accountable owner?',
+                  confidence: 0.86,
+                  caseUpdate: {
+                    integrations: ['Oracle ERP', 'Workday', 'ServiceNow', 'SharePoint', 'Snowflake'],
+                    riskSignals: ['privileged access']
+                  }
+                })
+              }
+            }]
+          })
+        };
+      };
+
+      const result = await assessConversationWithLlm({
+        message: 'Assess a managed integration partner connecting Oracle ERP, Workday, ServiceNow, SharePoint, and Snowflake with privileged implementation access.'
+      });
+
+      assert.equal(requests.length, 2);
+      assert.equal(result.llmAssessment.prose.status, 'success');
+      assert.ok(result.llmAssessment.naturalResponse.length > 1200);
+      assert.equal(result.llmAssessment.naturalResponse, longNaturalResponse);
     });
   } finally {
     global.fetch = originalFetch;
