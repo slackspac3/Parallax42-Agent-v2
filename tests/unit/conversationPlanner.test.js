@@ -9,7 +9,7 @@ const path = require('node:path');
 const { buildConversationPlan, planConversationTurn } = require('../../lib/conversationPlanner');
 const {
   SMART_INTAKE_DEGRADED_MESSAGE,
-  SMART_INTAKE_INVALID_RESPONSE_MESSAGE,
+  SMART_INTAKE_MALFORMED_DEGRADED_MESSAGE,
   SMART_INTAKE_UNAVAILABLE_MESSAGE
 } = require('../../lib/conversationLlmAssessor');
 
@@ -68,25 +68,27 @@ test('conversation planner marks smart intake unavailable when required Compass 
   assert.equal(plan.fallbackReason, SMART_INTAKE_UNAVAILABLE_MESSAGE);
 });
 
-test('conversation planner distinguishes malformed Compass output from missing configuration', () => {
+test('conversation planner falls back deterministically on malformed Compass output', () => {
   const plan = buildConversationPlan({
     message: 'Assess a managed integration partner',
     caseDraft: {},
     llmAssessment: {
       used: false,
-      smartIntakeUnavailable: true,
+      smartIntakeUnavailable: false,
+      smartIntakeDegraded: true,
       invalidCompassResponse: true,
-      userMessage: SMART_INTAKE_INVALID_RESPONSE_MESSAGE,
-      reason: SMART_INTAKE_INVALID_RESPONSE_MESSAGE
+      userMessage: SMART_INTAKE_MALFORMED_DEGRADED_MESSAGE,
+      reason: SMART_INTAKE_MALFORMED_DEGRADED_MESSAGE
     }
   });
 
   assert.equal(plan.source, 'compass_invalid_response');
-  assert.equal(plan.nextBestAction, 'contact_admin');
-  assert.equal(plan.smartIntakeUnavailable, true);
+  assert.equal(plan.nextBestAction, 'deterministic_fallback');
+  assert.equal(plan.smartIntakeUnavailable, false);
+  assert.equal(plan.smartIntakeDegraded, true);
   assert.equal(plan.requiresCompass, false);
-  assert.equal(plan.userMessage, SMART_INTAKE_INVALID_RESPONSE_MESSAGE);
-  assert.equal(plan.nextQuestion, SMART_INTAKE_INVALID_RESPONSE_MESSAGE);
+  assert.equal(plan.userMessage, SMART_INTAKE_MALFORMED_DEGRADED_MESSAGE);
+  assert.equal(plan.nextQuestion, '');
   assert.equal(plan.shouldRunCouncil, false);
 });
 

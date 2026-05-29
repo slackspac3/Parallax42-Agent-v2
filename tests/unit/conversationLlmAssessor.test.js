@@ -10,6 +10,7 @@ const { processConversation } = require('../../lib/conversationAgent');
 const {
   SMART_INTAKE_DEGRADED_MESSAGE,
   SMART_INTAKE_INVALID_RESPONSE_MESSAGE,
+  SMART_INTAKE_MALFORMED_DEGRADED_MESSAGE,
   SMART_INTAKE_UNAVAILABLE_MESSAGE,
   assessConversationWithLlm,
   buildRollingConversationSummary,
@@ -992,7 +993,7 @@ test('rolling conversation summary is deterministic and bounded', () => {
   assert.ok(summary.length <= 2500);
 });
 
-test('conversation LLM assessor reports malformed Compass output accurately', async () => {
+test('conversation LLM assessor degrades gracefully on malformed Compass output', async () => {
   const originalFetch = global.fetch;
   try {
     await withEnv({
@@ -1021,10 +1022,12 @@ test('conversation LLM assessor reports malformed Compass output accurately', as
 
       assert.equal(calls, 2);
       assert.equal(result.llmAssessment.used, false);
-      assert.equal(result.llmAssessment.userMessage, SMART_INTAKE_INVALID_RESPONSE_MESSAGE);
-      assert.equal(result.llmAssessment.reason, SMART_INTAKE_INVALID_RESPONSE_MESSAGE);
+      assert.equal(result.llmAssessment.userMessage, SMART_INTAKE_MALFORMED_DEGRADED_MESSAGE);
+      assert.equal(result.llmAssessment.reason, SMART_INTAKE_MALFORMED_DEGRADED_MESSAGE);
       assert.equal(result.llmAssessment.invalidCompassResponse, true);
       assert.equal(result.llmAssessment.requiresCompass, false);
+      assert.equal(result.llmAssessment.smartIntakeUnavailable, false);
+      assert.equal(result.llmAssessment.smartIntakeDegraded, true);
       assert.equal(result.llmAssessment.compassFailureType, 'invalid_json');
       assert.match(result.llmAssessment.detail, /not valid JSON/i);
       assert.equal(result.llmAssessment.attemptCount, 2);
@@ -1131,6 +1134,8 @@ test('extractChatContent handles common gateway response wrappers', () => {
   assert.equal(extractChatContent({ result: { choices: [{ message: { content: '{"intent":"case_context"}' } }] } }), '{"intent":"case_context"}');
   assert.equal(extractChatContent({ message: { content: '{"intent":"question"}' } }), '{"intent":"question"}');
   assert.equal(extractChatContent({ output: [{ content: [{ text: '{"intent":"owner_answer"}' }] }] }), '{"intent":"owner_answer"}');
+  assert.deepEqual(extractChatContent({ choices: [{ message: { parsed: { intent: 'case_context', caseUpdate: {} } } }] }), { intent: 'case_context', caseUpdate: {} });
+  assert.equal(extractChatContent({ body: { response: { choices: [{ message: { content: '{"intent":"geography_answer"}' } }] } } }), '{"intent":"geography_answer"}');
 });
 
 test('conversation LLM assessor merges strict Compass JSON into the case draft', async () => {
