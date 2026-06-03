@@ -106,3 +106,19 @@ test('production defaults to enforced auth unless explicitly allowed', async () 
     restoreEnv(snapshot);
   }
 });
+
+test('audit mode ignores malformed optional bearer tokens on normal routes', async () => {
+  const snapshot = { ...process.env };
+  try {
+    process.env.P42_AUTH_MODE = 'audit';
+
+    const result = await authorizeRequest({ headers: { authorization: 'Bearer malformed-token' } }, 'agent:run');
+
+    assert.equal(result.ok, true);
+    assert.equal(result.actor.authenticated, false);
+    assert.equal(result.actor.authSource, 'invalid_bearer_ignored');
+    assert.deepEqual(result.actor.roles, ['demo_user']);
+  } finally {
+    restoreEnv(snapshot);
+  }
+});

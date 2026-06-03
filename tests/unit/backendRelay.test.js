@@ -132,3 +132,40 @@ test('backend relay forwards authorized bearer token to allowlisted backend rout
     resetRateLimiter();
   }
 });
+
+test('backend relay drops malformed optional bearer ignored by audit-mode authorization', async () => {
+  resetRateLimiter();
+  const originalFetch = globalThis.fetch;
+  let captured = null;
+  globalThis.fetch = async (url, options = {}) => {
+    captured = { url, options };
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' }
+    });
+  };
+  try {
+    await withEnv({
+      P42_AUTH_MODE: 'audit',
+      PARALLAX42_BACKEND_URL: 'https://backend.example.test'
+    }, async () => {
+      const res = mockResponse();
+      await backendRelayHandler({
+        method: 'GET',
+        url: '/api/backend?path=/health',
+        headers: {
+          host: 'example.test',
+          authorization: 'Bearer malformed-token'
+        },
+        query: { path: '/health' }
+      }, res);
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(captured.url, 'https://backend.example.test/health');
+      assert.equal(captured.options.headers.authorization, undefined);
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    resetRateLimiter();
+  }
+});

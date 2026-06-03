@@ -140,26 +140,26 @@ async function readResponseBody(response, { limitBytes = RELAY_RESPONSE_LIMIT_BY
   return chunks.length ? Buffer.concat(chunks) : Buffer.alloc(0);
 }
 
-function forwardedHeaders(req) {
+function forwardedHeaders(req, auth = null) {
   const headers = {
     accept: req.headers.accept || 'application/json',
     'x-p42-relay': 'vercel-browser-relay'
   };
   if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
-  if (req.headers.authorization) headers.authorization = req.headers.authorization;
+  if (req.headers.authorization && auth?.actor?.authenticated) headers.authorization = req.headers.authorization;
   if (req.headers['x-parallax42-demo-token']) headers['x-parallax42-demo-token'] = req.headers['x-parallax42-demo-token'];
   if (req.headers['x-p42-demo-token']) headers['x-parallax42-demo-token'] = req.headers['x-p42-demo-token'];
   return headers;
 }
 
-async function forward(req, pathWithSearch) {
+async function forward(req, pathWithSearch, auth = null) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const body = await requestBody(req, { limitBytes: requestLimitForPath(pathWithSearch) });
     const response = await fetch(`${backendBaseUrl()}${pathWithSearch}`, {
       method: req.method,
-      headers: forwardedHeaders(req),
+      headers: forwardedHeaders(req, auth),
       body,
       signal: controller.signal
     });
@@ -240,7 +240,7 @@ async function backendRelayHandler(req, res) {
     return;
   }
 
-  const result = await forward(req, pathWithSearch);
+  const result = await forward(req, pathWithSearch, auth);
   if (!result.ok) {
     sendJson(req, res, result.status, result.body);
     return;
