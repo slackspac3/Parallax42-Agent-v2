@@ -3,7 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { checkRateLimit, resetRateLimiter } = require('../../lib/rateLimiter');
+const { checkRateLimit, clientKey, resetRateLimiter } = require('../../lib/rateLimiter');
 
 function req(ip = '203.0.113.10') {
   return {
@@ -32,4 +32,8 @@ test('rate limiter isolates clients by forwarded address', () => {
   assert.equal(checkRateLimit(req('203.0.113.10'), 'evidenceIndex', { max: 1, windowMs: 60_000 }).ok, false);
   assert.equal(checkRateLimit(req('203.0.113.11'), 'evidenceIndex', { max: 1, windowMs: 60_000 }).ok, true);
   resetRateLimiter();
+});
+
+test('rate limiter resists spoofed forwarded-for prefixes by using the proxy-appended address', () => {
+  assert.equal(clientKey(req('198.51.100.200, 203.0.113.25')), '203.0.113.25');
 });

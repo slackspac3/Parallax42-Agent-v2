@@ -436,6 +436,31 @@ function writeAdminBearerToken(value = '') {
   writeSessionStorage(storageKeys.adminBearerToken, String(value || '').trim());
 }
 
+function authorizationHeaderPresent(headers = {}) {
+  if (headers instanceof Headers) return headers.has('authorization');
+  return Object.keys(headers || {}).some((key) => key.toLowerCase() === 'authorization');
+}
+
+function sessionAuthHeaders(headers = {}) {
+  const token = readAdminBearerToken().trim();
+  if (!token) return headers;
+  if (headers instanceof Headers) {
+    const next = new Headers(headers);
+    if (!next.has('authorization')) next.set('Authorization', `Bearer ${token}`);
+    return next;
+  }
+  const next = { ...(headers || {}) };
+  if (!authorizationHeaderPresent(next)) next.Authorization = `Bearer ${token}`;
+  return next;
+}
+
+function withSessionAuth(options = {}) {
+  return {
+    ...options,
+    headers: sessionAuthHeaders(options.headers || {})
+  };
+}
+
 function stripTrailingSlash(value, fallback = '') {
   return String(value || fallback || '').trim().replace(/\/+$/, '');
 }
@@ -492,6 +517,7 @@ function backendStatusCheck(config) {
   return {
     label: 'Parallax42 backend',
     url: backendHealthUrl(config),
+    sessionAuth: true,
     detail: (body) => body?.status || body?.service || body?.ok || 'Backend responded'
   };
 }
@@ -506,7 +532,7 @@ async function fetchJson(url, options = {}) {
 }
 
 function apiFetch(path, options = {}) {
-  return fetchJson(apiUrl(path), options);
+  return fetchJson(apiUrl(path), withSessionAuth(options));
 }
 
 function backendApiUrl(path) {
@@ -519,14 +545,26 @@ function backendApiUrl(path) {
 }
 
 function backendApiFetch(path, options = {}) {
-  return fetchJson(backendApiUrl(path), options);
+  return fetchJson(backendApiUrl(path), withSessionAuth(options));
 }
 
 function adminMutationHeaders(headers = {}) {
-  const token = readAdminBearerToken().trim();
-  return token
-    ? { ...headers, Authorization: `Bearer ${token}` }
-    : headers;
+  return sessionAuthHeaders(headers);
+}
+
+function isAuthorizationError(error) {
+  const status = Number(error?.status || error?.body?.statusCode || 0);
+  const code = cleanText(error?.body?.error || error?.body?.code || '');
+  const detail = cleanText(error?.body?.detail || error?.message || '');
+  return status === 401
+    || code === 'authentication_required'
+    || code === 'invalid_token'
+    || /bearer jwt|demo bearer token|authorization required|authentication required/i.test(detail);
+}
+
+function authorizationRecoveryMessage(target = 'API') {
+  const label = cleanText(target) || 'API';
+  return `${label} authorization is required. Add the private demo/JWT bearer token in Admin > Runtime settings, save runtime, and retry.`;
 }
 
 function statusClass(value = '') {
@@ -1674,12 +1712,15 @@ async function ingestEvidenceFiles(files = []) {
         extracted.push(...parsedEvidence);
       } catch (error) {
         const detail = error instanceof Error ? error.message : 'Backend parsing failed.';
+        const authBlocked = isAuthorizationError(error);
         if (activeRunMode === 'chat') {
           renderEvidencePipelineStatus({
             phase: 'error',
             progress: 28,
-            title: 'Parser relay unavailable',
-            detail: 'File parsing/OCR did not complete. Metadata is preserved; typed summaries still let the deterministic council run.',
+            title: authBlocked ? 'Parser relay authorization required' : 'Parser relay unavailable',
+            detail: authBlocked
+              ? 'File metadata is preserved. Add the private demo/JWT bearer token in Runtime settings to use protected parser/OCR routes.'
+              : 'File parsing/OCR did not complete. Metadata is preserved; typed summaries still let the deterministic council run.',
             metric: 'fallback',
             files: backendFiles,
             state: 'error'
@@ -1687,7 +1728,9 @@ async function ingestEvidenceFiles(files = []) {
         }
         chatMessages.push({
           role: 'assistant',
-          text: `Parser relay fallback: I could not parse the evidence through the backend parser (${detail}). I registered the file metadata only. Chat intake, deterministic council, audit trace, and PDF export still work; paste the supplier/workflow and key clauses before running council.`
+          text: authBlocked
+            ? `Parser relay authorization required: ${authorizationRecoveryMessage('Parser relay')} I registered the file metadata only, so paste the supplier/workflow and key clauses if you need to continue without parser/OCR.`
+            : `Parser relay fallback: I could not parse the evidence through the backend parser (${detail}). I registered the file metadata only. Chat intake, deterministic council, audit trace, and PDF export still work; paste the supplier/workflow and key clauses before running council.`
         });
         for (const [index, file] of backendFiles.entries()) {
           extracted.push(await extractEvidenceFile(file, offset + index, { allowBrowserText: false }));
@@ -4791,10 +4834,22 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     return result;
   } catch (error) {
     const messageText = error instanceof Error ? error.message : 'Conversation failed.';
+    const authBlocked = isAuthorizationError(error);
     pendingMessage.pending = false;
-    pendingMessage.text = `I could not process that turn: ${messageText}`;
+    pendingMessage.text = authBlocked
+      ? `${authorizationRecoveryMessage('Agent API')} Uploaded evidence metadata stays attached in this session; save the token and retry the last message.`
+      : `I could not process that turn: ${messageText}`;
     renderChatMessages();
-    renderRun({ ok: false, message: messageText });
+    if (authBlocked) {
+      renderConversationState({
+        caseDraft: chatCaseDraft,
+        missingFields: chatMissingFields,
+        runReadiness: chatRunReadiness,
+        questions: [activeQuestion || chatCaseDraft.activeQuestion || 'Who is the accountable business owner for this case?']
+      });
+    } else {
+      renderRun({ ok: false, message: messageText });
+    }
     return null;
   } finally {
     stopThinkingProgress();
@@ -5376,6 +5431,7 @@ async function loadDeploymentStatus() {
     {
       label: `Compliance API (${config.resolvedMode})`,
       url: apiUrl('/api/health'),
+      sessionAuth: true,
       detail: (body) => body?.agentRuntime?.configuredRuntime
         ? `${body.service} using ${formatRuntime(body.agentRuntime.configuredRuntime)}`
         : body?.status || body?.service || 'API responded'
@@ -5398,7 +5454,7 @@ async function loadDeploymentStatus() {
       };
     }
     try {
-      const body = await fetchJson(check.url);
+      const body = await fetchJson(check.url, check.sessionAuth ? withSessionAuth() : {});
       return {
         label: check.label,
         url: check.url,

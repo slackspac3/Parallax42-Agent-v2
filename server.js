@@ -157,6 +157,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && (url.pathname === '/metadata' || url.pathname === '/metadata.json' || url.pathname === '/api/metadata')) {
+      if (!localRateLimitGuard(req, res, 'healthRead')) return;
       try {
         writeJson(res, 200, JSON.parse(fs.readFileSync(METADATA_PATH, 'utf8')));
       } catch (error) {
@@ -485,6 +486,18 @@ const server = http.createServer(async (req, res) => {
     if (error?.limitBytes) body.limitBytes = error.limitBytes;
     writeJson(res, statusCode, body);
   }
+});
+
+server.on('error', (error) => {
+  const code = error?.code || 'server_error';
+  if (code === 'EADDRINUSE') {
+    process.stderr.write(`Compliance Intelligence Agent could not start: port ${PORT} is already in use. Set PORT to an available port and retry.\n`);
+  } else if (code === 'EACCES' || code === 'EPERM') {
+    process.stderr.write(`Compliance Intelligence Agent could not start on 0.0.0.0:${PORT}: permission denied. Check sandbox/network policy or set PORT to an allowed local port.\n`);
+  } else {
+    process.stderr.write(`Compliance Intelligence Agent server failed to start: ${error instanceof Error ? error.message : String(error || 'unknown error')}\n`);
+  }
+  process.exit(1);
 });
 
 server.listen(PORT, '0.0.0.0', () => {

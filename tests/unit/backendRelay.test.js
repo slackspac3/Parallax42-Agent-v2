@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 
 const { backendRelayHandler, isRouteAllowed, normaliseRelayPath, requestLimitForPath, relayPath, routeKey } = require('../../api/_backendRelay');
 const { EVIDENCE_UPLOAD_CHUNK_SIZE_BYTES, STANDARD_RUN_BODY_LIMIT_BYTES } = require('../../lib/requestLimits');
+const { resetRateLimiter } = require('../../lib/rateLimiter');
 
 function mockResponse() {
   return {
@@ -79,6 +80,7 @@ test('backend relay uses tight upload chunk request limits', () => {
 });
 
 test('backend relay requires route authorization when auth is enforced', async () => {
+  resetRateLimiter();
   await withEnv({ P42_AUTH_MODE: 'enforced' }, async () => {
     const res = mockResponse();
     await backendRelayHandler({
@@ -91,4 +93,42 @@ test('backend relay requires route authorization when auth is enforced', async (
     assert.equal(res.statusCode, 401);
     assert.equal(res.body.error, 'authentication_required');
   });
+});
+
+test('backend relay forwards authorized bearer token to allowlisted backend routes', async () => {
+  resetRateLimiter();
+  const originalFetch = globalThis.fetch;
+  let captured = null;
+  globalThis.fetch = async (url, options = {}) => {
+    captured = { url, options };
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' }
+    });
+  };
+  try {
+    await withEnv({
+      P42_AUTH_MODE: 'enforced',
+      P42_DEMO_BEARER_TOKEN: 'demo-token',
+      PARALLAX42_BACKEND_URL: 'https://backend.example.test'
+    }, async () => {
+      const res = mockResponse();
+      await backendRelayHandler({
+        method: 'GET',
+        url: '/api/backend?path=/health',
+        headers: {
+          host: 'example.test',
+          authorization: 'Bearer demo-token'
+        },
+        query: { path: '/health' }
+      }, res);
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(captured.url, 'https://backend.example.test/health');
+      assert.equal(captured.options.headers.authorization, 'Bearer demo-token');
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    resetRateLimiter();
+  }
 });

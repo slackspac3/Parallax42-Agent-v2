@@ -130,6 +130,10 @@ if (/writeStorage\(storageKeys\.adminBearerToken,\s*adminBearerToken/.test(app))
   throw new Error('Admin bearer token must not be written through persistent localStorage helpers.');
 }
 
+if (!app.includes('function withSessionAuth(') || !/function apiFetch\([\s\S]{0,160}withSessionAuth\(options\)/.test(app) || !/function backendApiFetch\([\s\S]{0,180}withSessionAuth\(options\)/.test(app)) {
+  throw new Error('Session bearer token must be attached to normal API and parser relay calls, not only admin mutations.');
+}
+
 if (!app.includes('function mergeChatCaseDraft(') || /chatCaseDraft\s*=\s*\{\s*\.\.\.chatCaseDraft,\s*\.\.\.returnedDraft/.test(app)) {
   throw new Error('Chat case draft updates must use mergeChatCaseDraft instead of last-writer-wins async spreads.');
 }

@@ -146,6 +146,7 @@ function forwardedHeaders(req) {
     'x-p42-relay': 'vercel-browser-relay'
   };
   if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
+  if (req.headers.authorization) headers.authorization = req.headers.authorization;
   if (req.headers['x-parallax42-demo-token']) headers['x-parallax42-demo-token'] = req.headers['x-parallax42-demo-token'];
   if (req.headers['x-p42-demo-token']) headers['x-parallax42-demo-token'] = req.headers['x-p42-demo-token'];
   return headers;
