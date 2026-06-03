@@ -1133,6 +1133,54 @@ function uploadedDocumentToEvidence(document = {}, index = 0) {
   };
 }
 
+function documentCaseTitleFromFileName(fileName = '') {
+  const withoutExtension = cleanEvidenceText(fileName)
+    .replace(/\.[a-z0-9]+$/i, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/^\d+\s+/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!withoutExtension) return '';
+  const acronyms = new Map([
+    ['ai', 'AI'],
+    ['api', 'API'],
+    ['bcp', 'BCP'],
+    ['dpa', 'DPA'],
+    ['dr', 'DR'],
+    ['erp', 'ERP'],
+    ['hris', 'HRIS'],
+    ['iso', 'ISO'],
+    ['msa', 'MSA'],
+    ['ocr', 'OCR'],
+    ['saas', 'SaaS'],
+    ['soc', 'SOC'],
+    ['sow', 'SOW']
+  ]);
+  return withoutExtension
+    .toLowerCase()
+    .split(/\s+/)
+    .map((word) => acronyms.get(word) || word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+    .replace(/\bOf\b/g, 'of')
+    .replace(/\bAnd\b/g, 'and')
+    .replace(/\bFor\b/g, 'for')
+    .replace(/\bTo\b/g, 'to')
+    .replace(/\bStatement of Work\b/gi, 'Statement of Work')
+    .slice(0, 120);
+}
+
+function inferredCaseTitleFromParsedEvidence(output = {}, parsed = []) {
+  const documents = Array.isArray(output.uploaded_documents) ? output.uploaded_documents : [];
+  const titleFromFile = [...documents, ...parsed]
+    .map((document) => documentCaseTitleFromFileName(document.file_name || document.fileName || document.title || ''))
+    .find((title) => meaningfulCaseNameValue(title));
+  if (titleFromFile) return titleFromFile;
+  const summaryTitle = cleanEvidenceText(output.extracted_case?.service_description || output.source_summary || parsed[0]?.summary || '')
+    .split(/[.!?]/)[0]
+    .slice(0, 120);
+  return meaningfulCaseNameValue(summaryTitle) ? summaryTitle : '';
+}
+
 function stripEvidencePayloadForBrowser(item = {}) {
   if (!item || typeof item !== 'object') return item;
   delete item.text;
@@ -1193,8 +1241,26 @@ function meaningfulDraftValue(value = '') {
   return Boolean(clean) && !/^(needed|unknown|not sure|pending|n\/a|none|null|undefined)$/i.test(clean);
 }
 
+function isGenericCaseName(value = '') {
+  const clean = cleanEvidenceText(value).toLowerCase();
+  if (!clean) return true;
+  return /^(compliance evidence extraction|evidence extraction|compliance extraction|compliance intake|compliance advisor|new compliance case|case draft|current case|document review request|draft from current message|conversation-supplied case|submitted compliance case)$/i.test(clean);
+}
+
+function meaningfulCaseNameValue(value = '') {
+  const clean = cleanEvidenceText(value);
+  return meaningfulDraftValue(clean) && !isGenericCaseName(clean);
+}
+
 function mergeDraftText(current = '', next = '') {
   return meaningfulDraftValue(next) ? cleanEvidenceText(next) : current;
+}
+
+function mergeCaseNameText(current = '', next = '') {
+  const cleanCurrent = cleanEvidenceText(current);
+  const cleanNext = cleanEvidenceText(next);
+  if (meaningfulCaseNameValue(cleanNext)) return cleanNext;
+  return cleanCurrent;
 }
 
 function mergeDraftArray(current = [], next = [], limit = 24) {
@@ -1218,7 +1284,7 @@ function mergeDocumentContext(current = {}, next = {}) {
   return {
     ...current,
     ...next,
-    supplierName: mergeDraftText(current.supplierName, next.supplierName),
+    supplierName: mergeCaseNameText(current.supplierName, next.supplierName),
     businessUnit: mergeDraftText(current.businessUnit, next.businessUnit),
     geography: mergeDraftText(current.geography, next.geography),
     serviceDescription: mergeDraftText(current.serviceDescription, next.serviceDescription)
@@ -1232,7 +1298,7 @@ function mergeChatCaseDraft(patch = {}, options = {}) {
     ...base,
     ...patch,
     caseId: mergeDraftText(base.caseId, patch.caseId),
-    supplierName: mergeDraftText(base.supplierName, patch.supplierName),
+    supplierName: mergeCaseNameText(base.supplierName, patch.supplierName),
     businessUnit: mergeDraftText(base.businessUnit, patch.businessUnit),
     geography: mergeDraftText(base.geography, patch.geography),
     brief: mergeDraftText(base.brief, patch.brief),
@@ -1457,14 +1523,19 @@ function applyCaseAssistOutput(output = {}, offset = uploadedEvidence.length) {
   const parsed = documents.map((document, index) => uploadedDocumentToEvidence(document, offset + index));
   if (output.extracted_case) {
     const caseRequestStarted = hasCaseRequestContext(chatCaseDraft);
+    const extractedSupplierName = cleanEvidenceText(output.extracted_case.supplier_name || '');
+    const inferredCaseTitle = inferredCaseTitleFromParsedEvidence(output, parsed);
+    const supplierName = meaningfulCaseNameValue(extractedSupplierName)
+      ? extractedSupplierName
+      : inferredCaseTitle || chatCaseDraft.supplierName;
     mergeChatCaseDraft({
-      supplierName: output.extracted_case.supplier_name || chatCaseDraft.supplierName,
+      supplierName,
       businessUnit: caseRequestStarted ? (output.extracted_case.business_unit || chatCaseDraft.businessUnit) : chatCaseDraft.businessUnit,
       geography: caseRequestStarted ? (output.extracted_case.geography || chatCaseDraft.geography) : chatCaseDraft.geography,
       brief: caseRequestStarted ? (output.extracted_case.service_description || output.source_summary || chatCaseDraft.brief) : chatCaseDraft.brief,
       documentContext: {
         ...(chatCaseDraft.documentContext || {}),
-        supplierName: output.extracted_case.supplier_name || chatCaseDraft.documentContext?.supplierName || '',
+        supplierName: supplierName || chatCaseDraft.documentContext?.supplierName || '',
         businessUnit: output.extracted_case.business_unit || chatCaseDraft.documentContext?.businessUnit || '',
         geography: output.extracted_case.geography || chatCaseDraft.documentContext?.geography || '',
         serviceDescription: output.extracted_case.service_description || output.source_summary || chatCaseDraft.documentContext?.serviceDescription || ''

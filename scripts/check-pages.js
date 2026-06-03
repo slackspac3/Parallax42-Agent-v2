@@ -138,6 +138,10 @@ if (!app.includes('function mergeChatCaseDraft(') || /chatCaseDraft\s*=\s*\{\s*\
   throw new Error('Chat case draft updates must use mergeChatCaseDraft instead of last-writer-wins async spreads.');
 }
 
+if (!app.includes('function isGenericCaseName(') || !app.includes('compliance evidence extraction') || !app.includes('function documentCaseTitleFromFileName(')) {
+  throw new Error('Uploaded evidence case naming must reject generic parser labels and derive specific titles from document filenames.');
+}
+
 if (!app.includes('storageKeys.chatSession') || !app.includes('window.sessionStorage.setItem(key, JSON.stringify(value))')) {
   throw new Error('Active chat state must have session-scoped refresh recovery.');
 }
