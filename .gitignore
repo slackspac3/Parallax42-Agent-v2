@@ -9,6 +9,9 @@ __pycache__/
 logs/*
 !logs/*.sample.jsonl
 !logs/demo_trace.jsonl
+!logs/example_1_trace.jsonl
+!logs/example_2_trace.jsonl
+!logs/example_3_trace.jsonl
 !logs/README.md
 audits/
 coverage/
