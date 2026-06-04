@@ -46,6 +46,10 @@
       "role": "Adds governed precedent context without changing deterministic decisions."
     },
     {
+      "name": "Compass Advisory Critic",
+      "role": "Performs a live OpenAI-compatible Compass advisory review in non-sample mode when credentials are configured; advisory only."
+    },
+    {
       "name": "Deterministic Decision Owner",
       "role": "Runs the local rules engine and owns the final non-LLM decision."
     },
@@ -99,15 +103,16 @@
   ],
   "output_type": "text",
   "human_approval_required": true,
-  "sample_mode_supported": false,
+  "sample_mode_supported": true,
   "logs": {
     "directory": "logs",
     "per_run_pattern": "logs/trace-<run_id>.jsonl",
     "stdout_trace_logging": true
   },
   "limitations": [
-    "The Agentathon wrapper does not require live LLM calls, browser clicks, manual uploads, or private setup.",
-    "Live Compass, Qdrant, RBAC enforcement, and live CrewAI are not claimed active unless configured and separately verified.",
+    "The Agentathon wrapper does not require browser clicks, manual uploads, or private local setup.",
+    "In non-sample mode, /run attempts a live Compass/OpenAI-compatible advisory call when OPENAI_API_KEY is configured; failures are returned as structured advisory-unavailable metadata.",
+    "Qdrant, RBAC enforcement, and live CrewAI are not claimed active unless configured and separately verified.",
     "The deterministic decision package is for human legal/compliance review and is not legal advice or automatic approval."
   ]
 }

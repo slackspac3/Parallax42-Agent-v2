@@ -23,7 +23,9 @@ python scripts/agentathon_preflight.py --docker
 
 `--run-api` starts `python run.py`, waits for `GET /health`, posts `input_examples/example_1.json` to `/run`, validates structured JSON, and stops the server. `--docker` builds and runs the container only when Docker is installed; if the Docker CLI is missing, it reports `SKIPPED` rather than failing local validation.
 
-CI uses `SAMPLE_MODE=true`, `OPENAI_API_KEY=dummy`, and `OPENAI_BASE_URL=https://compass.core42.ai/v1` so Docker and API shape can be verified without real secrets. Final evaluation should supply a real Compass key through `OPENAI_API_KEY`. Sample mode is fallback/testing only and still executes deterministic logic; it is not a live Compass, Qdrant, CrewAI, or enforced-RBAC claim.
+CI uses `SAMPLE_MODE=true`, `OPENAI_API_KEY=dummy`, and `OPENAI_BASE_URL=https://compass.core42.ai/v1` so Docker and API shape can be verified without real secrets. Final evaluation should set `SAMPLE_MODE=false` and supply a real Compass key through `OPENAI_API_KEY`; in that mode `/run` attempts a live Compass/OpenAI-compatible advisory review of the deterministic draft. Sample mode is fallback/testing only and still executes deterministic logic; it is not a live Compass, Qdrant, CrewAI, or enforced-RBAC claim.
+
+Compass output is advisory only. It can contribute reviewer questions and advisory notes, but the Deterministic Decision Owner remains the final decision authority and human review remains required.
 
 For UI or demo-flow changes, add a human browser check on top of `npm run qa`: verify that the chat is usable, evidence states are visible, the decision room renders a business-first memo, and technical trace details are behind progressive disclosure. The intended validation split is visual, functional, and output quality:
 
@@ -105,7 +107,7 @@ The generated snapshots are written under `evidence/`, including readiness, live
 
 ## Known Limitations
 
-- Compass gateway LLM and embedding calls are optional/advisory and require server-side environment configuration.
+- Compass gateway LLM and embedding calls require server-side environment configuration; the Agentathon non-sample path attempts a live advisory call when credentials are present.
 - Local vector storage is the default; Qdrant REST is optional only when configured.
 - Governed learning memory is advisory precedent storage, not model retraining.
 - Live advisory specialists require `AGENT_RUNTIME=crewai_llm`, `CREWAI_ENABLE_LIVE_LLM=1`, and server-side Compass credentials; final decisions remain deterministic.

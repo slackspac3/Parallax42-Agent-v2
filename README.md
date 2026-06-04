@@ -98,9 +98,9 @@ MODEL_REASONING=gpt-5.1
 EMBEDDING_MODEL=text-embedding-3-large
 ```
 
-No secrets are committed. `SAMPLE_MODE=true` is accepted for evaluator compatibility, but it does not switch to canned outputs; the wrapper still runs the deterministic Node rules engine. Live Compass, Qdrant, enforced RBAC, and live CrewAI are optional/configurable paths and are not claimed active unless those environment variables are set and separately verified.
+No secrets are committed. `SAMPLE_MODE=true` is accepted for CI/local reproducibility, but it does not switch to canned outputs; the wrapper still runs the deterministic Node rules engine and Python council. With `SAMPLE_MODE=false`, `/run` attempts a live Compass/OpenAI-compatible advisory call when `OPENAI_API_KEY` is configured. That advisory is recorded as advisory only; the Deterministic Decision Owner remains final authority. Qdrant, enforced RBAC, and live CrewAI are optional/configurable paths and are not claimed active unless those environment variables are set and separately verified.
 
-Known limitations: the Agentathon path returns structured JSON and trace logs, not the browser cockpit; the decision is a human-review compliance package, not legal advice or automatic approval; Qdrant and live advisory specialists are disabled by default.
+Known limitations: the Agentathon path returns structured JSON and trace logs, not the browser cockpit; the decision is a human-review compliance package, not legal advice or automatic approval; Compass failures return structured `live_compass.status=unavailable`; Qdrant and live CrewAI are disabled by default.
 
 ## Agentathon Preflight
 
@@ -122,12 +122,14 @@ OPENAI_API_KEY=<real Compass key>
 OPENAI_BASE_URL=https://compass.core42.ai/v1
 ```
 
+In final non-sample evaluation, the wrapper sends sanitized case facts, evidence summaries, specialist findings, and the deterministic draft to Compass for advisory critique. Compass can add reviewer questions and advisory notes, but it cannot approve, reject, or override the deterministic final decision.
+
 ## What This Demo Does Not Claim
 
 - The product runtime is not rewritten as Python; FastAPI is only the Agentathon evaluation wrapper.
 - This repository does not include Redis, Postgres, Celery, or durable queues.
-- Without the optional remote Python CrewAI service, the runtime degrades to deterministic decisioning plus CrewAI-shaped dry run.
-- Live LLM specialist output is optional and advisory.
+- Without the optional remote Python CrewAI service, the product runtime degrades to deterministic decisioning plus CrewAI-shaped dry run.
+- Live Compass advisory output is optional outside final evaluation credentials and remains advisory only.
 - Qdrant support exists only when configured; local-file vector storage is the demo default.
 - OCR/parser capability is integrated through external relay paths rather than implemented as a local parser service in this repo.
 - OpenClaw is not implemented and should not be claimed.

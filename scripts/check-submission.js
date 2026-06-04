@@ -72,7 +72,14 @@ const metadata = exists('metadata.json') ? readJson('metadata.json') : {};
 if (metadata.use_case_id !== '21') failures.push('metadata.json use_case_id must be "21" for the legal/compliance track.');
 if (metadata.entrypoint !== 'run.py') failures.push('metadata.json entrypoint must be run.py.');
 if (metadata.api?.run_endpoint !== 'POST /run') failures.push('metadata.json api.run_endpoint must be POST /run.');
-if (metadata.sample_mode_supported !== false) failures.push('metadata.json must not claim sample_mode_supported unless a real sample-mode branch exists.');
+if (metadata.sample_mode_supported === true) {
+  const orchestrator = fs.readFileSync(path.join(ROOT, 'app/agentathon_orchestrator.py'), 'utf8');
+  if (!orchestrator.includes('skipped_sample_mode') || !orchestrator.includes('sample_mode')) {
+    failures.push('metadata.json claims sample_mode_supported but the Agentathon wrapper sample-mode branch was not detected.');
+  }
+} else if (metadata.sample_mode_supported !== false) {
+  failures.push('metadata.json sample_mode_supported must be a boolean.');
+}
 
 const pythonCheck = spawnSync('python3', ['-m', 'py_compile', 'run.py'], {
   cwd: ROOT,

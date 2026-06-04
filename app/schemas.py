@@ -27,6 +27,7 @@ class AgentDescriptor(FlexibleModel):
 class AgentTraceEvent(FlexibleModel):
     timestamp: str
     trace_id: str
+    run_id: str = ""
     agent_name: str
     action: str
     input_summary: str = ""
@@ -35,6 +36,8 @@ class AgentTraceEvent(FlexibleModel):
     confidence: float = 0.0
     retry_count: int = 0
     status: str = "success"
+    tool_used: str = ""
+    memory_key: str = ""
     payload: Dict[str, Any] = Field(default_factory=dict)
 
 

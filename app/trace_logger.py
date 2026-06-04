@@ -86,11 +86,14 @@ class TraceLogger:
         confidence: float = 0.0,
         retry_count: int = 0,
         status: str = "success",
+        tool_used: str = "",
+        memory_key: str = "",
         payload: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         event = {
             "timestamp": utc_now(),
             "trace_id": self.trace_id,
+            "run_id": self.run_id,
             "agent_name": agent_name,
             "action": action,
             "input_summary": input_summary,
@@ -99,6 +102,8 @@ class TraceLogger:
             "confidence": round(float(confidence or 0), 3),
             "retry_count": int(retry_count or 0),
             "status": status,
+            "tool_used": tool_used,
+            "memory_key": memory_key,
             "payload": redact(payload or {}),
         }
         event = redact(event)

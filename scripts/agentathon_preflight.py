@@ -374,12 +374,27 @@ def check_logs(pf: Preflight) -> None:
     has_target = any(event.get("target_agent") for event in all_trace_events)
     actions = [str(event.get("action", "")).lower() for event in all_trace_events]
     has_collaboration = any(any(keyword in action for keyword in COLLABORATION_ACTIONS) for action in actions)
+    shared_context_keys = {
+        "casefacts",
+        "evidencematches",
+        "missingevidence",
+        "specialistfindings",
+        "precedents",
+        "compassadvisory",
+        "decisiondraft",
+        "requiredactions",
+        "humanreviewrequired",
+        "finaldecision",
+    }
+    has_shared_context = any(str(event.get("memory_key", "")).lower() in shared_context_keys for event in all_trace_events)
     if len(agent_names) < 2:
         failures.append("fewer than 2 distinct agent_name values in trace logs")
     if not has_target:
         failures.append("no target_agent values found in trace logs")
     if not has_collaboration:
         failures.append("no collaboration action found in trace logs")
+    if not has_shared_context:
+        failures.append("no shared context memory_key found in trace logs")
     if len(set(actions)) <= 1 and len(actions) > 1:
         warnings.append("trace actions look generic or identical")
     status = "FAIL" if failures else "WARN" if warnings else "PASS"
@@ -546,9 +561,21 @@ def run_compass_probe(pf: Preflight, *, strict: bool = False) -> None:
     )
     try:
         with urllib.request.urlopen(request, timeout=20) as response:
-            body = response.read(200).decode("utf-8", errors="replace")
-        ok = 200 <= response.status < 300
-        pf.add("Compass probe", "PASS" if ok else "FAIL" if strict else "WARN", f"/models HTTP {response.status}; body_prefix={clean_detail(body, 80)}")
+            body_bytes = response.read(2048)
+        body = body_bytes.decode("utf-8", errors="replace")
+        json_ok = False
+        try:
+            json.loads(body)
+            json_ok = True
+        except Exception:
+            json_ok = False
+        ok = 200 <= response.status < 300 and json_ok
+        if ok:
+            pf.add("Compass probe", "PASS", f"/models HTTP {response.status}; JSON response received with credentials redacted.")
+        else:
+            status = "FAIL" if strict else "WARN"
+            detail = "non-JSON response" if not json_ok else "unexpected HTTP status"
+            pf.add("Compass probe", status, f"/models HTTP {response.status}; {detail}; body_prefix={clean_detail(body, 80)}")
     except urllib.error.HTTPError as exc:
         status = "FAIL" if strict else "WARN"
         pf.add("Compass probe", status, f"/models HTTP {exc.code}; credentials redacted.")
