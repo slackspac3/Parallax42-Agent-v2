@@ -518,6 +518,43 @@ test('conversation NLP handles export-control hardware import cases', () => {
   assert.ok(result.questions.some((question) => /upload the export control pack|classify it|analyze it first/i.test(question)));
 });
 
+test('conversation records export origin follow-up without overwriting import geography or repeating the question', () => {
+  const first = processConversation({
+    message: 'Review an AI accelerator import for UAE and Singapore. The supplier will ship restricted hardware, provide firmware support, and has no final end-use certificate.'
+  }, { runtime: 'deterministic' });
+  const originQuestion = 'From which country or export-control jurisdiction will the supplier ship the AI accelerator hardware (for example, US, EU, UK, or another country)?';
+  const second = processConversation({
+    message: 'from the US',
+    activeQuestion: originQuestion,
+    caseDraft: {
+      ...first.caseDraft,
+      activeQuestion: originQuestion,
+      questions: [originQuestion]
+    },
+    conversationPlan: {
+      usedLlm: false,
+      source: 'compass_invalid_response',
+      nextQuestion: originQuestion,
+      naturalResponse: `A key dependency here is the exporting jurisdiction. ${originQuestion}`
+    },
+    llmAssessment: {
+      provider: 'compass_gateway',
+      used: false,
+      invalidCompassResponse: true,
+      compassFailureType: 'invalid_json',
+      reason: 'Smart intake used deterministic fallback for this turn because the live advisory response could not be parsed.'
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(second.ok, true);
+  assert.equal(second.caseDraft.geography, 'UAE and Singapore');
+  assert.equal(second.caseDraft.exportOriginJurisdiction, 'US');
+  assert.equal(second.caseDraft.recentlyAnsweredFields.export_origin_jurisdiction, 2);
+  assert.equal(second.conversationPlan.nextQuestion, '');
+  assert.ok(!second.reply.includes(originQuestion));
+  assert.ok(!second.questions.some((question) => /export-control jurisdiction|supplier ship/i.test(question)));
+});
+
 test('conversation force-run does not execute when owner and geography are missing', () => {
   let runCount = 0;
   const result = processConversation({
