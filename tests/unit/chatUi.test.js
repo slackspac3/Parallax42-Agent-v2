@@ -144,11 +144,11 @@ test('renderAssistantTurn shows structured smart-intake diagnostics without hidi
     responseText: prose,
     smartIntakeDegraded: true,
     smartIntakeDiagnostic: true,
-    degradedMessage: 'Compass returned a malformed structured response; deterministic intake handled this turn.'
+    degradedMessage: 'Smart intake used deterministic fallback for this turn because the live advisory response could not be parsed.'
   });
 
-  assert.match(html, /Smart intake diagnostic/);
-  assert.match(html, /malformed structured response/);
+  assert.match(html, /Smart intake fallback/);
+  assert.match(html, /deterministic fallback/);
   assert.match(html, /managed integration partner context/);
 });
 

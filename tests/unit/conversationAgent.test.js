@@ -395,7 +395,7 @@ test('conversation exposes malformed Compass output as structured advisory metad
       used: false,
       invalidCompassResponse: true,
       compassFailureType: 'invalid_json',
-      reason: 'Compass returned a malformed structured response; deterministic intake handled this turn.',
+      reason: 'Smart intake used deterministic fallback for this turn because the live advisory response could not be parsed.',
       attempts: [{ attempt: 1, status: 'invalid_json' }],
       attemptCount: 1,
       maxAttempts: 3
@@ -752,7 +752,7 @@ test('conversation classifies assurance artifacts without treating them as legal
   assert.equal(result.nlp.requestProfile.requestType, 'security_assurance_review');
   assert.equal(result.nlp.requestProfile.workflowType, 'security_assurance_review');
   assert.ok(result.nlp.requestProfile.documentTypes.includes('soc2_report'));
-  assert.ok(result.questions.some((question) => /upload the document|classify it|analyze it first/i.test(question)));
+  assert.ok(result.questions.some((question) => /upload the .*|paste the relevant sections/i.test(question)));
   assert.ok(!result.questions.some((question) => /accountable business unit|workflow owner/i.test(question)));
 });
 

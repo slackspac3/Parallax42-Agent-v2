@@ -4901,7 +4901,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
         || llmAttempt.reason
         || conversationPlan.reason
         || (invalidCompassResponse
-          ? 'Compass returned a malformed structured response; deterministic intake handled this turn.'
+          ? 'Smart intake used deterministic fallback for this turn because the live advisory response could not be parsed.'
           : 'Compass is busy, so I used deterministic intake for this turn. You can keep going or retry smart intake.');
     }
     pendingMessage.displayedQuestion = structuredQuestion
