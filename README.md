@@ -119,6 +119,13 @@ No secrets are committed. `SAMPLE_MODE=true` is accepted for CI/local reproducib
 
 Known limitations: the Agentathon path returns structured JSON and trace logs, not the browser cockpit; the decision is a human-review compliance package, not legal advice or automatic approval; Compass failures return structured `live_compass.status=unavailable`; Qdrant is inactive unless Qdrant and Compass embedding env vars are configured and smoke-tested; live CrewAI is not active by default.
 
+Live Compass boundary:
+
+- **Agentathon evaluation path:** `run.py` uses the official OpenAI-compatible environment contract: `OPENAI_API_KEY` plus `OPENAI_BASE_URL=https://compass.core42.ai/v1`. This is the path used by `/run`, `/compass/probe`, `scripts/compass_doctor.py`, and optional Compass embeddings for Qdrant. It exists because the technical screening expects a reproducible root-level API that can be run in Docker without browser clicks or private hosted services.
+- **Product demo path:** the existing Node/Vercel application may use `COMPASS_GATEWAY_BASE_URL` and `COMPASS_GATEWAY_TOKEN` for server-side smart intake, embeddings, and hosted-demo workflows. That Vercel gateway is product infrastructure, not the official Agentathon Compass base URL unless it is explicitly configured to expose OpenAI-compatible `/v1` routes.
+- **Backend/droplet path:** `PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com` supports the product's parser/OCR/backend relay and optional remote CrewAI service. It is not used as the Agentathon Compass API and should not be set as `OPENAI_BASE_URL`.
+- **Why the split exists:** the product keeps its richer hosted architecture, while the Agentathon wrapper exposes judgeable equivalent behavior: deterministic final decisioning, advisory Compass hooks, multi-agent trace logs, and structured fallback when live Compass is unavailable. This avoids rewriting the Node product while satisfying the evaluator's API shape.
+
 Compass diagnostics:
 
 ```bash

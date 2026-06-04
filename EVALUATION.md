@@ -29,6 +29,18 @@ CI uses `SAMPLE_MODE=true`, `OPENAI_API_KEY=dummy`, and `OPENAI_BASE_URL=https:/
 
 Compass output is advisory only. It can contribute reviewer questions and advisory notes, but the Deterministic Decision Owner remains the final decision authority and human review remains required.
 
+## Live Compass Boundary
+
+The repository intentionally separates three runtime boundaries:
+
+| Boundary | Env / URL | Used for | Why |
+|---|---|---|---|
+| Agentathon direct Compass | `OPENAI_API_KEY`, `OPENAI_BASE_URL=https://compass.core42.ai/v1` | FastAPI `/run`, `/compass/probe`, `scripts/compass_doctor.py`, optional Compass embeddings | Matches the evaluator-facing OpenAI-compatible contract and keeps the root `run.py` execution reproducible in Docker. |
+| Product Vercel gateway | `COMPASS_GATEWAY_BASE_URL`, `COMPASS_GATEWAY_TOKEN` | Existing Node/Vercel smart intake, embeddings, hosted demo support | Keeps server-side tokens out of the browser and preserves the product runtime. It is not the Agentathon direct Compass base URL unless it exposes OpenAI-compatible `/v1` routes. |
+| Product backend/droplet | `PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com`, optional `P42_CREWAI_SERVICE_URL` | OCR/parser, backend relay, optional remote CrewAI/product services | Supports the richer product demo. It is not a Compass API and should not be used as `OPENAI_BASE_URL`. |
+
+The Agentathon wrapper uses direct Compass for live advisory when available because the judging API should not depend on browser clicks, uploaded files, Vercel routing, or the droplet backend. The Node/Vercel/droplet stack remains the product vision and can demonstrate richer functionality, but the submitted `/run` path provides equivalent judgeable evidence: multi-agent collaboration, deterministic final decision ownership, advisory live-LLM boundary, RAG/learning status, and JSONL traces.
+
 Optional Qdrant RAG evidence memory is active only when `P42_VECTOR_STORE_PROVIDER=qdrant`, `QDRANT_URL`, and the Compass embedding env vars are configured. The Agentathon `/run` path then chunks synthetic/input evidence, embeds through Compass, stores case-scoped evidence chunks in Qdrant, searches by `caseId`, and returns citation-safe snippets only. Raw embeddings are never returned. Without that configuration, `/run` reports `rag_evidence_memory.provider=local-fallback`; this fallback is not durable production RAG.
 
 ```bash
