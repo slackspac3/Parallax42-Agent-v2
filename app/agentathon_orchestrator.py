@@ -10,6 +10,9 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from .compass_client import CompassClient
+from .crewai_runtime import run_crewai_advisory_council
+from .evidence_memory import LocalEvidenceMemory, build_retrieval_query, chunks_from_evidence_items, get_evidence_memory_provider
+from .learning_memory import summarize_learning_signals
 from .node_bridge import run_node_bridge
 from .schemas import AgentathonRunRequest
 from .trace_logger import TraceLogger, redact, safe_run_id
@@ -25,6 +28,7 @@ AGENTS: List[Dict[str, str]] = [
     {"name": "Responsible AI Specialist", "role": "Challenges AI use, model training, automation, oversight, and transparency risk."},
     {"name": "Learning & Precedent Specialist", "role": "Looks up deterministic synthetic precedent patterns as advisory memory."},
     {"name": "Compass Advisory Critic", "role": "Runs live Compass advisory review when configured; never owns the final decision."},
+    {"name": "Final Advisory Reviewer", "role": "Optional live CrewAI advisory reviewer when AGENT_RUNTIME=crewai_live; advisory only."},
     {"name": "Deterministic Decision Owner", "role": "Applies deterministic policy and remains final decision authority."},
     {"name": "Audit Packager", "role": "Packages the decision, evidence, collaboration trace, and review artifacts."},
 ]
@@ -113,6 +117,18 @@ def _extract_query(payload: Dict[str, Any]) -> str:
 
 def _sample_mode(request: AgentathonRunRequest) -> bool:
     return bool(request.options.get("sample_mode") is True or _truthy(os.environ.get("SAMPLE_MODE", "false")))
+
+
+def _require_compass() -> bool:
+    return _truthy(os.environ.get("REQUIRE_COMPASS", "false"))
+
+
+def _agent_runtime() -> str:
+    return (os.environ.get("AGENT_RUNTIME") or "custom").strip().lower() or "custom"
+
+
+def _crewai_live_enabled() -> bool:
+    return _truthy(os.environ.get("CREWAI_ENABLE_LIVE_LLM", "0"))
 
 
 def _limited_list(values: List[Any], limit: int = 8) -> List[str]:
@@ -216,9 +232,12 @@ class AgentathonOrchestrator:
             "specialistFindings": [],
             "precedents": [],
             "compassAdvisory": {},
+            "liveAdvisory": {},
             "decisionDraft": {},
             "requiredActions": [],
             "humanReviewRequired": True,
+            "retrievalContext": {},
+            "learningContext": {},
         }
         collaboration_summary: Dict[str, List[Any] | str] = {
             "delegated_tasks": [],
@@ -280,41 +299,48 @@ class AgentathonOrchestrator:
             memory_key="evidenceMatches",
         )
 
-        evidence_context = self._evidence_context(payload, node_result, case_facts)
+        evidence_context = self._evidence_context(payload, node_result, case_facts, run_id=run_id)
         shared_context["evidenceMatches"] = evidence_context["matches"]
         shared_context["missingEvidence"] = evidence_context["missing"]
+        shared_context["retrievalContext"] = evidence_context["retrieval_context"]
         collaboration_summary["shared_context_updates"].append("evidence matches and gaps updated")
+        collaboration_summary["shared_context_updates"].append("retrieval context updated")
+        retrieval_context = evidence_context["retrieval_context"]
         logger.log(
             agent_name="Evidence Retrieval Agent",
             action="retrieve_evidence",
-            input_summary="Supplied request evidence, Node citations, and local sample evidence manifest.",
-            output_summary=f"Retrieved {len(evidence_context['matches'])} evidence match(es); sufficiency={evidence_context['sufficiency']}.",
+            input_summary="Supplied request evidence, Node citations, local sample snippets, and case-scoped evidence memory.",
+            output_summary=(
+                f"Retrieved {len(evidence_context['matches'])} evidence match(es); "
+                f"memory provider={retrieval_context['provider']}; sufficiency={evidence_context['sufficiency']}."
+            ),
             target_agent="Privacy Specialist",
             confidence=evidence_context["confidence"],
             status="success" if evidence_context["sufficiency"] in {"strong", "usable"} else "needs_revision",
-            tool_used="local_input_evidence_search",
+            tool_used=retrieval_context["provider"],
             memory_key="evidenceMatches",
             payload={
                 "match_count": len(evidence_context["matches"]),
                 "missingEvidence": evidence_context["missing"],
                 "localEvidenceArtifacts": evidence_context["local_artifacts"],
+                "retrievalContext": retrieval_context,
             },
         )
         if evidence_context["sufficiency"] in {"weak", "missing"} or len(evidence_context["missing"]) >= 2:
             retry_status = "retry" if evidence_context["matches"] else "fallback_used"
-            collaboration_summary["retries"].append("Evidence Retrieval Agent refined search with domain keywords and local evidence manifest")
+            collaboration_summary["retries"].append(f"Evidence Retrieval Agent refined search with domain keywords using {retrieval_context['provider']}")
             logger.log(
                 agent_name="Evidence Retrieval Agent",
                 action="retry_evidence_search",
                 input_summary="Initial evidence coverage was weak or missing key proof.",
-                output_summary="Retried with privacy/security/AI/continuity keywords; retained only sanitized evidence metadata.",
+                output_summary=f"Retried with privacy/security/AI/continuity keywords through {retrieval_context['provider']}; retained only sanitized evidence metadata.",
                 target_agent="Privacy Specialist",
                 confidence=max(0.45, evidence_context["confidence"] - 0.08),
                 retry_count=1,
                 status=retry_status,
-                tool_used="deterministic_keyword_refinement",
+                tool_used=retrieval_context["provider"],
                 memory_key="missingEvidence",
-                payload={"missingEvidence": evidence_context["missing"]},
+                payload={"missingEvidence": evidence_context["missing"], "retrievalContext": retrieval_context},
             )
 
         privacy = self._privacy_review(case_facts, evidence_context)
@@ -333,19 +359,31 @@ class AgentathonOrchestrator:
         self._log_specialist(logger, responsible_ai, "Learning & Precedent Specialist")
 
         precedent = self._precedent_lookup(case_facts, evidence_context, shared_context["specialistFindings"])
+        learning_context = summarize_learning_signals(
+            case_facts,
+            evidence_context["missing"],
+            self._risk_domains(case_facts, evidence_context["missing"]),
+            compass_client=self.compass,
+        )
         shared_context["precedents"].append(precedent)
+        shared_context["learningContext"] = learning_context
         collaboration_summary["shared_context_updates"].append("synthetic precedent added")
+        collaboration_summary["shared_context_updates"].append("governed learning memory updated")
+        top_pattern = learning_context.get("topPattern") or precedent["pattern"]
         logger.log(
             agent_name="Learning & Precedent Specialist",
             action="retrieve_precedent",
             input_summary="Case facts, missing evidence, and specialist challenges.",
-            output_summary=f"Matched precedent pattern: {precedent['pattern']}.",
-            target_agent="Compass Advisory Critic",
+            output_summary=(
+                f"Matched precedent pattern: {precedent['pattern']}; "
+                f"similar learning cases={learning_context.get('similar_cases_found', 0)}, top pattern={top_pattern}."
+            ),
+            target_agent="Deterministic Decision Owner",
             confidence=precedent["confidence"],
             status="success",
-            tool_used="synthetic_precedent_lookup",
-            memory_key="precedents",
-            payload=precedent,
+            tool_used=learning_context.get("provider", "local-jsonl"),
+            memory_key="learningContext",
+            payload={"precedent": precedent, "learningContext": learning_context},
         )
 
         decision_draft = {
@@ -355,11 +393,23 @@ class AgentathonOrchestrator:
             "humanReviewRequired": True,
         }
         shared_context["decisionDraft"] = decision_draft
+        live_advisory = self._run_live_crewai(sample_mode, shared_context, logger, collaboration_summary)
+        shared_context["liveAdvisory"] = live_advisory
         compass_result = self._run_compass(sample_mode, shared_context, logger, collaboration_summary)
         live_compass = self._live_compass_payload(sample_mode, compass_result)
         shared_context["compassAdvisory"] = live_compass.get("advisory") or {}
+        if _require_compass() and not sample_mode and not compass_result.get("ok"):
+            return self._compass_required_error_response(
+                request,
+                run_id,
+                trace_id,
+                logger,
+                live_compass,
+                collaboration_summary,
+                started,
+            )
 
-        output = self._deterministic_output(node_result, shared_context, live_compass, collaboration_summary)
+        output = self._deterministic_output(node_result, shared_context, live_compass, live_advisory, collaboration_summary)
         output["artifacts"][0]["path"] = logger.relative_log_file
         shared_context["requiredActions"] = output["required_actions"]
         shared_context["humanReviewRequired"] = output["human_review_required"]
@@ -409,6 +459,7 @@ class AgentathonOrchestrator:
                 "final_owner": "Deterministic Decision Owner",
                 "llm_advisory_only": True,
                 "compass_status": output["live_compass"]["status"],
+                "live_advisory_runtime": output["live_advisory"]["runtime"],
             },
         )
         output["collaboration_summary"] = collaboration_summary
@@ -448,6 +499,78 @@ class AgentathonOrchestrator:
             "execution_time_seconds": round(time.monotonic() - started, 3),
         }
 
+    def _compass_required_error_response(
+        self,
+        request: AgentathonRunRequest,
+        run_id: str,
+        trace_id: str,
+        logger: TraceLogger,
+        live_compass: Dict[str, Any],
+        collaboration_summary: Dict[str, Any],
+        started: float,
+    ) -> Dict[str, Any]:
+        collaboration_summary["escalations"].append("REQUIRE_COMPASS=true blocked deterministic-only completion because live Compass advisory was unavailable")
+        collaboration_summary["shared_context_updates"].append("Compass requirement failure recorded")
+        summary = "Live Compass advisory is required for this run, but the OpenAI-compatible Compass call was unavailable."
+        logger.log(
+            agent_name="Deterministic Decision Owner",
+            action="escalate_human_review",
+            input_summary="REQUIRE_COMPASS=true and Compass advisory failed before final policy completion.",
+            output_summary="Blocked deterministic-only completion and returned a structured recoverable error.",
+            target_agent="Audit Packager",
+            confidence=0.9,
+            retry_count=1,
+            status="escalated",
+            tool_used="deterministic_rules_engine",
+            memory_key="humanReviewRequired",
+            payload={"compass_status": live_compass.get("status"), "error_type": live_compass.get("error_type")},
+        )
+        output = {
+            "summary": summary,
+            "executive_summary": summary,
+            "decision": "needs_more_information",
+            "risk_level": "high",
+            "required_actions": [
+                "Verify OPENAI_API_KEY and OPENAI_BASE_URL=https://compass.core42.ai/v1, then rerun with REQUIRE_COMPASS=true."
+            ],
+            "evidence_used": [],
+            "missing_evidence": ["live Compass advisory"],
+            "human_review_required": True,
+            "decision_authority": {"final_owner": "Deterministic Decision Owner", "llm_advisory_only": True},
+            "live_compass": live_compass,
+            "live_advisory": self._default_live_advisory("compass_required_error"),
+            "collaboration_summary": collaboration_summary,
+            "artifacts": [{"type": "trace_log", "path": logger.relative_log_file}],
+        }
+        logger.log(
+            agent_name="Audit Packager",
+            action="finalize_response",
+            input_summary="Compass-required execution failed with structured advisory-unavailable metadata.",
+            output_summary=summary,
+            target_agent="Audit Packager",
+            confidence=0.88,
+            status="error",
+            memory_key="finalDecision",
+            payload={"error_type": live_compass.get("error_type", "compass_unavailable")},
+        )
+        return {
+            "run_id": run_id,
+            "status": "error",
+            "use_case_id": request.use_case_id or USE_CASE_ID,
+            "output": output,
+            "result": output,
+            "agents": AGENTS,
+            "agent_trace": logger.events,
+            "trace_id": trace_id,
+            "log_file": logger.relative_log_file,
+            "execution_time_seconds": round(time.monotonic() - started, 3),
+            "error": {
+                "type": "compass_required_unavailable",
+                "message": summary,
+                "recoverable": True,
+            },
+        }
+
     def _bridge_error_response(
         self,
         request: AgentathonRunRequest,
@@ -485,6 +608,7 @@ class AgentathonOrchestrator:
                 "model": self.compass.model_reasoning(),
                 "advisory": {},
             },
+            "live_advisory": self._default_live_advisory("bridge_error"),
             "collaboration_summary": {
                 "delegated_tasks": [],
                 "specialist_challenges": ["Node deterministic bridge failed"],
@@ -569,13 +693,14 @@ class AgentathonOrchestrator:
                 parts.append(_clean(citation.get("text"))[:600])
         return " ".join(parts).lower()
 
-    def _evidence_context(self, payload: Dict[str, Any], node_result: Dict[str, Any], case_facts: Dict[str, Any]) -> Dict[str, Any]:
+    def _evidence_context(self, payload: Dict[str, Any], node_result: Dict[str, Any], case_facts: Dict[str, Any], *, run_id: str) -> Dict[str, Any]:
         citations = [item for item in _as_list(node_result.get("citations")) if isinstance(item, dict)]
-        matches = [
+        citation_matches = [
             {
                 "evidence_id": _first_text(item.get("evidenceId"), item.get("citationId")),
                 "title": _first_text(item.get("title"), "Input evidence"),
                 "snippet": _clean(item.get("text"))[:260],
+                "source": "node-citation",
             }
             for item in citations
         ]
@@ -611,8 +736,79 @@ class AgentathonOrchestrator:
             if isinstance(gap, dict) and _clean((gap or {}).get("gap"))
         ]
         missing = _limited_list(missing + node_gaps, 12)
+        risk_domains = self._risk_domains(case_facts, missing)
+        identifiers = self._case_identifiers(payload, run_id)
+        evidence_items = self._evidence_items(payload, node_result, case_facts)
+        if not evidence_items:
+            evidence_items = self._sample_evidence_items(case_facts, missing)
+        chunks = chunks_from_evidence_items(
+            evidence_items,
+            case_id=identifiers["caseId"],
+            workspace_id=identifiers["workspaceId"],
+            project_id=identifiers["projectId"],
+        )
+        provider = get_evidence_memory_provider(self.compass)
+        index_result = provider.index(chunks)
+        retrieval_query = build_retrieval_query(case_facts, missing, risk_domains)
+        search_result = provider.search(
+            retrieval_query,
+            case_id=identifiers["caseId"],
+            workspace_id=identifiers["workspaceId"],
+            project_id=identifiers["projectId"],
+            limit=8,
+        )
+        fallback_from = ""
+        qdrant_configured = bool(search_result.get("configured") or index_result.get("configured"))
+        if getattr(provider, "provider", "") == "qdrant" and (index_result.get("error_type") or search_result.get("error_type")):
+            fallback_from = str(search_result.get("error_type") or index_result.get("error_type") or "qdrant_unavailable")
+            fallback_provider = LocalEvidenceMemory()
+            fallback_index = fallback_provider.index(chunks)
+            fallback_search = fallback_provider.search(
+                retrieval_query,
+                case_id=identifiers["caseId"],
+                workspace_id=identifiers["workspaceId"],
+                project_id=identifiers["projectId"],
+                limit=8,
+            )
+            index_result = {**fallback_index, "fallbackFrom": fallback_from}
+            search_result = {**fallback_search, "fallbackFrom": fallback_from}
+        rag_matches = [
+            {
+                "evidence_id": match.get("evidenceId", ""),
+                "title": match.get("title", ""),
+                "snippet": match.get("snippet", ""),
+                "score": match.get("score", 0),
+                "documentId": match.get("documentId", ""),
+                "chunkIndex": match.get("chunkIndex", 0),
+                "domains": match.get("domains", []),
+                "source": match.get("source", "evidence-memory"),
+            }
+            for match in search_result.get("matches", [])
+            if isinstance(match, dict)
+        ]
+        matches = self._merge_evidence_matches(rag_matches, citation_matches)
+        retrieved_count = len(search_result.get("matches", [])) if isinstance(search_result.get("matches"), list) else 0
+        retrieval_context = {
+            "provider": search_result.get("provider") or index_result.get("provider") or "local-fallback",
+            "qdrantConfigured": qdrant_configured,
+            "collection": search_result.get("collection") or index_result.get("collection", ""),
+            "durable": bool(search_result.get("durable") or index_result.get("durable")),
+            "indexedChunkCount": int(index_result.get("indexedChunkCount") or 0),
+            "retrievedMatchCount": retrieved_count,
+            "evidenceMatches": rag_matches[:8],
+            "missingEvidenceSignals": missing,
+            "browserEmbeddingsRetained": False,
+            **({"fallbackFrom": fallback_from} if fallback_from else {}),
+            **(
+                {"error_type": search_result.get("error_type") or index_result.get("error_type")}
+                if (search_result.get("error_type") or index_result.get("error_type"))
+                else {}
+            ),
+        }
         quality = _as_dict(node_result.get("evidence_quality"))
         sufficiency = _clean(quality.get("status")) or ("usable" if matches else "missing")
+        if matches and sufficiency == "missing":
+            sufficiency = "usable"
         if len(missing) >= 4 and sufficiency == "usable":
             sufficiency = "weak"
         confidence = {"strong": 0.88, "usable": 0.76, "weak": 0.52, "missing": 0.25}.get(sufficiency, 0.55)
@@ -622,7 +818,122 @@ class AgentathonOrchestrator:
             "sufficiency": sufficiency,
             "confidence": confidence,
             "local_artifacts": local_artifacts,
+            "retrieval_context": retrieval_context,
         }
+
+    def _case_identifiers(self, payload: Dict[str, Any], run_id: str) -> Dict[str, str]:
+        input_payload = payload.get("input") if isinstance(payload.get("input"), dict) else {}
+        case_payload = input_payload.get("case") if isinstance(input_payload.get("case"), dict) else {}
+        return {
+            "caseId": _first_text(case_payload.get("case_id"), case_payload.get("caseId"), input_payload.get("case_id"), run_id),
+            "workspaceId": _first_text(case_payload.get("workspace_id"), case_payload.get("workspaceId"), input_payload.get("workspace_id"), "agentathon"),
+            "projectId": _first_text(case_payload.get("project_id"), case_payload.get("projectId"), input_payload.get("project_id"), "use-case-21"),
+        }
+
+    def _evidence_items(self, payload: Dict[str, Any], node_result: Dict[str, Any], case_facts: Dict[str, Any]) -> List[Dict[str, Any]]:
+        del case_facts
+        input_payload = payload.get("input") if isinstance(payload.get("input"), dict) else {}
+        items: List[Dict[str, Any]] = []
+        for source_key in ("evidence", "documents"):
+            for index, raw in enumerate(_as_list(input_payload.get(source_key)), start=1):
+                if isinstance(raw, dict):
+                    items.append({**raw, "source": _first_text(raw.get("source"), "input")})
+                elif _clean(raw):
+                    items.append(
+                        {
+                            "id": f"{source_key}-{index}",
+                            "title": f"Typed {source_key} {index}",
+                            "text": _clean(raw),
+                            "source": "typed",
+                        }
+                    )
+        for key in ("evidence_text", "evidenceText", "document_text", "documentText"):
+            if _clean(input_payload.get(key)):
+                items.append({"id": key, "title": key, "text": _clean(input_payload.get(key)), "source": "typed"})
+        for citation in [item for item in _as_list(node_result.get("citations")) if isinstance(item, dict)]:
+            if _clean(citation.get("text")):
+                items.append(
+                    {
+                        "id": _first_text(citation.get("evidenceId"), citation.get("citationId")),
+                        "title": _first_text(citation.get("title"), "Node citation"),
+                        "text": _clean(citation.get("text")),
+                        "source": "input",
+                    }
+                )
+        return self._dedupe_evidence_items(items)
+
+    def _dedupe_evidence_items(self, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        deduped: List[Dict[str, Any]] = []
+        seen = set()
+        for item in items:
+            key = (
+                _first_text(item.get("id"), item.get("evidenceId"), item.get("citationId")).lower(),
+                _clean(item.get("title")).lower(),
+                _clean(_first_text(item.get("text"), item.get("content"), item.get("body"), item.get("snippet")))[:120].lower(),
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(item)
+        return deduped
+
+    def _sample_evidence_items(self, case_facts: Dict[str, Any], missing: List[str]) -> List[Dict[str, Any]]:
+        text = json.dumps({"caseFacts": case_facts, "missingEvidence": missing}, ensure_ascii=False).lower()
+        if not text.strip():
+            return []
+        samples = [
+            {
+                "id": "sample-privacy-baseline",
+                "title": "Synthetic privacy baseline",
+                "text": "Sample evidence requirement: signed DPA, subprocessor register, retention schedule, deletion assistance, and cross-border transfer mechanism must be reviewed before approval.",
+                "source": "sample",
+            },
+            {
+                "id": "sample-security-baseline",
+                "title": "Synthetic security baseline",
+                "text": "Sample evidence requirement: SOC 2, ISO 27001, access control, MFA, SSO, encryption, audit logging, vulnerability management, BCP, and exit assistance evidence support reviewer validation.",
+                "source": "sample",
+            },
+            {
+                "id": "sample-ai-baseline",
+                "title": "Synthetic AI governance baseline",
+                "text": "Sample evidence requirement: AI vendors using customer, patient, or confidential data need model-training exclusion, human oversight, transparency, and no autonomous approval.",
+                "source": "sample",
+            },
+        ]
+        if "ai" not in text and "model" not in text:
+            samples = samples[:2]
+        return samples
+
+    def _risk_domains(self, case_facts: Dict[str, Any], missing: List[str]) -> List[str]:
+        blob = json.dumps({"caseFacts": case_facts, "missing": missing}, ensure_ascii=False).lower()
+        domains = []
+        if _contains(blob, r"dpa|subprocessor|retention|transfer|patient|personal|privacy"):
+            domains.append("privacy")
+        if _contains(blob, r"soc|iso|security|mfa|sso|encryption|bcp|continuity|exit"):
+            domains.append("security")
+        if _contains(blob, r"\b(ai|model|training|llm|analytics)\b"):
+            domains.append("ai-governance")
+        if _contains(blob, r"critical|continuity|bcp|disaster recovery"):
+            domains.append("continuity")
+        return domains or ["general"]
+
+    def _merge_evidence_matches(self, primary: List[Dict[str, Any]], secondary: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        merged: List[Dict[str, Any]] = []
+        seen = set()
+        for item in primary + secondary:
+            key = (
+                _clean(item.get("evidence_id") or item.get("evidenceId")).lower(),
+                _clean(item.get("title")).lower(),
+                _clean(item.get("snippet"))[:80].lower(),
+            )
+            if key in seen or not _clean(item.get("snippet")):
+                continue
+            seen.add(key)
+            merged.append(item)
+            if len(merged) >= 12:
+                break
+        return merged
 
     def _local_artifacts(self, case_facts: Dict[str, Any]) -> List[str]:
         artifacts: List[str] = []
@@ -766,6 +1077,115 @@ class AgentathonOrchestrator:
             "confidence": 0.62,
         }
 
+    def _default_live_advisory(self, status: str = "skipped_custom_runtime") -> Dict[str, Any]:
+        runtime = _agent_runtime()
+        return {
+            "enabled": False,
+            "runtime": runtime,
+            "status": status if runtime == "crewai_live" else "skipped_custom_runtime",
+            "model": self.compass.model_fast(),
+            "advisoryOnly": True,
+            "agents": [],
+            "cards": [],
+            "summary": {},
+            "final_decision_owner": "Deterministic Decision Owner",
+        }
+
+    def _run_live_crewai(
+        self,
+        sample_mode: bool,
+        shared_context: Dict[str, Any],
+        logger: TraceLogger,
+        collaboration_summary: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        runtime = _agent_runtime()
+        if runtime != "crewai_live":
+            return self._default_live_advisory("skipped_custom_runtime")
+        if sample_mode:
+            collaboration_summary["shared_context_updates"].append("CrewAI live advisory skipped in sample mode")
+            logger.log(
+                agent_name="Final Advisory Reviewer",
+                action="crewai_advisory_unavailable",
+                input_summary="Sample mode requested.",
+                output_summary="Skipped live CrewAI call; custom deterministic council remains active.",
+                target_agent="Deterministic Decision Owner",
+                confidence=0.7,
+                status="fallback_used",
+                tool_used="sample_mode",
+                memory_key="liveAdvisory",
+                payload={"runtime": "crewai_live", "advisoryOnly": True},
+            )
+            return {
+                **self._default_live_advisory("skipped_sample_mode"),
+                "runtime": "crewai_live",
+                "status": "skipped_sample_mode",
+            }
+        if not _crewai_live_enabled():
+            collaboration_summary["shared_context_updates"].append("CrewAI live advisory disabled")
+            logger.log(
+                agent_name="Final Advisory Reviewer",
+                action="crewai_advisory_unavailable",
+                input_summary="AGENT_RUNTIME=crewai_live without CREWAI_ENABLE_LIVE_LLM=1.",
+                output_summary="CrewAI advisory disabled; custom deterministic council continued.",
+                target_agent="Deterministic Decision Owner",
+                confidence=0.52,
+                status="fallback_used",
+                tool_used="crewai_live",
+                memory_key="liveAdvisory",
+                payload={"runtime": "crewai_live", "error_type": "crewai_live_disabled"},
+            )
+            return {
+                **self._default_live_advisory("unavailable"),
+                "runtime": "crewai_live",
+                "status": "unavailable",
+                "error_type": "crewai_live_disabled",
+                "recoverable": True,
+            }
+
+        result = run_crewai_advisory_council(shared_context)
+        if result.get("ok"):
+            collaboration_summary["shared_context_updates"].append("CrewAI live advisory added")
+            logger.log(
+                agent_name="Final Advisory Reviewer",
+                action="live_crewai_review",
+                input_summary="Case facts, evidence matches, missing evidence, learning suggestions, and deterministic draft.",
+                output_summary=f"CrewAI advisory completed with {len(result.get('cards') or [])} card(s); deterministic owner remains final.",
+                target_agent="Deterministic Decision Owner",
+                confidence=0.76,
+                status="success",
+                tool_used="crewai_live",
+                memory_key="liveAdvisory",
+                payload={
+                    "runtime": "crewai_live",
+                    "model": result.get("model"),
+                    "advisoryOnly": True,
+                    "summary": result.get("summary"),
+                    "card_count": len(result.get("cards") or []),
+                },
+            )
+            return result
+
+        collaboration_summary["shared_context_updates"].append("CrewAI live advisory unavailable")
+        collaboration_summary["retries"].append("CrewAI live advisory unavailable; custom deterministic council continued")
+        logger.log(
+            agent_name="Final Advisory Reviewer",
+            action="crewai_advisory_unavailable",
+            input_summary="Case facts, evidence matches, missing evidence, learning suggestions, and deterministic draft.",
+            output_summary=f"CrewAI advisory unavailable: {result.get('error_type', 'unknown')}.",
+            target_agent="Deterministic Decision Owner",
+            confidence=0.44,
+            status="advisory_unavailable",
+            tool_used="crewai_live",
+            memory_key="liveAdvisory",
+            payload={
+                "runtime": "crewai_live",
+                "error_type": result.get("error_type"),
+                "recoverable": result.get("recoverable", True),
+                "advisoryOnly": True,
+            },
+        )
+        return result
+
     def _run_compass(
         self,
         sample_mode: bool,
@@ -894,6 +1314,7 @@ class AgentathonOrchestrator:
         node_result: Dict[str, Any],
         shared_context: Dict[str, Any],
         live_compass: Dict[str, Any],
+        live_advisory: Dict[str, Any],
         collaboration_summary: Dict[str, Any],
     ) -> Dict[str, Any]:
         findings = shared_context["specialistFindings"]
@@ -912,6 +1333,9 @@ class AgentathonOrchestrator:
             ],
             14,
         )
+        learning_context = shared_context.get("learningContext") if isinstance(shared_context.get("learningContext"), dict) else {}
+        learning_actions, reviewer_questions = self._learning_supported_controls(missing, learning_context)
+        required_actions = _limited_list(required_actions + learning_actions, 14)
         if not required_actions:
             required_actions = ["Confirm accountable human reviewer before operational approval."]
 
@@ -920,10 +1344,17 @@ class AgentathonOrchestrator:
                 "evidence_id": match.get("evidence_id", ""),
                 "title": match.get("title", ""),
                 "snippet": match.get("snippet", ""),
+                **({"score": match.get("score")} if match.get("score") is not None else {}),
+                **({"documentId": match.get("documentId")} if match.get("documentId") else {}),
+                **({"chunkIndex": match.get("chunkIndex")} if match.get("chunkIndex") is not None else {}),
+                **({"domains": match.get("domains")} if match.get("domains") else {}),
+                **({"source": match.get("source")} if match.get("source") else {}),
             }
             for match in shared_context["evidenceMatches"][:12]
         ]
         summary = _summary(decision, risk, missing, live_compass.get("status", "unavailable"))
+        if learning_context.get("similar_cases_found"):
+            summary = f"{summary} Learning memory found {learning_context.get('similar_cases_found')} advisory similar case(s)."
         return {
             "summary": summary,
             "executive_summary": summary,
@@ -932,15 +1363,79 @@ class AgentathonOrchestrator:
             "required_actions": required_actions,
             "evidence_used": evidence_used,
             "missing_evidence": missing,
+            "rag_evidence_memory": shared_context.get("retrievalContext") or {
+                "provider": "local-fallback",
+                "qdrantConfigured": False,
+                "durable": False,
+                "indexedChunkCount": 0,
+                "retrievedMatchCount": 0,
+                "evidenceMatches": [],
+                "missingEvidenceSignals": missing,
+                "browserEmbeddingsRetained": False,
+            },
+            "learning_memory": {
+                "provider": learning_context.get("provider", "local-jsonl"),
+                "similar_cases_found": int(learning_context.get("similar_cases_found") or 0),
+                "control_suggestions": learning_context.get("controlSuggestions", [])[:8],
+                "repeatedEvidenceGaps": learning_context.get("repeatedEvidenceGaps", [])[:8],
+                "advisoryOnly": True,
+                "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+                "browserEmbeddingsRetained": False,
+                **({"fallbackFrom": learning_context.get("fallbackFrom")} if learning_context.get("fallbackFrom") else {}),
+            },
+            "reviewer_questions": reviewer_questions,
             "human_review_required": True,
             "decision_authority": {
                 "final_owner": "Deterministic Decision Owner",
                 "llm_advisory_only": True,
             },
             "live_compass": live_compass,
+            "live_advisory": {
+                "enabled": bool(live_advisory.get("ok")),
+                "runtime": live_advisory.get("runtime", _agent_runtime()),
+                "status": live_advisory.get("status", "skipped_custom_runtime"),
+                "model": live_advisory.get("model") or self.compass.model_fast(),
+                "advisoryOnly": True,
+                "agents": live_advisory.get("agents") or [],
+                "cards": live_advisory.get("cards") or [],
+                "summary": live_advisory.get("summary") or {},
+                "final_decision_owner": "Deterministic Decision Owner",
+                **(
+                    {
+                        "error_type": live_advisory.get("error_type", "crewai_advisory_unavailable"),
+                        "recoverable": live_advisory.get("recoverable", True),
+                    }
+                    if not live_advisory.get("ok") and live_advisory.get("status") not in {"skipped_custom_runtime", "skipped_sample_mode"}
+                    else {}
+                ),
+            },
             "collaboration_summary": collaboration_summary,
             "artifacts": [
                 {"type": "trace_log", "path": "logs/trace-<run_id>.jsonl"},
                 {"type": "decision_payload", "source": "deterministic_node_bridge_plus_python_council"},
             ],
         }
+
+    def _learning_supported_controls(self, missing: List[str], learning_context: Dict[str, Any]) -> tuple[List[str], List[str]]:
+        missing_blob = " ".join(_clean(item).lower() for item in missing)
+        if not missing_blob:
+            return [], []
+        controls: List[str] = []
+        questions: List[str] = []
+        for suggestion in _as_list(learning_context.get("controlSuggestions")):
+            text = _clean(suggestion)
+            lower = text.lower()
+            if not text:
+                continue
+            if lower.startswith("add reviewer question:"):
+                question = text.split(":", 1)[1].strip() if ":" in text else text
+                if any(token in missing_blob for token in ("training", "dpa", "subprocessor", "retention", "transfer", "support", "region")):
+                    questions.append(question)
+                continue
+            supported = any(
+                token in missing_blob and token in lower
+                for token in ("training", "dpa", "subprocessor", "retention", "deletion", "transfer", "cross-border", "support", "hosting", "soc", "iso", "continuity")
+            )
+            if supported:
+                controls.append(text)
+        return _limited_list(controls, 4), _limited_list(questions, 4)

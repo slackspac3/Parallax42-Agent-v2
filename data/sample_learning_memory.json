@@ -1,0 +1,178 @@
+{
+  "description": "Synthetic governed learning memory for Agentathon evaluation. Advisory only; not model training and not policy.",
+  "artifacts": [
+    {
+      "type": "case_outcome",
+      "memoryId": "learn-healthcare-training-001",
+      "caseId": "synthetic-memory-healthcare-001",
+      "workspaceId": "agentathon",
+      "projectId": "use-case-21",
+      "title": "Healthcare analytics vendor missing model-training exclusion",
+      "originalDecision": "conditional_approval",
+      "reviewerDecision": "conditional_approval",
+      "reviewerNotes": "Reviewer accepted conditional onboarding only after DPA amendment added explicit model-training exclusion and human review boundary.",
+      "addedControls": [
+        "Require signed model-training exclusion for patient or customer data before production.",
+        "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+        "Add reviewer question: Has any analytics data been used for model improvement or service training?"
+      ],
+      "rejectedEvidence": [
+        "Generic analytics security overview without data-use terms"
+      ],
+      "missingEvidence": [
+        "model-training exclusion",
+        "DPA amendment"
+      ],
+      "finalOutcome": "conditional approval after DPA amendment",
+      "domains": [
+        "privacy",
+        "ai-governance",
+        "healthcare"
+      ],
+      "createdAt": "2026-01-15T10:00:00Z",
+      "actor": {
+        "mode": "audit",
+        "id": "demo-reviewer"
+      },
+      "advisoryOnly": true
+    },
+    {
+      "type": "control_pattern",
+      "memoryId": "learn-saas-subprocessors-001",
+      "caseId": "synthetic-memory-saas-001",
+      "workspaceId": "agentathon",
+      "projectId": "use-case-21",
+      "title": "SaaS vendor missing subprocessor list",
+      "originalDecision": "needs_more_information",
+      "reviewerDecision": "conditional_approval",
+      "reviewerNotes": "Reviewer allowed conditional approval after supplier supplied current subprocessor register and change-notification terms.",
+      "addedControls": [
+        "Require current subprocessor register before approval.",
+        "Require 30-day subprocessor change notification and right to object.",
+        "Add reviewer question: Are support and hosting locations consistent with transfer assessment?"
+      ],
+      "rejectedEvidence": [
+        "MSA reference to subprocessors without attached register"
+      ],
+      "missingEvidence": [
+        "subprocessor register",
+        "cross-border transfer mechanism"
+      ],
+      "finalOutcome": "conditional approval with subprocessor disclosure",
+      "domains": [
+        "privacy",
+        "saas",
+        "third-party-risk"
+      ],
+      "createdAt": "2026-01-21T10:00:00Z",
+      "actor": {
+        "mode": "audit",
+        "id": "demo-reviewer"
+      },
+      "advisoryOnly": true
+    },
+    {
+      "type": "decision_override",
+      "memoryId": "learn-ai-training-reject-001",
+      "caseId": "synthetic-memory-ai-001",
+      "workspaceId": "agentathon",
+      "projectId": "use-case-21",
+      "title": "AI vendor permitted customer-data training",
+      "originalDecision": "conditional_approval",
+      "reviewerDecision": "reject",
+      "reviewerNotes": "Reviewer rejected onboarding because product terms permitted customer-data training and no enterprise opt-out was executed.",
+      "addedControls": [
+        "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
+        "Require signed model-training exclusion and human oversight plan before reconsideration.",
+        "Add reviewer question: Does the vendor use prompts, tickets, or submitted records for model improvement?"
+      ],
+      "rejectedEvidence": [
+        "Security questionnaire without data-use restriction",
+        "Unsigned enterprise opt-out"
+      ],
+      "missingEvidence": [
+        "model-training exclusion",
+        "signed DPA",
+        "human oversight plan"
+      ],
+      "finalOutcome": "rejected and escalated",
+      "domains": [
+        "ai-governance",
+        "privacy",
+        "customer-data"
+      ],
+      "createdAt": "2026-01-28T10:00:00Z",
+      "actor": {
+        "mode": "audit",
+        "id": "demo-reviewer"
+      },
+      "advisoryOnly": true
+    },
+    {
+      "type": "case_outcome",
+      "memoryId": "learn-complete-package-001",
+      "caseId": "synthetic-memory-complete-001",
+      "workspaceId": "agentathon",
+      "projectId": "use-case-21",
+      "title": "Complete vendor package approved with monitoring",
+      "originalDecision": "approve",
+      "reviewerDecision": "approve",
+      "reviewerNotes": "Reviewer approved with monitoring because DPA, SOC 2, retention, deletion, subprocessors, and transfer mechanism were complete.",
+      "addedControls": [
+        "Keep annual SOC 2 and ISO evidence refresh on reviewer calendar.",
+        "Monitor subprocessor changes and retention exceptions quarterly.",
+        "Confirm accountable human owner before operational approval."
+      ],
+      "rejectedEvidence": [],
+      "missingEvidence": [],
+      "finalOutcome": "approval with monitoring",
+      "domains": [
+        "privacy",
+        "security",
+        "third-party-risk"
+      ],
+      "createdAt": "2026-02-04T10:00:00Z",
+      "actor": {
+        "mode": "audit",
+        "id": "demo-reviewer"
+      },
+      "advisoryOnly": true
+    },
+    {
+      "type": "evidence_quality_note",
+      "memoryId": "learn-cross-border-retention-001",
+      "caseId": "synthetic-memory-cross-border-001",
+      "workspaceId": "agentathon",
+      "projectId": "use-case-21",
+      "title": "Cross-border SaaS missing retention schedule",
+      "originalDecision": "needs_more_information",
+      "reviewerDecision": "conditional_approval",
+      "reviewerNotes": "Reviewer required retention schedule, deletion assistance, and hosting/support geography confirmation before production use.",
+      "addedControls": [
+        "Require retention schedule and deletion assistance evidence.",
+        "Require cross-border transfer mechanism and support-region confirmation.",
+        "Add reviewer question: Are any support teams accessing records outside approved regions?"
+      ],
+      "rejectedEvidence": [
+        "Security overview without retention or deletion commitments"
+      ],
+      "missingEvidence": [
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "support region confirmation"
+      ],
+      "finalOutcome": "conditional approval after retention schedule",
+      "domains": [
+        "privacy",
+        "saas",
+        "cross-border"
+      ],
+      "createdAt": "2026-02-11T10:00:00Z",
+      "actor": {
+        "mode": "audit",
+        "id": "demo-reviewer"
+      },
+      "advisoryOnly": true
+    }
+  ]
+}

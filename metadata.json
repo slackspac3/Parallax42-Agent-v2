@@ -11,11 +11,18 @@
     "health_endpoint": "GET /health",
     "metadata_endpoint": "GET /metadata",
     "logs_endpoint": "GET /logs",
-    "compass_probe_endpoint": "GET /compass/probe"
+    "compass_probe_endpoint": "GET /compass/probe",
+    "evidence_memory_status_endpoint": "GET /evidence/memory/status",
+    "learning_memory_status_endpoint": "GET /learning/memory/status",
+    "learning_feedback_endpoint": "POST /learning/feedback",
+    "learning_similar_cases_endpoint": "POST /learning/similar-cases",
+    "learning_control_suggestions_endpoint": "POST /learning/control-suggestions"
   },
   "runtime": {
     "agentathon_layer": "Python FastAPI",
     "product_runtime": "Node.js CommonJS",
+    "agent_runtime_default": "custom",
+    "optional_live_crewai_runtime": "crewai_live",
     "final_decision_owner": "deterministic-rules-engine",
     "live_crewai_default": false,
     "rbac_default": "audit"
@@ -50,6 +57,10 @@
       "role": "Performs a live OpenAI-compatible Compass advisory review in non-sample mode when credentials are configured; advisory only."
     },
     {
+      "name": "Final Advisory Reviewer",
+      "role": "Optional live CrewAI advisory reviewer when AGENT_RUNTIME=crewai_live and CREWAI_ENABLE_LIVE_LLM=1; advisory only."
+    },
+    {
       "name": "Deterministic Decision Owner",
       "role": "Runs the local rules engine and owns the final non-LLM decision."
     },
@@ -82,7 +93,17 @@
     {
       "name": "qdrant",
       "status": "configurable_not_required",
-      "purpose": "Existing Node retrieval boundary can use Qdrant only when QDRANT_URL and QDRANT_API_KEY are configured"
+      "purpose": "Optional Agentathon evidence-memory RAG path; active only when Qdrant and Compass embedding env vars are configured and smoke-tested"
+    },
+    {
+      "name": "governed-learning-memory",
+      "status": "active_with_local_fallback",
+      "purpose": "Advisory reviewer outcome and control-pattern memory; not model training and never final decision authority"
+    },
+    {
+      "name": "crewai",
+      "status": "optional_not_required",
+      "purpose": "Optional live advisory council only when optional dependencies are installed and AGENT_RUNTIME=crewai_live with CREWAI_ENABLE_LIVE_LLM=1"
     },
     {
       "name": "deterministic-rules-engine",
@@ -99,7 +120,8 @@
     "synthetic/sample compliance cases under input_examples/",
     "local sample evidence text supplied in each Agentathon request",
     "sanitized local reference context under reference_context/ when used by the product runtime",
-    "optional configured Qdrant evidence index; inactive unless explicit environment variables are supplied"
+    "optional configured Qdrant evidence index; inactive unless explicit environment variables are supplied",
+    "synthetic governed learning memory under data/sample_learning_memory.json"
   ],
   "output_type": "text",
   "human_approval_required": true,
@@ -112,7 +134,9 @@
   "limitations": [
     "The Agentathon wrapper does not require browser clicks, manual uploads, or private local setup.",
     "In non-sample mode, /run attempts a live Compass/OpenAI-compatible advisory call when OPENAI_API_KEY is configured; failures are returned as structured advisory-unavailable metadata.",
-    "Qdrant, RBAC enforcement, and live CrewAI are not claimed active unless configured and separately verified.",
+    "Qdrant, RBAC enforcement, and live CrewAI are not claimed active unless configured and separately verified; the default Agentathon runtime is custom.",
+    "CrewAI is optional and advisory only; it is not installed by the default Docker build and cannot override deterministic decisions.",
+    "Governed learning memory is advisory only, is not model training, and does not silently modify compliance policy.",
     "The deterministic decision package is for human legal/compliance review and is not legal advice or automatic approval."
   ]
 }

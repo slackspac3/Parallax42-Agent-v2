@@ -235,6 +235,8 @@ def check_env_example(pf: Preflight) -> None:
         failures.append("embedding model variable missing")
     if not re.search(r"^SAMPLE_MODE=", text, re.M):
         failures.append("SAMPLE_MODE missing")
+    if not re.search(r"^REQUIRE_COMPASS=", text, re.M):
+        failures.append("REQUIRE_COMPASS missing")
 
     for key, value in ASSIGNMENT_RE.findall(text):
         if value and not is_placeholder(value):
@@ -251,7 +253,7 @@ def check_env_example(pf: Preflight) -> None:
         warnings.append(".env.example allowlist rule not found")
 
     status = "FAIL" if failures else "WARN" if warnings else "PASS"
-    details = "; ".join(failures or warnings) or "Compass placeholders, model variables, SAMPLE_MODE, and .env ignore rules are present."
+    details = "; ".join(failures or warnings) or "Compass placeholders, model variables, SAMPLE_MODE, REQUIRE_COMPASS, and .env ignore rules are present."
     pf.add(".env.example", status, details)
 
 
@@ -314,6 +316,7 @@ def check_output_examples(pf: Preflight) -> None:
     if not files:
         files = sorted(directory.glob("*.json"))
     failures: List[str] = []
+    warnings: List[str] = []
     payload_texts: List[str] = []
     if len(files) < 3:
         failures.append(f"expected at least 3 JSON files, found {len(files)}")
@@ -335,9 +338,42 @@ def check_output_examples(pf: Preflight) -> None:
             failures.append(f"{rel(path)} missing agents/agent_trace")
         if ("trace_id" not in payload and "log_file" not in payload) and ("agent_trace" in payload):
             failures.append(f"{rel(path)} missing trace_id/log_file")
+        failures.extend(check_output_trace_reference(path, payload))
     if len(set(payload_texts)) <= 1 and len(payload_texts) >= 3:
         failures.append("output examples are identical")
-    pf.add("output_examples", "FAIL" if failures else "PASS", "; ".join(failures) or f"{len(files)} JSON outputs parse and are not identical.")
+    status = "FAIL" if failures else "WARN" if warnings else "PASS"
+    pf.add(
+        "output_examples",
+        status,
+        "; ".join(failures or warnings) or f"{len(files)} JSON outputs parse, are not identical, and trace/log references match.",
+    )
+
+
+def check_output_trace_reference(path: Path, payload: Dict[str, Any]) -> List[str]:
+    failures: List[str] = []
+    log_file = str(payload.get("log_file") or "").strip()
+    trace_id = str(payload.get("trace_id") or "").strip()
+    if not log_file:
+        failures.append(f"{rel(path)} missing log_file")
+        return failures
+    log_path = ROOT / log_file
+    try:
+        log_path.relative_to(ROOT)
+    except ValueError:
+        failures.append(f"{rel(path)} log_file points outside repo")
+        return failures
+    if not log_path.exists():
+        failures.append(f"{rel(path)} log_file missing: {log_file}")
+        return failures
+    events, parse_failures = parse_jsonl(log_path)
+    failures.extend(parse_failures)
+    if trace_id:
+        trace_ids = {str(event.get("trace_id")) for event in events if event.get("trace_id")}
+        if trace_ids and trace_id not in trace_ids:
+            failures.append(f"{rel(path)} trace_id does not match {log_file}")
+        elif not trace_ids:
+            failures.append(f"{log_file} has no trace_id values to match {rel(path)}")
+    return failures
 
 
 def parse_jsonl(path: Path) -> Tuple[List[Dict[str, Any]], List[str]]:
@@ -385,6 +421,8 @@ def check_logs(pf: Preflight) -> None:
         "requiredactions",
         "humanreviewrequired",
         "finaldecision",
+        "retrievalcontext",
+        "learningcontext",
     }
     has_shared_context = any(str(event.get("memory_key", "")).lower() in shared_context_keys for event in all_trace_events)
     if len(agent_names) < 2:
@@ -480,6 +518,7 @@ def run_api_smoke(pf: Preflight) -> None:
     env.setdefault("SAMPLE_MODE", "true")
     env.setdefault("OPENAI_BASE_URL", "https://compass.core42.ai/v1")
     env.setdefault("OPENAI_API_KEY", "dummy")
+    env.setdefault("P42_VECTOR_STORE_PROVIDER", "local")
     env["PYTHONUNBUFFERED"] = "1"
     process = subprocess.Popen(
         [sys.executable, "run.py"],
@@ -543,45 +582,67 @@ def run_npm_qa(pf: Preflight) -> None:
     pf.add("npm run qa", "PASS" if code == 0 else "FAIL", detail or f"exit={code}")
 
 
-def run_compass_probe(pf: Preflight, *, strict: bool = False) -> None:
-    api_key = os.environ.get("OPENAI_API_KEY", "")
-    base_url = os.environ.get("OPENAI_BASE_URL", "").rstrip("/")
-    if not api_key or not base_url:
-        status = "FAIL" if strict else "SKIP"
-        pf.add("Compass probe", status, "OPENAI_API_KEY and OPENAI_BASE_URL are required for live Compass probe.")
-        return
-    if is_placeholder(api_key):
-        status = "FAIL" if strict else "SKIP"
-        pf.add("Compass probe", status, "OPENAI_API_KEY is a placeholder; live probe not attempted.")
-        return
-    request = urllib.request.Request(
-        f"{base_url}/models",
-        headers={"Authorization": f"Bearer {api_key}"},
-        method="GET",
-    )
+def run_compass_doctor(pf: Preflight, *, strict: bool = False) -> None:
+    command = [sys.executable, "scripts/compass_doctor.py", "--json"]
+    if strict:
+        command.append("--strict")
     try:
-        with urllib.request.urlopen(request, timeout=20) as response:
-            body_bytes = response.read(2048)
-        body = body_bytes.decode("utf-8", errors="replace")
-        json_ok = False
-        try:
-            json.loads(body)
-            json_ok = True
-        except Exception:
-            json_ok = False
-        ok = 200 <= response.status < 300 and json_ok
-        if ok:
-            pf.add("Compass probe", "PASS", f"/models HTTP {response.status}; JSON response received with credentials redacted.")
-        else:
-            status = "FAIL" if strict else "WARN"
-            detail = "non-JSON response" if not json_ok else "unexpected HTTP status"
-            pf.add("Compass probe", status, f"/models HTTP {response.status}; {detail}; body_prefix={clean_detail(body, 80)}")
-    except urllib.error.HTTPError as exc:
-        status = "FAIL" if strict else "WARN"
-        pf.add("Compass probe", status, f"/models HTTP {exc.code}; credentials redacted.")
+        code, stdout, stderr = run_command(command, timeout=120)
     except Exception as exc:
-        status = "FAIL" if strict else "WARN"
-        pf.add("Compass probe", status, f"Live probe error: {exc.__class__.__name__}; credentials redacted.")
+        pf.add("Compass doctor", "FAIL" if strict else "WARN", f"Unable to run compass_doctor.py: {exc.__class__.__name__}")
+        return
+
+    payload: Dict[str, Any] = {}
+    decoder = json.JSONDecoder()
+    stripped = stdout.lstrip()
+    if stripped:
+        try:
+            payload, _ = decoder.raw_decode(stripped)
+        except Exception:
+            payload = {}
+    status = str(payload.get("status") or ("FAIL" if code else "PASS"))
+    doctor = payload.get("doctor") if isinstance(payload.get("doctor"), dict) else {}
+    message = clean_detail(str(doctor.get("message") or payload.get("message") or stderr or "Compass doctor completed."))
+    if status == "PASS":
+        pf.add("Compass doctor", "PASS", message)
+    elif status == "SKIPPED":
+        pf.add("Compass doctor", "FAIL" if strict else "SKIP", message)
+    else:
+        pf.add("Compass doctor", "FAIL" if strict else "WARN", message)
+
+
+def run_qdrant_smoke(pf: Preflight, *, strict: bool = False) -> None:
+    command = [sys.executable, "scripts/qdrant_smoke.py", "--json"]
+    try:
+        code, stdout, stderr = run_command(command, timeout=180)
+    except Exception as exc:
+        pf.add("Qdrant smoke", "FAIL" if strict else "WARN", f"Unable to run qdrant_smoke.py: {exc.__class__.__name__}")
+        return
+
+    payload: Dict[str, Any] = {}
+    decoder = json.JSONDecoder()
+    stripped = stdout.lstrip()
+    if stripped:
+        try:
+            payload, _ = decoder.raw_decode(stripped)
+        except Exception:
+            payload = {}
+    status = str(payload.get("status") or ("FAIL" if code else "PASS"))
+    smoke = payload.get("qdrant_smoke") if isinstance(payload.get("qdrant_smoke"), dict) else {}
+    details = clean_detail(
+        str(
+            smoke.get("reason")
+            or smoke.get("message")
+            or f"provider={smoke.get('provider', 'unknown')} collection={smoke.get('collection', '')} matches={smoke.get('matchCount', 0)}"
+            or stderr
+        )
+    )
+    if status == "PASS":
+        pf.add("Qdrant smoke", "PASS", details)
+    elif status == "SKIPPED":
+        pf.add("Qdrant smoke", "FAIL" if strict else "SKIP", details)
+    else:
+        pf.add("Qdrant smoke", "FAIL" if strict else "WARN", details or "Qdrant smoke failed.")
 
 
 def run_docker_smoke(pf: Preflight) -> None:
@@ -610,6 +671,8 @@ def run_docker_smoke(pf: Preflight) -> None:
             "OPENAI_API_KEY=dummy",
             "-e",
             "OPENAI_BASE_URL=https://compass.core42.ai/v1",
+            "-e",
+            "P42_VECTOR_STORE_PROVIDER=local",
             image,
         ]
         code, stdout, stderr = run_command(run_cmd, timeout=120)
@@ -631,6 +694,17 @@ def run_docker_smoke(pf: Preflight) -> None:
         subprocess.run([docker, "rm", "-f", container], cwd=ROOT, text=True, capture_output=True, check=False)
 
 
+def docker_local_status(pf: Preflight) -> str:
+    for result in pf.results:
+        if result.name == "Docker smoke":
+            if result.status == "PASS":
+                return "PASS"
+            if result.status == "SKIP" and "not installed" in result.details.lower():
+                return "SKIPPED_DOCKER_CLI_MISSING"
+            return "FAIL"
+    return "SKIPPED_DOCKER_NOT_REQUESTED"
+
+
 def print_table(results: Iterable[CheckResult]) -> None:
     rows = list(results)
     name_width = max([len("Check"), *(len(row.name) for row in rows)])
@@ -645,8 +719,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run Agentathon submission preflight checks.")
     parser.add_argument("--run-api", action="store_true", help="Start python run.py and smoke-test /health and /run.")
     parser.add_argument("--npm-qa", action="store_true", help="Run npm run qa.")
-    parser.add_argument("--compass-probe", action="store_true", help="Probe live Compass/OpenAI-compatible /models when env vars are present.")
+    parser.add_argument("--compass-probe", action="store_true", help="Run Compass doctor for backward-compatible live probe behavior.")
+    parser.add_argument("--compass-doctor", action="store_true", help="Run scripts/compass_doctor.py diagnostics.")
     parser.add_argument("--strict-compass", action="store_true", help="Fail if Compass env/probe is absent or unsuccessful.")
+    parser.add_argument("--qdrant-smoke", action="store_true", help="Run scripts/qdrant_smoke.py diagnostics.")
+    parser.add_argument("--strict-qdrant", action="store_true", help="Fail if Qdrant env/smoke is absent or unsuccessful.")
     parser.add_argument("--docker", action="store_true", help="Run Docker build/container smoke test if docker CLI is available.")
     parser.add_argument("--json", action="store_true", help="Emit JSON summary before the final machine-readable line.")
     args = parser.parse_args()
@@ -665,14 +742,18 @@ def main() -> int:
         run_api_smoke(pf)
     if args.npm_qa:
         run_npm_qa(pf)
-    if args.compass_probe or args.strict_compass:
-        run_compass_probe(pf, strict=args.strict_compass)
+    if args.compass_probe or args.compass_doctor or args.strict_compass:
+        run_compass_doctor(pf, strict=args.strict_compass)
+    if args.qdrant_smoke or args.strict_qdrant:
+        run_qdrant_smoke(pf, strict=args.strict_qdrant)
     if args.docker:
         run_docker_smoke(pf)
 
     print_table(pf.results)
     if args.json:
         print(json.dumps(pf.summary(), indent=2, sort_keys=True))
+    if args.docker:
+        print(f"DOCKER_LOCAL={docker_local_status(pf)}")
     status = "PASS" if pf.passed else "FAIL"
     print(f"AGENTATHON_PREFLIGHT={status}")
     return 0 if pf.passed else 1

@@ -88,19 +88,46 @@ docker run --rm -p 8000:8000 \
   parallax42-agentathon
 ```
 
+Successful Docker smoke means the container starts, `GET /health` returns JSON with `ok=true`, and `POST /run` with `input_examples/example_1.json` returns structured JSON. The local preflight Docker check prints `DOCKER_LOCAL=PASS`, `DOCKER_LOCAL=FAIL`, or `DOCKER_LOCAL=SKIPPED_DOCKER_CLI_MISSING`:
+
+```bash
+python scripts/agentathon_preflight.py --docker
+```
+
+GitHub Actions runs Docker verification in `.github/workflows/agentathon-preflight.yml` with `SAMPLE_MODE=true`, `OPENAI_API_KEY=dummy`, and the official Compass base URL so no real secrets are required in CI. Verify the latest remote result with:
+
+```bash
+gh run list --workflow agentathon-preflight.yml --limit 5
+gh run view <run-id> --log-failed
+```
+
 Compass/OpenAI-compatible variables are placeholders in `.env.example`:
 
 ```text
-OPENAI_API_KEY=replace-with-your-compass-api-key
+OPENAI_API_KEY=<real Compass key>
 OPENAI_BASE_URL=https://compass.core42.ai/v1
 MODEL_FAST=gpt-4.1
 MODEL_REASONING=gpt-5.1
 EMBEDDING_MODEL=text-embedding-3-large
+SAMPLE_MODE=false
+REQUIRE_COMPASS=true
+AGENT_RUNTIME=custom
+CREWAI_ENABLE_LIVE_LLM=0
 ```
 
 No secrets are committed. `SAMPLE_MODE=true` is accepted for CI/local reproducibility, but it does not switch to canned outputs; the wrapper still runs the deterministic Node rules engine and Python council. With `SAMPLE_MODE=false`, `/run` attempts a live Compass/OpenAI-compatible advisory call when `OPENAI_API_KEY` is configured. That advisory is recorded as advisory only; the Deterministic Decision Owner remains final authority. Qdrant, enforced RBAC, and live CrewAI are optional/configurable paths and are not claimed active unless those environment variables are set and separately verified.
 
-Known limitations: the Agentathon path returns structured JSON and trace logs, not the browser cockpit; the decision is a human-review compliance package, not legal advice or automatic approval; Compass failures return structured `live_compass.status=unavailable`; Qdrant and live CrewAI are disabled by default.
+Known limitations: the Agentathon path returns structured JSON and trace logs, not the browser cockpit; the decision is a human-review compliance package, not legal advice or automatic approval; Compass failures return structured `live_compass.status=unavailable`; Qdrant is inactive unless Qdrant and Compass embedding env vars are configured and smoke-tested; live CrewAI is not active by default.
+
+Compass diagnostics:
+
+```bash
+python scripts/compass_doctor.py --json
+python scripts/compass_doctor.py --strict
+curl http://localhost:8000/compass/probe
+```
+
+`OPENAI_BASE_URL` is normalized for the official direct Agentathon Compass path. `https://compass.core42.ai` is corrected to `https://compass.core42.ai/v1`; duplicate `/v1/v1` and known frontend URLs are rejected. If `OPENAI_BASE_URL` is not exported, `compass_doctor.py` reports that the default is used only for normalization and is not live proof. The optional Parallax42 Vercel gateway uses `COMPASS_GATEWAY_BASE_URL` and `COMPASS_GATEWAY_TOKEN` in the existing Node product runtime. It is not the official Agentathon Compass direct path unless explicitly configured as an OpenAI-compatible `/v1` endpoint.
 
 ## Agentathon Preflight
 
@@ -110,19 +137,91 @@ Run the local submission checks:
 python scripts/agentathon_preflight.py
 python scripts/agentathon_preflight.py --run-api
 python scripts/agentathon_preflight.py --run-api --npm-qa
+python scripts/agentathon_preflight.py --compass-doctor
+python scripts/agentathon_preflight.py --qdrant-smoke
 python scripts/agentathon_preflight.py --docker
 ```
 
 The Docker check requires a machine with Docker installed. Some local Codex environments do not include the Docker CLI; in that case `--docker` reports `SKIPPED` with the reason rather than failing the whole preflight.
+
+Regenerate judge-facing output examples and matching logs after changing the `/run` path:
+
+```bash
+python scripts/regenerate_agentathon_artifacts.py
+```
+
+This executes the actual orchestrator for `example_1`, `example_2`, and `example_3`, writes `output_examples/example_*_output.json`, copies matching stable logs to `logs/example_*_trace.jsonl`, and updates `logs/demo_trace.jsonl`. The preflight checks that each output example's `trace_id` matches its referenced log file.
 
 `SAMPLE_MODE=true` is a fallback/testing flag only. It must not be presented as live Compass execution, and it still runs the simplified deterministic Node rules path rather than returning canned output files. Final evaluation should provide:
 
 ```text
 OPENAI_API_KEY=<real Compass key>
 OPENAI_BASE_URL=https://compass.core42.ai/v1
+MODEL_FAST=gpt-4.1
+MODEL_REASONING=gpt-5.1
+EMBEDDING_MODEL=text-embedding-3-large
+SAMPLE_MODE=false
+REQUIRE_COMPASS=true
+AGENT_RUNTIME=custom
 ```
 
 In final non-sample evaluation, the wrapper sends sanitized case facts, evidence summaries, specialist findings, and the deterministic draft to Compass for advisory critique. Compass can add reviewer questions and advisory notes, but it cannot approve, reject, or override the deterministic final decision.
+
+Optional live CrewAI for the Agentathon `/run` path is separate from the stable custom orchestrator:
+
+```text
+AGENT_RUNTIME=crewai_live
+CREWAI_ENABLE_LIVE_LLM=1
+OPENAI_API_KEY=<real Compass key>
+OPENAI_BASE_URL=https://compass.core42.ai/v1
+MODEL_FAST=gpt-4.1
+MODEL_REASONING=gpt-5.1
+```
+
+CrewAI is imported lazily and is not installed by the default Docker build. Install `requirements-crewai.txt` only when validating the optional live path. If CrewAI fails to import or execute, `/run` records `live_advisory.status=unavailable` and continues through the custom deterministic path. CrewAI specialist cards are advisory only and cannot override the Deterministic Decision Owner.
+
+Optional Qdrant evidence memory for the Agentathon `/run` path:
+
+```text
+P42_VECTOR_STORE_PROVIDER=qdrant
+QDRANT_URL=https://<cluster>.cloud.qdrant.io
+QDRANT_API_KEY=<server-side-vector-db-key>
+QDRANT_COLLECTION=p42_compliance_evidence
+QDRANT_VECTOR_SIZE=3072
+RAG_CHUNK_SIZE=900
+RAG_CHUNK_OVERLAP=120
+```
+
+With those values plus the official Compass embedding env vars, `/run` chunks synthetic/input evidence, embeds through Compass, stores case-scoped chunks in Qdrant, searches by `caseId`, and returns only citation-safe snippets. Raw embeddings are never returned to the browser/API caller. Without Qdrant or embeddings, the Agentathon wrapper uses `provider=local-fallback`, which is useful for CI/demo reproducibility but is not durable production RAG.
+
+```bash
+python scripts/qdrant_smoke.py
+python scripts/agentathon_preflight.py --qdrant-smoke
+```
+
+Governed learning memory for the Agentathon `/run` path stores synthetic reviewer outcomes, feedback, control patterns, decision overrides, and evidence-quality notes as advisory artifacts. It is not model training, autonomous self-learning, or silent policy modification. The Deterministic Decision Owner remains final authority and can only use learning memory to surface reviewer questions or controls that are already supported by current evidence gaps.
+
+When Qdrant and Compass embeddings are configured, learning artifacts use the same server-side Qdrant boundary with `memoryType=learning_artifact` payloads. Without Qdrant, the wrapper reads `data/sample_learning_memory.json` and optional local JSONL feedback through `provider=local-jsonl`. API responses return sanitized similar cases and controls only; raw embeddings are never returned.
+
+Learning endpoints:
+
+```bash
+curl http://localhost:8000/learning/memory/status
+curl -X POST http://localhost:8000/learning/similar-cases \
+  -H "Content-Type: application/json" \
+  -d '{"caseFacts":{"workflow":"healthcare analytics"},"missingEvidence":["model-training exclusion"],"domains":["privacy","ai-governance"]}'
+curl -X POST http://localhost:8000/learning/control-suggestions \
+  -H "Content-Type: application/json" \
+  -d '{"caseFacts":{"workflow":"AI support-ticket classifier"},"missingEvidence":["model-training exclusion"],"domains":["ai-governance"]}'
+```
+
+Troubleshooting Compass:
+
+- HTML from `/models` means `OPENAI_BASE_URL` is probably a frontend or gateway URL, not an OpenAI-compatible API base.
+- HTML from `/models` can also mean the key/base URL is routing to a portal or proxy instead of the OpenAI-compatible Compass API.
+- `405` from `/chat/completions` usually means the path/base URL/proxy is wrong or the gateway is not exposing the OpenAI-compatible route directly.
+- `SAMPLE_MODE=true` is enough for CI shape checks, but not enough for final judging of the live Compass path.
+- Use `REQUIRE_COMPASS=true` for final verification when you want `/run` to return a structured error if live Compass advisory is unavailable.
 
 ## What This Demo Does Not Claim
 
@@ -131,6 +230,7 @@ In final non-sample evaluation, the wrapper sends sanitized case facts, evidence
 - Without the optional remote Python CrewAI service, the product runtime degrades to deterministic decisioning plus CrewAI-shaped dry run.
 - Live Compass advisory output is optional outside final evaluation credentials and remains advisory only.
 - Qdrant support exists only when configured; local-file vector storage is the demo default.
+- Governed learning memory is advisory reviewer memory only; it is not model training, autonomous approval, or policy mutation.
 - OCR/parser capability is integrated through external relay paths rather than implemented as a local parser service in this repo.
 - OpenClaw is not implemented and should not be claimed.
 
@@ -216,7 +316,7 @@ The JSON limits can be overridden with `CONVERSATION_BODY_LIMIT_BYTES`, `EVIDENC
 Default-safe environment variables:
 
 ```text
-AGENT_RUNTIME=crewai_dry_run
+AGENT_RUNTIME=custom
 CREWAI_ENABLE_LIVE_LLM=0
 CREWAI_LLM_MODEL=gpt-5.1
 CREWAI_LLM_BASE_URL=
@@ -258,9 +358,11 @@ QDRANT_URL=https://<cluster>.cloud.qdrant.io
 QDRANT_API_KEY=<server-side qdrant key>
 QDRANT_COLLECTION=p42_compliance_evidence
 P42_REFERENCE_CONTEXT_DIR=
-AGENT_RUNTIME=crewai_llm
+AGENT_RUNTIME=crewai_live
 CREWAI_ENABLE_LIVE_LLM=1
-CREWAI_LLM_MODEL=gpt-5.1
+OPENAI_API_KEY=<real Compass key>
+OPENAI_BASE_URL=https://compass.core42.ai/v1
+MODEL_FAST=gpt-4.1
 P42_CREWAI_SERVICE_URL=https://api.parallax42.bhavukarora.com/crewai
 P42_CREWAI_SERVICE_TOKEN=<server-side-service-token>
 P42_AUTH_MODE=audit
@@ -293,7 +395,7 @@ Validate the CrewAI crew design without installing optional dependencies:
 npm run check:crewai
 ```
 
-Dry-run validation covers both CrewAI Crew and CrewAI Flow manifests. Install optional dependencies for live CrewAI validation:
+Dry-run validation covers both CrewAI Crew and CrewAI Flow manifests. CrewAI is not part of the default Agentathon Docker dependency set. Install optional dependencies only for live CrewAI validation:
 
 ```bash
 python3 -m venv .venv
@@ -306,14 +408,15 @@ python crewai_adapter/compliance_crew.py --live-crewai --input examples/high_ris
 Enable live LLM calls only with approved credentials:
 
 ```bash
+export AGENT_RUNTIME=crewai_live
 export CREWAI_ENABLE_LIVE_LLM=1
-export CREWAI_LLM_MODEL=gpt-5.1
-export CREWAI_LLM_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
-export CREWAI_LLM_API_KEY=$COMPASS_GATEWAY_TOKEN
-AGENT_RUNTIME=crewai_llm npm run dev
+export OPENAI_API_KEY=<real Compass key>
+export OPENAI_BASE_URL=https://compass.core42.ai/v1
+export MODEL_FAST=gpt-4.1
+python run.py
 ```
 
-Live LLM specialist output is attached under `orchestration.llmOutput`; on Vercel this can use the Node-side Compass advisory adapter when `AGENT_RUNTIME=crewai_llm` and `CREWAI_ENABLE_LIVE_LLM=1` are set. The final decision remains guarded by the deterministic engine. The evidence boundary uses server-side `POST /api/evidence/index` and `POST /api/evidence/search`, calls the reusable Parallax42 embedding boundary using `text-embedding-3-large`, stores chunk vectors behind the API, and keeps embedding vectors out of browser state. The browser may carry sanitized document metadata, excerpts, and retrieved snippets so the chat and reviewer UI can explain what was used.
+For the Agentathon FastAPI wrapper, live CrewAI specialist output is attached under `output.live_advisory` only when `AGENT_RUNTIME=crewai_live` and `CREWAI_ENABLE_LIVE_LLM=1` are set and CrewAI actually runs. The final decision remains guarded by the deterministic engine. The evidence boundary uses server-side `POST /api/evidence/index` and `POST /api/evidence/search`, calls the reusable Parallax42 embedding boundary using `text-embedding-3-large`, stores chunk vectors behind the API, and keeps embedding vectors out of browser state. The browser may carry sanitized document metadata, excerpts, and retrieved snippets so the chat and reviewer UI can explain what was used.
 
 For live CrewAI multi-agent execution from Vercel, configure `P42_CREWAI_SERVICE_URL` and `P42_CREWAI_SERVICE_TOKEN`. The Node runtime delegates the six-agent CrewAI council to that service, attaches its output under `orchestration.crewaiOutput`, then still applies the deterministic council as the final decision owner.
 

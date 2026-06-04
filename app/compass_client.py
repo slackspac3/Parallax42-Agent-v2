@@ -1,9 +1,10 @@
-"""Compass/OpenAI-compatible advisory client."""
+"""Compass/OpenAI-compatible advisory client and diagnostics."""
 
 from __future__ import annotations
 
 import json
 import os
+import socket
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
@@ -15,6 +16,8 @@ from .trace_logger import redact
 DEFAULT_BASE_URL = "https://compass.core42.ai/v1"
 DEFAULT_FAST_MODEL = "gpt-4.1"
 DEFAULT_REASONING_MODEL = "gpt-5.1"
+DEFAULT_EMBEDDING_MODEL = "text-embedding-3-large"
+HTML_SNIPPET_LIMIT = 220
 
 
 def truthy(value: str) -> bool:
@@ -25,37 +28,125 @@ def _clean(value: Any) -> str:
     return " ".join(str(value or "").split())
 
 
+def _safe_snippet(value: str, limit: int = HTML_SNIPPET_LIMIT) -> str:
+    text = _clean(redact(value))
+    return text if len(text) <= limit else f"{text[: limit - 3]}..."
+
+
+def _looks_html(text: str) -> bool:
+    prefix = text.lstrip()[:120].lower()
+    return prefix.startswith("<!doctype html") or prefix.startswith("<html") or "<html" in prefix
+
+
+def normalize_openai_base_url(raw_url: Optional[str]) -> Dict[str, Any]:
+    """Normalize and classify the OpenAI-compatible Compass base URL.
+
+    Returns a dictionary rather than raising so callers can surface structured
+    diagnostics without leaking environment values or crashing the evaluator.
+    """
+
+    raw = _clean(raw_url) or DEFAULT_BASE_URL
+    normalized = raw.rstrip("/")
+    warnings: List[str] = []
+    errors: List[str] = []
+    parsed = urlparse(normalized)
+
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return {
+            "ok": False,
+            "raw": raw,
+            "normalized": normalized,
+            "host": parsed.netloc,
+            "warnings": warnings,
+            "errors": ["OPENAI_BASE_URL must be an absolute http(s) URL."],
+        }
+
+    host = parsed.netloc.lower()
+    path = parsed.path.rstrip("/")
+    if host == "compass.core42.ai":
+        if not path:
+            normalized = f"{parsed.scheme}://{parsed.netloc}/v1"
+            warnings.append("OPENAI_BASE_URL was normalized to include /v1 for official Compass.")
+        elif path == "/v1":
+            normalized = f"{parsed.scheme}://{parsed.netloc}/v1"
+        else:
+            errors.append("Official Compass OPENAI_BASE_URL must be https://compass.core42.ai/v1.")
+    elif "g42.genai.works" in host or "academy.genai.works" in host:
+        errors.append("OPENAI_BASE_URL points to a GenAI frontend page, not the official Compass OpenAI-compatible /v1 endpoint.")
+    elif "vercel.app" in host or "parallax42-compass-gateway" in host:
+        warnings.append(
+            "OPENAI_BASE_URL appears to be a gateway/frontend URL. The Agentathon wrapper expects the official direct Compass /v1 endpoint unless this URL is explicitly OpenAI-compatible."
+        )
+        if not path.endswith("/v1"):
+            warnings.append("Gateway URL does not end in /v1; verify it exposes /chat/completions and /models directly.")
+    elif not path.endswith("/v1"):
+        warnings.append("OPENAI_BASE_URL does not end in /v1; verify it is OpenAI-compatible and will not produce /v1/v1 paths.")
+
+    if normalized.endswith("/v1/v1"):
+        errors.append("OPENAI_BASE_URL resolves to /v1/v1; remove the duplicate /v1.")
+
+    normalized = normalized.rstrip("/")
+    return {
+        "ok": not errors,
+        "raw": raw,
+        "normalized": normalized,
+        "host": urlparse(normalized).netloc,
+        "official": normalized == DEFAULT_BASE_URL,
+        "warnings": warnings,
+        "errors": errors,
+    }
+
+
+def model_fast_from_env() -> str:
+    return (
+        os.environ.get("MODEL_FAST")
+        or os.environ.get("COMPASS_CHAT_MODEL")
+        or os.environ.get("AGENT_MODEL")
+        or DEFAULT_FAST_MODEL
+    )
+
+
+def model_reasoning_from_env() -> str:
+    return (
+        os.environ.get("MODEL_REASONING")
+        or os.environ.get("COMPASS_REASONING_MODEL")
+        or os.environ.get("REASONING_MODEL")
+        or DEFAULT_REASONING_MODEL
+    )
+
+
+def embedding_model_from_env() -> str:
+    return os.environ.get("EMBEDDING_MODEL") or os.environ.get("COMPASS_EMBEDDING_MODEL") or DEFAULT_EMBEDDING_MODEL
+
+
 class CompassClient:
     def __init__(self, timeout_seconds: float = 25, retries: int = 1) -> None:
         self.timeout_seconds = timeout_seconds
         self.retries = max(0, int(retries))
 
     @property
+    def base_url_info(self) -> Dict[str, Any]:
+        return normalize_openai_base_url(os.environ.get("OPENAI_BASE_URL"))
+
+    @property
     def base_url(self) -> str:
-        return (os.environ.get("OPENAI_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
+        return str(self.base_url_info["normalized"])
 
     @property
     def api_key(self) -> str:
         return os.environ.get("OPENAI_API_KEY") or ""
 
     def model_fast(self) -> str:
-        return (
-            os.environ.get("MODEL_FAST")
-            or os.environ.get("COMPASS_CHAT_MODEL")
-            or os.environ.get("AGENT_MODEL")
-            or DEFAULT_FAST_MODEL
-        )
+        return model_fast_from_env()
 
     def model_reasoning(self) -> str:
-        return (
-            os.environ.get("MODEL_REASONING")
-            or os.environ.get("COMPASS_REASONING_MODEL")
-            or os.environ.get("REASONING_MODEL")
-            or DEFAULT_REASONING_MODEL
-        )
+        return model_reasoning_from_env()
+
+    def embedding_model(self) -> str:
+        return embedding_model_from_env()
 
     def configured(self) -> bool:
-        return bool(self.api_key and self.base_url)
+        return bool(self.api_key and self.base_url_info.get("ok"))
 
     def unavailable(self, error_type: str, message: str, *, model: Optional[str] = None, attempts: int = 0) -> Dict[str, Any]:
         return {
@@ -64,7 +155,7 @@ class CompassClient:
             "model": model or self.model_reasoning(),
             "attempts": attempts,
             "error_type": error_type,
-            "message": _clean(str(redact(message)))[:400],
+            "message": _safe_snippet(message, 400),
             "recoverable": True,
             "advisory": {
                 "specialist": "Compass Advisory Critic",
@@ -79,50 +170,274 @@ class CompassClient:
             },
         }
 
-    def probe(self) -> Dict[str, Any]:
-        live_probe = truthy(os.environ.get("COMPASS_PROBE_LIVE", "0"))
-        result: Dict[str, Any] = {
-            "ok": True,
-            "provider": "openai_compatible_compass",
-            "base_url_configured": bool(self.base_url),
-            "base_url_host": urlparse(self.base_url).netloc or "unconfigured",
-            "api_key_configured": bool(self.api_key),
-            "chat_model": self.model_fast(),
-            "reasoning_model": self.model_reasoning(),
-            "live_call_performed": False,
-            "live_llm_enabled": truthy(os.environ.get("CREWAI_ENABLE_LIVE_LLM", "0")),
-            "sample_mode": truthy(os.environ.get("SAMPLE_MODE", "false")),
+    def _headers(self) -> Dict[str, str]:
+        return {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
         }
-        if not live_probe:
-            result["message"] = "Configuration-only probe; set COMPASS_PROBE_LIVE=1 to verify /models."
-            return result
+
+    def embed_texts(self, texts: List[str], model: Optional[str] = None) -> Dict[str, Any]:
+        """Embed texts through the same OpenAI-compatible Compass boundary.
+
+        The returned structure intentionally contains vectors only for
+        server-side callers. API responses must not forward the embeddings.
+        """
+
+        selected_model = model or self.embedding_model()
+        base_info = self.base_url_info
+        cleaned_texts = [_clean(text)[:8000] for text in texts if _clean(text)]
+        if not cleaned_texts:
+            return {
+                "ok": True,
+                "status": "available",
+                "model": selected_model,
+                "embeddings": [],
+                "count": 0,
+            }
+        if not base_info.get("ok"):
+            return {
+                "ok": False,
+                "status": "unavailable",
+                "model": selected_model,
+                "error_type": "invalid_base_url",
+                "message": _safe_snippet("; ".join(base_info.get("errors", [])), 400),
+                "recoverable": True,
+            }
         if not self.api_key:
-            result.update({"ok": False, "message": "OPENAI_API_KEY is not configured."})
-            return result
-        try:
-            response = httpx.get(
-                f"{self.base_url}/models",
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                timeout=self.timeout_seconds,
-            )
-            result["live_call_performed"] = True
-            result["status_code"] = response.status_code
+            return {
+                "ok": False,
+                "status": "unavailable",
+                "model": selected_model,
+                "error_type": "missing_api_key",
+                "message": "OPENAI_API_KEY is not configured.",
+                "recoverable": True,
+            }
+
+        last_error = ""
+        attempts = 0
+        for attempt in range(self.retries + 1):
+            attempts += 1
             try:
-                response.json()
-                result["ok"] = 200 <= response.status_code < 300
-                result["message"] = "Compass /models probe returned JSON without exposing credentials."
-            except ValueError:
-                result["ok"] = False
-                result["message"] = "Compass /models probe returned a non-JSON response."
-        except Exception as exc:  # pragma: no cover - network optional
-            result.update(
-                {
-                    "ok": False,
-                    "live_call_performed": True,
-                    "message": f"Compass probe failed: {exc.__class__.__name__}",
-                }
-            )
+                response = httpx.post(
+                    f"{self.base_url}/embeddings",
+                    headers=self._headers(),
+                    json={"model": selected_model, "input": cleaned_texts},
+                    timeout=self.timeout_seconds,
+                )
+                if response.status_code >= 400:
+                    last_error = f"HTTP {response.status_code}"
+                    if _looks_html(response.text):
+                        last_error = "html_response"
+                    if attempt < self.retries:
+                        continue
+                    break
+                if _looks_html(response.text):
+                    last_error = "html_response"
+                    if attempt < self.retries:
+                        continue
+                    break
+                try:
+                    payload = response.json()
+                except ValueError:
+                    last_error = "non_json_response"
+                    if attempt < self.retries:
+                        continue
+                    break
+                data = payload.get("data") if isinstance(payload, dict) else None
+                if not isinstance(data, list):
+                    last_error = "invalid_embedding_response"
+                    if attempt < self.retries:
+                        continue
+                    break
+                embeddings = []
+                for item in data:
+                    vector = item.get("embedding") if isinstance(item, dict) else None
+                    if not isinstance(vector, list) or not vector:
+                        last_error = "invalid_embedding_vector"
+                        break
+                    embeddings.append(vector)
+                if len(embeddings) == len(cleaned_texts):
+                    return {
+                        "ok": True,
+                        "status": "available",
+                        "model": selected_model,
+                        "attempts": attempts,
+                        "count": len(embeddings),
+                        "embeddings": embeddings,
+                    }
+                if attempt < self.retries:
+                    continue
+            except Exception as exc:  # pragma: no cover - network boundary
+                last_error = exc.__class__.__name__
+            if attempt < self.retries:
+                continue
+
+        return {
+            "ok": False,
+            "status": "unavailable",
+            "model": selected_model,
+            "attempts": attempts,
+            "error_type": "embedding_unavailable",
+            "message": _safe_snippet(last_error or "Compass embeddings failed.", 400),
+            "recoverable": True,
+        }
+
+    def doctor(self, *, skip_models: bool = False, skip_chat: bool = False) -> Dict[str, Any]:
+        """Run OpenAI-compatible diagnostics without exposing credentials."""
+
+        base_info = self.base_url_info
+        result: Dict[str, Any] = {
+            "ok": False,
+            "live_compass_verified": False,
+            "configured": bool(self.api_key and base_info.get("ok")),
+            "provider_mode": "direct",
+            "provider": "official_compass_openai_compatible",
+            "base_url": base_info["normalized"],
+            "base_url_host": base_info.get("host", ""),
+            "base_url_official": bool(base_info.get("official")),
+            "openai_base_url_raw_present": bool(os.environ.get("OPENAI_BASE_URL")),
+            "base_url_warnings": base_info.get("warnings", []),
+            "base_url_errors": base_info.get("errors", []),
+            "api_key_configured": bool(self.api_key),
+            "model": self.model_fast(),
+            "reasoning_model": self.model_reasoning(),
+            "sample_mode": truthy(os.environ.get("SAMPLE_MODE", "false")),
+            "models_endpoint": {
+                "attempted": False,
+                "ok": False,
+                "json": False,
+                "status_code": None,
+                "content_type": "",
+                "url": f"{base_info['normalized']}/models",
+            },
+            "chat_completion": {
+                "attempted": False,
+                "ok": False,
+                "json": False,
+                "status_code": None,
+                "content_type": "",
+                "url": f"{base_info['normalized']}/chat/completions",
+            },
+            "models_json": False,
+            "chat_json": False,
+            "error_type": "",
+            "message": "",
+        }
+
+        if base_info.get("host"):
+            try:
+                socket.getaddrinfo(str(base_info["host"]).split(":")[0], None)
+                result["dns_ok"] = True
+            except Exception as exc:
+                result["dns_ok"] = False
+                result["dns_error_type"] = exc.__class__.__name__
+        else:
+            result["dns_ok"] = False
+
+        if not base_info.get("ok"):
+            result.update({"error_type": "invalid_base_url", "message": "; ".join(base_info.get("errors", []))})
+            return redact(result)
+        if not self.api_key:
+            result.update({"error_type": "missing_api_key", "message": "OPENAI_API_KEY is not configured."})
+            return redact(result)
+
+        models_ok = True if skip_models else self._doctor_models(result)
+        chat_ok = True if skip_chat else self._doctor_chat(result)
+        result["models_json"] = bool(result.get("models_endpoint", {}).get("json"))
+        result["chat_json"] = bool(result.get("chat_completion", {}).get("json"))
+        result["ok"] = bool(models_ok and chat_ok)
+        result["live_compass_verified"] = bool(result["ok"])
+        if result["ok"]:
+            result["message"] = "Compass OpenAI-compatible diagnostics passed."
+        elif not result.get("error_type"):
+            result["error_type"] = "compass_doctor_failed"
+            result["message"] = "Compass diagnostics failed."
         return redact(result)
+
+    def _doctor_models(self, result: Dict[str, Any]) -> bool:
+        endpoint = result["models_endpoint"]
+        endpoint["attempted"] = True
+        try:
+            response = httpx.get(f"{self.base_url}/models", headers=self._headers(), timeout=self.timeout_seconds)
+            endpoint["status_code"] = response.status_code
+            endpoint["content_type"] = response.headers.get("content-type", "")
+            body_text = response.text
+            if _looks_html(body_text):
+                endpoint["body_type"] = "html"
+                endpoint["body_snippet"] = _safe_snippet(body_text)
+                result["error_type"] = "html_models_response"
+                result["message"] = (
+                    "Received HTML from /models. The key/base URL may be routing to a portal or proxy "
+                    "instead of the OpenAI-compatible Compass API."
+                )
+                return False
+            try:
+                payload = response.json()
+                endpoint["json"] = True
+                endpoint["openai_shape"] = isinstance(payload, dict) and (
+                    isinstance(payload.get("data"), list) or payload.get("object") in {"list", "model"}
+                )
+            except ValueError:
+                endpoint["body_snippet"] = _safe_snippet(body_text)
+                result["error_type"] = "non_json_models_response"
+                result["message"] = "Compass /models returned a non-JSON response."
+                return False
+            endpoint["ok"] = bool(200 <= response.status_code < 300 and endpoint.get("openai_shape"))
+            if not endpoint["ok"]:
+                result["error_type"] = "invalid_models_response"
+                result["message"] = f"Compass /models HTTP {response.status_code} did not return a recognized OpenAI-compatible model list."
+            return bool(endpoint["ok"])
+        except Exception as exc:  # pragma: no cover - network boundary
+            result["error_type"] = "models_probe_error"
+            result["message"] = f"Compass /models probe failed: {exc.__class__.__name__}"
+            return False
+
+    def _doctor_chat(self, result: Dict[str, Any]) -> bool:
+        endpoint = result["chat_completion"]
+        endpoint["attempted"] = True
+        body = {
+            "model": self.model_fast(),
+            "messages": [{"role": "user", "content": "Reply with the single word OK."}],
+            "temperature": 0,
+            "max_tokens": 8,
+        }
+        try:
+            response = httpx.post(f"{self.base_url}/chat/completions", headers=self._headers(), json=body, timeout=self.timeout_seconds)
+            endpoint["status_code"] = response.status_code
+            endpoint["content_type"] = response.headers.get("content-type", "")
+            body_text = response.text
+            if _looks_html(body_text):
+                endpoint["body_type"] = "html"
+                endpoint["body_snippet"] = _safe_snippet(body_text)
+                result["error_type"] = "html_chat_response"
+                result["message"] = (
+                    "Received HTML from /chat/completions. The path/base URL/proxy may not expose the "
+                    "OpenAI-compatible Compass chat route."
+                )
+                return False
+            try:
+                payload = response.json()
+                endpoint["json"] = True
+            except ValueError:
+                endpoint["body_snippet"] = _safe_snippet(body_text)
+                result["error_type"] = "non_json_chat_response"
+                result["message"] = "Compass /chat/completions returned a non-JSON response."
+                return False
+            content = self._extract_content(payload)
+            endpoint["has_content"] = bool(content)
+            endpoint["ok"] = bool(200 <= response.status_code < 300 and content)
+            if not endpoint["ok"]:
+                endpoint["body_snippet"] = _safe_snippet(body_text)
+                result["error_type"] = "invalid_chat_response"
+                result["message"] = f"Compass /chat/completions HTTP {response.status_code} did not return choices[0].message.content."
+            return bool(endpoint["ok"])
+        except Exception as exc:  # pragma: no cover - network boundary
+            result["error_type"] = "chat_probe_error"
+            result["message"] = f"Compass /chat/completions probe failed: {exc.__class__.__name__}"
+            return False
+
+    def probe(self) -> Dict[str, Any]:
+        return self.doctor()
 
     def compass_chat_json(
         self,
@@ -132,6 +447,9 @@ class CompassClient:
         max_tokens: int = 900,
     ) -> Dict[str, Any]:
         selected_model = model or self.model_reasoning()
+        base_info = self.base_url_info
+        if not base_info.get("ok"):
+            return self.unavailable("invalid_base_url", "; ".join(base_info.get("errors", [])), model=selected_model)
         if not self.api_key:
             return self.unavailable("missing_api_key", "OPENAI_API_KEY is not configured.", model=selected_model)
 
@@ -163,14 +481,22 @@ class CompassClient:
                 }
                 response = httpx.post(
                     f"{self.base_url}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                    },
+                    headers=self._headers(),
                     json=body,
                     timeout=self.timeout_seconds,
                 )
-                response.raise_for_status()
+                if response.status_code >= 400:
+                    last_error = f"HTTP {response.status_code}"
+                    if _looks_html(response.text):
+                        last_error = "html_response"
+                    if attempt < self.retries:
+                        continue
+                    break
+                if _looks_html(response.text):
+                    last_error = "html_response"
+                    if attempt < self.retries:
+                        continue
+                    break
                 try:
                     response_json = response.json()
                 except ValueError:
@@ -202,8 +528,6 @@ class CompassClient:
                         }
                     )
                     continue
-            except httpx.HTTPStatusError as exc:
-                last_error = f"HTTP {exc.response.status_code}"
             except Exception as exc:  # pragma: no cover - defensive network boundary
                 last_error = exc.__class__.__name__
             if attempt < self.retries:

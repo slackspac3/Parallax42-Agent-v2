@@ -15,6 +15,9 @@ from fastapi.responses import JSONResponse
 
 from .agentathon_orchestrator import AgentathonOrchestrator, USE_CASE_ID
 from .compass_client import CompassClient
+from .crewai_runtime import crewai_runtime_status
+from .evidence_memory import evidence_memory_status
+from .learning_memory import find_similar_cases, get_control_suggestions, learning_memory_status, store_feedback
 from .schemas import AgentathonRunRequest, AgentathonRunResponse
 from .trace_logger import ROOT, redact
 
@@ -82,6 +85,7 @@ async def general_exception_handler(_request, exc: Exception):
 
 @app.get("/health")
 async def health() -> Dict[str, Any]:
+    crewai_status = crewai_runtime_status()
     return {
         "ok": True,
         "service": "parallax42-agentathon-wrapper",
@@ -91,14 +95,55 @@ async def health() -> Dict[str, Any]:
         "port": int(os.environ.get("PORT", "8000")),
         "node_available": bool(shutil.which("node")),
         "log_dir": "logs",
-        "live_crewai": False,
+        "live_crewai": bool(crewai_status.get("enabled")),
+        "crewai_runtime": crewai_status,
         "rbac_enforced": os.environ.get("P42_AUTH_MODE", "audit") == "enforced",
+        "evidence_memory": evidence_memory_status(),
+        "learning_memory": learning_memory_status(),
     }
 
 
 @app.get("/metadata")
 async def metadata() -> Dict[str, Any]:
-    return redact(_metadata())
+    payload = _metadata()
+    payload["evidence_memory"] = evidence_memory_status()
+    payload["learning_memory"] = learning_memory_status()
+    payload["crewai_runtime"] = crewai_runtime_status()
+    return redact(payload)
+
+
+@app.get("/evidence/memory/status")
+async def evidence_memory_status_endpoint() -> Dict[str, Any]:
+    return redact({"ok": True, "evidence_memory": evidence_memory_status()})
+
+
+@app.get("/learning/memory/status")
+async def learning_memory_status_endpoint() -> Dict[str, Any]:
+    return redact({"ok": True, "learning_memory": learning_memory_status()})
+
+
+@app.post("/learning/feedback")
+async def learning_feedback(payload: Dict[str, Any]) -> Dict[str, Any]:
+    result = store_feedback(payload)
+    return redact({"ok": bool(result.get("stored")), "auth": {"mode": os.environ.get("P42_AUTH_MODE", "audit")}, "result": result})
+
+
+@app.post("/learning/similar-cases")
+async def learning_similar_cases(payload: Dict[str, Any]) -> Dict[str, Any]:
+    case_facts = payload.get("caseFacts") if isinstance(payload.get("caseFacts"), dict) else payload.get("case") if isinstance(payload.get("case"), dict) else {}
+    missing = payload.get("missingEvidence") if isinstance(payload.get("missingEvidence"), list) else []
+    domains = payload.get("domains") if isinstance(payload.get("domains"), list) else []
+    result = find_similar_cases(case_facts, missing, domains, limit=int(payload.get("limit") or 5))
+    return redact({"ok": True, "auth": {"mode": os.environ.get("P42_AUTH_MODE", "audit")}, "result": result})
+
+
+@app.post("/learning/control-suggestions")
+async def learning_control_suggestions(payload: Dict[str, Any]) -> Dict[str, Any]:
+    case_facts = payload.get("caseFacts") if isinstance(payload.get("caseFacts"), dict) else payload.get("case") if isinstance(payload.get("case"), dict) else {}
+    missing = payload.get("missingEvidence") if isinstance(payload.get("missingEvidence"), list) else []
+    domains = payload.get("domains") if isinstance(payload.get("domains"), list) else []
+    result = get_control_suggestions(case_facts, missing, domains, limit=int(payload.get("limit") or 8))
+    return redact({"ok": True, "auth": {"mode": os.environ.get("P42_AUTH_MODE", "audit")}, "result": result})
 
 
 @app.get("/logs")

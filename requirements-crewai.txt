@@ -1,7 +1,8 @@
-# Optional CrewAI runtime dependencies.
+# Optional CrewAI runtime dependencies. These are intentionally excluded from
+# requirements.txt and the default Agentathon Docker image.
 # Install only when running the CrewAI adapter:
 #   python3 -m venv .venv
 #   source .venv/bin/activate
 #   python -m pip install -r requirements-crewai.txt
-crewai
-pyyaml
+crewai>=0.102.0,<1.0.0
+pyyaml>=6.0.2,<7.0.0
