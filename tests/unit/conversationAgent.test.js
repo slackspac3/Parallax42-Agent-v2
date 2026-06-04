@@ -555,6 +555,54 @@ test('conversation records export origin follow-up without overwriting import ge
   assert.ok(!second.questions.some((question) => /export-control jurisdiction|supplier ship/i.test(question)));
 });
 
+test('conversation re-asks active clarification when the reply is unrelated', () => {
+  const originQuestion = 'From which country or export-control jurisdiction will the supplier ship the AI accelerator hardware (for example, US, EU, UK, or another country)?';
+  const result = processConversation({
+    message: 'pizza',
+    activeQuestion: originQuestion,
+    caseDraft: {
+      supplierName: 'Conversation-supplied case',
+      brief: 'Review an AI accelerator import for UAE and Singapore with restricted hardware and firmware support.',
+      geography: 'UAE and Singapore',
+      riskSignals: ['export control', 'remote support access'],
+      integrations: ['Firmware support channel'],
+      activeQuestion: originQuestion,
+      questions: [originQuestion],
+      askedQuestions: [originQuestion]
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.caseDraft.exportOriginJurisdiction, '');
+  assert.equal(result.caseDraft.activeQuestion, originQuestion);
+  assert.equal(result.caseDraft.answerValidation.status, 'needs_clarification');
+  assert.deepEqual(result.questions, [originQuestion]);
+  assert.match(result.reply, /could not map that answer/i);
+  assert.match(result.reply, /Export controls differ by shipping jurisdiction/i);
+});
+
+test('conversation records pending active clarification as a known gap instead of re-asking it', () => {
+  const originQuestion = 'From which country or export-control jurisdiction will the supplier ship the AI accelerator hardware (for example, US, EU, UK, or another country)?';
+  const result = processConversation({
+    message: 'unknown',
+    activeQuestion: originQuestion,
+    caseDraft: {
+      supplierName: 'Conversation-supplied case',
+      brief: 'Review an AI accelerator import for UAE and Singapore with restricted hardware and firmware support.',
+      geography: 'UAE and Singapore',
+      riskSignals: ['export control', 'remote support access'],
+      integrations: ['Firmware support channel'],
+      activeQuestion: originQuestion,
+      questions: [originQuestion],
+      askedQuestions: [originQuestion]
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.ok(result.caseDraft.knownGaps.includes('export_origin_jurisdiction'));
+  assert.ok(!result.questions.includes(originQuestion));
+  assert.match(result.reply, /recorded export origin jurisdiction as a known gap/i);
+});
+
 test('conversation force-run does not execute when owner and geography are missing', () => {
   let runCount = 0;
   const result = processConversation({
