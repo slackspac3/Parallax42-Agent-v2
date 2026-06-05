@@ -186,6 +186,107 @@
     `;
   }
 
+  function normalizeStructuredProse(value = '') {
+    return cleanText(value)
+      .replace(/\s+(\d{1,2})[).]\s+/g, '\n\n$1. ')
+      .replace(/\s+-\s+(Risks|What to check\/require|What to check|What to require|Signals|Missing evidence|Required actions|Controls to require):\s*/gi, '\n$1:\n')
+      .replace(/\s+[•]\s+/g, '\n- ')
+      .replace(/\s+-\s+/g, '\n- ')
+      .replace(/\s+(Risks|What to check\/require|What to check|What to require|Signals|Missing evidence|Required actions|Controls to require):\s*/gi, '\n$1:\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  function shouldUseStructuredProse(value = '') {
+    const clean = cleanText(value);
+    if (clean.length < 520) return false;
+    const numbered = (clean.match(/\b\d{1,2}[).]\s+[A-Z]/g) || []).length;
+    const bullets = (clean.match(/\s(?:-|•)\s+/g) || []).length;
+    const labels = (clean.match(/\b(?:Risks|What to check\/require|What to check|Required actions|Missing evidence):/gi) || []).length;
+    return numbered >= 2 || bullets >= 3 || labels >= 2;
+  }
+
+  function sectionPartsFromStructuredProse(value = '') {
+    const normalized = normalizeStructuredProse(value);
+    if (!normalized) return [];
+    const rawParts = normalized.split(/\n+/).map((part) => part.trim()).filter(Boolean);
+    const parts = [];
+    for (const part of rawParts) {
+      const heading = part.match(/^(\d{1,2})\.\s+(.+)$/);
+      if (heading) {
+        parts.push({ type: 'heading', index: heading[1], text: heading[2] });
+      } else if (/^[-•]\s+/.test(part)) {
+        parts.push({ type: 'bullet', text: part.replace(/^[-•]\s+/, '') });
+      } else if (/^[A-Z][A-Za-z /-]{2,44}:$/.test(part)) {
+        parts.push({ type: 'label', text: part.replace(/:$/, '') });
+      } else {
+        parts.push({ type: 'paragraph', text: part });
+      }
+    }
+    return parts;
+  }
+
+  function renderAssistantProse(value = '') {
+    if (!shouldUseStructuredProse(value)) {
+      return `<p>${escapeHtml(value)}</p>`;
+    }
+    const parts = sectionPartsFromStructuredProse(value);
+    if (!parts.length) return `<p>${escapeHtml(value)}</p>`;
+
+    const output = [];
+    let current = null;
+    const closeList = () => {
+      if (current && current.listOpen) {
+        output.push('</ul>');
+        current.listOpen = false;
+      }
+    };
+    const closeSection = () => {
+      if (current) {
+        closeList();
+        output.push('</section>');
+        current = null;
+      }
+    };
+
+    for (const part of parts) {
+      if (part.type === 'heading') {
+        closeSection();
+        current = { listOpen: false };
+        output.push(`
+          <section class="advisor-prose-section">
+            <h4><span>${escapeHtml(part.index)}</span>${escapeHtml(part.text)}</h4>
+        `);
+      } else if (part.type === 'bullet') {
+        if (!current) {
+          current = { listOpen: false };
+          output.push('<section class="advisor-prose-section is-implicit">');
+        }
+        if (!current.listOpen) {
+          output.push('<ul>');
+          current.listOpen = true;
+        }
+        output.push(`<li>${escapeHtml(part.text)}</li>`);
+      } else if (part.type === 'label') {
+        if (!current) {
+          current = { listOpen: false };
+          output.push('<section class="advisor-prose-section is-implicit">');
+        }
+        closeList();
+        output.push(`<strong class="advisor-prose-label">${escapeHtml(part.text)}</strong>`);
+      } else {
+        if (current) {
+          closeList();
+          output.push(`<p>${escapeHtml(part.text)}</p>`);
+        } else {
+          output.push(`<p>${escapeHtml(part.text)}</p>`);
+        }
+      }
+    }
+    closeSection();
+    return output.join('');
+  }
+
   function renderAssistantTurn(message, context) {
     const state = context || {};
     if (state.smartIntakeUnavailable) {
@@ -220,7 +321,7 @@
         <div class="advisor-response-card advisor-natural-response advisor-chat-only">
           ${renderSmartIntakeDegraded(state)}
           <div class="advisor-prose-response">
-            <p>${escapeHtml(proseText)}</p>
+            ${renderAssistantProse(proseText)}
           </div>
           ${!state.canRun && questionText && !responseIncludesQuestion ? `
             <div class="advisor-next-question">

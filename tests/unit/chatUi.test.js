@@ -53,6 +53,30 @@ test('renderAssistantTurn keeps flowing prose intact in the latest assistant car
   assert.doesNotMatch(html, /advisor-next-question/);
 });
 
+test('renderAssistantTurn formats dense multi-domain risk prose into scannable sections', () => {
+  const chatUi = loadChatUiModule();
+  const prose = 'Understood: you want a full-spectrum risk review of the Aster Cognitive Cloud Cloud AI Model Services SOW. 1) Scope, use cases, and data categories - The service covers private assistant, retrieval, document intelligence, policy Q&A, meeting summaries, and compliance evidence extraction. - Risks: ambiguous scope that allows expansion to new use cases without review. - What to check/require: precise permitted use cases and user groups. 2) Privacy and data protection - Risks: unclear data residency and retention for prompts, documents, logs, and model outputs. - What to check/require: DPA, retention schedule, deletion timelines, and model-training prohibition. 3) Security and access controls - Risks: vague security commitments without concrete controls. - What to check/require: SSO, MFA, logging, incident notification, and encryption.';
+
+  const html = chatUi.renderAssistantTurn({ text: prose }, {
+    canRun: false,
+    chatMessageCount: 4,
+    hasChatContext: true,
+    isLatest: true,
+    question: 'Which geography or regulatory perimeter applies?',
+    responseText: prose,
+    source: 'compass_gateway'
+  });
+
+  assert.match(html, /advisor-prose-section/);
+  assert.match(html, /<h4><span>1<\/span>Scope, use cases, and data categories<\/h4>/);
+  assert.match(html, /<h4><span>2<\/span>Privacy and data protection<\/h4>/);
+  assert.match(html, /advisor-prose-label">Risks<\/strong><p>ambiguous scope that allows expansion to new use cases without review\.<\/p>/);
+  assert.match(html, /advisor-prose-label/);
+  assert.doesNotMatch(html, /<p>-<\/p>/);
+  assert.match(html, /Which geography or regulatory perimeter applies/);
+  assert.doesNotMatch(html, /<p>Understood:.*1\) Scope/s);
+});
+
 test('renderAssistantTurn keeps short Compass natural responses when explicitly flagged', () => {
   const chatUi = loadChatUiModule();
   const prose = 'Owner recorded.';
