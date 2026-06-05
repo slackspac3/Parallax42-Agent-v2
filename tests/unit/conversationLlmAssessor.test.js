@@ -1028,7 +1028,7 @@ test('conversation LLM assessor degrades gracefully on malformed Compass output'
           calls += 1;
           return JSON.stringify({
             model: 'gpt-5.1',
-            choices: [{ message: { content: 'I can help with that, but this is not JSON.' } }]
+            choices: [{ message: { content: 'Not JSON.' } }]
           });
         }
       });
@@ -1048,6 +1048,57 @@ test('conversation LLM assessor degrades gracefully on malformed Compass output'
       assert.equal(result.llmAssessment.compassFailureType, 'invalid_json');
       assert.match(result.llmAssessment.detail, /not valid JSON/i);
       assert.equal(result.llmAssessment.attemptCount, 2);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('conversation LLM assessor salvages substantive Compass prose with deterministic structured fields', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1',
+      CONVERSATION_LLM_MAX_ATTEMPTS: '2'
+    }, async () => {
+      let calls = 0;
+      global.fetch = async () => ({
+        ok: true,
+        status: 200,
+        text: async () => {
+          calls += 1;
+          return JSON.stringify({
+            model: 'gpt-5.1',
+            choices: [{
+              message: {
+                content: 'This import of restricted AI accelerator hardware into the UAE and Singapore raises export-control, end-use, and firmware-support risks. The missing final end-use certificate should be treated as a reviewer gap before shipment.'
+              }
+            }]
+          });
+        }
+      });
+
+      const result = await assessConversationWithLlm({
+        message: 'Review an AI accelerator import for UAE and Singapore. The supplier will ship restricted hardware, provide firmware support, and has no final end-use certificate.'
+      });
+
+      assert.equal(calls, 2);
+      assert.equal(result.llmAssessment.used, true);
+      assert.equal(result.llmAssessment.structuredFallbackUsed, true);
+      assert.equal(result.llmAssessment.invalidCompassResponse, false);
+      assert.equal(result.llmAssessment.compassFailureType, 'structured_json_salvaged_from_prose');
+      assert.equal(result.llmAssessment.requestType, 'export_control');
+      assert.equal(result.llmAssessment.workflowType, 'export_control_review');
+      assert.match(result.llmAssessment.naturalResponse, /restricted AI accelerator hardware/i);
+      assert.match(result.llmAssessment.naturalResponse, /Next question:/i);
+      assert.equal(result.caseDraft.geography, 'UAE and Singapore');
+      assert.ok(result.caseDraft.riskSignals.includes('export control'));
+      assert.ok(result.caseDraft.llmIntake.used);
+      assert.equal(result.caseDraft.llmIntake.structuredFallbackUsed, true);
+      assert.equal(result.caseDraft.llmIntake.compassFailureType, undefined);
     });
   } finally {
     global.fetch = originalFetch;
