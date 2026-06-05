@@ -453,7 +453,7 @@ def check_crewai_runtime_modes() -> None:
         assert response["output"]["live_advisory"]["runtime"] == "custom"
         assert response["output"]["live_advisory"]["status"] == "skipped_custom_runtime"
 
-    with patched_env(SAMPLE_MODE="false", REQUIRE_COMPASS="false", LOG_DIR="./logs", OPENAI_API_KEY="placeholder", OPENAI_BASE_URL="https://compass.core42.ai/v1", P42_VECTOR_STORE_PROVIDER="local", QDRANT_URL=None, QDRANT_API_KEY=None, AGENT_RUNTIME="crewai_live", CREWAI_ENABLE_LIVE_LLM="1"):
+    with patched_env(SAMPLE_MODE="false", REQUIRE_COMPASS="false", LOG_DIR="./logs", OPENAI_API_KEY="placeholder", OPENAI_BASE_URL="https://api.core42.ai/v1", P42_VECTOR_STORE_PROVIDER="local", QDRANT_URL=None, QDRANT_API_KEY=None, AGENT_RUNTIME="crewai_live", CREWAI_ENABLE_LIVE_LLM="1"):
         with patch("app.agentathon_orchestrator.run_crewai_advisory_council", side_effect=fake_crewai_success):
             response = run_payload(load_example("example_2.json", run_id="unit-crewai-success", sample_mode=False), FakeCompassFailure())
         assert_base_response(response)
@@ -471,7 +471,7 @@ def check_crewai_runtime_modes() -> None:
         assert response["output"]["live_advisory"]["error_type"] == "mock_crewai_failure"
         assert "crewai_advisory_unavailable" in event_actions(response)
 
-    with patched_env(SAMPLE_MODE="false", REQUIRE_COMPASS="false", LOG_DIR="./logs", OPENAI_API_KEY="placeholder", OPENAI_BASE_URL="https://compass.core42.ai/v1", P42_VECTOR_STORE_PROVIDER="local", QDRANT_URL=None, QDRANT_API_KEY=None, AGENT_RUNTIME="crewai_live", CREWAI_ENABLE_LIVE_LLM="0"):
+    with patched_env(SAMPLE_MODE="false", REQUIRE_COMPASS="false", LOG_DIR="./logs", OPENAI_API_KEY="placeholder", OPENAI_BASE_URL="https://api.core42.ai/v1", P42_VECTOR_STORE_PROVIDER="local", QDRANT_URL=None, QDRANT_API_KEY=None, AGENT_RUNTIME="crewai_live", CREWAI_ENABLE_LIVE_LLM="0"):
         with patch("app.agentathon_orchestrator.run_crewai_advisory_council", side_effect=AssertionError("disabled CrewAI must not call live runtime")):
             response = run_payload(load_example("example_1.json", run_id="unit-crewai-disabled", sample_mode=False), FakeCompassFailure())
         assert_base_response(response)
@@ -481,11 +481,19 @@ def check_crewai_runtime_modes() -> None:
 
 
 def check_base_url_normalization() -> None:
-    assert normalize_openai_base_url("https://compass.core42.ai/v1")["normalized"] == "https://compass.core42.ai/v1"
-    assert normalize_openai_base_url("https://compass.core42.ai/v1/")["normalized"] == "https://compass.core42.ai/v1"
-    normalized_root = normalize_openai_base_url("https://compass.core42.ai")
-    assert normalized_root["normalized"] == "https://compass.core42.ai/v1"
+    current = normalize_openai_base_url("https://api.core42.ai/v1")
+    assert current["normalized"] == "https://api.core42.ai/v1"
+    assert current["official"] is True
+    assert current["accepted_direct"] is True
+    assert normalize_openai_base_url("https://api.core42.ai/v1/")["normalized"] == "https://api.core42.ai/v1"
+    normalized_root = normalize_openai_base_url("https://api.core42.ai")
+    assert normalized_root["normalized"] == "https://api.core42.ai/v1"
     assert normalized_root["warnings"], "expected /v1 normalization warning"
+    legacy = normalize_openai_base_url("https://compass.core42.ai/v1")
+    assert legacy["normalized"] == "https://compass.core42.ai/v1"
+    assert legacy["official"] is False
+    assert legacy["accepted_direct"] is True
+    assert legacy["provider_variant"] == "legacy_agentathon_prompt"
     assert normalize_openai_base_url("not a url")["ok"] is False
     frontend = normalize_openai_base_url("https://g42.genai.works")
     assert frontend["ok"] is False
@@ -494,7 +502,7 @@ def check_base_url_normalization() -> None:
 
 def check_compass_doctor_html_detection() -> None:
     html = "<!doctype html><html><body>Compass landing page</body></html>"
-    with patched_env(OPENAI_API_KEY="test-secret-key", OPENAI_BASE_URL="https://compass.core42.ai/v1"):
+    with patched_env(OPENAI_API_KEY="test-secret-key", OPENAI_BASE_URL="https://api.core42.ai/v1"):
         with patch("app.compass_client.socket.getaddrinfo", return_value=[]):
             with patch("app.compass_client.httpx.get", return_value=FakeHttpxResponse(200, html, {"content-type": "text/html"})):
                 with patch("app.compass_client.httpx.post", return_value=FakeHttpxResponse(405, json.dumps({"error": "method"}), {"content-type": "application/json"})):
@@ -519,7 +527,7 @@ def check_compass_probe_endpoint() -> None:
     assert body["error_type"] == "missing_api_key"
 
     secret = "secret-token-for-redaction-123456"
-    with patched_env(OPENAI_API_KEY=secret, OPENAI_BASE_URL="https://compass.core42.ai/v1", SAMPLE_MODE="true"):
+    with patched_env(OPENAI_API_KEY=secret, OPENAI_BASE_URL="https://api.core42.ai/v1", SAMPLE_MODE="true"):
         with patch("app.compass_client.socket.getaddrinfo", return_value=[]):
             with patch("app.compass_client.httpx.get", side_effect=RuntimeError(secret)):
                 with patch("app.compass_client.httpx.post", side_effect=RuntimeError(secret)):
@@ -560,7 +568,7 @@ def check_evidence_memory_components() -> None:
         assert get_evidence_memory_provider(FakeCompassSuccess()).provider == "local-fallback"
 
     fake_client = FakeQdrantClient()
-    with patched_env(P42_VECTOR_STORE_PROVIDER="qdrant", QDRANT_URL="https://qdrant.example", QDRANT_API_KEY="placeholder", OPENAI_API_KEY="placeholder", OPENAI_BASE_URL="https://compass.core42.ai/v1"):
+    with patched_env(P42_VECTOR_STORE_PROVIDER="qdrant", QDRANT_URL="https://qdrant.example", QDRANT_API_KEY="placeholder", OPENAI_API_KEY="placeholder", OPENAI_BASE_URL="https://api.core42.ai/v1"):
         provider = FakeQdrantMemory(compass_client=FakeCompassSuccess(), client=fake_client, collection="unit_collection", vector_size=3)
         index_result = provider.index(evidence_chunks)
         assert index_result["indexedChunkCount"] == len(evidence_chunks)

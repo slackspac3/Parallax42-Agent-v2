@@ -13,7 +13,10 @@ import httpx
 from .trace_logger import redact
 
 
-DEFAULT_BASE_URL = "https://compass.core42.ai/v1"
+CURRENT_DOCS_BASE_URL = "https://api.core42.ai/v1"
+LEGACY_AGENTATHON_BASE_URL = "https://compass.core42.ai/v1"
+DEFAULT_BASE_URL = CURRENT_DOCS_BASE_URL
+ACCEPTED_DIRECT_BASE_URLS = {CURRENT_DOCS_BASE_URL, LEGACY_AGENTATHON_BASE_URL}
 DEFAULT_FAST_MODEL = "gpt-4.1"
 DEFAULT_REASONING_MODEL = "gpt-5.1"
 DEFAULT_EMBEDDING_MODEL = "text-embedding-3-large"
@@ -63,14 +66,29 @@ def normalize_openai_base_url(raw_url: Optional[str]) -> Dict[str, Any]:
 
     host = parsed.netloc.lower()
     path = parsed.path.rstrip("/")
-    if host == "compass.core42.ai":
+    provider_variant = "custom_openai_compatible"
+    if host == "api.core42.ai":
         if not path:
             normalized = f"{parsed.scheme}://{parsed.netloc}/v1"
-            warnings.append("OPENAI_BASE_URL was normalized to include /v1 for official Compass.")
+            warnings.append("OPENAI_BASE_URL was normalized to include /v1 for the documented Core42 Compass API.")
         elif path == "/v1":
             normalized = f"{parsed.scheme}://{parsed.netloc}/v1"
         else:
-            errors.append("Official Compass OPENAI_BASE_URL must be https://compass.core42.ai/v1.")
+            errors.append("Documented Core42 Compass OPENAI_BASE_URL must be https://api.core42.ai/v1.")
+        provider_variant = "core42_docs"
+    elif host == "compass.core42.ai":
+        if not path:
+            normalized = f"{parsed.scheme}://{parsed.netloc}/v1"
+            warnings.append("OPENAI_BASE_URL was normalized to include /v1 for the legacy Agentathon Compass host.")
+        elif path == "/v1":
+            normalized = f"{parsed.scheme}://{parsed.netloc}/v1"
+        else:
+            errors.append("Legacy Agentathon Compass OPENAI_BASE_URL must be https://compass.core42.ai/v1.")
+        warnings.append(
+            "https://compass.core42.ai/v1 is treated as a legacy Agentathon prompt-era host. "
+            "Current Core42 API documentation points to https://api.core42.ai/v1."
+        )
+        provider_variant = "legacy_agentathon_prompt"
     elif "g42.genai.works" in host or "academy.genai.works" in host:
         errors.append("OPENAI_BASE_URL points to a GenAI frontend page, not the official Compass OpenAI-compatible /v1 endpoint.")
     elif "vercel.app" in host or "parallax42-compass-gateway" in host:
@@ -91,7 +109,9 @@ def normalize_openai_base_url(raw_url: Optional[str]) -> Dict[str, Any]:
         "raw": raw,
         "normalized": normalized,
         "host": urlparse(normalized).netloc,
-        "official": normalized == DEFAULT_BASE_URL,
+        "official": normalized == CURRENT_DOCS_BASE_URL,
+        "accepted_direct": normalized in ACCEPTED_DIRECT_BASE_URLS,
+        "provider_variant": provider_variant,
         "warnings": warnings,
         "errors": errors,
     }
@@ -173,6 +193,7 @@ class CompassClient:
     def _headers(self) -> Dict[str, str]:
         return {
             "Authorization": f"Bearer {self.api_key}",
+            "api-key": self.api_key,
             "Content-Type": "application/json",
         }
 
@@ -295,6 +316,8 @@ class CompassClient:
             "base_url": base_info["normalized"],
             "base_url_host": base_info.get("host", ""),
             "base_url_official": bool(base_info.get("official")),
+            "base_url_accepted_direct": bool(base_info.get("accepted_direct")),
+            "provider_variant": base_info.get("provider_variant", "custom_openai_compatible"),
             "openai_base_url_raw_present": bool(os.environ.get("OPENAI_BASE_URL")),
             "base_url_warnings": base_info.get("warnings", []),
             "base_url_errors": base_info.get("errors", []),

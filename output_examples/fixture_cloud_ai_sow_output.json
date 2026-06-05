@@ -15,9 +15,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "success",
       "target_agent": "Intake Agent",
-      "timestamp": "2026-06-05T06:23:41.828562Z",
+      "timestamp": "2026-06-05T08:27:40.105755Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "extract_case_facts",
@@ -65,9 +65,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "needs_revision",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-05T06:23:41.935430Z",
+      "timestamp": "2026-06-05T08:27:40.209789Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "delegate_evidence_search",
@@ -81,9 +81,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "success",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-05T06:23:41.944646Z",
+      "timestamp": "2026-06-05T08:27:40.217020Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "ingest_fixture_document",
@@ -128,9 +128,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "success",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:41.952488Z",
+      "timestamp": "2026-06-05T08:27:40.230517Z",
       "tool_used": "fixture_pdf_text_extractor",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "retrieve_evidence",
@@ -311,9 +311,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "needs_revision",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:42.014777Z",
+      "timestamp": "2026-06-05T08:27:40.301776Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "retry_evidence_search",
@@ -487,9 +487,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "retry",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:42.027856Z",
+      "timestamp": "2026-06-05T08:27:40.318147Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "critique_privacy_gap",
@@ -513,9 +513,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "needs_revision",
       "target_agent": "Security Specialist",
-      "timestamp": "2026-06-05T06:23:42.040865Z",
+      "timestamp": "2026-06-05T08:27:40.331014Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "critique_security_gap",
@@ -534,9 +534,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "needs_revision",
       "target_agent": "Responsible AI Specialist",
-      "timestamp": "2026-06-05T06:23:42.048458Z",
+      "timestamp": "2026-06-05T08:27:40.340152Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "critique_ai_governance_gap",
@@ -557,9 +557,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "needs_revision",
       "target_agent": "Learning & Precedent Specialist",
-      "timestamp": "2026-06-05T06:23:42.055725Z",
+      "timestamp": "2026-06-05T08:27:40.347960Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "retrieve_precedent",
@@ -735,9 +735,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "success",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-05T06:23:42.066370Z",
+      "timestamp": "2026-06-05T08:27:40.359738Z",
       "tool_used": "local-jsonl",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "compass_advisory_unavailable",
@@ -751,9 +751,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "fallback_used",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-05T06:23:42.078098Z",
+      "timestamp": "2026-06-05T08:27:40.367677Z",
       "tool_used": "sample_mode",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "revise_required_controls",
@@ -786,9 +786,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "needs_revision",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:42.085719Z",
+      "timestamp": "2026-06-05T08:27:40.370515Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "escalate_human_review",
@@ -805,9 +805,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "escalated",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:42.092910Z",
+      "timestamp": "2026-06-05T08:27:40.374344Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "apply_deterministic_policy",
@@ -826,9 +826,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:42.098345Z",
+      "timestamp": "2026-06-05T08:27:40.377499Z",
       "tool_used": "deterministic_rules_engine",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "package_audit_trace",
@@ -845,9 +845,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:42.104086Z",
+      "timestamp": "2026-06-05T08:27:40.380145Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     },
     {
       "action": "finalize_response",
@@ -864,9 +864,9 @@
       "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
       "status": "success",
       "target_agent": "",
-      "timestamp": "2026-06-05T06:23:42.109675Z",
+      "timestamp": "2026-06-05T08:27:40.382911Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875"
     }
   ],
   "agents": [
@@ -911,7 +911,7 @@
       "role": "Packages the decision, evidence, collaboration trace, and review artifacts."
     }
   ],
-  "execution_time_seconds": 0.31,
+  "execution_time_seconds": 0.291,
   "log_file": "logs/fixture_cloud_ai_sow_trace.jsonl",
   "output": {
     "artifacts": [
@@ -1755,6 +1755,6 @@
   },
   "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
   "status": "success",
-  "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b",
+  "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-ccb32875",
   "use_case_id": "21"
 }

@@ -108,7 +108,7 @@ Docker:
 docker build -t parallax42-agentathon .
 docker run --rm -p 8000:8000 \
   -e SAMPLE_MODE=true \
-  -e OPENAI_BASE_URL=https://compass.core42.ai/v1 \
+  -e OPENAI_BASE_URL=https://api.core42.ai/v1 \
   -e OPENAI_API_KEY=dummy \
   parallax42-agentathon
 ```
@@ -163,7 +163,7 @@ CI uses sample mode and a dummy key so secrets are not exposed in GitHub Actions
 
 ```text
 OPENAI_API_KEY=<real Compass key>
-OPENAI_BASE_URL=https://compass.core42.ai/v1
+OPENAI_BASE_URL=https://api.core42.ai/v1
 SAMPLE_MODE=false
 REQUIRE_COMPASS=true
 ```
@@ -172,7 +172,7 @@ Compass/OpenAI-compatible variables are placeholders in `.env.example`:
 
 ```text
 OPENAI_API_KEY=<real Compass key>
-OPENAI_BASE_URL=https://compass.core42.ai/v1
+OPENAI_BASE_URL=https://api.core42.ai/v1
 MODEL_FAST=gpt-4.1
 MODEL_REASONING=gpt-5.1
 EMBEDDING_MODEL=text-embedding-3-large
@@ -188,7 +188,7 @@ Known limitations: the Agentathon path returns structured JSON and trace logs, n
 
 Live Compass boundary:
 
-- **Agentathon evaluation path:** `run.py` uses the official OpenAI-compatible environment contract: `OPENAI_API_KEY` plus `OPENAI_BASE_URL=https://compass.core42.ai/v1`. This is the path used by `/run`, `/compass/probe`, `scripts/compass_doctor.py`, and optional Compass embeddings for Qdrant. It exists because the technical screening expects a reproducible root-level API that can be run in Docker without browser clicks or private hosted services.
+- **Agentathon evaluation path:** `run.py` uses the OpenAI-compatible Compass environment contract: `OPENAI_API_KEY` plus `OPENAI_BASE_URL=https://api.core42.ai/v1`. This is the path used by `/run`, `/compass/probe`, `scripts/compass_doctor.py`, and optional Compass embeddings for Qdrant. It exists because the technical screening expects a reproducible root-level API that can be run in Docker without browser clicks or private hosted services.
 - **Product demo path:** the existing Node/Vercel application may use `COMPASS_GATEWAY_BASE_URL` and `COMPASS_GATEWAY_TOKEN` for server-side smart intake, embeddings, and hosted-demo workflows. That Vercel gateway is product infrastructure, not the official Agentathon Compass base URL unless it is explicitly configured to expose OpenAI-compatible `/v1` routes.
 - **Backend/droplet path:** `PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com` supports the product's parser/OCR/backend relay and optional remote CrewAI service. It is not used as the Agentathon Compass API and should not be set as `OPENAI_BASE_URL`.
 - **Why the split exists:** the product keeps its richer hosted architecture, while the Agentathon wrapper exposes judgeable equivalent behavior: deterministic final decisioning, advisory Compass hooks, multi-agent trace logs, and structured fallback when live Compass is unavailable. This avoids rewriting the Node product while satisfying the evaluator's API shape.
@@ -201,7 +201,7 @@ python scripts/compass_doctor.py --strict
 curl http://localhost:8000/compass/probe
 ```
 
-`OPENAI_BASE_URL` is normalized for the official direct Agentathon Compass path. `https://compass.core42.ai` is corrected to `https://compass.core42.ai/v1`; duplicate `/v1/v1` and known frontend URLs are rejected. If `OPENAI_BASE_URL` is not exported, `compass_doctor.py` reports that the default is used only for normalization and is not live proof. The optional Parallax42 Vercel gateway uses `COMPASS_GATEWAY_BASE_URL` and `COMPASS_GATEWAY_TOKEN` in the existing Node product runtime. It is not the official Agentathon Compass direct path unless explicitly configured as an OpenAI-compatible `/v1` endpoint.
+`OPENAI_BASE_URL` is normalized for the direct Compass path. The repo now defaults to `https://api.core42.ai/v1` because Core42's Compass API documentation (<https://www.core42.ai/compass/documentation/use-compass-apis>) uses that base for OpenAI-compatible chat completions. The earlier prompt-era value `https://compass.core42.ai/v1` is kept as a legacy accepted diagnostic alias, but it returned HTML/405 in prior probes and should not be used as the final proof URL unless Core42 confirms access for that host. Duplicate `/v1/v1` and known frontend URLs are rejected. If `OPENAI_BASE_URL` is not exported, `compass_doctor.py` reports that the default is used only for normalization and is not live proof. The optional Parallax42 Vercel gateway uses `COMPASS_GATEWAY_BASE_URL` and `COMPASS_GATEWAY_TOKEN` in the existing Node product runtime. It is not the Agentathon direct Compass path unless explicitly configured as an OpenAI-compatible `/v1` endpoint and allowed by the rules.
 
 ## Fixture Contract Demo Inputs
 
@@ -254,7 +254,7 @@ Minimal Azure deployment sequence:
 
 ```text
 OPENAI_API_KEY=<Compass key>
-OPENAI_BASE_URL=https://compass.core42.ai/v1
+OPENAI_BASE_URL=https://api.core42.ai/v1
 MODEL_FAST=gpt-4.1
 MODEL_REASONING=gpt-5.1
 EMBEDDING_MODEL=text-embedding-3-large
@@ -314,7 +314,7 @@ This executes the actual orchestrator for `example_1`, `example_2`, and `example
 
 ```text
 OPENAI_API_KEY=<real Compass key>
-OPENAI_BASE_URL=https://compass.core42.ai/v1
+OPENAI_BASE_URL=https://api.core42.ai/v1
 MODEL_FAST=gpt-4.1
 MODEL_REASONING=gpt-5.1
 EMBEDDING_MODEL=text-embedding-3-large
@@ -331,7 +331,7 @@ Optional live CrewAI for the Agentathon `/run` path is separate from the stable 
 AGENT_RUNTIME=crewai_live
 CREWAI_ENABLE_LIVE_LLM=1
 OPENAI_API_KEY=<real Compass key>
-OPENAI_BASE_URL=https://compass.core42.ai/v1
+OPENAI_BASE_URL=https://api.core42.ai/v1
 MODEL_FAST=gpt-4.1
 MODEL_REASONING=gpt-5.1
 ```
@@ -519,7 +519,7 @@ P42_REFERENCE_CONTEXT_DIR=
 AGENT_RUNTIME=crewai_live
 CREWAI_ENABLE_LIVE_LLM=1
 OPENAI_API_KEY=<real Compass key>
-OPENAI_BASE_URL=https://compass.core42.ai/v1
+OPENAI_BASE_URL=https://api.core42.ai/v1
 MODEL_FAST=gpt-4.1
 P42_CREWAI_SERVICE_URL=https://api.parallax42.bhavukarora.com/crewai
 P42_CREWAI_SERVICE_TOKEN=<server-side-service-token>
@@ -569,7 +569,7 @@ Enable live LLM calls only with approved credentials:
 export AGENT_RUNTIME=crewai_live
 export CREWAI_ENABLE_LIVE_LLM=1
 export OPENAI_API_KEY=<real Compass key>
-export OPENAI_BASE_URL=https://compass.core42.ai/v1
+export OPENAI_BASE_URL=https://api.core42.ai/v1
 export MODEL_FAST=gpt-4.1
 python run.py
 ```

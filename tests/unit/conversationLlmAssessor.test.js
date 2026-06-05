@@ -1105,6 +1105,79 @@ test('conversation LLM assessor salvages substantive Compass prose with determin
   }
 });
 
+test('conversation LLM assessor recovers uploaded document turns with Compass prose after malformed structured JSON', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1',
+      CONVERSATION_LLM_MAX_ATTEMPTS: '2'
+    }, async () => {
+      const requests = [];
+      global.fetch = async (url, options) => {
+        requests.push(JSON.parse(options.body));
+        if (requests.at(-1).response_format) {
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              model: 'gpt-5.1',
+              choices: [{ message: { content: '{' } }]
+            })
+          };
+        }
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            model: 'gpt-5.1',
+            choices: [{
+              message: {
+                content: 'I understand you uploaded a Cloud AI Model Services SOW for Astera Cognitive Cloud. I will treat it as an AI governance and contract-risk review and focus next on the highest-risk review scope.'
+              }
+            }]
+          })
+        };
+      };
+
+      const result = await assessConversationWithLlm({
+        message: 'Evidence uploaded: Cloud AI Model Services Statement of Work. 8 extracted signals and 1 indexed retrieval chunks are available. Classify the uploaded document and ask the next best review question before requesting generic metadata.',
+        eventType: 'evidence_uploaded',
+        caseDraft: {
+          supplierName: 'Astera Cognitive Cloud',
+          brief: 'Cloud AI Model Services Statement of Work',
+          documents: [{
+            title: 'Cloud AI Model Services Statement of Work',
+            documentType: 'sow',
+            extractionStatus: 'metadata_fallback',
+            summary: 'Private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction.',
+            signals: ['responsible-ai', 'privacy', 'model-governance', 'retrieval-quality', 'auditability', 'human-oversight', 'security-monitoring']
+          }],
+          evidenceSignals: ['responsible-ai', 'privacy', 'model-governance', 'retrieval-quality', 'auditability', 'human-oversight', 'security-monitoring'],
+          indexedEvidence: { chunkCount: 1 }
+        }
+      });
+
+      assert.equal(requests.length, 3);
+      assert.equal(result.llmAssessment.used, true);
+      assert.equal(result.llmAssessment.structuredFallbackUsed, true);
+      assert.equal(result.llmAssessment.invalidCompassResponse, false);
+      assert.equal(result.llmAssessment.smartIntakeDegraded, false);
+      assert.equal(result.llmAssessment.compassFailureType, 'structured_json_recovered_with_compass_prose');
+      assert.match(result.llmAssessment.naturalResponse, /Cloud AI Model Services SOW/i);
+      assert.equal(result.llmAssessment.attemptCount, 2);
+      assert.equal(result.llmAssessment.retriedAfterInvalidJson, true);
+      assert.equal(result.caseDraft.supplierName, 'Astera Cognitive Cloud');
+      assert.ok(result.caseDraft.llmIntake.used);
+      assert.equal(result.caseDraft.llmIntake.structuredFallbackUsed, true);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test('conversation LLM assessor retries malformed Compass output with compact JSON prompt then populates prose', async () => {
   const originalFetch = global.fetch;
   try {

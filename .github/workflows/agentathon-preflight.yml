@@ -48,7 +48,7 @@ jobs:
         env:
           SAMPLE_MODE: "true"
           OPENAI_API_KEY: dummy
-          OPENAI_BASE_URL: https://compass.core42.ai/v1
+          OPENAI_BASE_URL: https://api.core42.ai/v1
 
       - name: Upload Agentathon logs
         if: always()
@@ -90,7 +90,7 @@ jobs:
             -p 8000:8000 \
             -e SAMPLE_MODE=true \
             -e OPENAI_API_KEY=dummy \
-            -e OPENAI_BASE_URL=https://compass.core42.ai/v1 \
+            -e OPENAI_BASE_URL=https://api.core42.ai/v1 \
             parallax42-agentathon
           for i in $(seq 1 60); do
             if curl -fsS http://127.0.0.1:8000/health; then

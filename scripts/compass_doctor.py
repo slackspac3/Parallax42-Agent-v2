@@ -41,6 +41,8 @@ def build_summary(result: Dict[str, Any], *, strict: bool) -> Dict[str, Any]:
         "openai_base_url_raw_present": raw_base_present,
         "normalized_base_url": base_info.get("normalized"),
         "base_url_official": bool(base_info.get("official")),
+        "base_url_accepted_direct": bool(base_info.get("accepted_direct")),
+        "provider_variant": base_info.get("provider_variant", "custom_openai_compatible"),
         "base_url_warnings": base_info.get("warnings", []),
         "base_url_errors": base_info.get("errors", []),
         "doctor": result,
@@ -65,7 +67,9 @@ def print_human(summary: Dict[str, Any]) -> None:
     print(f"OPENAI_API_KEY: {summary.get('api_key')}")
     print(f"OPENAI_BASE_URL raw present: {summary.get('openai_base_url_raw_present')}")
     print(f"OPENAI_BASE_URL normalized: {summary.get('normalized_base_url')}")
-    print(f"OPENAI_BASE_URL official direct Compass: {summary.get('base_url_official')}")
+    print(f"OPENAI_BASE_URL documented Core42 Compass base: {summary.get('base_url_official')}")
+    print(f"OPENAI_BASE_URL accepted direct Compass base: {summary.get('base_url_accepted_direct')}")
+    print(f"Provider variant: {summary.get('provider_variant')}")
     if summary.get("base_url_warnings"):
         print(f"Base URL warnings: {'; '.join(summary['base_url_warnings'])}")
     if summary.get("base_url_errors"):
@@ -126,6 +130,8 @@ def main() -> int:
             "base_url": base_info.get("normalized"),
             "base_url_host": base_info.get("host", ""),
             "base_url_official": bool(base_info.get("official")),
+            "base_url_accepted_direct": bool(base_info.get("accepted_direct")),
+            "provider_variant": base_info.get("provider_variant", "custom_openai_compatible"),
             "openai_base_url_raw_present": bool(os.environ.get("OPENAI_BASE_URL")),
             "base_url_warnings": base_info.get("warnings", []),
             "base_url_errors": base_info.get("errors", []),

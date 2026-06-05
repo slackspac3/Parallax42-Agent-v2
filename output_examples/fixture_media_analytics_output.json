@@ -15,9 +15,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "Intake Agent",
-      "timestamp": "2026-06-05T06:23:41.524674Z",
+      "timestamp": "2026-06-05T08:27:39.852503Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "extract_case_facts",
@@ -63,9 +63,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "needs_revision",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-05T06:23:41.635256Z",
+      "timestamp": "2026-06-05T08:27:39.958808Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "delegate_evidence_search",
@@ -79,9 +79,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-05T06:23:41.645001Z",
+      "timestamp": "2026-06-05T08:27:39.968072Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "ingest_fixture_document",
@@ -124,9 +124,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:41.653134Z",
+      "timestamp": "2026-06-05T08:27:39.974300Z",
       "tool_used": "fixture_pdf_text_extractor",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "retrieve_evidence",
@@ -313,9 +313,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "needs_revision",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:41.701521Z",
+      "timestamp": "2026-06-05T08:27:40.022310Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "retry_evidence_search",
@@ -495,9 +495,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "retry",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:41.715023Z",
+      "timestamp": "2026-06-05T08:27:40.032991Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "critique_privacy_gap",
@@ -523,9 +523,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "needs_revision",
       "target_agent": "Security Specialist",
-      "timestamp": "2026-06-05T06:23:41.727940Z",
+      "timestamp": "2026-06-05T08:27:40.047634Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "critique_security_gap",
@@ -544,9 +544,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "needs_revision",
       "target_agent": "Responsible AI Specialist",
-      "timestamp": "2026-06-05T06:23:41.735502Z",
+      "timestamp": "2026-06-05T08:27:40.052601Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "validate_evidence",
@@ -565,9 +565,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "Learning & Precedent Specialist",
-      "timestamp": "2026-06-05T06:23:41.742334Z",
+      "timestamp": "2026-06-05T08:27:40.056431Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "retrieve_precedent",
@@ -743,9 +743,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-05T06:23:41.752936Z",
+      "timestamp": "2026-06-05T08:27:40.063907Z",
       "tool_used": "local-jsonl",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "compass_advisory_unavailable",
@@ -759,9 +759,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "fallback_used",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-05T06:23:41.764520Z",
+      "timestamp": "2026-06-05T08:27:40.071612Z",
       "tool_used": "sample_mode",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "revise_required_controls",
@@ -794,9 +794,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "needs_revision",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:41.771171Z",
+      "timestamp": "2026-06-05T08:27:40.076117Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "escalate_human_review",
@@ -813,9 +813,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "escalated",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:41.777923Z",
+      "timestamp": "2026-06-05T08:27:40.079566Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "apply_deterministic_policy",
@@ -834,9 +834,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:41.783784Z",
+      "timestamp": "2026-06-05T08:27:40.081861Z",
       "tool_used": "deterministic_rules_engine",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "package_audit_trace",
@@ -853,9 +853,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:41.788807Z",
+      "timestamp": "2026-06-05T08:27:40.084917Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     },
     {
       "action": "finalize_response",
@@ -872,9 +872,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "",
-      "timestamp": "2026-06-05T06:23:41.793976Z",
+      "timestamp": "2026-06-05T08:27:40.087130Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
     }
   ],
   "agents": [
@@ -919,7 +919,7 @@
       "role": "Packages the decision, evidence, collaboration trace, and review artifacts."
     }
   ],
-  "execution_time_seconds": 0.305,
+  "execution_time_seconds": 0.26,
   "log_file": "logs/fixture_media_analytics_trace.jsonl",
   "output": {
     "artifacts": [
@@ -1785,6 +1785,6 @@
   },
   "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
   "status": "success",
-  "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9",
+  "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7",
   "use_case_id": "21"
 }

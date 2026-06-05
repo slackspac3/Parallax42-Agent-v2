@@ -225,8 +225,8 @@ def check_env_example(pf: Preflight) -> None:
         match = re.search(r"^OPENAI_API_KEY=(.*)$", text, re.M)
         if match and not is_placeholder(match.group(1)):
             failures.append("OPENAI_API_KEY is not a placeholder")
-    if "OPENAI_BASE_URL=https://compass.core42.ai/v1" not in text:
-        failures.append("OPENAI_BASE_URL must be https://compass.core42.ai/v1")
+    if "OPENAI_BASE_URL=https://api.core42.ai/v1" not in text:
+        failures.append("OPENAI_BASE_URL must be https://api.core42.ai/v1")
     if not re.search(r"^(MODEL_FAST|COMPASS_CHAT_MODEL|AGENT_MODEL)=", text, re.M):
         failures.append("fast/chat model variable missing")
     if not re.search(r"^(MODEL_REASONING|COMPASS_REASONING_MODEL|REASONING_MODEL)=", text, re.M):
@@ -516,7 +516,7 @@ def run_api_smoke(pf: Preflight) -> None:
     env.setdefault("PORT", "8000")
     env.setdefault("LOG_DIR", "./logs")
     env.setdefault("SAMPLE_MODE", "true")
-    env.setdefault("OPENAI_BASE_URL", "https://compass.core42.ai/v1")
+    env.setdefault("OPENAI_BASE_URL", "https://api.core42.ai/v1")
     env.setdefault("OPENAI_API_KEY", "dummy")
     env.setdefault("P42_VECTOR_STORE_PROVIDER", "local")
     env["PYTHONUNBUFFERED"] = "1"
@@ -670,7 +670,7 @@ def run_docker_smoke(pf: Preflight) -> None:
             "-e",
             "OPENAI_API_KEY=dummy",
             "-e",
-            "OPENAI_BASE_URL=https://compass.core42.ai/v1",
+            "OPENAI_BASE_URL=https://api.core42.ai/v1",
             "-e",
             "P42_VECTOR_STORE_PROVIDER=local",
             image,

@@ -15,9 +15,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "success",
       "target_agent": "Intake Agent",
-      "timestamp": "2026-06-05T06:23:40.889953Z",
+      "timestamp": "2026-06-05T08:27:39.212721Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "extract_case_facts",
@@ -63,9 +63,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "needs_revision",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-05T06:23:41.001416Z",
+      "timestamp": "2026-06-05T08:27:39.326719Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "delegate_evidence_search",
@@ -79,9 +79,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "success",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-05T06:23:41.010043Z",
+      "timestamp": "2026-06-05T08:27:39.334861Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "ingest_fixture_document",
@@ -125,9 +125,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "success",
       "target_agent": "Security Specialist",
-      "timestamp": "2026-06-05T06:23:41.016259Z",
+      "timestamp": "2026-06-05T08:27:39.341591Z",
       "tool_used": "fixture_pdf_text_extractor",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "retrieve_evidence",
@@ -306,9 +306,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "needs_revision",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:41.079304Z",
+      "timestamp": "2026-06-05T08:27:39.406577Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "retry_evidence_search",
@@ -480,9 +480,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "retry",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:41.093667Z",
+      "timestamp": "2026-06-05T08:27:39.422927Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "critique_privacy_gap",
@@ -504,9 +504,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "needs_revision",
       "target_agent": "Security Specialist",
-      "timestamp": "2026-06-05T06:23:41.106365Z",
+      "timestamp": "2026-06-05T08:27:39.436857Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "critique_security_gap",
@@ -531,9 +531,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "needs_revision",
       "target_agent": "Responsible AI Specialist",
-      "timestamp": "2026-06-05T06:23:41.113218Z",
+      "timestamp": "2026-06-05T08:27:39.445015Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "validate_evidence",
@@ -552,9 +552,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "success",
       "target_agent": "Learning & Precedent Specialist",
-      "timestamp": "2026-06-05T06:23:41.120635Z",
+      "timestamp": "2026-06-05T08:27:39.452872Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "retrieve_precedent",
@@ -730,9 +730,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "success",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-05T06:23:41.131245Z",
+      "timestamp": "2026-06-05T08:27:39.462711Z",
       "tool_used": "local-jsonl",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "compass_advisory_unavailable",
@@ -746,9 +746,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "fallback_used",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-05T06:23:41.142873Z",
+      "timestamp": "2026-06-05T08:27:39.478347Z",
       "tool_used": "sample_mode",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "revise_required_controls",
@@ -781,9 +781,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "needs_revision",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:41.150285Z",
+      "timestamp": "2026-06-05T08:27:39.482391Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "escalate_human_review",
@@ -800,9 +800,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "escalated",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:41.156700Z",
+      "timestamp": "2026-06-05T08:27:39.486188Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "apply_deterministic_policy",
@@ -821,9 +821,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:41.162900Z",
+      "timestamp": "2026-06-05T08:27:39.489057Z",
       "tool_used": "deterministic_rules_engine",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "package_audit_trace",
@@ -840,9 +840,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:41.169105Z",
+      "timestamp": "2026-06-05T08:27:39.491613Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     },
     {
       "action": "finalize_response",
@@ -859,9 +859,9 @@
       "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
       "status": "success",
       "target_agent": "",
-      "timestamp": "2026-06-05T06:23:41.174736Z",
+      "timestamp": "2026-06-05T08:27:39.493882Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385"
     }
   ],
   "agents": [
@@ -906,7 +906,7 @@
       "role": "Packages the decision, evidence, collaboration trace, and review artifacts."
     }
   ],
-  "execution_time_seconds": 0.314,
+  "execution_time_seconds": 0.299,
   "log_file": "logs/fixture_ai_accelerator_export_trace.jsonl",
   "output": {
     "artifacts": [
@@ -1748,6 +1748,6 @@
   },
   "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
   "status": "success",
-  "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87",
+  "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-92fae385",
   "use_case_id": "21"
 }

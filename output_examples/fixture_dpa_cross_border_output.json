@@ -15,9 +15,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "success",
       "target_agent": "Intake Agent",
-      "timestamp": "2026-06-05T06:23:40.618351Z",
+      "timestamp": "2026-06-05T08:27:38.995428Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "extract_case_facts",
@@ -63,9 +63,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "needs_revision",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-05T06:23:40.703163Z",
+      "timestamp": "2026-06-05T08:27:39.083042Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "delegate_evidence_search",
@@ -79,9 +79,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "success",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-05T06:23:40.712390Z",
+      "timestamp": "2026-06-05T08:27:39.088460Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "ingest_fixture_document",
@@ -122,9 +122,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "success",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:40.720187Z",
+      "timestamp": "2026-06-05T08:27:39.093338Z",
       "tool_used": "fixture_pdf_text_extractor",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "retrieve_evidence",
@@ -307,9 +307,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "needs_revision",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:40.763173Z",
+      "timestamp": "2026-06-05T08:27:39.132826Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "retry_evidence_search",
@@ -485,9 +485,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "retry",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:40.776997Z",
+      "timestamp": "2026-06-05T08:27:39.142233Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "critique_privacy_gap",
@@ -512,9 +512,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "needs_revision",
       "target_agent": "Security Specialist",
-      "timestamp": "2026-06-05T06:23:40.790640Z",
+      "timestamp": "2026-06-05T08:27:39.149462Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "critique_security_gap",
@@ -533,9 +533,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "needs_revision",
       "target_agent": "Responsible AI Specialist",
-      "timestamp": "2026-06-05T06:23:40.797609Z",
+      "timestamp": "2026-06-05T08:27:39.152279Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "validate_evidence",
@@ -552,9 +552,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "success",
       "target_agent": "Learning & Precedent Specialist",
-      "timestamp": "2026-06-05T06:23:40.804125Z",
+      "timestamp": "2026-06-05T08:27:39.156943Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "retrieve_precedent",
@@ -730,9 +730,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "success",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-05T06:23:40.815680Z",
+      "timestamp": "2026-06-05T08:27:39.165978Z",
       "tool_used": "local-jsonl",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "compass_advisory_unavailable",
@@ -746,9 +746,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "fallback_used",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-05T06:23:40.826263Z",
+      "timestamp": "2026-06-05T08:27:39.173593Z",
       "tool_used": "sample_mode",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "revise_required_controls",
@@ -781,9 +781,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "needs_revision",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:40.832306Z",
+      "timestamp": "2026-06-05T08:27:39.176308Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "escalate_human_review",
@@ -800,9 +800,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "escalated",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:40.838679Z",
+      "timestamp": "2026-06-05T08:27:39.180932Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "apply_deterministic_policy",
@@ -821,9 +821,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:40.844559Z",
+      "timestamp": "2026-06-05T08:27:39.183225Z",
       "tool_used": "deterministic_rules_engine",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "package_audit_trace",
@@ -840,9 +840,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:40.849958Z",
+      "timestamp": "2026-06-05T08:27:39.185384Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     },
     {
       "action": "finalize_response",
@@ -859,9 +859,9 @@
       "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
       "status": "success",
       "target_agent": "",
-      "timestamp": "2026-06-05T06:23:40.854443Z",
+      "timestamp": "2026-06-05T08:27:39.189484Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e"
     }
   ],
   "agents": [
@@ -906,7 +906,7 @@
       "role": "Packages the decision, evidence, collaboration trace, and review artifacts."
     }
   ],
-  "execution_time_seconds": 0.268,
+  "execution_time_seconds": 0.213,
   "log_file": "logs/fixture_dpa_cross_border_trace.jsonl",
   "output": {
     "artifacts": [
@@ -1764,6 +1764,6 @@
   },
   "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
   "status": "success",
-  "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46",
+  "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-05036e8e",
   "use_case_id": "21"
 }

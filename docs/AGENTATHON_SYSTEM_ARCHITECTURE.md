@@ -58,11 +58,13 @@ Browser cockpit in public/
 
 | Boundary | Env / URL | Used by | What it is | What it is not |
 | --- | --- | --- | --- | --- |
-| Agentathon direct Compass | `OPENAI_API_KEY`, `OPENAI_BASE_URL=https://compass.core42.ai/v1` | `app/compass_client.py`, `/compass/probe`, `/run`, `scripts/compass_doctor.py`, optional embeddings | Official OpenAI-compatible contract for the FastAPI evaluator path. | Not the browser product gateway and not the droplet backend. |
+| Agentathon direct Compass | `OPENAI_API_KEY`, `OPENAI_BASE_URL=https://api.core42.ai/v1` | `app/compass_client.py`, `/compass/probe`, `/run`, `scripts/compass_doctor.py`, optional embeddings | Current Core42 Compass API documentation's OpenAI-compatible base for the FastAPI evaluator path. | Not the browser product gateway and not the droplet backend. |
 | Product Compass gateway | `COMPASS_GATEWAY_BASE_URL`, `COMPASS_GATEWAY_TOKEN` | Existing Node/Vercel product APIs and `lib/compassGatewayClient.js` | Server-side product model boundary for smart intake, advisory LLM, and embeddings. | Not automatically proof of the official Agentathon direct Compass endpoint unless it exposes compatible `/v1` routes and is allowed by rules. |
 | Product backend / droplet | `PARALLAX42_BACKEND_URL`, optional `P42_CREWAI_SERVICE_URL` | Backend relay, parser/OCR support, optional remote product services | Product infrastructure for the richer hosted demo. | Not a Compass API and should not be used as `OPENAI_BASE_URL`. |
 | Qdrant | `P42_VECTOR_STORE_PROVIDER=qdrant`, `QDRANT_URL`, `QDRANT_API_KEY`, `QDRANT_COLLECTION` | Evidence memory and optional learning memory | Durable vector memory when configured and smoke-tested. | Not active by default and not claimed unless `qdrant_smoke.py` passes. |
 | Local fallback memory | no external service required | CI, local demos, sample mode | Deterministic fallback for evidence and governed learning memory. | Not production-durable RAG. |
+
+The Compass direct base is `https://api.core42.ai/v1` because Core42's Compass API documentation (<https://www.core42.ai/compass/documentation/use-compass-apis>) uses that host for OpenAI-compatible calls. The earlier `https://compass.core42.ai/v1` value came from the initial Agentathon prompt assumptions and is still accepted by diagnostics as a legacy alias, but prior probes returned HTML from `/models` and 405 HTML from `/chat/completions`; it is therefore not the final proof URL unless Core42 explicitly confirms it for the issued key.
 
 ## 4. Agentathon `/run` Flow
 
@@ -138,7 +140,7 @@ human_review_required = true/false based on deterministic policy
 
 There are two live-AI stories, and they should not be mixed:
 
-1. Agentathon evaluator mode uses `OPENAI_API_KEY` and `OPENAI_BASE_URL=https://compass.core42.ai/v1`.
+1. Agentathon evaluator mode uses `OPENAI_API_KEY` and `OPENAI_BASE_URL=https://api.core42.ai/v1`.
    - `/compass/probe` checks `/models` and `/chat/completions`.
    - `scripts/compass_doctor.py --strict` is the live proof command.
    - `REQUIRE_COMPASS=true` makes non-sample `/run` return a structured error if Compass is unavailable.
@@ -291,7 +293,7 @@ Compass:
 
 ```bash
 export OPENAI_API_KEY=<real Compass key>
-export OPENAI_BASE_URL=https://compass.core42.ai/v1
+export OPENAI_BASE_URL=https://api.core42.ai/v1
 export SAMPLE_MODE=false
 export REQUIRE_COMPASS=true
 python scripts/compass_doctor.py --strict

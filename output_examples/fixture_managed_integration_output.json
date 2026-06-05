@@ -15,9 +15,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "success",
       "target_agent": "Intake Agent",
-      "timestamp": "2026-06-05T06:23:41.208376Z",
+      "timestamp": "2026-06-05T08:27:39.523238Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "extract_case_facts",
@@ -64,9 +64,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "needs_revision",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-05T06:23:41.322034Z",
+      "timestamp": "2026-06-05T08:27:39.635564Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "delegate_evidence_search",
@@ -80,9 +80,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "success",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-05T06:23:41.328960Z",
+      "timestamp": "2026-06-05T08:27:39.645058Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "ingest_fixture_document",
@@ -126,9 +126,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "success",
       "target_agent": "Security Specialist",
-      "timestamp": "2026-06-05T06:23:41.336212Z",
+      "timestamp": "2026-06-05T08:27:39.658997Z",
       "tool_used": "fixture_pdf_text_extractor",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "retrieve_evidence",
@@ -306,9 +306,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "needs_revision",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:41.398933Z",
+      "timestamp": "2026-06-05T08:27:39.722947Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "retry_evidence_search",
@@ -479,9 +479,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "retry",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:41.413949Z",
+      "timestamp": "2026-06-05T08:27:39.740248Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "critique_privacy_gap",
@@ -503,9 +503,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "needs_revision",
       "target_agent": "Security Specialist",
-      "timestamp": "2026-06-05T06:23:41.427067Z",
+      "timestamp": "2026-06-05T08:27:39.753515Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "critique_security_gap",
@@ -528,9 +528,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "needs_revision",
       "target_agent": "Responsible AI Specialist",
-      "timestamp": "2026-06-05T06:23:41.434278Z",
+      "timestamp": "2026-06-05T08:27:39.761649Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "validate_evidence",
@@ -547,9 +547,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "success",
       "target_agent": "Learning & Precedent Specialist",
-      "timestamp": "2026-06-05T06:23:41.440122Z",
+      "timestamp": "2026-06-05T08:27:39.769113Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "retrieve_precedent",
@@ -725,9 +725,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "success",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-05T06:23:41.449631Z",
+      "timestamp": "2026-06-05T08:27:39.780364Z",
       "tool_used": "local-jsonl",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "compass_advisory_unavailable",
@@ -741,9 +741,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "fallback_used",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-05T06:23:41.459772Z",
+      "timestamp": "2026-06-05T08:27:39.792477Z",
       "tool_used": "sample_mode",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "revise_required_controls",
@@ -776,9 +776,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "needs_revision",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:41.464417Z",
+      "timestamp": "2026-06-05T08:27:39.798446Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "escalate_human_review",
@@ -795,9 +795,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "escalated",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:41.469548Z",
+      "timestamp": "2026-06-05T08:27:39.804755Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "apply_deterministic_policy",
@@ -816,9 +816,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:41.474197Z",
+      "timestamp": "2026-06-05T08:27:39.811831Z",
       "tool_used": "deterministic_rules_engine",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "package_audit_trace",
@@ -835,9 +835,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:41.478868Z",
+      "timestamp": "2026-06-05T08:27:39.817485Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     },
     {
       "action": "finalize_response",
@@ -854,9 +854,9 @@
       "run_id": "fixture-04_managed_platform_integration_services_agreement",
       "status": "success",
       "target_agent": "",
-      "timestamp": "2026-06-05T06:23:41.483274Z",
+      "timestamp": "2026-06-05T08:27:39.820722Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5"
     }
   ],
   "agents": [
@@ -901,7 +901,7 @@
       "role": "Packages the decision, evidence, collaboration trace, and review artifacts."
     }
   ],
-  "execution_time_seconds": 0.301,
+  "execution_time_seconds": 0.317,
   "log_file": "logs/fixture_managed_integration_trace.jsonl",
   "output": {
     "artifacts": [
@@ -1739,6 +1739,6 @@
   },
   "run_id": "fixture-04_managed_platform_integration_services_agreement",
   "status": "success",
-  "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191",
+  "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-0463cad5",
   "use_case_id": "21"
 }

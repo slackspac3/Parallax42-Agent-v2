@@ -1,5 +1,7 @@
 # POST_PROMPT_EXECUTION_REPORT
 
+> Supersession note: this report captured the earlier `https://compass.core42.ai/v1` probe failure. Current implementation/docs now default to `OPENAI_BASE_URL=https://api.core42.ai/v1` based on Core42's Compass API documentation, while keeping `https://compass.core42.ai/v1` only as a legacy diagnostic alias. Treat any `compass.core42.ai/v1` references below as historical evidence, not current setup guidance.
+
 ## 1. Executive Status
 
 Current implementation status: **PARTIAL/PASS for submission shape, PARTIAL for winner-critical live integrations**.

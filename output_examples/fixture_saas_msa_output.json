@@ -15,9 +15,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "success",
       "target_agent": "Intake Agent",
-      "timestamp": "2026-06-05T06:23:40.293264Z",
+      "timestamp": "2026-06-05T08:27:38.729476Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "extract_case_facts",
@@ -63,9 +63,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "needs_revision",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-05T06:23:40.428230Z",
+      "timestamp": "2026-06-05T08:27:38.859376Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "delegate_evidence_search",
@@ -79,9 +79,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "success",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-05T06:23:40.436197Z",
+      "timestamp": "2026-06-05T08:27:38.862627Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "ingest_fixture_document",
@@ -124,9 +124,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "success",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:40.441228Z",
+      "timestamp": "2026-06-05T08:27:38.864861Z",
       "tool_used": "fixture_pdf_text_extractor",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "retrieve_evidence",
@@ -309,9 +309,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "needs_revision",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:40.494027Z",
+      "timestamp": "2026-06-05T08:27:38.916502Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "retry_evidence_search",
@@ -487,9 +487,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "retry",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T06:23:40.507353Z",
+      "timestamp": "2026-06-05T08:27:38.923081Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "critique_privacy_gap",
@@ -512,9 +512,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "needs_revision",
       "target_agent": "Security Specialist",
-      "timestamp": "2026-06-05T06:23:40.518310Z",
+      "timestamp": "2026-06-05T08:27:38.930031Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "critique_security_gap",
@@ -534,9 +534,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "needs_revision",
       "target_agent": "Responsible AI Specialist",
-      "timestamp": "2026-06-05T06:23:40.525376Z",
+      "timestamp": "2026-06-05T08:27:38.932514Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "critique_ai_governance_gap",
@@ -555,9 +555,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "needs_revision",
       "target_agent": "Learning & Precedent Specialist",
-      "timestamp": "2026-06-05T06:23:40.531031Z",
+      "timestamp": "2026-06-05T08:27:38.934791Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "retrieve_precedent",
@@ -733,9 +733,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "success",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-05T06:23:40.540901Z",
+      "timestamp": "2026-06-05T08:27:38.942829Z",
       "tool_used": "local-jsonl",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "compass_advisory_unavailable",
@@ -749,9 +749,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "fallback_used",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-05T06:23:40.551445Z",
+      "timestamp": "2026-06-05T08:27:38.949218Z",
       "tool_used": "sample_mode",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "revise_required_controls",
@@ -784,9 +784,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "needs_revision",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:40.557367Z",
+      "timestamp": "2026-06-05T08:27:38.952046Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "escalate_human_review",
@@ -803,9 +803,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "escalated",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:40.563878Z",
+      "timestamp": "2026-06-05T08:27:38.955045Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "apply_deterministic_policy",
@@ -824,9 +824,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:40.568950Z",
+      "timestamp": "2026-06-05T08:27:38.957357Z",
       "tool_used": "deterministic_rules_engine",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "package_audit_trace",
@@ -843,9 +843,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T06:23:40.573836Z",
+      "timestamp": "2026-06-05T08:27:38.959568Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     },
     {
       "action": "finalize_response",
@@ -862,9 +862,9 @@
       "run_id": "fixture-01_enterprise_saas_master_services_agreement",
       "status": "success",
       "target_agent": "",
-      "timestamp": "2026-06-05T06:23:40.579129Z",
+      "timestamp": "2026-06-05T08:27:38.961620Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3"
+      "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab"
     }
   ],
   "agents": [
@@ -909,7 +909,7 @@
       "role": "Packages the decision, evidence, collaboration trace, and review artifacts."
     }
   ],
-  "execution_time_seconds": 0.309,
+  "execution_time_seconds": 0.248,
   "log_file": "logs/fixture_saas_msa_trace.jsonl",
   "output": {
     "artifacts": [
@@ -1769,6 +1769,6 @@
   },
   "run_id": "fixture-01_enterprise_saas_master_services_agreement",
   "status": "success",
-  "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-d63684f3",
+  "trace_id": "trace-fixture-01_enterprise_saas_master_services_agreement-eaf5d7ab",
   "use_case_id": "21"
 }
