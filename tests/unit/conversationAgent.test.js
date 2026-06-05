@@ -581,6 +581,71 @@ test('conversation re-asks active clarification when the reply is unrelated', ()
   assert.match(result.reply, /Export controls differ by shipping jurisdiction/i);
 });
 
+test('conversation spots likely owner spelling mistakes and asks for confirmation', () => {
+  const geographyQuestion = 'Which geography or regulatory perimeter applies, for example UAE, KSA, Abu Dhabi, or global?';
+  const result = processConversation({
+    message: 'The accountable owner is complianc',
+    activeQuestion: geographyQuestion,
+    caseDraft: {
+      supplierName: 'Aster Cognitive Cloud',
+      brief: 'Review the Cloud AI Model Services SOW and focus on all risks.',
+      riskSignals: ['AI/model use', 'personal data'],
+      evidenceSignals: ['model governance'],
+      activeQuestion: geographyQuestion,
+      questions: [geographyQuestion],
+      askedQuestions: [geographyQuestion]
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.caseDraft.businessUnit, '');
+  assert.equal(result.caseDraft.pendingFieldClarification.suggestion, 'Compliance');
+  assert.equal(result.caseDraft.answerValidation.status, 'needs_confirmation');
+  assert.equal(result.caseDraft.activeQuestion, 'Did you mean Compliance as the accountable owner?');
+  assert.match(result.reply, /possible spelling issue/i);
+  assert.match(result.reply, /Complianc/i);
+  assert.match(result.reply, /Did you mean Compliance/i);
+  assert.doesNotMatch(result.reply, /could not map that answer/i);
+});
+
+test('conversation confirms corrected owner after spelling clarification then asks geography', () => {
+  const geographyQuestion = 'Which geography or regulatory perimeter applies, for example UAE, KSA, Abu Dhabi, or global?';
+  const result = processConversation({
+    message: 'yes',
+    activeQuestion: 'Did you mean Compliance as the accountable owner?',
+    caseDraft: {
+      supplierName: 'Aster Cognitive Cloud',
+      brief: 'Review the Cloud AI Model Services SOW and focus on all risks.',
+      riskSignals: ['AI/model use', 'personal data'],
+      evidenceSignals: ['model governance'],
+      documents: [{
+        evidenceId: 'UP-01',
+        title: 'Cloud AI Model Services Statement Of Work',
+        extractionStatus: 'metadata_fallback',
+        indexStatus: 'indexed',
+        summary: 'Cloud AI Model Services SOW for private assistant, retrieval, document intelligence, policy Q&A, meeting summaries, and compliance evidence extraction.',
+        signals: ['model governance', 'responsible-ai']
+      }],
+      pendingFieldClarification: {
+        field: 'business_owner',
+        rawValue: 'Complianc',
+        suggestion: 'Compliance',
+        reason: 'possible_spelling_mistake'
+      },
+      activeQuestion: 'Did you mean Compliance as the accountable owner?',
+      questions: ['Did you mean Compliance as the accountable owner?'],
+      askedQuestions: [geographyQuestion, 'Did you mean Compliance as the accountable owner?']
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.caseDraft.businessUnit, 'Compliance');
+  assert.equal(result.caseDraft.pendingFieldClarification, null);
+  assert.equal(result.caseDraft.activeQuestion, geographyQuestion);
+  assert.match(result.reply, /Owner: Compliance/i);
+  assert.match(result.reply, /Which geography or regulatory perimeter applies/i);
+});
+
 test('conversation records pending active clarification as a known gap instead of re-asking it', () => {
   const originQuestion = 'From which country or export-control jurisdiction will the supplier ship the AI accelerator hardware (for example, US, EU, UK, or another country)?';
   const result = processConversation({
