@@ -1,0 +1,16 @@
+{
+  "run_id": "fixture-saas-msa",
+  "use_case_id": "21",
+  "input": {
+    "query": "Can we approve this SaaS platform? The request says MSA, AI summaries, CRM/ITSM workflows, but I don't see a final DPA or continuity pack.",
+    "documents": [
+      {
+        "filename": "01_enterprise_saas_master_services_agreement.pdf"
+      }
+    ]
+  },
+  "options": {
+    "sample_mode": true,
+    "max_iterations": 3
+  }
+}

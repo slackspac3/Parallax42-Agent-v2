@@ -1,0 +1,1790 @@
+{
+  "agent_trace": [
+    {
+      "action": "receive_case",
+      "agent_name": "Intake Agent",
+      "confidence": 0.86,
+      "input_summary": "Need a quick read on this media buying/audience analytics order. It has hashed emails and audience uploads, but consent/DPA/partner destination proof is unclear.",
+      "memory_key": "caseFacts",
+      "output_summary": "Received evaluator request and started case fact extraction.",
+      "payload": {
+        "sample_mode": true,
+        "use_case_id": "21"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "success",
+      "target_agent": "Intake Agent",
+      "timestamp": "2026-06-05T06:23:41.524674Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "extract_case_facts",
+      "agent_name": "Intake Agent",
+      "confidence": 0.72,
+      "input_summary": "Evaluator input plus normalized Node case.",
+      "memory_key": "caseFacts",
+      "output_summary": "Extracted supplier=Submitted compliance case, geography=missing, missing facts=2.",
+      "payload": {
+        "caseFacts": {
+          "aiRiskSignal": "analytics_governance",
+          "aiUse": "Analytics workflow requires data-use governance confirmation.",
+          "dataCategories": [
+            "customer support data",
+            "supplier or finance workflow data",
+            "export-control hardware and support records",
+            "audience and marketing analytics data"
+          ],
+          "evidenceReferences": [
+            "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+            "FIXTURE-05"
+          ],
+          "fixtureDomain": "marketing",
+          "geography": "",
+          "integrations": [],
+          "owner": "",
+          "riskSignals": [
+            "privacy",
+            "consent",
+            "audience-data",
+            "marketing-analytics",
+            "partner-governance"
+          ],
+          "supplier": "Submitted compliance case",
+          "workflow": "Need a quick read on this media buying/audience analytics order. It has hashed emails and audience uploads, but consent/DPA/partner destination proof is unclear."
+        },
+        "missing_case_facts": [
+          "owner",
+          "geography"
+        ]
+      },
+      "retry_count": 0,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "needs_revision",
+      "target_agent": "Evidence Retrieval Agent",
+      "timestamp": "2026-06-05T06:23:41.635256Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "delegate_evidence_search",
+      "agent_name": "Intake Agent",
+      "confidence": 0.87,
+      "input_summary": "Case facts, evidence references, risk signals, and missing facts.",
+      "memory_key": "evidenceMatches",
+      "output_summary": "Delegated evidence retrieval for privacy, security, AI governance, continuity, and precedent context.",
+      "payload": {},
+      "retry_count": 0,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "success",
+      "target_agent": "Evidence Retrieval Agent",
+      "timestamp": "2026-06-05T06:23:41.645001Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "ingest_fixture_document",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.86,
+      "input_summary": "Generated fixture PDF reference supplied in evaluator input.",
+      "memory_key": "fixtureDocumentAnalysis",
+      "output_summary": "Ingested 1 fixture document(s); domain=marketing; extraction=text_extracted.",
+      "payload": {
+        "detected_domain": "marketing",
+        "documents_used": [
+          {
+            "extractionStatus": "text_extracted",
+            "filename": "05_media_buying_and_audience_analytics_order_form.pdf",
+            "pages": 29,
+            "source": "fixture_pdf",
+            "title": "Media Buying And Audience Analytics Order Form"
+          }
+        ],
+        "expected_profile_match": true,
+        "extraction_status": "text_extracted",
+        "matched_missing_evidence": [
+          "DPA",
+          "subprocessor schedule",
+          "audience-retention table",
+          "upload approval workflow",
+          "media partner destination review"
+        ],
+        "matched_risk_domains": [
+          "privacy",
+          "consent",
+          "audience-data",
+          "marketing-analytics",
+          "partner-governance"
+        ],
+        "rejected": [],
+        "target_agent": "Privacy Specialist"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "success",
+      "target_agent": "Privacy Specialist",
+      "timestamp": "2026-06-05T06:23:41.653134Z",
+      "tool_used": "fixture_pdf_text_extractor",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "retrieve_evidence",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.52,
+      "input_summary": "Supplied request evidence, Node citations, local sample snippets, and case-scoped evidence memory.",
+      "memory_key": "evidenceMatches",
+      "output_summary": "Retrieved 9 evidence match(es); memory provider=local-fallback; sufficiency=weak.",
+      "payload": {
+        "localEvidenceArtifacts": [
+          "live-health.json",
+          "benchmark-report.json",
+          "readiness.json",
+          "sample-agent-run.json"
+        ],
+        "match_count": 9,
+        "missingEvidence": [
+          "DPA",
+          "subprocessor schedule",
+          "audience-retention table",
+          "upload approval workflow",
+          "media partner destination review",
+          "signed DPA",
+          "retention and deletion evidence",
+          "cross-border transfer mechanism",
+          "subprocessor register",
+          "business continuity or exit evidence",
+          "Business owner is not identified.",
+          "Jurisdiction or geography is missing.",
+          "Privacy/data governance is applicable but DPA evidence was not detected.",
+          "ESG, HSE And BCM applicability needs confirmation."
+        ],
+        "retrievalContext": {
+          "browserEmbeddingsRetained": false,
+          "collection": "p42_compliance_evidence",
+          "durable": false,
+          "evidenceMatches": [
+            {
+              "chunkIndex": 130,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4708,
+              "snippet": "ecord, identify the affected service boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. Synthetic test fixture - Page 24 of 29 Media Buying And Audience Analytics Order Form - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, au...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            },
+            {
+              "chunkIndex": 131,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4708,
+              "snippet": "- Cross Border Transfer Review If a cross-border transfer review occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subproc...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            },
+            {
+              "chunkIndex": 41,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance",
+                "continuity"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4593,
+              "snippet": "media partner destinations, and attribution reports. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for business continuity. Synthetic test fixture - Page 8 of 29 Media Buying And Audience Analytics Order Form - Approval blocker: unresolved gaps affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review must remain visible in the risk register until accepted by Customer. Clause 25 | Area: Busines...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            },
+            {
+              "chunkIndex": 109,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4593,
+              "snippet": "clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. Synthetic test fixture - Page 20 of 29 Media Buying And Audience Analytics Order Form - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-02 | Trigger: material subprocessor change | Evidence: ticket, owne...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            },
+            {
+              "chunkIndex": 110,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4593,
+              "snippet": "act to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-03 | Trigger: privileged support request | Evidence: ti...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            },
+            {
+              "chunkIndex": 114,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4593,
+              "snippet": "pression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. Synthetic test fixture - Page 21 of 29 Media Buying And Audience Analytics Order Form SCN-07 | Trigger: regulator...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            },
+            {
+              "chunkIndex": 115,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4593,
+              "snippet": "e boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-08 | Trigger: failed access revie...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            },
+            {
+              "chunkIndex": 124,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4593,
+              "snippet": "shed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-17 | Trigger: critical vulnerability | Evidence: ticket, owner, ...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            }
+          ],
+          "fixtureDocumentsUsed": [
+            {
+              "extractionStatus": "text_extracted",
+              "filename": "05_media_buying_and_audience_analytics_order_form.pdf",
+              "pages": 29,
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            }
+          ],
+          "indexedChunkCount": 164,
+          "missingEvidenceSignals": [
+            "DPA",
+            "subprocessor schedule",
+            "audience-retention table",
+            "upload approval workflow",
+            "media partner destination review",
+            "signed DPA",
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "subprocessor register",
+            "business continuity or exit evidence",
+            "Business owner is not identified.",
+            "Jurisdiction or geography is missing.",
+            "Privacy/data governance is applicable but DPA evidence was not detected.",
+            "ESG, HSE And BCM applicability needs confirmation."
+          ],
+          "provider": "local-fallback",
+          "qdrantConfigured": false,
+          "retrievedMatchCount": 8
+        }
+      },
+      "retry_count": 0,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "needs_revision",
+      "target_agent": "Privacy Specialist",
+      "timestamp": "2026-06-05T06:23:41.701521Z",
+      "tool_used": "local-fallback",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "retry_evidence_search",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.45,
+      "input_summary": "Initial evidence coverage was weak or missing key proof.",
+      "memory_key": "missingEvidence",
+      "output_summary": "Retried with privacy/security/AI/continuity keywords through local-fallback; retained only sanitized evidence metadata.",
+      "payload": {
+        "missingEvidence": [
+          "DPA",
+          "subprocessor schedule",
+          "audience-retention table",
+          "upload approval workflow",
+          "media partner destination review",
+          "signed DPA",
+          "retention and deletion evidence",
+          "cross-border transfer mechanism",
+          "subprocessor register",
+          "business continuity or exit evidence",
+          "Business owner is not identified.",
+          "Jurisdiction or geography is missing.",
+          "Privacy/data governance is applicable but DPA evidence was not detected.",
+          "ESG, HSE And BCM applicability needs confirmation."
+        ],
+        "retrievalContext": {
+          "browserEmbeddingsRetained": false,
+          "collection": "p42_compliance_evidence",
+          "durable": false,
+          "evidenceMatches": [
+            {
+              "chunkIndex": 130,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4708,
+              "snippet": "ecord, identify the affected service boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. Synthetic test fixture - Page 24 of 29 Media Buying And Audience Analytics Order Form - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, au...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            },
+            {
+              "chunkIndex": 131,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4708,
+              "snippet": "- Cross Border Transfer Review If a cross-border transfer review occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subproc...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            },
+            {
+              "chunkIndex": 41,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance",
+                "continuity"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4593,
+              "snippet": "media partner destinations, and attribution reports. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for business continuity. Synthetic test fixture - Page 8 of 29 Media Buying And Audience Analytics Order Form - Approval blocker: unresolved gaps affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review must remain visible in the risk register until accepted by Customer. Clause 25 | Area: Busines...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            },
+            {
+              "chunkIndex": 109,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4593,
+              "snippet": "clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. Synthetic test fixture - Page 20 of 29 Media Buying And Audience Analytics Order Form - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-02 | Trigger: material subprocessor change | Evidence: ticket, owne...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            },
+            {
+              "chunkIndex": 110,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4593,
+              "snippet": "act to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-03 | Trigger: privileged support request | Evidence: ti...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            },
+            {
+              "chunkIndex": 114,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4593,
+              "snippet": "pression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. Synthetic test fixture - Page 21 of 29 Media Buying And Audience Analytics Order Form SCN-07 | Trigger: regulator...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            },
+            {
+              "chunkIndex": 115,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4593,
+              "snippet": "e boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-08 | Trigger: failed access revie...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            },
+            {
+              "chunkIndex": 124,
+              "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-05",
+              "score": 0.4593,
+              "snippet": "shed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-17 | Trigger: critical vulnerability | Evidence: ticket, owner, ...",
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            }
+          ],
+          "fixtureDocumentsUsed": [
+            {
+              "extractionStatus": "text_extracted",
+              "filename": "05_media_buying_and_audience_analytics_order_form.pdf",
+              "pages": 29,
+              "source": "fixture_pdf",
+              "title": "Media Buying And Audience Analytics Order Form"
+            }
+          ],
+          "indexedChunkCount": 164,
+          "missingEvidenceSignals": [
+            "DPA",
+            "subprocessor schedule",
+            "audience-retention table",
+            "upload approval workflow",
+            "media partner destination review",
+            "signed DPA",
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "subprocessor register",
+            "business continuity or exit evidence",
+            "Business owner is not identified.",
+            "Jurisdiction or geography is missing.",
+            "Privacy/data governance is applicable but DPA evidence was not detected.",
+            "ESG, HSE And BCM applicability needs confirmation."
+          ],
+          "provider": "local-fallback",
+          "qdrantConfigured": false,
+          "retrievedMatchCount": 8
+        }
+      },
+      "retry_count": 1,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "retry",
+      "target_agent": "Privacy Specialist",
+      "timestamp": "2026-06-05T06:23:41.715023Z",
+      "tool_used": "local-fallback",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "critique_privacy_gap",
+      "agent_name": "Privacy Specialist",
+      "confidence": 0.8,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "Privacy proof incomplete: DPA, subprocessor schedule, audience-retention table, signed DPA.",
+      "payload": {
+        "requiredActions": [
+          "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+          "Require current subprocessor register and change-notification terms.",
+          "Require retention schedule and deletion assistance evidence.",
+          "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+          "Require retention schedule and deletion assistance evidence.",
+          "Require cross-border transfer mechanism and hosting/support region confirmation.",
+          "Require current subprocessor register and change-notification terms.",
+          "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers."
+        ],
+        "severity": "high"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "needs_revision",
+      "target_agent": "Security Specialist",
+      "timestamp": "2026-06-05T06:23:41.727940Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "critique_security_gap",
+      "agent_name": "Security Specialist",
+      "confidence": 0.8,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "Security or continuity proof incomplete: business continuity or exit evidence.",
+      "payload": {
+        "requiredActions": [
+          "Require BCP/DR and exit assistance evidence for critical workflows."
+        ],
+        "severity": "medium"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "needs_revision",
+      "target_agent": "Responsible AI Specialist",
+      "timestamp": "2026-06-05T06:23:41.735502Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "validate_evidence",
+      "agent_name": "Responsible AI Specialist",
+      "confidence": 0.86,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "AI/analytics signal remains inside human oversight boundary.",
+      "payload": {
+        "requiredActions": [
+          "Confirm human oversight and no automated approval for AI-assisted workflow outputs."
+        ],
+        "severity": "medium"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "success",
+      "target_agent": "Learning & Precedent Specialist",
+      "timestamp": "2026-06-05T06:23:41.742334Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "retrieve_precedent",
+      "agent_name": "Learning & Precedent Specialist",
+      "confidence": 0.62,
+      "input_summary": "Case facts, missing evidence, and specialist challenges.",
+      "memory_key": "learningContext",
+      "output_summary": "Matched precedent pattern: general incomplete evidence -> human review controls; similar learning cases=5, top pattern=Healthcare analytics vendor missing model-training exclusion.",
+      "payload": {
+        "learningContext": {
+          "advisoryOnly": true,
+          "browserEmbeddingsRetained": false,
+          "controlSuggestions": [
+            "Require signed model-training exclusion for patient or customer data before production.",
+            "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+            "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+            "Require retention schedule and deletion assistance evidence.",
+            "Require cross-border transfer mechanism and support-region confirmation.",
+            "Add reviewer question: Are any support teams accessing records outside approved regions?",
+            "Require current subprocessor register before approval.",
+            "Require 30-day subprocessor change notification and right to object."
+          ],
+          "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+          "provider": "local-jsonl",
+          "qdrantConfigured": false,
+          "repeatedEvidenceGaps": [
+            "model-training exclusion",
+            "DPA amendment",
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "support region confirmation",
+            "subprocessor register",
+            "signed DPA",
+            "human oversight plan"
+          ],
+          "similarCases": [
+            {
+              "addedControls": [
+                "Require signed model-training exclusion for patient or customer data before production.",
+                "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+                "Add reviewer question: Has any analytics data been used for model improvement or service training?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-healthcare-001",
+              "domains": [
+                "privacy",
+                "ai-governance",
+                "healthcare"
+              ],
+              "finalOutcome": "conditional approval after DPA amendment",
+              "memoryId": "learn-healthcare-training-001",
+              "missingEvidence": [
+                "model-training exclusion",
+                "DPA amendment"
+              ],
+              "originalDecision": "conditional_approval",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.3527,
+              "title": "Healthcare analytics vendor missing model-training exclusion",
+              "type": "case_outcome"
+            },
+            {
+              "addedControls": [
+                "Require retention schedule and deletion assistance evidence.",
+                "Require cross-border transfer mechanism and support-region confirmation.",
+                "Add reviewer question: Are any support teams accessing records outside approved regions?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-cross-border-001",
+              "domains": [
+                "privacy",
+                "saas",
+                "cross-border"
+              ],
+              "finalOutcome": "conditional approval after retention schedule",
+              "memoryId": "learn-cross-border-retention-001",
+              "missingEvidence": [
+                "retention and deletion evidence",
+                "cross-border transfer mechanism",
+                "support region confirmation"
+              ],
+              "originalDecision": "needs_more_information",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.3397,
+              "title": "Cross-border SaaS missing retention schedule",
+              "type": "evidence_quality_note"
+            },
+            {
+              "addedControls": [
+                "Require current subprocessor register before approval.",
+                "Require 30-day subprocessor change notification and right to object.",
+                "Add reviewer question: Are support and hosting locations consistent with transfer assessment?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-saas-001",
+              "domains": [
+                "privacy",
+                "saas",
+                "third-party-risk"
+              ],
+              "finalOutcome": "conditional approval with subprocessor disclosure",
+              "memoryId": "learn-saas-subprocessors-001",
+              "missingEvidence": [
+                "subprocessor register",
+                "cross-border transfer mechanism"
+              ],
+              "originalDecision": "needs_more_information",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.2878,
+              "title": "SaaS vendor missing subprocessor list",
+              "type": "control_pattern"
+            },
+            {
+              "addedControls": [
+                "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
+                "Require signed model-training exclusion and human oversight plan before reconsideration.",
+                "Add reviewer question: Does the vendor use prompts, tickets, or submitted records for model improvement?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-ai-001",
+              "domains": [
+                "ai-governance",
+                "privacy",
+                "customer-data"
+              ],
+              "finalOutcome": "rejected and escalated",
+              "memoryId": "learn-ai-training-reject-001",
+              "missingEvidence": [
+                "model-training exclusion",
+                "signed DPA",
+                "human oversight plan"
+              ],
+              "originalDecision": "conditional_approval",
+              "reviewerDecision": "reject",
+              "score": 0.2748,
+              "title": "AI vendor permitted customer-data training",
+              "type": "decision_override"
+            },
+            {
+              "addedControls": [
+                "Keep annual SOC 2 and ISO evidence refresh on reviewer calendar.",
+                "Monitor subprocessor changes and retention exceptions quarterly.",
+                "Confirm accountable human owner before operational approval."
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-complete-001",
+              "domains": [
+                "privacy",
+                "security",
+                "third-party-risk"
+              ],
+              "finalOutcome": "approval with monitoring",
+              "memoryId": "learn-complete-package-001",
+              "missingEvidence": [],
+              "originalDecision": "approve",
+              "reviewerDecision": "approve",
+              "score": 0.2618,
+              "title": "Complete vendor package approved with monitoring",
+              "type": "case_outcome"
+            }
+          ],
+          "similar_cases_found": 5,
+          "topPattern": "Healthcare analytics vendor missing model-training exclusion"
+        },
+        "precedent": {
+          "advisoryOnly": true,
+          "confidence": 0.62,
+          "pattern": "general incomplete evidence -> human review controls",
+          "recommendation": "conditional_human_review"
+        }
+      },
+      "retry_count": 0,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "success",
+      "target_agent": "Deterministic Decision Owner",
+      "timestamp": "2026-06-05T06:23:41.752936Z",
+      "tool_used": "local-jsonl",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "compass_advisory_unavailable",
+      "agent_name": "Compass Advisory Critic",
+      "confidence": 0.7,
+      "input_summary": "Sample mode requested.",
+      "memory_key": "compassAdvisory",
+      "output_summary": "Skipped live Compass call; deterministic local council remains active.",
+      "payload": {},
+      "retry_count": 0,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "fallback_used",
+      "target_agent": "Deterministic Decision Owner",
+      "timestamp": "2026-06-05T06:23:41.764520Z",
+      "tool_used": "sample_mode",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "revise_required_controls",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.92,
+      "input_summary": "Specialist challenges, precedent pattern, and Compass advisory status.",
+      "memory_key": "requiredActions",
+      "output_summary": "Required controls revised to 14 action(s); final risk=high.",
+      "payload": {
+        "llm_advisory_only": true,
+        "required_actions": [
+          "Assign the accountable business unit or requester before approval.",
+          "Confirm the operating geography and regulatory perimeter.",
+          "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+          "Ask the domain owner whether esg, hse and bcm obligations apply.",
+          "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+          "Require current subprocessor register and change-notification terms.",
+          "Require retention schedule and deletion assistance evidence.",
+          "Require audience upload approval workflow with data owner, lawful basis, and suppression checks.",
+          "Require media partner destination review and deletion/retention limits.",
+          "Require cross-border transfer mechanism and hosting/support region confirmation.",
+          "Require BCP/DR and exit assistance evidence for critical workflows.",
+          "Resolve evidence gap: Business owner is not identified.",
+          "Resolve evidence gap: Jurisdiction or geography is missing.",
+          "Confirm human oversight and no automated approval for AI-assisted workflow outputs."
+        ],
+        "specialist_challenge_count": 2
+      },
+      "retry_count": 0,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "needs_revision",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:41.771171Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "escalate_human_review",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.94,
+      "input_summary": "Unresolved high-risk gaps or insufficient proof remained after council review.",
+      "memory_key": "humanReviewRequired",
+      "output_summary": "Escalated to accountable human reviewer; no autonomous approval permitted.",
+      "payload": {
+        "decision": "needs_more_information",
+        "risk_level": "high"
+      },
+      "retry_count": 1,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "escalated",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:41.777923Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "apply_deterministic_policy",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.95,
+      "input_summary": "Node deterministic result, specialist critiques, precedent, and advisory-only Compass output.",
+      "memory_key": "decisionDraft",
+      "output_summary": "Final decision sealed as needs_more_information by deterministic policy owner.",
+      "payload": {
+        "compass_status": "skipped_sample_mode",
+        "final_owner": "Deterministic Decision Owner",
+        "live_advisory_runtime": "custom",
+        "llm_advisory_only": true
+      },
+      "retry_count": 0,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "success",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:41.783784Z",
+      "tool_used": "deterministic_rules_engine",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "package_audit_trace",
+      "agent_name": "Audit Packager",
+      "confidence": 0.93,
+      "input_summary": "Decision, evidence, missing proof, council trace, and human review boundary.",
+      "memory_key": "finalDecision",
+      "output_summary": "Packaged judge-readable audit trace with evidence, specialist challenges, and final owner.",
+      "payload": {
+        "log_file": "logs/trace-fixture-05_media_buying_and_audience_analytics_order_form.jsonl",
+        "trace_events": 15
+      },
+      "retry_count": 0,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "success",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:41.788807Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    },
+    {
+      "action": "finalize_response",
+      "agent_name": "Audit Packager",
+      "confidence": 0.94,
+      "input_summary": "Final packaged decision and trace summary.",
+      "memory_key": "finalDecision",
+      "output_summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+      "payload": {
+        "decision": "needs_more_information",
+        "risk_level": "high"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+      "status": "success",
+      "target_agent": "",
+      "timestamp": "2026-06-05T06:23:41.793976Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9"
+    }
+  ],
+  "agents": [
+    {
+      "name": "Intake Agent",
+      "role": "Extracts case facts, missing facts, and delegates evidence needs."
+    },
+    {
+      "name": "Evidence Retrieval Agent",
+      "role": "Searches supplied and local evidence signals, retries weak coverage, and reports sufficiency."
+    },
+    {
+      "name": "Privacy Specialist",
+      "role": "Reviews DPA, subprocessors, retention, transfer, data categories, and model-training exclusions."
+    },
+    {
+      "name": "Security Specialist",
+      "role": "Reviews SOC 2, ISO, access control, encryption, logging, BCP, and technical assurance evidence."
+    },
+    {
+      "name": "Responsible AI Specialist",
+      "role": "Challenges AI use, model training, automation, oversight, and transparency risk."
+    },
+    {
+      "name": "Learning & Precedent Specialist",
+      "role": "Looks up deterministic synthetic precedent patterns as advisory memory."
+    },
+    {
+      "name": "Compass Advisory Critic",
+      "role": "Runs live Compass advisory review when configured; never owns the final decision."
+    },
+    {
+      "name": "Final Advisory Reviewer",
+      "role": "Optional live CrewAI advisory reviewer when AGENT_RUNTIME=crewai_live; advisory only."
+    },
+    {
+      "name": "Deterministic Decision Owner",
+      "role": "Applies deterministic policy and remains final decision authority."
+    },
+    {
+      "name": "Audit Packager",
+      "role": "Packages the decision, evidence, collaboration trace, and review artifacts."
+    }
+  ],
+  "execution_time_seconds": 0.305,
+  "log_file": "logs/fixture_media_analytics_trace.jsonl",
+  "output": {
+    "artifacts": [
+      {
+        "path": "logs/trace-fixture-05_media_buying_and_audience_analytics_order_form.jsonl",
+        "type": "trace_log"
+      },
+      {
+        "source": "deterministic_node_bridge_plus_python_council",
+        "type": "decision_payload"
+      }
+    ],
+    "collaboration_summary": {
+      "delegated_tasks": [
+        "Intake Agent -> Evidence Retrieval Agent: evidence needs and missing facts"
+      ],
+      "escalations": [
+        "Deterministic Decision Owner escalated unresolved high-risk gaps to human review"
+      ],
+      "final_decision_owner": "Deterministic Decision Owner",
+      "retries": [
+        "Evidence Retrieval Agent refined search with domain keywords using local-fallback"
+      ],
+      "shared_context_updates": [
+        "case facts updated",
+        "fixture document analysis updated",
+        "evidence matches and gaps updated",
+        "retrieval context updated",
+        "specialist finding added: Privacy Specialist",
+        "specialist finding added: Security Specialist",
+        "specialist finding added: Responsible AI Specialist",
+        "synthetic precedent added",
+        "governed learning memory updated",
+        "Compass advisory skipped in sample mode",
+        "required action added"
+      ],
+      "specialist_challenges": [
+        "Privacy proof incomplete: DPA, subprocessor schedule, audience-retention table, signed DPA.",
+        "Security or continuity proof incomplete: business continuity or exit evidence."
+      ],
+      "validations": [
+        "AI/analytics signal remains inside human oversight boundary."
+      ]
+    },
+    "decision": "needs_more_information",
+    "decision_authority": {
+      "final_owner": "Deterministic Decision Owner",
+      "llm_advisory_only": true
+    },
+    "evidence_used": [
+      {
+        "chunkIndex": 130,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4708,
+        "snippet": "ecord, identify the affected service boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. Synthetic test fixture - Page 24 of 29 Media Buying And Audience Analytics Order Form - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, au...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "chunkIndex": 131,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4708,
+        "snippet": "- Cross Border Transfer Review If a cross-border transfer review occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subproc...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "chunkIndex": 41,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance",
+          "continuity"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4593,
+        "snippet": "media partner destinations, and attribution reports. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for business continuity. Synthetic test fixture - Page 8 of 29 Media Buying And Audience Analytics Order Form - Approval blocker: unresolved gaps affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review must remain visible in the risk register until accepted by Customer. Clause 25 | Area: Busines...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "chunkIndex": 109,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4593,
+        "snippet": "clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. Synthetic test fixture - Page 20 of 29 Media Buying And Audience Analytics Order Form - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-02 | Trigger: material subprocessor change | Evidence: ticket, owne...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "chunkIndex": 110,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4593,
+        "snippet": "act to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-03 | Trigger: privileged support request | Evidence: ti...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "chunkIndex": 114,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4593,
+        "snippet": "pression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. Synthetic test fixture - Page 21 of 29 Media Buying And Audience Analytics Order Form SCN-07 | Trigger: regulator...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "chunkIndex": 115,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4593,
+        "snippet": "e boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-08 | Trigger: failed access revie...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "chunkIndex": 124,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4593,
+        "snippet": "shed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-17 | Trigger: critical vulnerability | Evidence: ticket, owner, ...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "evidence_id": "FIXTURE-05",
+        "snippet": "Media Buying And Audience Analytics Order Form Media Buying And Audience Analytics Order Form CivicMedia Analytics platform order for campaign activation, consented audiences, CRM sync, and measurement reporting Synthetic legal-style test document for agent ev",
+        "source": "node-citation",
+        "title": "Media Buying And Audience Analytics Order Form"
+      }
+    ],
+    "executive_summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "fixture_document_analysis": {
+      "detected_domain": "marketing",
+      "documents_used": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "05_media_buying_and_audience_analytics_order_form.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        }
+      ],
+      "expected_profile_match": true,
+      "extraction_status": "text_extracted",
+      "matched_missing_evidence": [
+        "DPA",
+        "subprocessor schedule",
+        "audience-retention table",
+        "upload approval workflow",
+        "media partner destination review"
+      ],
+      "matched_risk_domains": [
+        "privacy",
+        "consent",
+        "audience-data",
+        "marketing-analytics",
+        "partner-governance"
+      ],
+      "rejected": [],
+      "target_agent": "Privacy Specialist"
+    },
+    "human_review_required": true,
+    "learning_memory": {
+      "advisoryOnly": true,
+      "browserEmbeddingsRetained": false,
+      "control_suggestions": [
+        "Require signed model-training exclusion for patient or customer data before production.",
+        "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+        "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+        "Require retention schedule and deletion assistance evidence.",
+        "Require cross-border transfer mechanism and support-region confirmation.",
+        "Add reviewer question: Are any support teams accessing records outside approved regions?",
+        "Require current subprocessor register before approval.",
+        "Require 30-day subprocessor change notification and right to object."
+      ],
+      "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+      "provider": "local-jsonl",
+      "repeatedEvidenceGaps": [
+        "model-training exclusion",
+        "DPA amendment",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "support region confirmation",
+        "subprocessor register",
+        "signed DPA",
+        "human oversight plan"
+      ],
+      "similar_cases_found": 5
+    },
+    "live_advisory": {
+      "advisoryOnly": true,
+      "agents": [],
+      "cards": [],
+      "enabled": false,
+      "final_decision_owner": "Deterministic Decision Owner",
+      "model": "gpt-4.1",
+      "runtime": "custom",
+      "status": "skipped_custom_runtime",
+      "summary": {}
+    },
+    "live_compass": {
+      "advisory": {},
+      "enabled": false,
+      "model": "gpt-5.1",
+      "status": "skipped_sample_mode"
+    },
+    "missing_evidence": [
+      "DPA",
+      "subprocessor schedule",
+      "audience-retention table",
+      "upload approval workflow",
+      "media partner destination review",
+      "signed DPA",
+      "retention and deletion evidence",
+      "cross-border transfer mechanism",
+      "subprocessor register",
+      "business continuity or exit evidence",
+      "Business owner is not identified.",
+      "Jurisdiction or geography is missing."
+    ],
+    "rag_evidence_memory": {
+      "browserEmbeddingsRetained": false,
+      "collection": "p42_compliance_evidence",
+      "durable": false,
+      "evidenceMatches": [
+        {
+          "chunkIndex": 130,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4708,
+          "snippet": "ecord, identify the affected service boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. Synthetic test fixture - Page 24 of 29 Media Buying And Audience Analytics Order Form - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, au...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        },
+        {
+          "chunkIndex": 131,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4708,
+          "snippet": "- Cross Border Transfer Review If a cross-border transfer review occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subproc...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        },
+        {
+          "chunkIndex": 41,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance",
+            "continuity"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4593,
+          "snippet": "media partner destinations, and attribution reports. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for business continuity. Synthetic test fixture - Page 8 of 29 Media Buying And Audience Analytics Order Form - Approval blocker: unresolved gaps affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review must remain visible in the risk register until accepted by Customer. Clause 25 | Area: Busines...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        },
+        {
+          "chunkIndex": 109,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4593,
+          "snippet": "clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. Synthetic test fixture - Page 20 of 29 Media Buying And Audience Analytics Order Form - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-02 | Trigger: material subprocessor change | Evidence: ticket, owne...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        },
+        {
+          "chunkIndex": 110,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4593,
+          "snippet": "act to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-03 | Trigger: privileged support request | Evidence: ti...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        },
+        {
+          "chunkIndex": 114,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4593,
+          "snippet": "pression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. Synthetic test fixture - Page 21 of 29 Media Buying And Audience Analytics Order Form SCN-07 | Trigger: regulator...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        },
+        {
+          "chunkIndex": 115,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4593,
+          "snippet": "e boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-08 | Trigger: failed access revie...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        },
+        {
+          "chunkIndex": 124,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4593,
+          "snippet": "shed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-17 | Trigger: critical vulnerability | Evidence: ticket, owner, ...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        }
+      ],
+      "fixtureDocumentsUsed": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "05_media_buying_and_audience_analytics_order_form.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        }
+      ],
+      "indexedChunkCount": 164,
+      "missingEvidenceSignals": [
+        "DPA",
+        "subprocessor schedule",
+        "audience-retention table",
+        "upload approval workflow",
+        "media partner destination review",
+        "signed DPA",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "subprocessor register",
+        "business continuity or exit evidence",
+        "Business owner is not identified.",
+        "Jurisdiction or geography is missing.",
+        "Privacy/data governance is applicable but DPA evidence was not detected.",
+        "ESG, HSE And BCM applicability needs confirmation."
+      ],
+      "provider": "local-fallback",
+      "qdrantConfigured": false,
+      "retrievedMatchCount": 8
+    },
+    "required_actions": [
+      "Assign the accountable business unit or requester before approval.",
+      "Confirm the operating geography and regulatory perimeter.",
+      "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+      "Ask the domain owner whether esg, hse and bcm obligations apply.",
+      "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+      "Require current subprocessor register and change-notification terms.",
+      "Require retention schedule and deletion assistance evidence.",
+      "Require audience upload approval workflow with data owner, lawful basis, and suppression checks.",
+      "Require media partner destination review and deletion/retention limits.",
+      "Require cross-border transfer mechanism and hosting/support region confirmation.",
+      "Require BCP/DR and exit assistance evidence for critical workflows.",
+      "Resolve evidence gap: Business owner is not identified.",
+      "Resolve evidence gap: Jurisdiction or geography is missing.",
+      "Confirm human oversight and no automated approval for AI-assisted workflow outputs."
+    ],
+    "reviewer_questions": [
+      "Has any analytics data been used for model improvement or service training?",
+      "Are any support teams accessing records outside approved regions?"
+    ],
+    "risk_level": "high",
+    "summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
+  },
+  "result": {
+    "artifacts": [
+      {
+        "path": "logs/trace-fixture-05_media_buying_and_audience_analytics_order_form.jsonl",
+        "type": "trace_log"
+      },
+      {
+        "source": "deterministic_node_bridge_plus_python_council",
+        "type": "decision_payload"
+      }
+    ],
+    "collaboration_summary": {
+      "delegated_tasks": [
+        "Intake Agent -> Evidence Retrieval Agent: evidence needs and missing facts"
+      ],
+      "escalations": [
+        "Deterministic Decision Owner escalated unresolved high-risk gaps to human review"
+      ],
+      "final_decision_owner": "Deterministic Decision Owner",
+      "retries": [
+        "Evidence Retrieval Agent refined search with domain keywords using local-fallback"
+      ],
+      "shared_context_updates": [
+        "case facts updated",
+        "fixture document analysis updated",
+        "evidence matches and gaps updated",
+        "retrieval context updated",
+        "specialist finding added: Privacy Specialist",
+        "specialist finding added: Security Specialist",
+        "specialist finding added: Responsible AI Specialist",
+        "synthetic precedent added",
+        "governed learning memory updated",
+        "Compass advisory skipped in sample mode",
+        "required action added"
+      ],
+      "specialist_challenges": [
+        "Privacy proof incomplete: DPA, subprocessor schedule, audience-retention table, signed DPA.",
+        "Security or continuity proof incomplete: business continuity or exit evidence."
+      ],
+      "validations": [
+        "AI/analytics signal remains inside human oversight boundary."
+      ]
+    },
+    "decision": "needs_more_information",
+    "decision_authority": {
+      "final_owner": "Deterministic Decision Owner",
+      "llm_advisory_only": true
+    },
+    "evidence_used": [
+      {
+        "chunkIndex": 130,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4708,
+        "snippet": "ecord, identify the affected service boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. Synthetic test fixture - Page 24 of 29 Media Buying And Audience Analytics Order Form - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, au...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "chunkIndex": 131,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4708,
+        "snippet": "- Cross Border Transfer Review If a cross-border transfer review occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subproc...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "chunkIndex": 41,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance",
+          "continuity"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4593,
+        "snippet": "media partner destinations, and attribution reports. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for business continuity. Synthetic test fixture - Page 8 of 29 Media Buying And Audience Analytics Order Form - Approval blocker: unresolved gaps affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review must remain visible in the risk register until accepted by Customer. Clause 25 | Area: Busines...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "chunkIndex": 109,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4593,
+        "snippet": "clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. Synthetic test fixture - Page 20 of 29 Media Buying And Audience Analytics Order Form - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-02 | Trigger: material subprocessor change | Evidence: ticket, owne...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "chunkIndex": 110,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4593,
+        "snippet": "act to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-03 | Trigger: privileged support request | Evidence: ti...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "chunkIndex": 114,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4593,
+        "snippet": "pression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. Synthetic test fixture - Page 21 of 29 Media Buying And Audience Analytics Order Form SCN-07 | Trigger: regulator...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "chunkIndex": 115,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4593,
+        "snippet": "e boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-08 | Trigger: failed access revie...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "chunkIndex": 124,
+        "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-05",
+        "score": 0.4593,
+        "snippet": "shed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-17 | Trigger: critical vulnerability | Evidence: ticket, owner, ...",
+        "source": "fixture_pdf",
+        "title": "Media Buying And Audience Analytics Order Form"
+      },
+      {
+        "evidence_id": "FIXTURE-05",
+        "snippet": "Media Buying And Audience Analytics Order Form Media Buying And Audience Analytics Order Form CivicMedia Analytics platform order for campaign activation, consented audiences, CRM sync, and measurement reporting Synthetic legal-style test document for agent ev",
+        "source": "node-citation",
+        "title": "Media Buying And Audience Analytics Order Form"
+      }
+    ],
+    "executive_summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "fixture_document_analysis": {
+      "detected_domain": "marketing",
+      "documents_used": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "05_media_buying_and_audience_analytics_order_form.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        }
+      ],
+      "expected_profile_match": true,
+      "extraction_status": "text_extracted",
+      "matched_missing_evidence": [
+        "DPA",
+        "subprocessor schedule",
+        "audience-retention table",
+        "upload approval workflow",
+        "media partner destination review"
+      ],
+      "matched_risk_domains": [
+        "privacy",
+        "consent",
+        "audience-data",
+        "marketing-analytics",
+        "partner-governance"
+      ],
+      "rejected": [],
+      "target_agent": "Privacy Specialist"
+    },
+    "human_review_required": true,
+    "learning_memory": {
+      "advisoryOnly": true,
+      "browserEmbeddingsRetained": false,
+      "control_suggestions": [
+        "Require signed model-training exclusion for patient or customer data before production.",
+        "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+        "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+        "Require retention schedule and deletion assistance evidence.",
+        "Require cross-border transfer mechanism and support-region confirmation.",
+        "Add reviewer question: Are any support teams accessing records outside approved regions?",
+        "Require current subprocessor register before approval.",
+        "Require 30-day subprocessor change notification and right to object."
+      ],
+      "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+      "provider": "local-jsonl",
+      "repeatedEvidenceGaps": [
+        "model-training exclusion",
+        "DPA amendment",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "support region confirmation",
+        "subprocessor register",
+        "signed DPA",
+        "human oversight plan"
+      ],
+      "similar_cases_found": 5
+    },
+    "live_advisory": {
+      "advisoryOnly": true,
+      "agents": [],
+      "cards": [],
+      "enabled": false,
+      "final_decision_owner": "Deterministic Decision Owner",
+      "model": "gpt-4.1",
+      "runtime": "custom",
+      "status": "skipped_custom_runtime",
+      "summary": {}
+    },
+    "live_compass": {
+      "advisory": {},
+      "enabled": false,
+      "model": "gpt-5.1",
+      "status": "skipped_sample_mode"
+    },
+    "missing_evidence": [
+      "DPA",
+      "subprocessor schedule",
+      "audience-retention table",
+      "upload approval workflow",
+      "media partner destination review",
+      "signed DPA",
+      "retention and deletion evidence",
+      "cross-border transfer mechanism",
+      "subprocessor register",
+      "business continuity or exit evidence",
+      "Business owner is not identified.",
+      "Jurisdiction or geography is missing."
+    ],
+    "rag_evidence_memory": {
+      "browserEmbeddingsRetained": false,
+      "collection": "p42_compliance_evidence",
+      "durable": false,
+      "evidenceMatches": [
+        {
+          "chunkIndex": 130,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4708,
+          "snippet": "ecord, identify the affected service boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. Synthetic test fixture - Page 24 of 29 Media Buying And Audience Analytics Order Form - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, au...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        },
+        {
+          "chunkIndex": 131,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4708,
+          "snippet": "- Cross Border Transfer Review If a cross-border transfer review occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subproc...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        },
+        {
+          "chunkIndex": 41,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance",
+            "continuity"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4593,
+          "snippet": "media partner destinations, and attribution reports. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for business continuity. Synthetic test fixture - Page 8 of 29 Media Buying And Audience Analytics Order Form - Approval blocker: unresolved gaps affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review must remain visible in the risk register until accepted by Customer. Clause 25 | Area: Busines...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        },
+        {
+          "chunkIndex": 109,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4593,
+          "snippet": "clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. Synthetic test fixture - Page 20 of 29 Media Buying And Audience Analytics Order Form - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-02 | Trigger: material subprocessor change | Evidence: ticket, owne...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        },
+        {
+          "chunkIndex": 110,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4593,
+          "snippet": "act to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-03 | Trigger: privileged support request | Evidence: ti...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        },
+        {
+          "chunkIndex": 114,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4593,
+          "snippet": "pression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. Synthetic test fixture - Page 21 of 29 Media Buying And Audience Analytics Order Form SCN-07 | Trigger: regulator...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        },
+        {
+          "chunkIndex": 115,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4593,
+          "snippet": "e boundary, assess impact to hashed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-08 | Trigger: failed access revie...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        },
+        {
+          "chunkIndex": 124,
+          "documentId": "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-05",
+          "score": 0.4593,
+          "snippet": "shed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-17 | Trigger: critical vulnerability | Evidence: ticket, owner, ...",
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        }
+      ],
+      "fixtureDocumentsUsed": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "05_media_buying_and_audience_analytics_order_form.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "Media Buying And Audience Analytics Order Form"
+        }
+      ],
+      "indexedChunkCount": 164,
+      "missingEvidenceSignals": [
+        "DPA",
+        "subprocessor schedule",
+        "audience-retention table",
+        "upload approval workflow",
+        "media partner destination review",
+        "signed DPA",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "subprocessor register",
+        "business continuity or exit evidence",
+        "Business owner is not identified.",
+        "Jurisdiction or geography is missing.",
+        "Privacy/data governance is applicable but DPA evidence was not detected.",
+        "ESG, HSE And BCM applicability needs confirmation."
+      ],
+      "provider": "local-fallback",
+      "qdrantConfigured": false,
+      "retrievedMatchCount": 8
+    },
+    "required_actions": [
+      "Assign the accountable business unit or requester before approval.",
+      "Confirm the operating geography and regulatory perimeter.",
+      "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+      "Ask the domain owner whether esg, hse and bcm obligations apply.",
+      "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+      "Require current subprocessor register and change-notification terms.",
+      "Require retention schedule and deletion assistance evidence.",
+      "Require audience upload approval workflow with data owner, lawful basis, and suppression checks.",
+      "Require media partner destination review and deletion/retention limits.",
+      "Require cross-border transfer mechanism and hosting/support region confirmation.",
+      "Require BCP/DR and exit assistance evidence for critical workflows.",
+      "Resolve evidence gap: Business owner is not identified.",
+      "Resolve evidence gap: Jurisdiction or geography is missing.",
+      "Confirm human oversight and no automated approval for AI-assisted workflow outputs."
+    ],
+    "reviewer_questions": [
+      "Has any analytics data been used for model improvement or service training?",
+      "Are any support teams accessing records outside approved regions?"
+    ],
+    "risk_level": "high",
+    "summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
+  },
+  "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
+  "status": "success",
+  "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-5899e7b9",
+  "use_case_id": "21"
+}

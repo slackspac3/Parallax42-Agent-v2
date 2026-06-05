@@ -1210,7 +1210,9 @@ function evidenceMetadataForConversation(item = {}) {
     summary: summarizeEvidenceText(item.summary || '', 420),
     excerpt: summarizeEvidenceText(item.excerpt || item.summary || '', 180),
     signals: item.signals || [],
-    indexedChunkIds: item.indexedChunkIds || []
+    indexedChunkIds: item.indexedChunkIds || [],
+    fixtureProfile: item.fixtureProfile || null,
+    fixtureDocument: item.fixtureDocument || null
   };
 }
 
@@ -1709,6 +1711,42 @@ async function extractEvidenceFile(file, index, { allowBrowserText = false } = {
   };
 }
 
+async function lookupFixtureEvidenceFile(file, index) {
+  if (!file?.name || fileExtension(file.name) !== 'pdf') return null;
+  try {
+    const result = await apiFetch(`/api/fixture-documents/lookup?filename=${encodeURIComponent(file.name)}`);
+    if (!result?.ok || !result.evidence) return null;
+    const evidence = result.evidence || {};
+    const document = result.document || {};
+    const profile = result.expectedProfile || evidence.fixtureProfile || {};
+    const text = cleanEvidenceText(evidence.text || evidence.summary || evidence.excerpt || '');
+    return {
+      evidenceId: evidence.evidenceId || `FIXTURE-${String(index + 1).padStart(2, '0')}`,
+      title: evidence.title || document.title || file.name,
+      fileName: file.name,
+      sourceType: 'fixture_pdf',
+      sizeBytes: file.size,
+      extractionStatus: evidence.extractionStatus || 'metadata_fallback',
+      documentType: evidence.documentType || profile.domain || 'fixture_contract',
+      summary: summarizeEvidenceText(evidence.summary || text || document.title || file.name, 720),
+      excerpt: summarizeEvidenceText(evidence.excerpt || text || evidence.summary || file.name, 260),
+      text,
+      signals: unique([
+        ...(Array.isArray(evidence.signals) ? evidence.signals : []),
+        ...(Array.isArray(profile.expectedRiskDomains) ? profile.expectedRiskDomains : []),
+        ...(Array.isArray(profile.expectedMissingEvidence) ? profile.expectedMissingEvidence : [])
+      ]),
+      fixtureProfile: profile,
+      fixtureDocument: document,
+      uploadedAt: new Date().toISOString()
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error || '');
+    if (/unsupported_fixture_document|fixture lookup failed|unsupported fixture/i.test(message)) return null;
+    return null;
+  }
+}
+
 async function ingestEvidenceFiles(files = []) {
   const validation = validateEvidenceFiles(files);
   if (!validation.ok) {
@@ -1753,8 +1791,29 @@ async function ingestEvidenceFiles(files = []) {
   try {
     const offset = uploadedEvidence.length;
     const extracted = [];
-    const backendFiles = selected.filter((file) => backendParsedEvidenceExtensions.has(fileExtension(file.name)));
-    const browserFiles = selected.filter((file) => !backendParsedEvidenceExtensions.has(fileExtension(file.name)));
+    const fixtureFiles = [];
+    const nonFixtureFiles = [];
+    for (const [index, file] of selected.entries()) {
+      const fixtureEvidence = await lookupFixtureEvidenceFile(file, offset + index);
+      if (fixtureEvidence) {
+        fixtureFiles.push(file);
+        extracted.push(fixtureEvidence);
+      } else {
+        nonFixtureFiles.push(file);
+      }
+    }
+    if (fixtureFiles.length && activeRunMode === 'chat') {
+      renderEvidencePipelineStatus({
+        phase: 'parse',
+        progress: 34,
+        title: 'Fixture document recognized',
+        detail: `${fixtureFiles.length} generated fixture PDF${fixtureFiles.length === 1 ? '' : 's'} matched the safe manifest and will be indexed from fixture metadata/text.`,
+        metric: 'fixture profile',
+        files: fixtureFiles
+      });
+    }
+    const backendFiles = nonFixtureFiles.filter((file) => backendParsedEvidenceExtensions.has(fileExtension(file.name)));
+    const browserFiles = nonFixtureFiles.filter((file) => !backendParsedEvidenceExtensions.has(fileExtension(file.name)));
 
     if (backendFiles.length) {
       evidenceIngestionStatus.textContent = `Uploading ${backendFiles.length} document${backendFiles.length === 1 ? '' : 's'} to backend parser...`;
@@ -1991,6 +2050,8 @@ function buildRunHistoryRecord(mode = activeRunMode, result = null) {
   if (!isCompletedRun(run) || !cleanText(run.runId)) return null;
   const completedAt = cleanText(run.completedAt || run.timestamp || '') || new Date().toISOString();
   const supplierName = cleanText(run.case?.supplierName || run.case?.serviceDescription || run.case?.brief || '');
+  const documents = Array.isArray(run.case?.documents) ? run.case.documents : [];
+  const documentTitle = cleanText(documents[0]?.title || documents[0]?.fileName || '');
   const caseId = cleanText(run.case?.caseId || '');
   const decision = cleanText(run.decision?.recommendation || run.decision?.status || '');
   return {
@@ -1998,6 +2059,7 @@ function buildRunHistoryRecord(mode = activeRunMode, result = null) {
     mode: normalizedMode,
     caseId,
     supplierName,
+    documentTitle,
     decision,
     completedAt,
     gapCount: Array.isArray(run.gaps) ? run.gaps.length : 0,
@@ -2035,7 +2097,11 @@ function formatRunHistoryTime(value = '') {
 }
 
 function runHistoryLabel(record = {}) {
-  const subject = cleanText(record.supplierName || record.caseId || 'Council run');
+  const supplier = cleanText(record.supplierName);
+  const documentTitle = cleanText(record.documentTitle);
+  const subject = supplier && documentTitle && normalizedIdentity(supplier) !== normalizedIdentity(documentTitle)
+    ? `${supplier} - ${documentTitle}`
+    : cleanText(supplier || documentTitle || record.caseId || 'Council run');
   const trace = cleanText(record.runId).slice(-10);
   return `${subject} | ${record.mode || 'run'} | ${formatRunHistoryTime(record.completedAt)} | ${trace}`;
 }
@@ -2608,6 +2674,7 @@ function evidenceStatusLabel(item = {}) {
     return window.P42AppModules.evidenceUploadUi.evidenceStatusLabel(item);
   }
   if (item.indexStatus === 'indexed') return 'citation-ready';
+  if (item.sourceType === 'fixture_pdf' && item.extractionStatus === 'metadata_fallback') return 'fixture profile';
   if (item.extractionStatus === 'sampled_text') return 'sampled text';
   if (item.extractionStatus === 'backend_parsed' || item.extractionStatus === 'text_extracted') return 'parsed';
   if (item.extractionStatus === 'binary_registered') return 'metadata-only';
@@ -3208,13 +3275,37 @@ function syncUploadedEvidenceIntoChatDraft() {
   const existingDocuments = Array.isArray(chatCaseDraft.documents) ? chatCaseDraft.documents : [];
   const byId = new Map(existingDocuments.map((doc) => [doc.evidenceId || doc.title, doc]));
   uploadedEvidence.forEach((doc) => byId.set(doc.evidenceId || doc.title, doc));
+  const fixtureProfiles = uploadedEvidence
+    .map((doc) => doc.fixtureProfile)
+    .filter((profile) => profile && typeof profile === 'object');
   const evidenceSignals = unique([
     ...(chatCaseDraft.evidenceSignals || []),
     ...uploadedEvidence.flatMap((doc) => doc.signals || [])
   ]);
+  const riskSignals = unique([
+    ...(chatCaseDraft.riskSignals || []),
+    ...fixtureProfiles.flatMap((profile) => profile.expectedRiskDomains || []),
+    ...fixtureProfiles.flatMap((profile) => profile.expectedMissingEvidence || [])
+  ]).slice(0, 32);
+  const knownGaps = unique([
+    ...(chatCaseDraft.knownGaps || []),
+    ...fixtureProfiles.flatMap((profile) => profile.expectedMissingEvidence || [])
+  ]).slice(0, 24);
+  const firstFixture = fixtureProfiles[0] || {};
   mergeChatCaseDraft({
     documents: Array.from(byId.values()).slice(-12),
-    evidenceSignals
+    evidenceSignals,
+    riskSignals,
+    knownGaps,
+    supplierName: firstFixture.provider || firstFixture.supplier || chatCaseDraft.supplierName,
+    brief: firstFixture.serviceSummary || chatCaseDraft.brief,
+    documentContext: firstFixture.filename ? {
+      ...(chatCaseDraft.documentContext || {}),
+      supplierName: firstFixture.provider || firstFixture.supplier || '',
+      serviceDescription: firstFixture.serviceSummary || '',
+      detectedDomain: firstFixture.domain || '',
+      missingEvidence: firstFixture.expectedMissingEvidence || []
+    } : chatCaseDraft.documentContext
   });
 }
 

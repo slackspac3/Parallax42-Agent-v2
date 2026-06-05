@@ -1,0 +1,16 @@
+{
+  "run_id": "fixture-media-analytics",
+  "use_case_id": "21",
+  "input": {
+    "query": "Need a quick read on this media buying/audience analytics order. It has hashed emails and audience uploads, but consent/DPA/partner destination proof is unclear.",
+    "documents": [
+      {
+        "filename": "05_media_buying_and_audience_analytics_order_form.pdf"
+      }
+    ]
+  },
+  "options": {
+    "sample_mode": true,
+    "max_iterations": 3
+  }
+}

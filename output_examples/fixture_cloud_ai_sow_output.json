@@ -1,0 +1,1760 @@
+{
+  "agent_trace": [
+    {
+      "action": "receive_case",
+      "agent_name": "Intake Agent",
+      "confidence": 0.86,
+      "input_summary": "Can we launch this cloud AI model SOW for document intelligence? The source pack is messy; focus on model governance, retrieval quality, retention, and human review.",
+      "memory_key": "caseFacts",
+      "output_summary": "Received evaluator request and started case fact extraction.",
+      "payload": {
+        "sample_mode": true,
+        "use_case_id": "21"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "success",
+      "target_agent": "Intake Agent",
+      "timestamp": "2026-06-05T06:23:41.828562Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "extract_case_facts",
+      "agent_name": "Intake Agent",
+      "confidence": 0.72,
+      "input_summary": "Evaluator input plus normalized Node case.",
+      "memory_key": "caseFacts",
+      "output_summary": "Extracted supplier=Submitted compliance case, geography=missing, missing facts=2.",
+      "payload": {
+        "caseFacts": {
+          "aiRiskSignal": "explicit_ai",
+          "aiUse": "AI/model workflow signals require governance confirmation.",
+          "dataCategories": [
+            "customer support data",
+            "supplier or finance workflow data",
+            "export-control hardware and support records",
+            "audience and marketing analytics data"
+          ],
+          "evidenceReferences": [
+            "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+            "FIXTURE-06"
+          ],
+          "fixtureDomain": "ai",
+          "geography": "",
+          "integrations": [],
+          "owner": "",
+          "riskSignals": [
+            "responsible-ai",
+            "privacy",
+            "model-governance",
+            "retrieval-quality",
+            "auditability",
+            "human-oversight",
+            "security-monitoring"
+          ],
+          "supplier": "Submitted compliance case",
+          "workflow": "Can we launch this cloud AI model SOW for document intelligence? The source pack is messy; focus on model governance, retrieval quality, retention, and human review."
+        },
+        "missing_case_facts": [
+          "owner",
+          "geography"
+        ]
+      },
+      "retry_count": 0,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "needs_revision",
+      "target_agent": "Evidence Retrieval Agent",
+      "timestamp": "2026-06-05T06:23:41.935430Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "delegate_evidence_search",
+      "agent_name": "Intake Agent",
+      "confidence": 0.87,
+      "input_summary": "Case facts, evidence references, risk signals, and missing facts.",
+      "memory_key": "evidenceMatches",
+      "output_summary": "Delegated evidence retrieval for privacy, security, AI governance, continuity, and precedent context.",
+      "payload": {},
+      "retry_count": 0,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "success",
+      "target_agent": "Evidence Retrieval Agent",
+      "timestamp": "2026-06-05T06:23:41.944646Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "ingest_fixture_document",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.86,
+      "input_summary": "Generated fixture PDF reference supplied in evaluator input.",
+      "memory_key": "fixtureDocumentAnalysis",
+      "output_summary": "Ingested 1 fixture document(s); domain=ai; extraction=text_extracted.",
+      "payload": {
+        "detected_domain": "ai",
+        "documents_used": [
+          {
+            "extractionStatus": "text_extracted",
+            "filename": "06_cloud_ai_model_services_statement_of_work.pdf",
+            "pages": 29,
+            "source": "fixture_pdf",
+            "title": "Cloud AI Model Services Statement Of Work"
+          }
+        ],
+        "expected_profile_match": true,
+        "extraction_status": "text_extracted",
+        "matched_missing_evidence": [
+          "independent robustness results",
+          "final RAI assessment",
+          "retention approval",
+          "data owner approval",
+          "model rollback plan"
+        ],
+        "matched_risk_domains": [
+          "responsible-ai",
+          "privacy",
+          "model-governance",
+          "retrieval-quality",
+          "auditability",
+          "human-oversight",
+          "security-monitoring"
+        ],
+        "rejected": [],
+        "target_agent": "Privacy Specialist"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "success",
+      "target_agent": "Privacy Specialist",
+      "timestamp": "2026-06-05T06:23:41.952488Z",
+      "tool_used": "fixture_pdf_text_extractor",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "retrieve_evidence",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.52,
+      "input_summary": "Supplied request evidence, Node citations, local sample snippets, and case-scoped evidence memory.",
+      "memory_key": "evidenceMatches",
+      "output_summary": "Retrieved 9 evidence match(es); memory provider=local-fallback; sufficiency=weak.",
+      "payload": {
+        "localEvidenceArtifacts": [
+          "live-health.json",
+          "benchmark-report.json",
+          "readiness.json",
+          "sample-agent-run.json"
+        ],
+        "match_count": 9,
+        "missingEvidence": [
+          "independent robustness results",
+          "final RAI assessment",
+          "retention approval",
+          "data owner approval",
+          "model rollback plan",
+          "signed DPA",
+          "retention and deletion evidence",
+          "cross-border transfer mechanism",
+          "subprocessor register",
+          "business continuity or exit evidence",
+          "Business owner is not identified.",
+          "Jurisdiction or geography is missing.",
+          "Privacy/data governance is applicable but DPA evidence was not detected.",
+          "ESG, HSE And BCM applicability needs confirmation."
+        ],
+        "retrievalContext": {
+          "browserEmbeddingsRetained": false,
+          "collection": "p42_compliance_evidence",
+          "durable": false,
+          "evidenceMatches": [
+            {
+              "chunkIndex": 21,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4417,
+              "snippet": "roval blocker: unresolved gaps affecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 11. Personnel And Background Screening For Cloud AI Model Services, Aster Cognitive Cloud shall require appropriate screening, ro...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            },
+            {
+              "chunkIndex": 25,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4311,
+              "snippet": "ffecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontracting | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh Synthetic test fixture - Page 5 of 29 Cloud AI Model Services Statement Of Work 14. Change Control For Cloud AI Model Services, Aster Cognitive Cloud shall require risk ...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            },
+            {
+              "chunkIndex": 39,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance",
+                "continuity"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4311,
+              "snippet": "rs. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, connectors, human review queues, and safety logs. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for remediation. - Approval blocker: unresolved gaps affecting independent robustness results, final RAI ...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            },
+            {
+              "chunkIndex": 49,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4311,
+              "snippet": "independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 31 | Area: Intellectual Property | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 32. Open Source And Third-Party Components For Cloud AI Model Services, Aster Cognitive Cloud shall require inventory, license compliance, vulnerability management, proven...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            },
+            {
+              "chunkIndex": 12,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4204,
+              "snippet": "itive Cloud | Evidence cadence: onboarding and annual refresh 4. Governance Board For Cloud AI Model Services, Aster Cognitive Cloud shall establish operational, legal, security, privacy, finance, and compliance reviewers with documented decision rights. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, conne...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            },
+            {
+              "chunkIndex": 16,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4204,
+              "snippet": "ster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 7. Customer Responsibilities For Cloud AI Model Services, Aster Cognitive Cloud shall identify required approvals, access provisioning, data-quality responsibilities, and evidence response timelines. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, e...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            },
+            {
+              "chunkIndex": 29,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4204,
+              "snippet": "unresolved gaps affecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 16 | Area: Service Levels | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 17. Service Credits For Cloud AI Model Services, Aster Cognitive Cloud shall state credits do not replace corrective actions, regulatory duties, or term...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            },
+            {
+              "chunkIndex": 31,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4204,
+              "snippet": "ivacy, continuity, integration, and reporting tests before production acceptance. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, connectors, human review queues, and safety logs. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for acceptance testing. - A...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            }
+          ],
+          "fixtureDocumentsUsed": [
+            {
+              "extractionStatus": "text_extracted",
+              "filename": "06_cloud_ai_model_services_statement_of_work.pdf",
+              "pages": 29,
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            }
+          ],
+          "indexedChunkCount": 162,
+          "missingEvidenceSignals": [
+            "independent robustness results",
+            "final RAI assessment",
+            "retention approval",
+            "data owner approval",
+            "model rollback plan",
+            "signed DPA",
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "subprocessor register",
+            "business continuity or exit evidence",
+            "Business owner is not identified.",
+            "Jurisdiction or geography is missing.",
+            "Privacy/data governance is applicable but DPA evidence was not detected.",
+            "ESG, HSE And BCM applicability needs confirmation."
+          ],
+          "provider": "local-fallback",
+          "qdrantConfigured": false,
+          "retrievedMatchCount": 8
+        }
+      },
+      "retry_count": 0,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "needs_revision",
+      "target_agent": "Privacy Specialist",
+      "timestamp": "2026-06-05T06:23:42.014777Z",
+      "tool_used": "local-fallback",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "retry_evidence_search",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.45,
+      "input_summary": "Initial evidence coverage was weak or missing key proof.",
+      "memory_key": "missingEvidence",
+      "output_summary": "Retried with privacy/security/AI/continuity keywords through local-fallback; retained only sanitized evidence metadata.",
+      "payload": {
+        "missingEvidence": [
+          "independent robustness results",
+          "final RAI assessment",
+          "retention approval",
+          "data owner approval",
+          "model rollback plan",
+          "signed DPA",
+          "retention and deletion evidence",
+          "cross-border transfer mechanism",
+          "subprocessor register",
+          "business continuity or exit evidence",
+          "Business owner is not identified.",
+          "Jurisdiction or geography is missing.",
+          "Privacy/data governance is applicable but DPA evidence was not detected.",
+          "ESG, HSE And BCM applicability needs confirmation."
+        ],
+        "retrievalContext": {
+          "browserEmbeddingsRetained": false,
+          "collection": "p42_compliance_evidence",
+          "durable": false,
+          "evidenceMatches": [
+            {
+              "chunkIndex": 21,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4417,
+              "snippet": "roval blocker: unresolved gaps affecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 11. Personnel And Background Screening For Cloud AI Model Services, Aster Cognitive Cloud shall require appropriate screening, ro...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            },
+            {
+              "chunkIndex": 25,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4311,
+              "snippet": "ffecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontracting | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh Synthetic test fixture - Page 5 of 29 Cloud AI Model Services Statement Of Work 14. Change Control For Cloud AI Model Services, Aster Cognitive Cloud shall require risk ...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            },
+            {
+              "chunkIndex": 39,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance",
+                "continuity"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4311,
+              "snippet": "rs. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, connectors, human review queues, and safety logs. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for remediation. - Approval blocker: unresolved gaps affecting independent robustness results, final RAI ...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            },
+            {
+              "chunkIndex": 49,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4311,
+              "snippet": "independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 31 | Area: Intellectual Property | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 32. Open Source And Third-Party Components For Cloud AI Model Services, Aster Cognitive Cloud shall require inventory, license compliance, vulnerability management, proven...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            },
+            {
+              "chunkIndex": 12,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4204,
+              "snippet": "itive Cloud | Evidence cadence: onboarding and annual refresh 4. Governance Board For Cloud AI Model Services, Aster Cognitive Cloud shall establish operational, legal, security, privacy, finance, and compliance reviewers with documented decision rights. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, conne...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            },
+            {
+              "chunkIndex": 16,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4204,
+              "snippet": "ster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 7. Customer Responsibilities For Cloud AI Model Services, Aster Cognitive Cloud shall identify required approvals, access provisioning, data-quality responsibilities, and evidence response timelines. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, e...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            },
+            {
+              "chunkIndex": 29,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4204,
+              "snippet": "unresolved gaps affecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 16 | Area: Service Levels | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 17. Service Credits For Cloud AI Model Services, Aster Cognitive Cloud shall state credits do not replace corrective actions, regulatory duties, or term...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            },
+            {
+              "chunkIndex": 31,
+              "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-06",
+              "score": 0.4204,
+              "snippet": "ivacy, continuity, integration, and reporting tests before production acceptance. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, connectors, human review queues, and safety logs. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for acceptance testing. - A...",
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            }
+          ],
+          "fixtureDocumentsUsed": [
+            {
+              "extractionStatus": "text_extracted",
+              "filename": "06_cloud_ai_model_services_statement_of_work.pdf",
+              "pages": 29,
+              "source": "fixture_pdf",
+              "title": "Cloud AI Model Services Statement Of Work"
+            }
+          ],
+          "indexedChunkCount": 162,
+          "missingEvidenceSignals": [
+            "independent robustness results",
+            "final RAI assessment",
+            "retention approval",
+            "data owner approval",
+            "model rollback plan",
+            "signed DPA",
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "subprocessor register",
+            "business continuity or exit evidence",
+            "Business owner is not identified.",
+            "Jurisdiction or geography is missing.",
+            "Privacy/data governance is applicable but DPA evidence was not detected.",
+            "ESG, HSE And BCM applicability needs confirmation."
+          ],
+          "provider": "local-fallback",
+          "qdrantConfigured": false,
+          "retrievedMatchCount": 8
+        }
+      },
+      "retry_count": 1,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "retry",
+      "target_agent": "Privacy Specialist",
+      "timestamp": "2026-06-05T06:23:42.027856Z",
+      "tool_used": "local-fallback",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "critique_privacy_gap",
+      "agent_name": "Privacy Specialist",
+      "confidence": 0.8,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "Privacy proof incomplete: retention approval, signed DPA, retention and deletion evidence, cross-border transfer mechanism.",
+      "payload": {
+        "requiredActions": [
+          "Require retention schedule and deletion assistance evidence.",
+          "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+          "Require retention schedule and deletion assistance evidence.",
+          "Require cross-border transfer mechanism and hosting/support region confirmation.",
+          "Require current subprocessor register and change-notification terms.",
+          "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers."
+        ],
+        "severity": "high"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "needs_revision",
+      "target_agent": "Security Specialist",
+      "timestamp": "2026-06-05T06:23:42.040865Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "critique_security_gap",
+      "agent_name": "Security Specialist",
+      "confidence": 0.8,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "Security or continuity proof incomplete: business continuity or exit evidence.",
+      "payload": {
+        "requiredActions": [
+          "Require BCP/DR and exit assistance evidence for critical workflows."
+        ],
+        "severity": "medium"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "needs_revision",
+      "target_agent": "Responsible AI Specialist",
+      "timestamp": "2026-06-05T06:23:42.048458Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "critique_ai_governance_gap",
+      "agent_name": "Responsible AI Specialist",
+      "confidence": 0.8,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "AI/customer-data training proof incomplete: independent robustness results, final RAI assessment, model rollback plan.",
+      "payload": {
+        "requiredActions": [
+          "Require independent robustness and prompt-injection test results before AI service approval.",
+          "Require final Responsible AI assessment and documented human oversight before launch.",
+          "Require model rollback plan, versioning evidence, and incident-response owner."
+        ],
+        "severity": "medium"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "needs_revision",
+      "target_agent": "Learning & Precedent Specialist",
+      "timestamp": "2026-06-05T06:23:42.055725Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "retrieve_precedent",
+      "agent_name": "Learning & Precedent Specialist",
+      "confidence": 0.62,
+      "input_summary": "Case facts, missing evidence, and specialist challenges.",
+      "memory_key": "learningContext",
+      "output_summary": "Matched precedent pattern: general incomplete evidence -> human review controls; similar learning cases=5, top pattern=Healthcare analytics vendor missing model-training exclusion.",
+      "payload": {
+        "learningContext": {
+          "advisoryOnly": true,
+          "browserEmbeddingsRetained": false,
+          "controlSuggestions": [
+            "Require signed model-training exclusion for patient or customer data before production.",
+            "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+            "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+            "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
+            "Require signed model-training exclusion and human oversight plan before reconsideration.",
+            "Add reviewer question: Does the vendor use prompts, tickets, or submitted records for model improvement?",
+            "Require retention schedule and deletion assistance evidence.",
+            "Require cross-border transfer mechanism and support-region confirmation."
+          ],
+          "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+          "provider": "local-jsonl",
+          "qdrantConfigured": false,
+          "repeatedEvidenceGaps": [
+            "model-training exclusion",
+            "DPA amendment",
+            "signed DPA",
+            "human oversight plan",
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "support region confirmation",
+            "subprocessor register"
+          ],
+          "similarCases": [
+            {
+              "addedControls": [
+                "Require signed model-training exclusion for patient or customer data before production.",
+                "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+                "Add reviewer question: Has any analytics data been used for model improvement or service training?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-healthcare-001",
+              "domains": [
+                "privacy",
+                "ai-governance",
+                "healthcare"
+              ],
+              "finalOutcome": "conditional approval after DPA amendment",
+              "memoryId": "learn-healthcare-training-001",
+              "missingEvidence": [
+                "model-training exclusion",
+                "DPA amendment"
+              ],
+              "originalDecision": "conditional_approval",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.3591,
+              "title": "Healthcare analytics vendor missing model-training exclusion",
+              "type": "case_outcome"
+            },
+            {
+              "addedControls": [
+                "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
+                "Require signed model-training exclusion and human oversight plan before reconsideration.",
+                "Add reviewer question: Does the vendor use prompts, tickets, or submitted records for model improvement?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-ai-001",
+              "domains": [
+                "ai-governance",
+                "privacy",
+                "customer-data"
+              ],
+              "finalOutcome": "rejected and escalated",
+              "memoryId": "learn-ai-training-reject-001",
+              "missingEvidence": [
+                "model-training exclusion",
+                "signed DPA",
+                "human oversight plan"
+              ],
+              "originalDecision": "conditional_approval",
+              "reviewerDecision": "reject",
+              "score": 0.3242,
+              "title": "AI vendor permitted customer-data training",
+              "type": "decision_override"
+            },
+            {
+              "addedControls": [
+                "Require retention schedule and deletion assistance evidence.",
+                "Require cross-border transfer mechanism and support-region confirmation.",
+                "Add reviewer question: Are any support teams accessing records outside approved regions?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-cross-border-001",
+              "domains": [
+                "privacy",
+                "saas",
+                "cross-border"
+              ],
+              "finalOutcome": "conditional approval after retention schedule",
+              "memoryId": "learn-cross-border-retention-001",
+              "missingEvidence": [
+                "retention and deletion evidence",
+                "cross-border transfer mechanism",
+                "support region confirmation"
+              ],
+              "originalDecision": "needs_more_information",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.3126,
+              "title": "Cross-border SaaS missing retention schedule",
+              "type": "evidence_quality_note"
+            },
+            {
+              "addedControls": [
+                "Require current subprocessor register before approval.",
+                "Require 30-day subprocessor change notification and right to object.",
+                "Add reviewer question: Are support and hosting locations consistent with transfer assessment?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-saas-001",
+              "domains": [
+                "privacy",
+                "saas",
+                "third-party-risk"
+              ],
+              "finalOutcome": "conditional approval with subprocessor disclosure",
+              "memoryId": "learn-saas-subprocessors-001",
+              "missingEvidence": [
+                "subprocessor register",
+                "cross-border transfer mechanism"
+              ],
+              "originalDecision": "needs_more_information",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.2893,
+              "title": "SaaS vendor missing subprocessor list",
+              "type": "control_pattern"
+            },
+            {
+              "addedControls": [
+                "Keep annual SOC 2 and ISO evidence refresh on reviewer calendar.",
+                "Monitor subprocessor changes and retention exceptions quarterly.",
+                "Confirm accountable human owner before operational approval."
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-complete-001",
+              "domains": [
+                "privacy",
+                "security",
+                "third-party-risk"
+              ],
+              "finalOutcome": "approval with monitoring",
+              "memoryId": "learn-complete-package-001",
+              "missingEvidence": [],
+              "originalDecision": "approve",
+              "reviewerDecision": "approve",
+              "score": 0.2777,
+              "title": "Complete vendor package approved with monitoring",
+              "type": "case_outcome"
+            }
+          ],
+          "similar_cases_found": 5,
+          "topPattern": "Healthcare analytics vendor missing model-training exclusion"
+        },
+        "precedent": {
+          "advisoryOnly": true,
+          "confidence": 0.62,
+          "pattern": "general incomplete evidence -> human review controls",
+          "recommendation": "conditional_human_review"
+        }
+      },
+      "retry_count": 0,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "success",
+      "target_agent": "Deterministic Decision Owner",
+      "timestamp": "2026-06-05T06:23:42.066370Z",
+      "tool_used": "local-jsonl",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "compass_advisory_unavailable",
+      "agent_name": "Compass Advisory Critic",
+      "confidence": 0.7,
+      "input_summary": "Sample mode requested.",
+      "memory_key": "compassAdvisory",
+      "output_summary": "Skipped live Compass call; deterministic local council remains active.",
+      "payload": {},
+      "retry_count": 0,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "fallback_used",
+      "target_agent": "Deterministic Decision Owner",
+      "timestamp": "2026-06-05T06:23:42.078098Z",
+      "tool_used": "sample_mode",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "revise_required_controls",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.92,
+      "input_summary": "Specialist challenges, precedent pattern, and Compass advisory status.",
+      "memory_key": "requiredActions",
+      "output_summary": "Required controls revised to 14 action(s); final risk=high.",
+      "payload": {
+        "llm_advisory_only": true,
+        "required_actions": [
+          "Assign the accountable business unit or requester before approval.",
+          "Confirm the operating geography and regulatory perimeter.",
+          "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+          "Ask the domain owner whether esg, hse and bcm obligations apply.",
+          "Require independent robustness and prompt-injection test results before AI service approval.",
+          "Require final Responsible AI assessment and documented human oversight before launch.",
+          "Require retention schedule and deletion assistance evidence.",
+          "Require data owner approval for source data, retention, retrieval scope, and monitoring.",
+          "Require model rollback plan, versioning evidence, and incident-response owner.",
+          "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+          "Require cross-border transfer mechanism and hosting/support region confirmation.",
+          "Require current subprocessor register and change-notification terms.",
+          "Require BCP/DR and exit assistance evidence for critical workflows.",
+          "Resolve evidence gap: Business owner is not identified."
+        ],
+        "specialist_challenge_count": 3
+      },
+      "retry_count": 0,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "needs_revision",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:42.085719Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "escalate_human_review",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.94,
+      "input_summary": "Unresolved high-risk gaps or insufficient proof remained after council review.",
+      "memory_key": "humanReviewRequired",
+      "output_summary": "Escalated to accountable human reviewer; no autonomous approval permitted.",
+      "payload": {
+        "decision": "conditional_approval",
+        "risk_level": "high"
+      },
+      "retry_count": 1,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "escalated",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:42.092910Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "apply_deterministic_policy",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.95,
+      "input_summary": "Node deterministic result, specialist critiques, precedent, and advisory-only Compass output.",
+      "memory_key": "decisionDraft",
+      "output_summary": "Final decision sealed as conditional_approval by deterministic policy owner.",
+      "payload": {
+        "compass_status": "skipped_sample_mode",
+        "final_owner": "Deterministic Decision Owner",
+        "live_advisory_runtime": "custom",
+        "llm_advisory_only": true
+      },
+      "retry_count": 0,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "success",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:42.098345Z",
+      "tool_used": "deterministic_rules_engine",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "package_audit_trace",
+      "agent_name": "Audit Packager",
+      "confidence": 0.93,
+      "input_summary": "Decision, evidence, missing proof, council trace, and human review boundary.",
+      "memory_key": "finalDecision",
+      "output_summary": "Packaged judge-readable audit trace with evidence, specialist challenges, and final owner.",
+      "payload": {
+        "log_file": "logs/trace-fixture-06_cloud_ai_model_services_statement_of_work.jsonl",
+        "trace_events": 15
+      },
+      "retry_count": 0,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "success",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:42.104086Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    },
+    {
+      "action": "finalize_response",
+      "agent_name": "Audit Packager",
+      "confidence": 0.94,
+      "input_summary": "Final packaged decision and trace summary.",
+      "memory_key": "finalDecision",
+      "output_summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+      "payload": {
+        "decision": "conditional_approval",
+        "risk_level": "high"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+      "status": "success",
+      "target_agent": "",
+      "timestamp": "2026-06-05T06:23:42.109675Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b"
+    }
+  ],
+  "agents": [
+    {
+      "name": "Intake Agent",
+      "role": "Extracts case facts, missing facts, and delegates evidence needs."
+    },
+    {
+      "name": "Evidence Retrieval Agent",
+      "role": "Searches supplied and local evidence signals, retries weak coverage, and reports sufficiency."
+    },
+    {
+      "name": "Privacy Specialist",
+      "role": "Reviews DPA, subprocessors, retention, transfer, data categories, and model-training exclusions."
+    },
+    {
+      "name": "Security Specialist",
+      "role": "Reviews SOC 2, ISO, access control, encryption, logging, BCP, and technical assurance evidence."
+    },
+    {
+      "name": "Responsible AI Specialist",
+      "role": "Challenges AI use, model training, automation, oversight, and transparency risk."
+    },
+    {
+      "name": "Learning & Precedent Specialist",
+      "role": "Looks up deterministic synthetic precedent patterns as advisory memory."
+    },
+    {
+      "name": "Compass Advisory Critic",
+      "role": "Runs live Compass advisory review when configured; never owns the final decision."
+    },
+    {
+      "name": "Final Advisory Reviewer",
+      "role": "Optional live CrewAI advisory reviewer when AGENT_RUNTIME=crewai_live; advisory only."
+    },
+    {
+      "name": "Deterministic Decision Owner",
+      "role": "Applies deterministic policy and remains final decision authority."
+    },
+    {
+      "name": "Audit Packager",
+      "role": "Packages the decision, evidence, collaboration trace, and review artifacts."
+    }
+  ],
+  "execution_time_seconds": 0.31,
+  "log_file": "logs/fixture_cloud_ai_sow_trace.jsonl",
+  "output": {
+    "artifacts": [
+      {
+        "path": "logs/trace-fixture-06_cloud_ai_model_services_statement_of_work.jsonl",
+        "type": "trace_log"
+      },
+      {
+        "source": "deterministic_node_bridge_plus_python_council",
+        "type": "decision_payload"
+      }
+    ],
+    "collaboration_summary": {
+      "delegated_tasks": [
+        "Intake Agent -> Evidence Retrieval Agent: evidence needs and missing facts"
+      ],
+      "escalations": [
+        "Deterministic Decision Owner escalated unresolved high-risk gaps to human review"
+      ],
+      "final_decision_owner": "Deterministic Decision Owner",
+      "retries": [
+        "Evidence Retrieval Agent refined search with domain keywords using local-fallback"
+      ],
+      "shared_context_updates": [
+        "case facts updated",
+        "fixture document analysis updated",
+        "evidence matches and gaps updated",
+        "retrieval context updated",
+        "specialist finding added: Privacy Specialist",
+        "specialist finding added: Security Specialist",
+        "specialist finding added: Responsible AI Specialist",
+        "synthetic precedent added",
+        "governed learning memory updated",
+        "Compass advisory skipped in sample mode",
+        "required action added"
+      ],
+      "specialist_challenges": [
+        "Privacy proof incomplete: retention approval, signed DPA, retention and deletion evidence, cross-border transfer mechanism.",
+        "Security or continuity proof incomplete: business continuity or exit evidence.",
+        "AI/customer-data training proof incomplete: independent robustness results, final RAI assessment, model rollback plan."
+      ],
+      "validations": []
+    },
+    "decision": "conditional_approval",
+    "decision_authority": {
+      "final_owner": "Deterministic Decision Owner",
+      "llm_advisory_only": true
+    },
+    "evidence_used": [
+      {
+        "chunkIndex": 21,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4417,
+        "snippet": "roval blocker: unresolved gaps affecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 11. Personnel And Background Screening For Cloud AI Model Services, Aster Cognitive Cloud shall require appropriate screening, ro...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "chunkIndex": 25,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4311,
+        "snippet": "ffecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontracting | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh Synthetic test fixture - Page 5 of 29 Cloud AI Model Services Statement Of Work 14. Change Control For Cloud AI Model Services, Aster Cognitive Cloud shall require risk ...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "chunkIndex": 39,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance",
+          "continuity"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4311,
+        "snippet": "rs. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, connectors, human review queues, and safety logs. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for remediation. - Approval blocker: unresolved gaps affecting independent robustness results, final RAI ...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "chunkIndex": 49,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4311,
+        "snippet": "independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 31 | Area: Intellectual Property | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 32. Open Source And Third-Party Components For Cloud AI Model Services, Aster Cognitive Cloud shall require inventory, license compliance, vulnerability management, proven...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "chunkIndex": 12,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4204,
+        "snippet": "itive Cloud | Evidence cadence: onboarding and annual refresh 4. Governance Board For Cloud AI Model Services, Aster Cognitive Cloud shall establish operational, legal, security, privacy, finance, and compliance reviewers with documented decision rights. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, conne...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "chunkIndex": 16,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4204,
+        "snippet": "ster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 7. Customer Responsibilities For Cloud AI Model Services, Aster Cognitive Cloud shall identify required approvals, access provisioning, data-quality responsibilities, and evidence response timelines. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, e...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "chunkIndex": 29,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4204,
+        "snippet": "unresolved gaps affecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 16 | Area: Service Levels | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 17. Service Credits For Cloud AI Model Services, Aster Cognitive Cloud shall state credits do not replace corrective actions, regulatory duties, or term...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "chunkIndex": 31,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4204,
+        "snippet": "ivacy, continuity, integration, and reporting tests before production acceptance. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, connectors, human review queues, and safety logs. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for acceptance testing. - A...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "evidence_id": "FIXTURE-06",
+        "snippet": "Cloud AI Model Services Statement Of Work Cloud AI Model Services Statement Of Work Aster Cognitive Cloud conversational assistant, document intelligence, retrieval, and model operations services Synthetic legal-style test document for agent evaluation. Not le",
+        "source": "node-citation",
+        "title": "Cloud AI Model Services Statement Of Work"
+      }
+    ],
+    "executive_summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "fixture_document_analysis": {
+      "detected_domain": "ai",
+      "documents_used": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "06_cloud_ai_model_services_statement_of_work.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        }
+      ],
+      "expected_profile_match": true,
+      "extraction_status": "text_extracted",
+      "matched_missing_evidence": [
+        "independent robustness results",
+        "final RAI assessment",
+        "retention approval",
+        "data owner approval",
+        "model rollback plan"
+      ],
+      "matched_risk_domains": [
+        "responsible-ai",
+        "privacy",
+        "model-governance",
+        "retrieval-quality",
+        "auditability",
+        "human-oversight",
+        "security-monitoring"
+      ],
+      "rejected": [],
+      "target_agent": "Privacy Specialist"
+    },
+    "human_review_required": true,
+    "learning_memory": {
+      "advisoryOnly": true,
+      "browserEmbeddingsRetained": false,
+      "control_suggestions": [
+        "Require signed model-training exclusion for patient or customer data before production.",
+        "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+        "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+        "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
+        "Require signed model-training exclusion and human oversight plan before reconsideration.",
+        "Add reviewer question: Does the vendor use prompts, tickets, or submitted records for model improvement?",
+        "Require retention schedule and deletion assistance evidence.",
+        "Require cross-border transfer mechanism and support-region confirmation."
+      ],
+      "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+      "provider": "local-jsonl",
+      "repeatedEvidenceGaps": [
+        "model-training exclusion",
+        "DPA amendment",
+        "signed DPA",
+        "human oversight plan",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "support region confirmation",
+        "subprocessor register"
+      ],
+      "similar_cases_found": 5
+    },
+    "live_advisory": {
+      "advisoryOnly": true,
+      "agents": [],
+      "cards": [],
+      "enabled": false,
+      "final_decision_owner": "Deterministic Decision Owner",
+      "model": "gpt-4.1",
+      "runtime": "custom",
+      "status": "skipped_custom_runtime",
+      "summary": {}
+    },
+    "live_compass": {
+      "advisory": {},
+      "enabled": false,
+      "model": "gpt-5.1",
+      "status": "skipped_sample_mode"
+    },
+    "missing_evidence": [
+      "independent robustness results",
+      "final RAI assessment",
+      "retention approval",
+      "data owner approval",
+      "model rollback plan",
+      "signed DPA",
+      "retention and deletion evidence",
+      "cross-border transfer mechanism",
+      "subprocessor register",
+      "business continuity or exit evidence",
+      "Business owner is not identified.",
+      "Jurisdiction or geography is missing."
+    ],
+    "rag_evidence_memory": {
+      "browserEmbeddingsRetained": false,
+      "collection": "p42_compliance_evidence",
+      "durable": false,
+      "evidenceMatches": [
+        {
+          "chunkIndex": 21,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4417,
+          "snippet": "roval blocker: unresolved gaps affecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 11. Personnel And Background Screening For Cloud AI Model Services, Aster Cognitive Cloud shall require appropriate screening, ro...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        },
+        {
+          "chunkIndex": 25,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4311,
+          "snippet": "ffecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontracting | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh Synthetic test fixture - Page 5 of 29 Cloud AI Model Services Statement Of Work 14. Change Control For Cloud AI Model Services, Aster Cognitive Cloud shall require risk ...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        },
+        {
+          "chunkIndex": 39,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance",
+            "continuity"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4311,
+          "snippet": "rs. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, connectors, human review queues, and safety logs. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for remediation. - Approval blocker: unresolved gaps affecting independent robustness results, final RAI ...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        },
+        {
+          "chunkIndex": 49,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4311,
+          "snippet": "independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 31 | Area: Intellectual Property | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 32. Open Source And Third-Party Components For Cloud AI Model Services, Aster Cognitive Cloud shall require inventory, license compliance, vulnerability management, proven...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        },
+        {
+          "chunkIndex": 12,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4204,
+          "snippet": "itive Cloud | Evidence cadence: onboarding and annual refresh 4. Governance Board For Cloud AI Model Services, Aster Cognitive Cloud shall establish operational, legal, security, privacy, finance, and compliance reviewers with documented decision rights. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, conne...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        },
+        {
+          "chunkIndex": 16,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4204,
+          "snippet": "ster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 7. Customer Responsibilities For Cloud AI Model Services, Aster Cognitive Cloud shall identify required approvals, access provisioning, data-quality responsibilities, and evidence response timelines. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, e...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        },
+        {
+          "chunkIndex": 29,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4204,
+          "snippet": "unresolved gaps affecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 16 | Area: Service Levels | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 17. Service Credits For Cloud AI Model Services, Aster Cognitive Cloud shall state credits do not replace corrective actions, regulatory duties, or term...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        },
+        {
+          "chunkIndex": 31,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4204,
+          "snippet": "ivacy, continuity, integration, and reporting tests before production acceptance. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, connectors, human review queues, and safety logs. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for acceptance testing. - A...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        }
+      ],
+      "fixtureDocumentsUsed": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "06_cloud_ai_model_services_statement_of_work.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        }
+      ],
+      "indexedChunkCount": 162,
+      "missingEvidenceSignals": [
+        "independent robustness results",
+        "final RAI assessment",
+        "retention approval",
+        "data owner approval",
+        "model rollback plan",
+        "signed DPA",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "subprocessor register",
+        "business continuity or exit evidence",
+        "Business owner is not identified.",
+        "Jurisdiction or geography is missing.",
+        "Privacy/data governance is applicable but DPA evidence was not detected.",
+        "ESG, HSE And BCM applicability needs confirmation."
+      ],
+      "provider": "local-fallback",
+      "qdrantConfigured": false,
+      "retrievedMatchCount": 8
+    },
+    "required_actions": [
+      "Assign the accountable business unit or requester before approval.",
+      "Confirm the operating geography and regulatory perimeter.",
+      "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+      "Ask the domain owner whether esg, hse and bcm obligations apply.",
+      "Require independent robustness and prompt-injection test results before AI service approval.",
+      "Require final Responsible AI assessment and documented human oversight before launch.",
+      "Require retention schedule and deletion assistance evidence.",
+      "Require data owner approval for source data, retention, retrieval scope, and monitoring.",
+      "Require model rollback plan, versioning evidence, and incident-response owner.",
+      "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+      "Require cross-border transfer mechanism and hosting/support region confirmation.",
+      "Require current subprocessor register and change-notification terms.",
+      "Require BCP/DR and exit assistance evidence for critical workflows.",
+      "Resolve evidence gap: Business owner is not identified."
+    ],
+    "reviewer_questions": [
+      "Has any analytics data been used for model improvement or service training?",
+      "Does the vendor use prompts, tickets, or submitted records for model improvement?"
+    ],
+    "risk_level": "high",
+    "summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
+  },
+  "result": {
+    "artifacts": [
+      {
+        "path": "logs/trace-fixture-06_cloud_ai_model_services_statement_of_work.jsonl",
+        "type": "trace_log"
+      },
+      {
+        "source": "deterministic_node_bridge_plus_python_council",
+        "type": "decision_payload"
+      }
+    ],
+    "collaboration_summary": {
+      "delegated_tasks": [
+        "Intake Agent -> Evidence Retrieval Agent: evidence needs and missing facts"
+      ],
+      "escalations": [
+        "Deterministic Decision Owner escalated unresolved high-risk gaps to human review"
+      ],
+      "final_decision_owner": "Deterministic Decision Owner",
+      "retries": [
+        "Evidence Retrieval Agent refined search with domain keywords using local-fallback"
+      ],
+      "shared_context_updates": [
+        "case facts updated",
+        "fixture document analysis updated",
+        "evidence matches and gaps updated",
+        "retrieval context updated",
+        "specialist finding added: Privacy Specialist",
+        "specialist finding added: Security Specialist",
+        "specialist finding added: Responsible AI Specialist",
+        "synthetic precedent added",
+        "governed learning memory updated",
+        "Compass advisory skipped in sample mode",
+        "required action added"
+      ],
+      "specialist_challenges": [
+        "Privacy proof incomplete: retention approval, signed DPA, retention and deletion evidence, cross-border transfer mechanism.",
+        "Security or continuity proof incomplete: business continuity or exit evidence.",
+        "AI/customer-data training proof incomplete: independent robustness results, final RAI assessment, model rollback plan."
+      ],
+      "validations": []
+    },
+    "decision": "conditional_approval",
+    "decision_authority": {
+      "final_owner": "Deterministic Decision Owner",
+      "llm_advisory_only": true
+    },
+    "evidence_used": [
+      {
+        "chunkIndex": 21,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4417,
+        "snippet": "roval blocker: unresolved gaps affecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 11. Personnel And Background Screening For Cloud AI Model Services, Aster Cognitive Cloud shall require appropriate screening, ro...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "chunkIndex": 25,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4311,
+        "snippet": "ffecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontracting | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh Synthetic test fixture - Page 5 of 29 Cloud AI Model Services Statement Of Work 14. Change Control For Cloud AI Model Services, Aster Cognitive Cloud shall require risk ...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "chunkIndex": 39,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance",
+          "continuity"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4311,
+        "snippet": "rs. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, connectors, human review queues, and safety logs. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for remediation. - Approval blocker: unresolved gaps affecting independent robustness results, final RAI ...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "chunkIndex": 49,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4311,
+        "snippet": "independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 31 | Area: Intellectual Property | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 32. Open Source And Third-Party Components For Cloud AI Model Services, Aster Cognitive Cloud shall require inventory, license compliance, vulnerability management, proven...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "chunkIndex": 12,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4204,
+        "snippet": "itive Cloud | Evidence cadence: onboarding and annual refresh 4. Governance Board For Cloud AI Model Services, Aster Cognitive Cloud shall establish operational, legal, security, privacy, finance, and compliance reviewers with documented decision rights. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, conne...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "chunkIndex": 16,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4204,
+        "snippet": "ster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 7. Customer Responsibilities For Cloud AI Model Services, Aster Cognitive Cloud shall identify required approvals, access provisioning, data-quality responsibilities, and evidence response timelines. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, e...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "chunkIndex": 29,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4204,
+        "snippet": "unresolved gaps affecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 16 | Area: Service Levels | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 17. Service Credits For Cloud AI Model Services, Aster Cognitive Cloud shall state credits do not replace corrective actions, regulatory duties, or term...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "chunkIndex": 31,
+        "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-06",
+        "score": 0.4204,
+        "snippet": "ivacy, continuity, integration, and reporting tests before production acceptance. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, connectors, human review queues, and safety logs. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for acceptance testing. - A...",
+        "source": "fixture_pdf",
+        "title": "Cloud AI Model Services Statement Of Work"
+      },
+      {
+        "evidence_id": "FIXTURE-06",
+        "snippet": "Cloud AI Model Services Statement Of Work Cloud AI Model Services Statement Of Work Aster Cognitive Cloud conversational assistant, document intelligence, retrieval, and model operations services Synthetic legal-style test document for agent evaluation. Not le",
+        "source": "node-citation",
+        "title": "Cloud AI Model Services Statement Of Work"
+      }
+    ],
+    "executive_summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "fixture_document_analysis": {
+      "detected_domain": "ai",
+      "documents_used": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "06_cloud_ai_model_services_statement_of_work.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        }
+      ],
+      "expected_profile_match": true,
+      "extraction_status": "text_extracted",
+      "matched_missing_evidence": [
+        "independent robustness results",
+        "final RAI assessment",
+        "retention approval",
+        "data owner approval",
+        "model rollback plan"
+      ],
+      "matched_risk_domains": [
+        "responsible-ai",
+        "privacy",
+        "model-governance",
+        "retrieval-quality",
+        "auditability",
+        "human-oversight",
+        "security-monitoring"
+      ],
+      "rejected": [],
+      "target_agent": "Privacy Specialist"
+    },
+    "human_review_required": true,
+    "learning_memory": {
+      "advisoryOnly": true,
+      "browserEmbeddingsRetained": false,
+      "control_suggestions": [
+        "Require signed model-training exclusion for patient or customer data before production.",
+        "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+        "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+        "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
+        "Require signed model-training exclusion and human oversight plan before reconsideration.",
+        "Add reviewer question: Does the vendor use prompts, tickets, or submitted records for model improvement?",
+        "Require retention schedule and deletion assistance evidence.",
+        "Require cross-border transfer mechanism and support-region confirmation."
+      ],
+      "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+      "provider": "local-jsonl",
+      "repeatedEvidenceGaps": [
+        "model-training exclusion",
+        "DPA amendment",
+        "signed DPA",
+        "human oversight plan",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "support region confirmation",
+        "subprocessor register"
+      ],
+      "similar_cases_found": 5
+    },
+    "live_advisory": {
+      "advisoryOnly": true,
+      "agents": [],
+      "cards": [],
+      "enabled": false,
+      "final_decision_owner": "Deterministic Decision Owner",
+      "model": "gpt-4.1",
+      "runtime": "custom",
+      "status": "skipped_custom_runtime",
+      "summary": {}
+    },
+    "live_compass": {
+      "advisory": {},
+      "enabled": false,
+      "model": "gpt-5.1",
+      "status": "skipped_sample_mode"
+    },
+    "missing_evidence": [
+      "independent robustness results",
+      "final RAI assessment",
+      "retention approval",
+      "data owner approval",
+      "model rollback plan",
+      "signed DPA",
+      "retention and deletion evidence",
+      "cross-border transfer mechanism",
+      "subprocessor register",
+      "business continuity or exit evidence",
+      "Business owner is not identified.",
+      "Jurisdiction or geography is missing."
+    ],
+    "rag_evidence_memory": {
+      "browserEmbeddingsRetained": false,
+      "collection": "p42_compliance_evidence",
+      "durable": false,
+      "evidenceMatches": [
+        {
+          "chunkIndex": 21,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4417,
+          "snippet": "roval blocker: unresolved gaps affecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 11. Personnel And Background Screening For Cloud AI Model Services, Aster Cognitive Cloud shall require appropriate screening, ro...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        },
+        {
+          "chunkIndex": 25,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4311,
+          "snippet": "ffecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontracting | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh Synthetic test fixture - Page 5 of 29 Cloud AI Model Services Statement Of Work 14. Change Control For Cloud AI Model Services, Aster Cognitive Cloud shall require risk ...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        },
+        {
+          "chunkIndex": 39,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance",
+            "continuity"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4311,
+          "snippet": "rs. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, connectors, human review queues, and safety logs. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for remediation. - Approval blocker: unresolved gaps affecting independent robustness results, final RAI ...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        },
+        {
+          "chunkIndex": 49,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4311,
+          "snippet": "independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 31 | Area: Intellectual Property | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 32. Open Source And Third-Party Components For Cloud AI Model Services, Aster Cognitive Cloud shall require inventory, license compliance, vulnerability management, proven...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        },
+        {
+          "chunkIndex": 12,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4204,
+          "snippet": "itive Cloud | Evidence cadence: onboarding and annual refresh 4. Governance Board For Cloud AI Model Services, Aster Cognitive Cloud shall establish operational, legal, security, privacy, finance, and compliance reviewers with documented decision rights. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, conne...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        },
+        {
+          "chunkIndex": 16,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4204,
+          "snippet": "ster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 7. Customer Responsibilities For Cloud AI Model Services, Aster Cognitive Cloud shall identify required approvals, access provisioning, data-quality responsibilities, and evidence response timelines. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, e...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        },
+        {
+          "chunkIndex": 29,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4204,
+          "snippet": "unresolved gaps affecting independent robustness results, final RAI assessment, retention approval, data owner approval, model rollback plan must remain visible in the risk register until accepted by Customer. Clause 16 | Area: Service Levels | Customer: Praxis Knowledge Services | Provider: Aster Cognitive Cloud | Evidence cadence: onboarding and annual refresh 17. Service Credits For Cloud AI Model Services, Aster Cognitive Cloud shall state credits do not replace corrective actions, regulatory duties, or term...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        },
+        {
+          "chunkIndex": 31,
+          "documentId": "fixture-06_cloud_ai_model_services_statement_of_work.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-06",
+          "score": 0.4204,
+          "snippet": "ivacy, continuity, integration, and reporting tests before production acceptance. The obligation applies to private assistant, retrieval, document intelligence, policy question answering, meeting summaries, and compliance evidence extraction and to all records concerning retrieval indexes, prompts, responses, model gateways, embeddings, connectors, human review queues, and safety logs. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for acceptance testing. - A...",
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        }
+      ],
+      "fixtureDocumentsUsed": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "06_cloud_ai_model_services_statement_of_work.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "Cloud AI Model Services Statement Of Work"
+        }
+      ],
+      "indexedChunkCount": 162,
+      "missingEvidenceSignals": [
+        "independent robustness results",
+        "final RAI assessment",
+        "retention approval",
+        "data owner approval",
+        "model rollback plan",
+        "signed DPA",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "subprocessor register",
+        "business continuity or exit evidence",
+        "Business owner is not identified.",
+        "Jurisdiction or geography is missing.",
+        "Privacy/data governance is applicable but DPA evidence was not detected.",
+        "ESG, HSE And BCM applicability needs confirmation."
+      ],
+      "provider": "local-fallback",
+      "qdrantConfigured": false,
+      "retrievedMatchCount": 8
+    },
+    "required_actions": [
+      "Assign the accountable business unit or requester before approval.",
+      "Confirm the operating geography and regulatory perimeter.",
+      "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+      "Ask the domain owner whether esg, hse and bcm obligations apply.",
+      "Require independent robustness and prompt-injection test results before AI service approval.",
+      "Require final Responsible AI assessment and documented human oversight before launch.",
+      "Require retention schedule and deletion assistance evidence.",
+      "Require data owner approval for source data, retention, retrieval scope, and monitoring.",
+      "Require model rollback plan, versioning evidence, and incident-response owner.",
+      "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+      "Require cross-border transfer mechanism and hosting/support region confirmation.",
+      "Require current subprocessor register and change-notification terms.",
+      "Require BCP/DR and exit assistance evidence for critical workflows.",
+      "Resolve evidence gap: Business owner is not identified."
+    ],
+    "reviewer_questions": [
+      "Has any analytics data been used for model improvement or service training?",
+      "Does the vendor use prompts, tickets, or submitted records for model improvement?"
+    ],
+    "risk_level": "high",
+    "summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
+  },
+  "run_id": "fixture-06_cloud_ai_model_services_statement_of_work",
+  "status": "success",
+  "trace_id": "trace-fixture-06_cloud_ai_model_services_statement_of_work-d55e884b",
+  "use_case_id": "21"
+}

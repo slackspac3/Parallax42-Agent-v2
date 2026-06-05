@@ -110,6 +110,10 @@ The orchestrator sequence is:
 
 The trace is deliberately non-linear. It includes delegation, evidence retry or fallback, critique, validation, escalation, shared context updates, and final synthesis.
 
+Fixture contract intelligence is part of the same flow, not a separate shortcut. If `input.documents[]` references one of the generated PDFs under `test-fixtures/compliance-documents/`, `app/fixture_documents.py` safely resolves the manifest-listed file, extracts generated text streams or falls back to the expected profile metadata, converts that material into evidence, and then passes it through the evidence memory and specialist council. The output adds `fixture_document_analysis` with documents used, detected domain, extraction status, profile match, matched risk domains, and matched missing evidence. The trace records `Evidence Retrieval Agent -> ingest_fixture_document` before retrieval. This supports the synthetic fixture demo only; arbitrary scanned-PDF OCR is not claimed.
+
+The Node product runtime mirrors the fixture manifest through `lib/fixtureDocuments.js` and `/api/fixture-documents/lookup`, so the cockpit can recognize uploaded generated PDFs by filename, mark them as fixture-profile evidence, index citation-safe metadata/text, and update the chat case draft with supplier/provider, service summary, risk domains, and missing evidence signals. Browser state still receives no provider secrets and no raw embeddings.
+
 ## 5. Final Decision Authority
 
 The system separates advisory intelligence from approval authority:

@@ -1,0 +1,16 @@
+{
+  "run_id": "fixture-cloud-ai-sow",
+  "use_case_id": "21",
+  "input": {
+    "query": "Can we launch this cloud AI model SOW for document intelligence? The source pack is messy; focus on model governance, retrieval quality, retention, and human review.",
+    "documents": [
+      {
+        "path": "test-fixtures/compliance-documents/06_cloud_ai_model_services_statement_of_work.pdf"
+      }
+    ]
+  },
+  "options": {
+    "sample_mode": true,
+    "max_iterations": 3
+  }
+}

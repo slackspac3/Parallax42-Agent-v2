@@ -1,0 +1,16 @@
+{
+  "run_id": "fixture-managed-integration",
+  "use_case_id": "21",
+  "input": {
+    "query": "We want this managed integration partner live across ERP, HRIS, CRM and ServiceNow. Privileged access and release signoff are not clear.",
+    "documents": [
+      {
+        "filename": "04_managed_platform_integration_services_agreement.pdf"
+      }
+    ]
+  },
+  "options": {
+    "sample_mode": true,
+    "max_iterations": 3
+  }
+}

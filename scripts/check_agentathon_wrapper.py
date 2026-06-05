@@ -33,6 +33,13 @@ from app.evidence_memory import (  # noqa: E402
     chunks_from_evidence_items,
     get_evidence_memory_provider,
 )
+from app.fixture_documents import (  # noqa: E402
+    FixtureDocumentError,
+    extractFixtureDocument,
+    getFixtureExpectedProfile,
+    listSupportedFixtureDocuments,
+    safeResolveFixturePath,
+)
 from app.learning_memory import LocalLearningMemory, load_seed_artifacts, summarize_learning_signals  # noqa: E402
 from app.schemas import AgentathonRunRequest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -605,6 +612,62 @@ def check_learning_memory_components() -> None:
         assert ai_summary["browserEmbeddingsRetained"] is False
 
 
+def check_fixture_document_components() -> None:
+    documents = listSupportedFixtureDocuments()
+    assert len(documents) == 6, "expected six generated fixture PDFs"
+    saas = getFixtureExpectedProfile("01_enterprise_saas_master_services_agreement.pdf")
+    assert saas and saas["domain"] == "saas"
+    resolved = safeResolveFixturePath("01_enterprise_saas_master_services_agreement.pdf")
+    assert resolved.name == "01_enterprise_saas_master_services_agreement.pdf"
+    try:
+        safeResolveFixturePath("../metadata.json")
+    except FixtureDocumentError:
+        pass
+    else:
+        raise AssertionError("path traversal fixture lookup should be rejected")
+    try:
+        safeResolveFixturePath("https://vercel.com/dashboard/example")
+    except FixtureDocumentError:
+        pass
+    else:
+        raise AssertionError("hosted dashboard URL should be rejected as fixture path")
+    extracted = extractFixtureDocument("03_ai_accelerator_chip_import_export_control_agreement.pdf")
+    assert extracted["extractionStatus"] in {"text_extracted", "metadata_fallback"}
+    text = json.dumps(extracted).lower()
+    assert "export" in text and "end-use" in text
+
+
+def check_fixture_run_behavior() -> None:
+    payload = {
+        "run_id": "unit-fixture-cloud-ai",
+        "use_case_id": "21",
+        "input": {
+            "query": "Can we approve this? The prompt is vague, use the uploaded fixture.",
+            "documents": [{"filename": "06_cloud_ai_model_services_statement_of_work.pdf"}],
+        },
+        "options": {"sample_mode": True, "max_iterations": 3},
+    }
+    with patched_env(SAMPLE_MODE="false", REQUIRE_COMPASS="false", LOG_DIR="./logs", OPENAI_API_KEY=None, OPENAI_BASE_URL=None, P42_VECTOR_STORE_PROVIDER="local", QDRANT_URL=None, QDRANT_API_KEY=None, AGENT_RUNTIME="custom", CREWAI_ENABLE_LIVE_LLM="0"):
+        response = run_payload(payload)
+    assert_base_response(response)
+    output = response["output"]
+    fixture_analysis = output.get("fixture_document_analysis")
+    assert isinstance(fixture_analysis, dict) and fixture_analysis["documents_used"], "missing fixture document analysis"
+    assert fixture_analysis["detected_domain"] == "ai"
+    assert "ingest_fixture_document" in event_actions(response)
+    assert output["rag_evidence_memory"]["provider"] == "local-fallback"
+    assert output["rag_evidence_memory"]["browserEmbeddingsRetained"] is False
+    assert any("Aster Cognitive Cloud" in json.dumps(value) for value in [output, response.get("agent_trace", [])])
+    assert_no_raw_vectors(response)
+
+    unknown_payload = copy.deepcopy(payload)
+    unknown_payload["run_id"] = "unit-fixture-unknown"
+    unknown_payload["input"]["documents"] = [{"filename": "not_a_supported_fixture.pdf"}]
+    response = run_payload(unknown_payload)
+    assert_base_response(response)
+    assert response["output"]["fixture_document_analysis"]["documents_used"] == []
+
+
 def check_qdrant_smoke_skip() -> None:
     env = os.environ.copy()
     env.pop("QDRANT_URL", None)
@@ -644,6 +707,8 @@ def main() -> int:
     check_compass_probe_endpoint()
     check_evidence_memory_components()
     check_learning_memory_components()
+    check_fixture_document_components()
+    check_fixture_run_behavior()
     check_qdrant_smoke_skip()
     responses = check_sample_runs()
     check_trace_collaboration(responses[0])

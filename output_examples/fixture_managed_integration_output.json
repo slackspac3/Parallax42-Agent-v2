@@ -1,0 +1,1744 @@
+{
+  "agent_trace": [
+    {
+      "action": "receive_case",
+      "agent_name": "Intake Agent",
+      "confidence": 0.86,
+      "input_summary": "We want this managed integration partner live across ERP, HRIS, CRM and ServiceNow. Privileged access and release signoff are not clear.",
+      "memory_key": "caseFacts",
+      "output_summary": "Received evaluator request and started case fact extraction.",
+      "payload": {
+        "sample_mode": true,
+        "use_case_id": "21"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "success",
+      "target_agent": "Intake Agent",
+      "timestamp": "2026-06-05T06:23:41.208376Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "extract_case_facts",
+      "agent_name": "Intake Agent",
+      "confidence": 0.72,
+      "input_summary": "Evaluator input plus normalized Node case.",
+      "memory_key": "caseFacts",
+      "output_summary": "Extracted supplier=Submitted compliance case, geography=missing, missing facts=2.",
+      "payload": {
+        "caseFacts": {
+          "aiRiskSignal": "none",
+          "aiUse": "",
+          "dataCategories": [
+            "customer support data",
+            "supplier or finance workflow data",
+            "export-control hardware and support records",
+            "audience and marketing analytics data"
+          ],
+          "evidenceReferences": [
+            "fixture-04_managed_platform_integration_services_agreement.pdf",
+            "FIXTURE-04"
+          ],
+          "fixtureDomain": "integration",
+          "geography": "",
+          "integrations": [],
+          "owner": "",
+          "riskSignals": [
+            "privileged-access",
+            "integration-risk",
+            "finance-controls",
+            "data-protection",
+            "continuity",
+            "secrets-management"
+          ],
+          "supplier": "Submitted compliance case",
+          "workflow": "We want this managed integration partner live across ERP, HRIS, CRM and ServiceNow. Privileged access and release signoff are not clear."
+        },
+        "missing_case_facts": [
+          "owner",
+          "geography"
+        ]
+      },
+      "retry_count": 0,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "needs_revision",
+      "target_agent": "Evidence Retrieval Agent",
+      "timestamp": "2026-06-05T06:23:41.322034Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "delegate_evidence_search",
+      "agent_name": "Intake Agent",
+      "confidence": 0.87,
+      "input_summary": "Case facts, evidence references, risk signals, and missing facts.",
+      "memory_key": "evidenceMatches",
+      "output_summary": "Delegated evidence retrieval for privacy, security, AI governance, continuity, and precedent context.",
+      "payload": {},
+      "retry_count": 0,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "success",
+      "target_agent": "Evidence Retrieval Agent",
+      "timestamp": "2026-06-05T06:23:41.328960Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "ingest_fixture_document",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.86,
+      "input_summary": "Generated fixture PDF reference supplied in evaluator input.",
+      "memory_key": "fixtureDocumentAnalysis",
+      "output_summary": "Ingested 1 fixture document(s); domain=integration; extraction=text_extracted.",
+      "payload": {
+        "detected_domain": "integration",
+        "documents_used": [
+          {
+            "extractionStatus": "text_extracted",
+            "filename": "04_managed_platform_integration_services_agreement.pdf",
+            "pages": 29,
+            "source": "fixture_pdf",
+            "title": "Managed Platform Integration Services Agreement"
+          }
+        ],
+        "expected_profile_match": true,
+        "extraction_status": "text_extracted",
+        "matched_missing_evidence": [
+          "privileged access approval",
+          "data processing addendum",
+          "continuity evidence",
+          "release-control signoff",
+          "secrets rotation plan"
+        ],
+        "matched_risk_domains": [
+          "privileged-access",
+          "integration-risk",
+          "finance-controls",
+          "data-protection",
+          "continuity",
+          "secrets-management"
+        ],
+        "rejected": [],
+        "target_agent": "Security Specialist"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "success",
+      "target_agent": "Security Specialist",
+      "timestamp": "2026-06-05T06:23:41.336212Z",
+      "tool_used": "fixture_pdf_text_extractor",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "retrieve_evidence",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.52,
+      "input_summary": "Supplied request evidence, Node citations, local sample snippets, and case-scoped evidence memory.",
+      "memory_key": "evidenceMatches",
+      "output_summary": "Retrieved 9 evidence match(es); memory provider=local-fallback; sufficiency=weak.",
+      "payload": {
+        "localEvidenceArtifacts": [
+          "live-health.json",
+          "benchmark-report.json",
+          "readiness.json",
+          "sample-agent-run.json"
+        ],
+        "match_count": 9,
+        "missingEvidence": [
+          "privileged access approval",
+          "data processing addendum",
+          "continuity evidence",
+          "release-control signoff",
+          "secrets rotation plan",
+          "signed DPA",
+          "retention and deletion evidence",
+          "cross-border transfer mechanism",
+          "subprocessor register",
+          "business continuity or exit evidence",
+          "Business owner is not identified.",
+          "Jurisdiction or geography is missing.",
+          "ESG, HSE And BCM applicability needs confirmation."
+        ],
+        "retrievalContext": {
+          "browserEmbeddingsRetained": false,
+          "collection": "p42_compliance_evidence",
+          "durable": false,
+          "evidenceMatches": [
+            {
+              "chunkIndex": 26,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4535,
+              "snippet": "books, field mappings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for subcontracting. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontracting | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Eviden...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            },
+            {
+              "chunkIndex": 10,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4414,
+              "snippet": "appings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for definitions and interpretation. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 01 | Area: Definitions And Interpretation | Customer: Summit Core Enterprises | Provider: OmniBridge Ser...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            },
+            {
+              "chunkIndex": 34,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4414,
+              "snippet": "nd reviewer for documentation. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 19 | Area: Documentation | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Evidence cadence: onboarding and annual refresh 20. Records Retention For Managed Platform Integration Services, OmniBridge Services LLC shall ...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            },
+            {
+              "chunkIndex": 22,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4294,
+              "snippet": "elease pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for policies and standards. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Evidence cadence: ...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            },
+            {
+              "chunkIndex": 80,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4173,
+              "snippet": "inconsistent with finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, the control is treated as not operating for approval purposes. CTRL-17 | Control: Data Transfer | Evidence: approved locations, transfer safeguards, encryption, access controls, and destination inventory | Blocker if missing: yes for high-risk or regulated processing CTRL-18 Subprocessor Oversight The parties assign subprocessor oversight as a control family for seg...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            },
+            {
+              "chunkIndex": 108,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4173,
+              "snippet": "rial subprocessor change occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting privileged access approval, data processing adden...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            },
+            {
+              "chunkIndex": 35,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4053,
+              "snippet": "ords concerning integration middleware, secrets, ERP workflows, privileged accounts, runbooks, field mappings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for records retention. Synthetic test fixture - Page 7 of 29 Managed Platform Integration Services Agreement - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must ...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            },
+            {
+              "chunkIndex": 107,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4053,
+              "snippet": "nch occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting privileged access approval, data processing addendum, continuity evide...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            }
+          ],
+          "fixtureDocumentsUsed": [
+            {
+              "extractionStatus": "text_extracted",
+              "filename": "04_managed_platform_integration_services_agreement.pdf",
+              "pages": 29,
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            }
+          ],
+          "indexedChunkCount": 162,
+          "missingEvidenceSignals": [
+            "privileged access approval",
+            "data processing addendum",
+            "continuity evidence",
+            "release-control signoff",
+            "secrets rotation plan",
+            "signed DPA",
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "subprocessor register",
+            "business continuity or exit evidence",
+            "Business owner is not identified.",
+            "Jurisdiction or geography is missing.",
+            "ESG, HSE And BCM applicability needs confirmation."
+          ],
+          "provider": "local-fallback",
+          "qdrantConfigured": false,
+          "retrievedMatchCount": 8
+        }
+      },
+      "retry_count": 0,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "needs_revision",
+      "target_agent": "Privacy Specialist",
+      "timestamp": "2026-06-05T06:23:41.398933Z",
+      "tool_used": "local-fallback",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "retry_evidence_search",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.45,
+      "input_summary": "Initial evidence coverage was weak or missing key proof.",
+      "memory_key": "missingEvidence",
+      "output_summary": "Retried with privacy/security/AI/continuity keywords through local-fallback; retained only sanitized evidence metadata.",
+      "payload": {
+        "missingEvidence": [
+          "privileged access approval",
+          "data processing addendum",
+          "continuity evidence",
+          "release-control signoff",
+          "secrets rotation plan",
+          "signed DPA",
+          "retention and deletion evidence",
+          "cross-border transfer mechanism",
+          "subprocessor register",
+          "business continuity or exit evidence",
+          "Business owner is not identified.",
+          "Jurisdiction or geography is missing.",
+          "ESG, HSE And BCM applicability needs confirmation."
+        ],
+        "retrievalContext": {
+          "browserEmbeddingsRetained": false,
+          "collection": "p42_compliance_evidence",
+          "durable": false,
+          "evidenceMatches": [
+            {
+              "chunkIndex": 26,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4535,
+              "snippet": "books, field mappings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for subcontracting. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontracting | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Eviden...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            },
+            {
+              "chunkIndex": 10,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4414,
+              "snippet": "appings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for definitions and interpretation. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 01 | Area: Definitions And Interpretation | Customer: Summit Core Enterprises | Provider: OmniBridge Ser...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            },
+            {
+              "chunkIndex": 34,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4414,
+              "snippet": "nd reviewer for documentation. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 19 | Area: Documentation | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Evidence cadence: onboarding and annual refresh 20. Records Retention For Managed Platform Integration Services, OmniBridge Services LLC shall ...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            },
+            {
+              "chunkIndex": 22,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4294,
+              "snippet": "elease pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for policies and standards. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Evidence cadence: ...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            },
+            {
+              "chunkIndex": 80,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4173,
+              "snippet": "inconsistent with finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, the control is treated as not operating for approval purposes. CTRL-17 | Control: Data Transfer | Evidence: approved locations, transfer safeguards, encryption, access controls, and destination inventory | Blocker if missing: yes for high-risk or regulated processing CTRL-18 Subprocessor Oversight The parties assign subprocessor oversight as a control family for seg...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            },
+            {
+              "chunkIndex": 108,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4173,
+              "snippet": "rial subprocessor change occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting privileged access approval, data processing adden...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            },
+            {
+              "chunkIndex": 35,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4053,
+              "snippet": "ords concerning integration middleware, secrets, ERP workflows, privileged accounts, runbooks, field mappings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for records retention. Synthetic test fixture - Page 7 of 29 Managed Platform Integration Services Agreement - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must ...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            },
+            {
+              "chunkIndex": 107,
+              "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security"
+              ],
+              "evidence_id": "FIXTURE-04",
+              "score": 0.4053,
+              "snippet": "nch occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting privileged access approval, data processing addendum, continuity evide...",
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            }
+          ],
+          "fixtureDocumentsUsed": [
+            {
+              "extractionStatus": "text_extracted",
+              "filename": "04_managed_platform_integration_services_agreement.pdf",
+              "pages": 29,
+              "source": "fixture_pdf",
+              "title": "Managed Platform Integration Services Agreement"
+            }
+          ],
+          "indexedChunkCount": 162,
+          "missingEvidenceSignals": [
+            "privileged access approval",
+            "data processing addendum",
+            "continuity evidence",
+            "release-control signoff",
+            "secrets rotation plan",
+            "signed DPA",
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "subprocessor register",
+            "business continuity or exit evidence",
+            "Business owner is not identified.",
+            "Jurisdiction or geography is missing.",
+            "ESG, HSE And BCM applicability needs confirmation."
+          ],
+          "provider": "local-fallback",
+          "qdrantConfigured": false,
+          "retrievedMatchCount": 8
+        }
+      },
+      "retry_count": 1,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "retry",
+      "target_agent": "Privacy Specialist",
+      "timestamp": "2026-06-05T06:23:41.413949Z",
+      "tool_used": "local-fallback",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "critique_privacy_gap",
+      "agent_name": "Privacy Specialist",
+      "confidence": 0.8,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "Privacy proof incomplete: signed DPA, retention and deletion evidence, cross-border transfer mechanism, subprocessor register.",
+      "payload": {
+        "requiredActions": [
+          "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+          "Require retention schedule and deletion assistance evidence.",
+          "Require cross-border transfer mechanism and hosting/support region confirmation.",
+          "Require current subprocessor register and change-notification terms."
+        ],
+        "severity": "high"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "needs_revision",
+      "target_agent": "Security Specialist",
+      "timestamp": "2026-06-05T06:23:41.427067Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "critique_security_gap",
+      "agent_name": "Security Specialist",
+      "confidence": 0.8,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "Security or continuity proof incomplete: privileged access approval, continuity evidence, release-control signoff, secrets rotation plan.",
+      "payload": {
+        "requiredActions": [
+          "Require privileged access approval, named accounts, time-boxed elevation, and session logging evidence.",
+          "Require BCP/DR and exit assistance evidence for critical workflows.",
+          "Require release-control signoff, rollback evidence, and post-release monitoring before production change.",
+          "Require secrets rotation plan, vault ownership, environment separation, and exit rotation evidence.",
+          "Require BCP/DR and exit assistance evidence for critical workflows."
+        ],
+        "severity": "medium"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "needs_revision",
+      "target_agent": "Responsible AI Specialist",
+      "timestamp": "2026-06-05T06:23:41.434278Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "validate_evidence",
+      "agent_name": "Responsible AI Specialist",
+      "confidence": 0.86,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "No material AI/model-training signal detected beyond standard human-review boundary.",
+      "payload": {
+        "requiredActions": [],
+        "severity": "low"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "success",
+      "target_agent": "Learning & Precedent Specialist",
+      "timestamp": "2026-06-05T06:23:41.440122Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "retrieve_precedent",
+      "agent_name": "Learning & Precedent Specialist",
+      "confidence": 0.62,
+      "input_summary": "Case facts, missing evidence, and specialist challenges.",
+      "memory_key": "learningContext",
+      "output_summary": "Matched precedent pattern: general incomplete evidence -> human review controls; similar learning cases=5, top pattern=Cross-border SaaS missing retention schedule.",
+      "payload": {
+        "learningContext": {
+          "advisoryOnly": true,
+          "browserEmbeddingsRetained": false,
+          "controlSuggestions": [
+            "Require retention schedule and deletion assistance evidence.",
+            "Require cross-border transfer mechanism and support-region confirmation.",
+            "Add reviewer question: Are any support teams accessing records outside approved regions?",
+            "Require signed model-training exclusion for patient or customer data before production.",
+            "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+            "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+            "Require current subprocessor register before approval.",
+            "Require 30-day subprocessor change notification and right to object."
+          ],
+          "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+          "provider": "local-jsonl",
+          "qdrantConfigured": false,
+          "repeatedEvidenceGaps": [
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "support region confirmation",
+            "model-training exclusion",
+            "DPA amendment",
+            "subprocessor register",
+            "signed DPA",
+            "human oversight plan"
+          ],
+          "similarCases": [
+            {
+              "addedControls": [
+                "Require retention schedule and deletion assistance evidence.",
+                "Require cross-border transfer mechanism and support-region confirmation.",
+                "Add reviewer question: Are any support teams accessing records outside approved regions?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-cross-border-001",
+              "domains": [
+                "privacy",
+                "saas",
+                "cross-border"
+              ],
+              "finalOutcome": "conditional approval after retention schedule",
+              "memoryId": "learn-cross-border-retention-001",
+              "missingEvidence": [
+                "retention and deletion evidence",
+                "cross-border transfer mechanism",
+                "support region confirmation"
+              ],
+              "originalDecision": "needs_more_information",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.3232,
+              "title": "Cross-border SaaS missing retention schedule",
+              "type": "evidence_quality_note"
+            },
+            {
+              "addedControls": [
+                "Require signed model-training exclusion for patient or customer data before production.",
+                "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+                "Add reviewer question: Has any analytics data been used for model improvement or service training?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-healthcare-001",
+              "domains": [
+                "privacy",
+                "ai-governance",
+                "healthcare"
+              ],
+              "finalOutcome": "conditional approval after DPA amendment",
+              "memoryId": "learn-healthcare-training-001",
+              "missingEvidence": [
+                "model-training exclusion",
+                "DPA amendment"
+              ],
+              "originalDecision": "conditional_approval",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.3097,
+              "title": "Healthcare analytics vendor missing model-training exclusion",
+              "type": "case_outcome"
+            },
+            {
+              "addedControls": [
+                "Require current subprocessor register before approval.",
+                "Require 30-day subprocessor change notification and right to object.",
+                "Add reviewer question: Are support and hosting locations consistent with transfer assessment?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-saas-001",
+              "domains": [
+                "privacy",
+                "saas",
+                "third-party-risk"
+              ],
+              "finalOutcome": "conditional approval with subprocessor disclosure",
+              "memoryId": "learn-saas-subprocessors-001",
+              "missingEvidence": [
+                "subprocessor register",
+                "cross-border transfer mechanism"
+              ],
+              "originalDecision": "needs_more_information",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.2692,
+              "title": "SaaS vendor missing subprocessor list",
+              "type": "control_pattern"
+            },
+            {
+              "addedControls": [
+                "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
+                "Require signed model-training exclusion and human oversight plan before reconsideration.",
+                "Add reviewer question: Does the vendor use prompts, tickets, or submitted records for model improvement?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-ai-001",
+              "domains": [
+                "ai-governance",
+                "privacy",
+                "customer-data"
+              ],
+              "finalOutcome": "rejected and escalated",
+              "memoryId": "learn-ai-training-reject-001",
+              "missingEvidence": [
+                "model-training exclusion",
+                "signed DPA",
+                "human oversight plan"
+              ],
+              "originalDecision": "conditional_approval",
+              "reviewerDecision": "reject",
+              "score": 0.2557,
+              "title": "AI vendor permitted customer-data training",
+              "type": "decision_override"
+            },
+            {
+              "addedControls": [
+                "Keep annual SOC 2 and ISO evidence refresh on reviewer calendar.",
+                "Monitor subprocessor changes and retention exceptions quarterly.",
+                "Confirm accountable human owner before operational approval."
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-complete-001",
+              "domains": [
+                "privacy",
+                "security",
+                "third-party-risk"
+              ],
+              "finalOutcome": "approval with monitoring",
+              "memoryId": "learn-complete-package-001",
+              "missingEvidence": [],
+              "originalDecision": "approve",
+              "reviewerDecision": "approve",
+              "score": 0.2422,
+              "title": "Complete vendor package approved with monitoring",
+              "type": "case_outcome"
+            }
+          ],
+          "similar_cases_found": 5,
+          "topPattern": "Cross-border SaaS missing retention schedule"
+        },
+        "precedent": {
+          "advisoryOnly": true,
+          "confidence": 0.62,
+          "pattern": "general incomplete evidence -> human review controls",
+          "recommendation": "conditional_human_review"
+        }
+      },
+      "retry_count": 0,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "success",
+      "target_agent": "Deterministic Decision Owner",
+      "timestamp": "2026-06-05T06:23:41.449631Z",
+      "tool_used": "local-jsonl",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "compass_advisory_unavailable",
+      "agent_name": "Compass Advisory Critic",
+      "confidence": 0.7,
+      "input_summary": "Sample mode requested.",
+      "memory_key": "compassAdvisory",
+      "output_summary": "Skipped live Compass call; deterministic local council remains active.",
+      "payload": {},
+      "retry_count": 0,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "fallback_used",
+      "target_agent": "Deterministic Decision Owner",
+      "timestamp": "2026-06-05T06:23:41.459772Z",
+      "tool_used": "sample_mode",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "revise_required_controls",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.92,
+      "input_summary": "Specialist challenges, precedent pattern, and Compass advisory status.",
+      "memory_key": "requiredActions",
+      "output_summary": "Required controls revised to 14 action(s); final risk=high.",
+      "payload": {
+        "llm_advisory_only": true,
+        "required_actions": [
+          "Assign the accountable business unit or requester before approval.",
+          "Confirm the operating geography and regulatory perimeter.",
+          "Ask the domain owner whether esg, hse and bcm obligations apply.",
+          "Require privileged access approval, named accounts, time-boxed elevation, and session logging evidence.",
+          "Require executed data processing addendum for integration and support data flows.",
+          "Require BCP/DR and exit assistance evidence for critical workflows.",
+          "Require release-control signoff, rollback evidence, and post-release monitoring before production change.",
+          "Require secrets rotation plan, vault ownership, environment separation, and exit rotation evidence.",
+          "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+          "Require retention schedule and deletion assistance evidence.",
+          "Require cross-border transfer mechanism and hosting/support region confirmation.",
+          "Require current subprocessor register and change-notification terms.",
+          "Resolve evidence gap: Business owner is not identified.",
+          "Resolve evidence gap: Jurisdiction or geography is missing."
+        ],
+        "specialist_challenge_count": 2
+      },
+      "retry_count": 0,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "needs_revision",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:41.464417Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "escalate_human_review",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.94,
+      "input_summary": "Unresolved high-risk gaps or insufficient proof remained after council review.",
+      "memory_key": "humanReviewRequired",
+      "output_summary": "Escalated to accountable human reviewer; no autonomous approval permitted.",
+      "payload": {
+        "decision": "conditional_approval",
+        "risk_level": "high"
+      },
+      "retry_count": 1,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "escalated",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:41.469548Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "apply_deterministic_policy",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.95,
+      "input_summary": "Node deterministic result, specialist critiques, precedent, and advisory-only Compass output.",
+      "memory_key": "decisionDraft",
+      "output_summary": "Final decision sealed as conditional_approval by deterministic policy owner.",
+      "payload": {
+        "compass_status": "skipped_sample_mode",
+        "final_owner": "Deterministic Decision Owner",
+        "live_advisory_runtime": "custom",
+        "llm_advisory_only": true
+      },
+      "retry_count": 0,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "success",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:41.474197Z",
+      "tool_used": "deterministic_rules_engine",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "package_audit_trace",
+      "agent_name": "Audit Packager",
+      "confidence": 0.93,
+      "input_summary": "Decision, evidence, missing proof, council trace, and human review boundary.",
+      "memory_key": "finalDecision",
+      "output_summary": "Packaged judge-readable audit trace with evidence, specialist challenges, and final owner.",
+      "payload": {
+        "log_file": "logs/trace-fixture-04_managed_platform_integration_services_agreement.jsonl",
+        "trace_events": 15
+      },
+      "retry_count": 0,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "success",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:41.478868Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    },
+    {
+      "action": "finalize_response",
+      "agent_name": "Audit Packager",
+      "confidence": 0.94,
+      "input_summary": "Final packaged decision and trace summary.",
+      "memory_key": "finalDecision",
+      "output_summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+      "payload": {
+        "decision": "conditional_approval",
+        "risk_level": "high"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-04_managed_platform_integration_services_agreement",
+      "status": "success",
+      "target_agent": "",
+      "timestamp": "2026-06-05T06:23:41.483274Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191"
+    }
+  ],
+  "agents": [
+    {
+      "name": "Intake Agent",
+      "role": "Extracts case facts, missing facts, and delegates evidence needs."
+    },
+    {
+      "name": "Evidence Retrieval Agent",
+      "role": "Searches supplied and local evidence signals, retries weak coverage, and reports sufficiency."
+    },
+    {
+      "name": "Privacy Specialist",
+      "role": "Reviews DPA, subprocessors, retention, transfer, data categories, and model-training exclusions."
+    },
+    {
+      "name": "Security Specialist",
+      "role": "Reviews SOC 2, ISO, access control, encryption, logging, BCP, and technical assurance evidence."
+    },
+    {
+      "name": "Responsible AI Specialist",
+      "role": "Challenges AI use, model training, automation, oversight, and transparency risk."
+    },
+    {
+      "name": "Learning & Precedent Specialist",
+      "role": "Looks up deterministic synthetic precedent patterns as advisory memory."
+    },
+    {
+      "name": "Compass Advisory Critic",
+      "role": "Runs live Compass advisory review when configured; never owns the final decision."
+    },
+    {
+      "name": "Final Advisory Reviewer",
+      "role": "Optional live CrewAI advisory reviewer when AGENT_RUNTIME=crewai_live; advisory only."
+    },
+    {
+      "name": "Deterministic Decision Owner",
+      "role": "Applies deterministic policy and remains final decision authority."
+    },
+    {
+      "name": "Audit Packager",
+      "role": "Packages the decision, evidence, collaboration trace, and review artifacts."
+    }
+  ],
+  "execution_time_seconds": 0.301,
+  "log_file": "logs/fixture_managed_integration_trace.jsonl",
+  "output": {
+    "artifacts": [
+      {
+        "path": "logs/trace-fixture-04_managed_platform_integration_services_agreement.jsonl",
+        "type": "trace_log"
+      },
+      {
+        "source": "deterministic_node_bridge_plus_python_council",
+        "type": "decision_payload"
+      }
+    ],
+    "collaboration_summary": {
+      "delegated_tasks": [
+        "Intake Agent -> Evidence Retrieval Agent: evidence needs and missing facts"
+      ],
+      "escalations": [
+        "Deterministic Decision Owner escalated unresolved high-risk gaps to human review"
+      ],
+      "final_decision_owner": "Deterministic Decision Owner",
+      "retries": [
+        "Evidence Retrieval Agent refined search with domain keywords using local-fallback"
+      ],
+      "shared_context_updates": [
+        "case facts updated",
+        "fixture document analysis updated",
+        "evidence matches and gaps updated",
+        "retrieval context updated",
+        "specialist finding added: Privacy Specialist",
+        "specialist finding added: Security Specialist",
+        "specialist finding added: Responsible AI Specialist",
+        "synthetic precedent added",
+        "governed learning memory updated",
+        "Compass advisory skipped in sample mode",
+        "required action added"
+      ],
+      "specialist_challenges": [
+        "Privacy proof incomplete: signed DPA, retention and deletion evidence, cross-border transfer mechanism, subprocessor register.",
+        "Security or continuity proof incomplete: privileged access approval, continuity evidence, release-control signoff, secrets rotation plan."
+      ],
+      "validations": [
+        "No material AI/model-training signal detected beyond standard human-review boundary."
+      ]
+    },
+    "decision": "conditional_approval",
+    "decision_authority": {
+      "final_owner": "Deterministic Decision Owner",
+      "llm_advisory_only": true
+    },
+    "evidence_used": [
+      {
+        "chunkIndex": 26,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4535,
+        "snippet": "books, field mappings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for subcontracting. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontracting | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Eviden...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "chunkIndex": 10,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4414,
+        "snippet": "appings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for definitions and interpretation. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 01 | Area: Definitions And Interpretation | Customer: Summit Core Enterprises | Provider: OmniBridge Ser...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "chunkIndex": 34,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4414,
+        "snippet": "nd reviewer for documentation. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 19 | Area: Documentation | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Evidence cadence: onboarding and annual refresh 20. Records Retention For Managed Platform Integration Services, OmniBridge Services LLC shall ...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "chunkIndex": 22,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4294,
+        "snippet": "elease pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for policies and standards. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Evidence cadence: ...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "chunkIndex": 80,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4173,
+        "snippet": "inconsistent with finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, the control is treated as not operating for approval purposes. CTRL-17 | Control: Data Transfer | Evidence: approved locations, transfer safeguards, encryption, access controls, and destination inventory | Blocker if missing: yes for high-risk or regulated processing CTRL-18 Subprocessor Oversight The parties assign subprocessor oversight as a control family for seg...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "chunkIndex": 108,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4173,
+        "snippet": "rial subprocessor change occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting privileged access approval, data processing adden...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "chunkIndex": 35,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4053,
+        "snippet": "ords concerning integration middleware, secrets, ERP workflows, privileged accounts, runbooks, field mappings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for records retention. Synthetic test fixture - Page 7 of 29 Managed Platform Integration Services Agreement - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must ...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "chunkIndex": 107,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4053,
+        "snippet": "nch occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting privileged access approval, data processing addendum, continuity evide...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "evidence_id": "FIXTURE-04",
+        "snippet": "Managed Platform Integration Services Agreement Managed Platform Integration Services Agreement OmniBridge Services LLC implementation and managed operations across ERP, HRIS, CRM, ITSM, collaboration, and data platforms Synthetic legal-style test document for",
+        "source": "node-citation",
+        "title": "Managed Platform Integration Services Agreement"
+      }
+    ],
+    "executive_summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "fixture_document_analysis": {
+      "detected_domain": "integration",
+      "documents_used": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "04_managed_platform_integration_services_agreement.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        }
+      ],
+      "expected_profile_match": true,
+      "extraction_status": "text_extracted",
+      "matched_missing_evidence": [
+        "privileged access approval",
+        "data processing addendum",
+        "continuity evidence",
+        "release-control signoff",
+        "secrets rotation plan"
+      ],
+      "matched_risk_domains": [
+        "privileged-access",
+        "integration-risk",
+        "finance-controls",
+        "data-protection",
+        "continuity",
+        "secrets-management"
+      ],
+      "rejected": [],
+      "target_agent": "Security Specialist"
+    },
+    "human_review_required": true,
+    "learning_memory": {
+      "advisoryOnly": true,
+      "browserEmbeddingsRetained": false,
+      "control_suggestions": [
+        "Require retention schedule and deletion assistance evidence.",
+        "Require cross-border transfer mechanism and support-region confirmation.",
+        "Add reviewer question: Are any support teams accessing records outside approved regions?",
+        "Require signed model-training exclusion for patient or customer data before production.",
+        "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+        "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+        "Require current subprocessor register before approval.",
+        "Require 30-day subprocessor change notification and right to object."
+      ],
+      "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+      "provider": "local-jsonl",
+      "repeatedEvidenceGaps": [
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "support region confirmation",
+        "model-training exclusion",
+        "DPA amendment",
+        "subprocessor register",
+        "signed DPA",
+        "human oversight plan"
+      ],
+      "similar_cases_found": 5
+    },
+    "live_advisory": {
+      "advisoryOnly": true,
+      "agents": [],
+      "cards": [],
+      "enabled": false,
+      "final_decision_owner": "Deterministic Decision Owner",
+      "model": "gpt-4.1",
+      "runtime": "custom",
+      "status": "skipped_custom_runtime",
+      "summary": {}
+    },
+    "live_compass": {
+      "advisory": {},
+      "enabled": false,
+      "model": "gpt-5.1",
+      "status": "skipped_sample_mode"
+    },
+    "missing_evidence": [
+      "privileged access approval",
+      "data processing addendum",
+      "continuity evidence",
+      "release-control signoff",
+      "secrets rotation plan",
+      "signed DPA",
+      "retention and deletion evidence",
+      "cross-border transfer mechanism",
+      "subprocessor register",
+      "business continuity or exit evidence",
+      "Business owner is not identified.",
+      "Jurisdiction or geography is missing."
+    ],
+    "rag_evidence_memory": {
+      "browserEmbeddingsRetained": false,
+      "collection": "p42_compliance_evidence",
+      "durable": false,
+      "evidenceMatches": [
+        {
+          "chunkIndex": 26,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4535,
+          "snippet": "books, field mappings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for subcontracting. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontracting | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Eviden...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        },
+        {
+          "chunkIndex": 10,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4414,
+          "snippet": "appings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for definitions and interpretation. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 01 | Area: Definitions And Interpretation | Customer: Summit Core Enterprises | Provider: OmniBridge Ser...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        },
+        {
+          "chunkIndex": 34,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4414,
+          "snippet": "nd reviewer for documentation. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 19 | Area: Documentation | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Evidence cadence: onboarding and annual refresh 20. Records Retention For Managed Platform Integration Services, OmniBridge Services LLC shall ...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        },
+        {
+          "chunkIndex": 22,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4294,
+          "snippet": "elease pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for policies and standards. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Evidence cadence: ...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        },
+        {
+          "chunkIndex": 80,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4173,
+          "snippet": "inconsistent with finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, the control is treated as not operating for approval purposes. CTRL-17 | Control: Data Transfer | Evidence: approved locations, transfer safeguards, encryption, access controls, and destination inventory | Blocker if missing: yes for high-risk or regulated processing CTRL-18 Subprocessor Oversight The parties assign subprocessor oversight as a control family for seg...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        },
+        {
+          "chunkIndex": 108,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4173,
+          "snippet": "rial subprocessor change occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting privileged access approval, data processing adden...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        },
+        {
+          "chunkIndex": 35,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4053,
+          "snippet": "ords concerning integration middleware, secrets, ERP workflows, privileged accounts, runbooks, field mappings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for records retention. Synthetic test fixture - Page 7 of 29 Managed Platform Integration Services Agreement - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must ...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        },
+        {
+          "chunkIndex": 107,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4053,
+          "snippet": "nch occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting privileged access approval, data processing addendum, continuity evide...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        }
+      ],
+      "fixtureDocumentsUsed": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "04_managed_platform_integration_services_agreement.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        }
+      ],
+      "indexedChunkCount": 162,
+      "missingEvidenceSignals": [
+        "privileged access approval",
+        "data processing addendum",
+        "continuity evidence",
+        "release-control signoff",
+        "secrets rotation plan",
+        "signed DPA",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "subprocessor register",
+        "business continuity or exit evidence",
+        "Business owner is not identified.",
+        "Jurisdiction or geography is missing.",
+        "ESG, HSE And BCM applicability needs confirmation."
+      ],
+      "provider": "local-fallback",
+      "qdrantConfigured": false,
+      "retrievedMatchCount": 8
+    },
+    "required_actions": [
+      "Assign the accountable business unit or requester before approval.",
+      "Confirm the operating geography and regulatory perimeter.",
+      "Ask the domain owner whether esg, hse and bcm obligations apply.",
+      "Require privileged access approval, named accounts, time-boxed elevation, and session logging evidence.",
+      "Require executed data processing addendum for integration and support data flows.",
+      "Require BCP/DR and exit assistance evidence for critical workflows.",
+      "Require release-control signoff, rollback evidence, and post-release monitoring before production change.",
+      "Require secrets rotation plan, vault ownership, environment separation, and exit rotation evidence.",
+      "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+      "Require retention schedule and deletion assistance evidence.",
+      "Require cross-border transfer mechanism and hosting/support region confirmation.",
+      "Require current subprocessor register and change-notification terms.",
+      "Resolve evidence gap: Business owner is not identified.",
+      "Resolve evidence gap: Jurisdiction or geography is missing."
+    ],
+    "reviewer_questions": [
+      "Are any support teams accessing records outside approved regions?",
+      "Has any analytics data been used for model improvement or service training?"
+    ],
+    "risk_level": "high",
+    "summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
+  },
+  "result": {
+    "artifacts": [
+      {
+        "path": "logs/trace-fixture-04_managed_platform_integration_services_agreement.jsonl",
+        "type": "trace_log"
+      },
+      {
+        "source": "deterministic_node_bridge_plus_python_council",
+        "type": "decision_payload"
+      }
+    ],
+    "collaboration_summary": {
+      "delegated_tasks": [
+        "Intake Agent -> Evidence Retrieval Agent: evidence needs and missing facts"
+      ],
+      "escalations": [
+        "Deterministic Decision Owner escalated unresolved high-risk gaps to human review"
+      ],
+      "final_decision_owner": "Deterministic Decision Owner",
+      "retries": [
+        "Evidence Retrieval Agent refined search with domain keywords using local-fallback"
+      ],
+      "shared_context_updates": [
+        "case facts updated",
+        "fixture document analysis updated",
+        "evidence matches and gaps updated",
+        "retrieval context updated",
+        "specialist finding added: Privacy Specialist",
+        "specialist finding added: Security Specialist",
+        "specialist finding added: Responsible AI Specialist",
+        "synthetic precedent added",
+        "governed learning memory updated",
+        "Compass advisory skipped in sample mode",
+        "required action added"
+      ],
+      "specialist_challenges": [
+        "Privacy proof incomplete: signed DPA, retention and deletion evidence, cross-border transfer mechanism, subprocessor register.",
+        "Security or continuity proof incomplete: privileged access approval, continuity evidence, release-control signoff, secrets rotation plan."
+      ],
+      "validations": [
+        "No material AI/model-training signal detected beyond standard human-review boundary."
+      ]
+    },
+    "decision": "conditional_approval",
+    "decision_authority": {
+      "final_owner": "Deterministic Decision Owner",
+      "llm_advisory_only": true
+    },
+    "evidence_used": [
+      {
+        "chunkIndex": 26,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4535,
+        "snippet": "books, field mappings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for subcontracting. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontracting | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Eviden...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "chunkIndex": 10,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4414,
+        "snippet": "appings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for definitions and interpretation. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 01 | Area: Definitions And Interpretation | Customer: Summit Core Enterprises | Provider: OmniBridge Ser...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "chunkIndex": 34,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4414,
+        "snippet": "nd reviewer for documentation. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 19 | Area: Documentation | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Evidence cadence: onboarding and annual refresh 20. Records Retention For Managed Platform Integration Services, OmniBridge Services LLC shall ...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "chunkIndex": 22,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4294,
+        "snippet": "elease pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for policies and standards. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Evidence cadence: ...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "chunkIndex": 80,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4173,
+        "snippet": "inconsistent with finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, the control is treated as not operating for approval purposes. CTRL-17 | Control: Data Transfer | Evidence: approved locations, transfer safeguards, encryption, access controls, and destination inventory | Blocker if missing: yes for high-risk or regulated processing CTRL-18 Subprocessor Oversight The parties assign subprocessor oversight as a control family for seg...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "chunkIndex": 108,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4173,
+        "snippet": "rial subprocessor change occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting privileged access approval, data processing adden...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "chunkIndex": 35,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4053,
+        "snippet": "ords concerning integration middleware, secrets, ERP workflows, privileged accounts, runbooks, field mappings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for records retention. Synthetic test fixture - Page 7 of 29 Managed Platform Integration Services Agreement - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must ...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "chunkIndex": 107,
+        "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security"
+        ],
+        "evidence_id": "FIXTURE-04",
+        "score": 0.4053,
+        "snippet": "nch occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting privileged access approval, data processing addendum, continuity evide...",
+        "source": "fixture_pdf",
+        "title": "Managed Platform Integration Services Agreement"
+      },
+      {
+        "evidence_id": "FIXTURE-04",
+        "snippet": "Managed Platform Integration Services Agreement Managed Platform Integration Services Agreement OmniBridge Services LLC implementation and managed operations across ERP, HRIS, CRM, ITSM, collaboration, and data platforms Synthetic legal-style test document for",
+        "source": "node-citation",
+        "title": "Managed Platform Integration Services Agreement"
+      }
+    ],
+    "executive_summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "fixture_document_analysis": {
+      "detected_domain": "integration",
+      "documents_used": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "04_managed_platform_integration_services_agreement.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        }
+      ],
+      "expected_profile_match": true,
+      "extraction_status": "text_extracted",
+      "matched_missing_evidence": [
+        "privileged access approval",
+        "data processing addendum",
+        "continuity evidence",
+        "release-control signoff",
+        "secrets rotation plan"
+      ],
+      "matched_risk_domains": [
+        "privileged-access",
+        "integration-risk",
+        "finance-controls",
+        "data-protection",
+        "continuity",
+        "secrets-management"
+      ],
+      "rejected": [],
+      "target_agent": "Security Specialist"
+    },
+    "human_review_required": true,
+    "learning_memory": {
+      "advisoryOnly": true,
+      "browserEmbeddingsRetained": false,
+      "control_suggestions": [
+        "Require retention schedule and deletion assistance evidence.",
+        "Require cross-border transfer mechanism and support-region confirmation.",
+        "Add reviewer question: Are any support teams accessing records outside approved regions?",
+        "Require signed model-training exclusion for patient or customer data before production.",
+        "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+        "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+        "Require current subprocessor register before approval.",
+        "Require 30-day subprocessor change notification and right to object."
+      ],
+      "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+      "provider": "local-jsonl",
+      "repeatedEvidenceGaps": [
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "support region confirmation",
+        "model-training exclusion",
+        "DPA amendment",
+        "subprocessor register",
+        "signed DPA",
+        "human oversight plan"
+      ],
+      "similar_cases_found": 5
+    },
+    "live_advisory": {
+      "advisoryOnly": true,
+      "agents": [],
+      "cards": [],
+      "enabled": false,
+      "final_decision_owner": "Deterministic Decision Owner",
+      "model": "gpt-4.1",
+      "runtime": "custom",
+      "status": "skipped_custom_runtime",
+      "summary": {}
+    },
+    "live_compass": {
+      "advisory": {},
+      "enabled": false,
+      "model": "gpt-5.1",
+      "status": "skipped_sample_mode"
+    },
+    "missing_evidence": [
+      "privileged access approval",
+      "data processing addendum",
+      "continuity evidence",
+      "release-control signoff",
+      "secrets rotation plan",
+      "signed DPA",
+      "retention and deletion evidence",
+      "cross-border transfer mechanism",
+      "subprocessor register",
+      "business continuity or exit evidence",
+      "Business owner is not identified.",
+      "Jurisdiction or geography is missing."
+    ],
+    "rag_evidence_memory": {
+      "browserEmbeddingsRetained": false,
+      "collection": "p42_compliance_evidence",
+      "durable": false,
+      "evidenceMatches": [
+        {
+          "chunkIndex": 26,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4535,
+          "snippet": "books, field mappings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for subcontracting. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontracting | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Eviden...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        },
+        {
+          "chunkIndex": 10,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4414,
+          "snippet": "appings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for definitions and interpretation. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 01 | Area: Definitions And Interpretation | Customer: Summit Core Enterprises | Provider: OmniBridge Ser...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        },
+        {
+          "chunkIndex": 34,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4414,
+          "snippet": "nd reviewer for documentation. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 19 | Area: Documentation | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Evidence cadence: onboarding and annual refresh 20. Records Retention For Managed Platform Integration Services, OmniBridge Services LLC shall ...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        },
+        {
+          "chunkIndex": 22,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4294,
+          "snippet": "elease pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for policies and standards. - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Summit Core Enterprises | Provider: OmniBridge Services LLC | Evidence cadence: ...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        },
+        {
+          "chunkIndex": 80,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4173,
+          "snippet": "inconsistent with finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, the control is treated as not operating for approval purposes. CTRL-17 | Control: Data Transfer | Evidence: approved locations, transfer safeguards, encryption, access controls, and destination inventory | Blocker if missing: yes for high-risk or regulated processing CTRL-18 Subprocessor Oversight The parties assign subprocessor oversight as a control family for seg...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        },
+        {
+          "chunkIndex": 108,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4173,
+          "snippet": "rial subprocessor change occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting privileged access approval, data processing adden...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        },
+        {
+          "chunkIndex": 35,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4053,
+          "snippet": "ords concerning integration middleware, secrets, ERP workflows, privileged accounts, runbooks, field mappings, and release pipelines. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for records retention. Synthetic test fixture - Page 7 of 29 Managed Platform Integration Services Agreement - Approval blocker: unresolved gaps affecting privileged access approval, data processing addendum, continuity evidence, release-control signoff, secrets rotation plan must ...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        },
+        {
+          "chunkIndex": 107,
+          "documentId": "fixture-04_managed_platform_integration_services_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security"
+          ],
+          "evidence_id": "FIXTURE-04",
+          "score": 0.4053,
+          "snippet": "nch occurs, Provider shall open a tracked record, identify the affected service boundary, assess impact to finance approvals, supplier bank changes, HR attributes, CRM case narratives, API payloads, logs, and privileged session metadata, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting privileged access approval, data processing addendum, continuity evide...",
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        }
+      ],
+      "fixtureDocumentsUsed": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "04_managed_platform_integration_services_agreement.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "Managed Platform Integration Services Agreement"
+        }
+      ],
+      "indexedChunkCount": 162,
+      "missingEvidenceSignals": [
+        "privileged access approval",
+        "data processing addendum",
+        "continuity evidence",
+        "release-control signoff",
+        "secrets rotation plan",
+        "signed DPA",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "subprocessor register",
+        "business continuity or exit evidence",
+        "Business owner is not identified.",
+        "Jurisdiction or geography is missing.",
+        "ESG, HSE And BCM applicability needs confirmation."
+      ],
+      "provider": "local-fallback",
+      "qdrantConfigured": false,
+      "retrievedMatchCount": 8
+    },
+    "required_actions": [
+      "Assign the accountable business unit or requester before approval.",
+      "Confirm the operating geography and regulatory perimeter.",
+      "Ask the domain owner whether esg, hse and bcm obligations apply.",
+      "Require privileged access approval, named accounts, time-boxed elevation, and session logging evidence.",
+      "Require executed data processing addendum for integration and support data flows.",
+      "Require BCP/DR and exit assistance evidence for critical workflows.",
+      "Require release-control signoff, rollback evidence, and post-release monitoring before production change.",
+      "Require secrets rotation plan, vault ownership, environment separation, and exit rotation evidence.",
+      "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+      "Require retention schedule and deletion assistance evidence.",
+      "Require cross-border transfer mechanism and hosting/support region confirmation.",
+      "Require current subprocessor register and change-notification terms.",
+      "Resolve evidence gap: Business owner is not identified.",
+      "Resolve evidence gap: Jurisdiction or geography is missing."
+    ],
+    "reviewer_questions": [
+      "Are any support teams accessing records outside approved regions?",
+      "Has any analytics data been used for model improvement or service training?"
+    ],
+    "risk_level": "high",
+    "summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
+  },
+  "run_id": "fixture-04_managed_platform_integration_services_agreement",
+  "status": "success",
+  "trace_id": "trace-fixture-04_managed_platform_integration_services_agreement-52baf191",
+  "use_case_id": "21"
+}

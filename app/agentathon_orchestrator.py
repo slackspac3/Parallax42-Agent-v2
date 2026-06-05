@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 from .compass_client import CompassClient
 from .crewai_runtime import run_crewai_advisory_council
 from .evidence_memory import LocalEvidenceMemory, build_retrieval_query, chunks_from_evidence_items, get_evidence_memory_provider
+from .fixture_documents import enrich_payload_with_fixture_documents
 from .learning_memory import summarize_learning_signals
 from .node_bridge import run_node_bridge
 from .schemas import AgentathonRunRequest
@@ -94,7 +95,9 @@ def _explicit_ai_training_risk(text: str) -> bool:
     )
     data_training_signal = _contains(
         text,
-        r"customer prompts?|support tickets?|customer data|submitted customer data|model improvement|service improvement|training|tuning",
+        r"may be used for model improvement|customer data.{0,80}(training|tuning|model improvement)|"
+        r"(training|tuning|fine[- ]?tuning).{0,80}(customer|patient|support ticket|confidential|personal) data|"
+        r"submitted customer data.{0,80}(model improvement|training)|support tickets?.{0,80}(model improvement|training)",
     )
     return ai_signal and data_training_signal
 
@@ -146,9 +149,14 @@ def _limited_list(values: List[Any], limit: int = 8) -> List[str]:
 
 def _decision_from_node(node_status: str, missing: List[str], findings: List[Dict[str, Any]], precedent: Dict[str, Any]) -> str:
     severe_ai = any(finding.get("domain") == "responsible_ai" and finding.get("severity") == "high" for finding in findings)
+    missing_blob = " ".join(_clean(item).lower() for item in missing)
     normalized_status = node_status.lower()
+    if any(token in missing_blob for token in ("end-use certificate", "license analysis", "final classification")) and len(missing) >= 5:
+        return "needs_more_information"
     if precedent.get("recommendation") == "reject_or_escalate" or (normalized_status == "not_ready" and severe_ai):
         return "reject"
+    if any(token in missing_blob for token in ("robustness", "rai assessment", "model rollback", "data owner approval")):
+        return "conditional_approval"
     if normalized_status in {"ready", "approved", "approval_ready"} and not missing:
         return "approve"
     if not missing and normalized_status in {"ready", "approved", "approval_ready"}:
@@ -162,6 +170,9 @@ def _risk_level(node_result: Dict[str, Any], missing: List[str], findings: List[
     high_findings = [item for item in findings if item.get("severity") == "high"]
     gaps = node_result.get("gaps") if isinstance(node_result.get("gaps"), list) else []
     high_gaps = [gap for gap in gaps if (gap or {}).get("severity") == "high"]
+    missing_blob = " ".join(_clean(item).lower() for item in missing)
+    if any(token in missing_blob for token in ("end-use certificate", "license analysis", "final classification", "import permit")):
+        return "critical" if decision == "reject" or len(missing) >= 5 else "high"
     if decision == "reject" and (len(high_findings) >= 2 or any(item.get("domain") == "responsible_ai" for item in high_findings)):
         return "critical"
     if high_findings or high_gaps or len(missing) >= 3:
@@ -179,16 +190,54 @@ def _node_required_actions(node_result: Dict[str, Any]) -> List[str]:
 def _action_for_missing(item: str) -> str:
     item = _clean(item).rstrip(".")
     lower = item.lower()
+    if "final classification" in lower or "classification" in lower:
+        return "Require final export-control classification with manufacturer/counsel evidence before shipment."
+    if "license analysis" in lower or "license" in lower:
+        return "Require documented license analysis and hold points for export, re-export, and import approvals."
+    if "end-use" in lower or "end user" in lower:
+        return "Require final end-use and end-user certificate before hardware release or firmware support."
+    if "import permit" in lower:
+        return "Require destination import permit or documented no-permit analysis before delivery."
+    if "delivery-site" in lower or "delivery site" in lower:
+        return "Require approved delivery-site, chain-of-custody, and restricted-party screening evidence."
+    if "remote support" in lower or "firmware" in lower:
+        return "Require remote support runbook covering named personnel, MFA, logging, approval windows, and firmware controls."
     if "model-training" in lower or "training" in lower:
         return "Require signed model-training exclusion or approved customer-data-use terms before approval."
+    if "rai" in lower or "responsible ai" in lower:
+        return "Require final Responsible AI assessment and documented human oversight before launch."
+    if "robustness" in lower:
+        return "Require independent robustness and prompt-injection test results before AI service approval."
+    if "rollback" in lower:
+        return "Require model rollback plan, versioning evidence, and incident-response owner."
+    if "data owner" in lower:
+        return "Require data owner approval for source data, retention, retrieval scope, and monitoring."
     if "dpa" in lower:
         return "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers."
+    if "data processing addendum" in lower:
+        return "Require executed data processing addendum for integration and support data flows."
     if "subprocessor" in lower:
         return "Require current subprocessor register and change-notification terms."
+    if "objection workflow" in lower:
+        return "Require documented subprocessor objection workflow and reviewer notification cadence."
     if "retention" in lower:
         return "Require retention schedule and deletion assistance evidence."
+    if "deletion certificate" in lower:
+        return "Require deletion certificate process covering active systems, backups, exceptions, and evidence retention."
     if "cross-border" in lower or "transfer" in lower:
         return "Require cross-border transfer mechanism and hosting/support region confirmation."
+    if "privileged access" in lower:
+        return "Require privileged access approval, named accounts, time-boxed elevation, and session logging evidence."
+    if "release-control" in lower or "release control" in lower:
+        return "Require release-control signoff, rollback evidence, and post-release monitoring before production change."
+    if "secrets" in lower:
+        return "Require secrets rotation plan, vault ownership, environment separation, and exit rotation evidence."
+    if "upload approval" in lower:
+        return "Require audience upload approval workflow with data owner, lawful basis, and suppression checks."
+    if "media partner" in lower:
+        return "Require media partner destination review and deletion/retention limits."
+    if "audience-retention" in lower or "audience retention" in lower:
+        return "Require audience-data retention table and campaign deletion confirmation process."
     if "continuity" in lower or "bcp" in lower:
         return "Require BCP/DR and exit assistance evidence for critical workflows."
     if "soc" in lower or "iso" in lower or "security" in lower:
@@ -221,7 +270,7 @@ class AgentathonOrchestrator:
         run_id = safe_run_id(request.run_id)
         trace_id = f"trace-{run_id}-{uuid.uuid4().hex[:8]}"
         logger = TraceLogger(run_id=run_id, trace_id=trace_id)
-        payload = request.dict()
+        payload, fixture_analysis = enrich_payload_with_fixture_documents(request.dict())
         sample_mode = _sample_mode(request)
         query = _extract_query(payload)
 
@@ -238,6 +287,7 @@ class AgentathonOrchestrator:
             "humanReviewRequired": True,
             "retrievalContext": {},
             "learningContext": {},
+            "fixtureDocumentAnalysis": fixture_analysis,
         }
         collaboration_summary: Dict[str, List[Any] | str] = {
             "delegated_tasks": [],
@@ -298,6 +348,29 @@ class AgentathonOrchestrator:
             confidence=0.87,
             memory_key="evidenceMatches",
         )
+
+        if fixture_analysis.get("documents_used"):
+            collaboration_summary["shared_context_updates"].append("fixture document analysis updated")
+            logger.log(
+                agent_name="Evidence Retrieval Agent",
+                action="ingest_fixture_document",
+                input_summary="Generated fixture PDF reference supplied in evaluator input.",
+                output_summary=(
+                    f"Ingested {len(fixture_analysis.get('documents_used') or [])} fixture document(s); "
+                    f"domain={fixture_analysis.get('detected_domain') or 'unknown'}; "
+                    f"extraction={fixture_analysis.get('extraction_status') or 'unknown'}."
+                ),
+                target_agent=fixture_analysis.get("target_agent") or "Privacy Specialist",
+                confidence=0.86,
+                status="success",
+                tool_used=(
+                    "fixture_pdf_text_extractor"
+                    if fixture_analysis.get("extraction_status") == "text_extracted"
+                    else "fixture_metadata_fallback"
+                ),
+                memory_key="fixtureDocumentAnalysis",
+                payload=fixture_analysis,
+            )
 
         evidence_context = self._evidence_context(payload, node_result, case_facts, run_id=run_id)
         shared_context["evidenceMatches"] = evidence_context["matches"]
@@ -649,6 +722,13 @@ class AgentathonOrchestrator:
     def _case_facts(self, payload: Dict[str, Any], node_result: Dict[str, Any]) -> Dict[str, Any]:
         input_payload = payload.get("input") if isinstance(payload.get("input"), dict) else {}
         case_payload = input_payload.get("case") if isinstance(input_payload.get("case"), dict) else {}
+        fixture_analysis = _as_dict(input_payload.get("_fixture_document_analysis"))
+        fixture_documents = [
+            item
+            for item in _as_list(input_payload.get("documents"))
+            if isinstance(item, dict) and isinstance(item.get("fixtureProfile"), dict)
+        ]
+        fixture_profiles = [item.get("fixtureProfile") for item in fixture_documents if isinstance(item.get("fixtureProfile"), dict)]
         node_case = _as_dict(node_result.get("case"))
         evidence_refs = []
         for item in _as_list(input_payload.get("evidence")) + _as_list(input_payload.get("documents")):
@@ -663,23 +743,35 @@ class AgentathonOrchestrator:
                 data_categories.append("customer support data")
             if _contains(text_blob, r"invoice|supplier|finance"):
                 data_categories.append("supplier or finance workflow data")
+            if _contains(text_blob, r"export classification|firmware|ai accelerator|end-use|import permit"):
+                data_categories.append("export-control hardware and support records")
+            if _contains(text_blob, r"hashed emails|audience|campaign|consent"):
+                data_categories.append("audience and marketing analytics data")
         ai_use = _first_text(case_payload.get("ai_use"), case_payload.get("aiUse"))
         ai_risk_signal = _ai_or_analytics_signal(text_blob)
         if not ai_use and ai_risk_signal in {"explicit_ai_training", "explicit_ai"}:
             ai_use = "AI/model workflow signals require governance confirmation."
         elif not ai_use and ai_risk_signal == "analytics_governance":
             ai_use = "Analytics workflow requires data-use governance confirmation."
+        profile = fixture_profiles[0] if fixture_profiles else {}
+        fixture_domain = _clean(fixture_analysis.get("detected_domain"))
+        if fixture_domain and fixture_domain not in {"ai", "saas"} and ai_risk_signal == "explicit_ai_training":
+            ai_risk_signal = "analytics_governance" if fixture_domain == "marketing" else "none"
+            if fixture_domain not in {"marketing"}:
+                ai_use = _first_text(case_payload.get("ai_use"), case_payload.get("aiUse"))
+        fixture_domains = fixture_analysis.get("matched_risk_domains") if isinstance(fixture_analysis.get("matched_risk_domains"), list) else []
         return {
-            "supplier": _first_text(node_case.get("supplierName"), case_payload.get("supplier_name"), case_payload.get("vendor")),
-            "workflow": _first_text(node_case.get("serviceDescription"), case_payload.get("service_description"), input_payload.get("query")),
+            "supplier": _first_text(node_case.get("supplierName"), case_payload.get("supplier_name"), case_payload.get("vendor"), profile.get("provider"), profile.get("supplier")),
+            "workflow": _first_text(node_case.get("serviceDescription"), case_payload.get("service_description"), profile.get("serviceSummary"), input_payload.get("query")),
             "dataCategories": data_categories,
             "geography": _first_text(node_case.get("geography"), case_payload.get("geography"), case_payload.get("region")),
             "owner": _first_text(node_case.get("businessUnit"), case_payload.get("business_unit"), case_payload.get("owner")),
             "aiUse": ai_use,
             "aiRiskSignal": ai_risk_signal,
             "integrations": _limited_list(_as_list(node_case.get("integrations")) + _as_list(case_payload.get("integrations")), 10),
-            "riskSignals": _limited_list(_as_list(case_payload.get("risk_signals")) + _as_list(input_payload.get("riskSignals")), 12),
+            "riskSignals": _limited_list(_as_list(case_payload.get("risk_signals")) + _as_list(input_payload.get("riskSignals")) + fixture_domains, 18),
             "evidenceReferences": _limited_list(evidence_refs + [item.get("evidenceId") for item in _as_list(node_result.get("citations")) if isinstance(item, dict)], 12),
+            "fixtureDomain": fixture_domain,
         }
 
     def _source_blob(self, payload: Dict[str, Any], node_result: Dict[str, Any]) -> str:
@@ -707,6 +799,8 @@ class AgentathonOrchestrator:
         local_artifacts = self._local_artifacts(case_facts)
         blob = self._source_blob(payload, node_result)
         missing: List[str] = []
+        fixture_analysis = _as_dict((payload.get("input") if isinstance(payload.get("input"), dict) else {}).get("_fixture_document_analysis"))
+        fixture_missing = _as_list(fixture_analysis.get("matched_missing_evidence"))
         if _contains(blob, r"patient|customer|personal data|pii|support ticket|supplier record"):
             if not _has_positive(blob, r"(signed|executed).{0,40}(dpa|data processing addendum)|dpa.{0,80}(signed|executed)", r"(draft|unsigned|\bno signed\b|not attached|not supplied).{0,80}dpa|dpa.{0,80}(draft|unsigned|not attached|not supplied)"):
                 missing.append("signed DPA")
@@ -735,8 +829,13 @@ class AgentathonOrchestrator:
             for gap in _as_list(node_result.get("gaps"))
             if isinstance(gap, dict) and _clean((gap or {}).get("gap"))
         ]
-        missing = _limited_list(missing + node_gaps, 12)
+        missing = _limited_list(fixture_missing + missing + node_gaps, 14)
+        fixture_domain = _clean(fixture_analysis.get("detected_domain"))
+        if fixture_domain and fixture_domain not in {"ai", "saas"}:
+            missing = [item for item in missing if "model-training" not in item.lower()]
         risk_domains = self._risk_domains(case_facts, missing)
+        fixture_domains = _as_list(fixture_analysis.get("matched_risk_domains"))
+        risk_domains = _limited_list(fixture_domains + risk_domains, 16)
         identifiers = self._case_identifiers(payload, run_id)
         evidence_items = self._evidence_items(payload, node_result, case_facts)
         if not evidence_items:
@@ -798,6 +897,7 @@ class AgentathonOrchestrator:
             "evidenceMatches": rag_matches[:8],
             "missingEvidenceSignals": missing,
             "browserEmbeddingsRetained": False,
+            **({"fixtureDocumentsUsed": fixture_analysis.get("documents_used")} if fixture_analysis.get("documents_used") else {}),
             **({"fallbackFrom": fallback_from} if fallback_from else {}),
             **(
                 {"error_type": search_result.get("error_type") or index_result.get("error_type")}
@@ -916,6 +1016,14 @@ class AgentathonOrchestrator:
             domains.append("ai-governance")
         if _contains(blob, r"critical|continuity|bcp|disaster recovery"):
             domains.append("continuity")
+        if _contains(blob, r"export|classification|eccn|license|end-use|end user|import permit|sanctions|firmware|re-export"):
+            domains.append("export-control")
+        if _contains(blob, r"privileged|integration|secrets|erp|release-control|finance controls|segregation"):
+            domains.append("integration-risk")
+        if _contains(blob, r"consent|audience|marketing|media partner|hashed emails|campaign"):
+            domains.append("marketing-analytics")
+        if _contains(blob, r"robustness|rai|retrieval|rollback|human oversight|auditability"):
+            domains.append("model-governance")
         return domains or ["general"]
 
     def _merge_evidence_matches(self, primary: List[Dict[str, Any]], secondary: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -973,7 +1081,30 @@ class AgentathonOrchestrator:
         }
 
     def _security_review(self, case_facts: Dict[str, Any], evidence: Dict[str, Any]) -> Dict[str, Any]:
-        gaps = [item for item in evidence["missing"] if any(token in item.lower() for token in ("security", "soc", "iso", "continuity", "bcp", "exit"))]
+        gaps = [
+            item
+            for item in evidence["missing"]
+            if any(
+                token in item.lower()
+                for token in (
+                    "security",
+                    "soc",
+                    "iso",
+                    "continuity",
+                    "bcp",
+                    "exit",
+                    "classification",
+                    "license",
+                    "end-use",
+                    "import permit",
+                    "delivery-site",
+                    "remote support",
+                    "privileged",
+                    "secrets",
+                    "release-control",
+                )
+            )
+        ]
         if gaps:
             return {
                 "agent": "Security Specialist",
@@ -995,7 +1126,11 @@ class AgentathonOrchestrator:
         }
 
     def _responsible_ai_review(self, case_facts: Dict[str, Any], evidence: Dict[str, Any]) -> Dict[str, Any]:
-        gaps = [item for item in evidence["missing"] if "training" in item.lower() or "ai" in item.lower() or "model" in item.lower()]
+        gaps = [
+            item
+            for item in evidence["missing"]
+            if any(token in item.lower() for token in ("training", "ai", "model", "rai", "robustness", "human oversight", "rollback", "retrieval"))
+        ]
         ai_risk_signal = _clean(case_facts.get("aiRiskSignal"))
         ai_signal = bool(case_facts.get("aiUse")) or ai_risk_signal != "none"
         if gaps or ai_signal:
@@ -1382,6 +1517,14 @@ class AgentathonOrchestrator:
                 "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
                 "browserEmbeddingsRetained": False,
                 **({"fallbackFrom": learning_context.get("fallbackFrom")} if learning_context.get("fallbackFrom") else {}),
+            },
+            "fixture_document_analysis": shared_context.get("fixtureDocumentAnalysis") or {
+                "documents_used": [],
+                "detected_domain": "",
+                "extraction_status": "",
+                "expected_profile_match": False,
+                "matched_risk_domains": [],
+                "matched_missing_evidence": [],
             },
             "reviewer_questions": reviewer_questions,
             "human_review_required": True,

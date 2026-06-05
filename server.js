@@ -15,6 +15,7 @@ const { buildCouncilNarrative } = require('./lib/councilNarrative');
 const { gatewayHealth } = require('./lib/compassGatewayClient');
 const { getReadinessInventory } = require('./lib/complianceAgent');
 const { evidenceVectorStoreHealth, runQdrantSmokeTest } = require('./lib/evidenceVectorStore');
+const { fixtureDocumentSummary, listSupportedFixtureDocuments } = require('./lib/fixtureDocuments');
 const { buildGoldenWorkflowRun } = require('./lib/goldenWorkflow');
 const { governanceReferenceHealth, indexGovernanceReference, searchGovernanceReferences } = require('./lib/governanceReferenceStore');
 const { readJsonBody, writeJson } = require('./lib/http');
@@ -354,6 +355,26 @@ const server = http.createServer(async (req, res) => {
       const body = await readJsonBody(req, { limitBytes: EVIDENCE_SEARCH_BODY_LIMIT_BYTES });
       const result = await handleEvidenceSearch({ req, body });
       writeJson(res, result.status, result.body);
+      return;
+    }
+
+    if ((req.method === 'GET' || req.method === 'POST') && url.pathname === '/api/fixture-documents/lookup') {
+      if (!localRateLimitGuard(req, res, 'healthRead')) return;
+      const body = req.method === 'POST' ? await readJsonBody(req, { limitBytes: 128 * 1024 }) : {};
+      const reference = url.searchParams.get('filename') || url.searchParams.get('path') || body.filename || body.path || body.fileName;
+      if (!reference) {
+        writeJson(res, 200, { ok: true, documents: listSupportedFixtureDocuments() });
+        return;
+      }
+      try {
+        writeJson(res, 200, fixtureDocumentSummary(reference));
+      } catch (error) {
+        writeJson(res, 400, {
+          ok: false,
+          error: error.code || 'fixture_lookup_failed',
+          detail: error instanceof Error ? error.message : String(error || 'Fixture lookup failed.')
+        });
+      }
       return;
     }
 

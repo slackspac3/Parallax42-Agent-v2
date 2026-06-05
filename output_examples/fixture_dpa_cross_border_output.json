@@ -1,0 +1,1769 @@
+{
+  "agent_trace": [
+    {
+      "action": "receive_case",
+      "agent_name": "Intake Agent",
+      "confidence": 0.86,
+      "input_summary": "Review this DPA-ish cross-border processing pack. I think support can happen outside region and the deletion evidence is vague.",
+      "memory_key": "caseFacts",
+      "output_summary": "Received evaluator request and started case fact extraction.",
+      "payload": {
+        "sample_mode": true,
+        "use_case_id": "21"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "success",
+      "target_agent": "Intake Agent",
+      "timestamp": "2026-06-05T06:23:40.618351Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "extract_case_facts",
+      "agent_name": "Intake Agent",
+      "confidence": 0.72,
+      "input_summary": "Evaluator input plus normalized Node case.",
+      "memory_key": "caseFacts",
+      "output_summary": "Extracted supplier=Submitted compliance case, geography=missing, missing facts=2.",
+      "payload": {
+        "caseFacts": {
+          "aiRiskSignal": "none",
+          "aiUse": "",
+          "dataCategories": [
+            "patient or healthcare operations data",
+            "customer support data",
+            "supplier or finance workflow data",
+            "export-control hardware and support records",
+            "audience and marketing analytics data"
+          ],
+          "evidenceReferences": [
+            "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+            "FIXTURE-02"
+          ],
+          "fixtureDomain": "privacy",
+          "geography": "",
+          "integrations": [],
+          "owner": "",
+          "riskSignals": [
+            "privacy",
+            "subprocessors",
+            "retention",
+            "cross-border transfer"
+          ],
+          "supplier": "Submitted compliance case",
+          "workflow": "Review this DPA-ish cross-border processing pack. I think support can happen outside region and the deletion evidence is vague."
+        },
+        "missing_case_facts": [
+          "owner",
+          "geography"
+        ]
+      },
+      "retry_count": 0,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "needs_revision",
+      "target_agent": "Evidence Retrieval Agent",
+      "timestamp": "2026-06-05T06:23:40.703163Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "delegate_evidence_search",
+      "agent_name": "Intake Agent",
+      "confidence": 0.87,
+      "input_summary": "Case facts, evidence references, risk signals, and missing facts.",
+      "memory_key": "evidenceMatches",
+      "output_summary": "Delegated evidence retrieval for privacy, security, AI governance, continuity, and precedent context.",
+      "payload": {},
+      "retry_count": 0,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "success",
+      "target_agent": "Evidence Retrieval Agent",
+      "timestamp": "2026-06-05T06:23:40.712390Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "ingest_fixture_document",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.86,
+      "input_summary": "Generated fixture PDF reference supplied in evaluator input.",
+      "memory_key": "fixtureDocumentAnalysis",
+      "output_summary": "Ingested 1 fixture document(s); domain=privacy; extraction=text_extracted.",
+      "payload": {
+        "detected_domain": "privacy",
+        "documents_used": [
+          {
+            "extractionStatus": "text_extracted",
+            "filename": "02_data_processing_addendum_and_cross_border_terms.pdf",
+            "pages": 28,
+            "source": "fixture_pdf",
+            "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+          }
+        ],
+        "expected_profile_match": true,
+        "extraction_status": "text_extracted",
+        "matched_missing_evidence": [
+          "transfer impact assessment",
+          "subprocessor objection workflow",
+          "retention table",
+          "deletion certificate process"
+        ],
+        "matched_risk_domains": [
+          "privacy",
+          "subprocessors",
+          "retention",
+          "cross-border transfer"
+        ],
+        "rejected": [],
+        "target_agent": "Privacy Specialist"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "success",
+      "target_agent": "Privacy Specialist",
+      "timestamp": "2026-06-05T06:23:40.720187Z",
+      "tool_used": "fixture_pdf_text_extractor",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "retrieve_evidence",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.52,
+      "input_summary": "Supplied request evidence, Node citations, local sample snippets, and case-scoped evidence memory.",
+      "memory_key": "evidenceMatches",
+      "output_summary": "Retrieved 9 evidence match(es); memory provider=local-fallback; sufficiency=weak.",
+      "payload": {
+        "localEvidenceArtifacts": [
+          "live-health.json",
+          "benchmark-report.json",
+          "readiness.json",
+          "sample-agent-run.json"
+        ],
+        "match_count": 9,
+        "missingEvidence": [
+          "transfer impact assessment",
+          "subprocessor objection workflow",
+          "retention table",
+          "deletion certificate process",
+          "signed DPA",
+          "retention and deletion evidence",
+          "cross-border transfer mechanism",
+          "subprocessor register",
+          "business continuity or exit evidence",
+          "Business owner is not identified.",
+          "Jurisdiction or geography is missing.",
+          "ESG, HSE And BCM applicability needs confirmation."
+        ],
+        "retrievalContext": {
+          "browserEmbeddingsRetained": false,
+          "collection": "p42_compliance_evidence",
+          "durable": false,
+          "evidenceMatches": [
+            {
+              "chunkIndex": 38,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance",
+                "continuity"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4956,
+              "snippet": "corrective actions, owners, deadlines, residual risk acceptance, and executive escalation for overdue blockers. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for remediation. - Approval blocker: ...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            },
+            {
+              "chunkIndex": 11,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4826,
+              "snippet": "endum, Apex DataWorks Ltd. shall require every work package to identify scope, owners, data, systems, locations, subcontractors, acceptance tests, and blockers. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, a...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            },
+            {
+              "chunkIndex": 15,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4826,
+              "snippet": "hat it may not do, and which activities need a separate change order. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for service description. - Approval blocker: unresolved gaps affecting final tr...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            },
+            {
+              "chunkIndex": 28,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4826,
+              "snippet": "HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for service levels. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate proc...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            },
+            {
+              "chunkIndex": 29,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4826,
+              "snippet": "sing Addendum, Apex DataWorks Ltd. shall state credits do not replace corrective actions, regulatory duties, or termination rights for chronic failure. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and review...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            },
+            {
+              "chunkIndex": 36,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4826,
+              "snippet": "ired evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for incident management. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 22 | Area: Incident Management | Customer: Riverstone Operations Group | Provider: Apex DataWorks Ltd. | Evidence cadence: onboarding and annual refresh 23. Notif...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            },
+            {
+              "chunkIndex": 41,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4826,
+              "snippet": "ions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for exit management. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 26 | Area: Exit Management | Customer: Riverstone Operations G...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            },
+            {
+              "chunkIndex": 45,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4826,
+              "snippet": "ate, exception status, and reviewer for insurance. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 29 | Area: Insurance | Customer: Riverstone Operations Group | Provider: Apex DataWorks Ltd. | Evidence cadence: onboarding and annual refresh 30. Confidentiality Synthetic test fixture - Page 9 of 28 Data Processing Addendum And C...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            }
+          ],
+          "fixtureDocumentsUsed": [
+            {
+              "extractionStatus": "text_extracted",
+              "filename": "02_data_processing_addendum_and_cross_border_terms.pdf",
+              "pages": 28,
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            }
+          ],
+          "indexedChunkCount": 157,
+          "missingEvidenceSignals": [
+            "transfer impact assessment",
+            "subprocessor objection workflow",
+            "retention table",
+            "deletion certificate process",
+            "signed DPA",
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "subprocessor register",
+            "business continuity or exit evidence",
+            "Business owner is not identified.",
+            "Jurisdiction or geography is missing.",
+            "ESG, HSE And BCM applicability needs confirmation."
+          ],
+          "provider": "local-fallback",
+          "qdrantConfigured": false,
+          "retrievedMatchCount": 8
+        }
+      },
+      "retry_count": 0,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "needs_revision",
+      "target_agent": "Privacy Specialist",
+      "timestamp": "2026-06-05T06:23:40.763173Z",
+      "tool_used": "local-fallback",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "retry_evidence_search",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.45,
+      "input_summary": "Initial evidence coverage was weak or missing key proof.",
+      "memory_key": "missingEvidence",
+      "output_summary": "Retried with privacy/security/AI/continuity keywords through local-fallback; retained only sanitized evidence metadata.",
+      "payload": {
+        "missingEvidence": [
+          "transfer impact assessment",
+          "subprocessor objection workflow",
+          "retention table",
+          "deletion certificate process",
+          "signed DPA",
+          "retention and deletion evidence",
+          "cross-border transfer mechanism",
+          "subprocessor register",
+          "business continuity or exit evidence",
+          "Business owner is not identified.",
+          "Jurisdiction or geography is missing.",
+          "ESG, HSE And BCM applicability needs confirmation."
+        ],
+        "retrievalContext": {
+          "browserEmbeddingsRetained": false,
+          "collection": "p42_compliance_evidence",
+          "durable": false,
+          "evidenceMatches": [
+            {
+              "chunkIndex": 38,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance",
+                "continuity"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4956,
+              "snippet": "corrective actions, owners, deadlines, residual risk acceptance, and executive escalation for overdue blockers. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for remediation. - Approval blocker: ...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            },
+            {
+              "chunkIndex": 11,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4826,
+              "snippet": "endum, Apex DataWorks Ltd. shall require every work package to identify scope, owners, data, systems, locations, subcontractors, acceptance tests, and blockers. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, a...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            },
+            {
+              "chunkIndex": 15,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4826,
+              "snippet": "hat it may not do, and which activities need a separate change order. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for service description. - Approval blocker: unresolved gaps affecting final tr...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            },
+            {
+              "chunkIndex": 28,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4826,
+              "snippet": "HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for service levels. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate proc...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            },
+            {
+              "chunkIndex": 29,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4826,
+              "snippet": "sing Addendum, Apex DataWorks Ltd. shall state credits do not replace corrective actions, regulatory duties, or termination rights for chronic failure. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and review...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            },
+            {
+              "chunkIndex": 36,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4826,
+              "snippet": "ired evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for incident management. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 22 | Area: Incident Management | Customer: Riverstone Operations Group | Provider: Apex DataWorks Ltd. | Evidence cadence: onboarding and annual refresh 23. Notif...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            },
+            {
+              "chunkIndex": 41,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4826,
+              "snippet": "ions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for exit management. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 26 | Area: Exit Management | Customer: Riverstone Operations G...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            },
+            {
+              "chunkIndex": 45,
+              "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-02",
+              "score": 0.4826,
+              "snippet": "ate, exception status, and reviewer for insurance. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 29 | Area: Insurance | Customer: Riverstone Operations Group | Provider: Apex DataWorks Ltd. | Evidence cadence: onboarding and annual refresh 30. Confidentiality Synthetic test fixture - Page 9 of 28 Data Processing Addendum And C...",
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            }
+          ],
+          "fixtureDocumentsUsed": [
+            {
+              "extractionStatus": "text_extracted",
+              "filename": "02_data_processing_addendum_and_cross_border_terms.pdf",
+              "pages": 28,
+              "source": "fixture_pdf",
+              "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+            }
+          ],
+          "indexedChunkCount": 157,
+          "missingEvidenceSignals": [
+            "transfer impact assessment",
+            "subprocessor objection workflow",
+            "retention table",
+            "deletion certificate process",
+            "signed DPA",
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "subprocessor register",
+            "business continuity or exit evidence",
+            "Business owner is not identified.",
+            "Jurisdiction or geography is missing.",
+            "ESG, HSE And BCM applicability needs confirmation."
+          ],
+          "provider": "local-fallback",
+          "qdrantConfigured": false,
+          "retrievedMatchCount": 8
+        }
+      },
+      "retry_count": 1,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "retry",
+      "target_agent": "Privacy Specialist",
+      "timestamp": "2026-06-05T06:23:40.776997Z",
+      "tool_used": "local-fallback",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "critique_privacy_gap",
+      "agent_name": "Privacy Specialist",
+      "confidence": 0.8,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "Privacy proof incomplete: transfer impact assessment, subprocessor objection workflow, retention table, signed DPA.",
+      "payload": {
+        "requiredActions": [
+          "Require cross-border transfer mechanism and hosting/support region confirmation.",
+          "Require current subprocessor register and change-notification terms.",
+          "Require retention schedule and deletion assistance evidence.",
+          "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+          "Require retention schedule and deletion assistance evidence.",
+          "Require cross-border transfer mechanism and hosting/support region confirmation.",
+          "Require current subprocessor register and change-notification terms."
+        ],
+        "severity": "high"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "needs_revision",
+      "target_agent": "Security Specialist",
+      "timestamp": "2026-06-05T06:23:40.790640Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "critique_security_gap",
+      "agent_name": "Security Specialist",
+      "confidence": 0.8,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "Security or continuity proof incomplete: business continuity or exit evidence.",
+      "payload": {
+        "requiredActions": [
+          "Require BCP/DR and exit assistance evidence for critical workflows."
+        ],
+        "severity": "medium"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "needs_revision",
+      "target_agent": "Responsible AI Specialist",
+      "timestamp": "2026-06-05T06:23:40.797609Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "validate_evidence",
+      "agent_name": "Responsible AI Specialist",
+      "confidence": 0.86,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "No material AI/model-training signal detected beyond standard human-review boundary.",
+      "payload": {
+        "requiredActions": [],
+        "severity": "low"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "success",
+      "target_agent": "Learning & Precedent Specialist",
+      "timestamp": "2026-06-05T06:23:40.804125Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "retrieve_precedent",
+      "agent_name": "Learning & Precedent Specialist",
+      "confidence": 0.78,
+      "input_summary": "Case facts, missing evidence, and specialist challenges.",
+      "memory_key": "learningContext",
+      "output_summary": "Matched precedent pattern: healthcare analytics + missing DPA/model-training exclusion -> conditional approval/human review; similar learning cases=5, top pattern=Healthcare analytics vendor missing model-training exclusion.",
+      "payload": {
+        "learningContext": {
+          "advisoryOnly": true,
+          "browserEmbeddingsRetained": false,
+          "controlSuggestions": [
+            "Require signed model-training exclusion for patient or customer data before production.",
+            "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+            "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+            "Require retention schedule and deletion assistance evidence.",
+            "Require cross-border transfer mechanism and support-region confirmation.",
+            "Add reviewer question: Are any support teams accessing records outside approved regions?",
+            "Require current subprocessor register before approval.",
+            "Require 30-day subprocessor change notification and right to object."
+          ],
+          "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+          "provider": "local-jsonl",
+          "qdrantConfigured": false,
+          "repeatedEvidenceGaps": [
+            "model-training exclusion",
+            "DPA amendment",
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "support region confirmation",
+            "subprocessor register",
+            "signed DPA",
+            "human oversight plan"
+          ],
+          "similarCases": [
+            {
+              "addedControls": [
+                "Require signed model-training exclusion for patient or customer data before production.",
+                "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+                "Add reviewer question: Has any analytics data been used for model improvement or service training?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-healthcare-001",
+              "domains": [
+                "privacy",
+                "ai-governance",
+                "healthcare"
+              ],
+              "finalOutcome": "conditional approval after DPA amendment",
+              "memoryId": "learn-healthcare-training-001",
+              "missingEvidence": [
+                "model-training exclusion",
+                "DPA amendment"
+              ],
+              "originalDecision": "conditional_approval",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.3888,
+              "title": "Healthcare analytics vendor missing model-training exclusion",
+              "type": "case_outcome"
+            },
+            {
+              "addedControls": [
+                "Require retention schedule and deletion assistance evidence.",
+                "Require cross-border transfer mechanism and support-region confirmation.",
+                "Add reviewer question: Are any support teams accessing records outside approved regions?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-cross-border-001",
+              "domains": [
+                "privacy",
+                "saas",
+                "cross-border"
+              ],
+              "finalOutcome": "conditional approval after retention schedule",
+              "memoryId": "learn-cross-border-retention-001",
+              "missingEvidence": [
+                "retention and deletion evidence",
+                "cross-border transfer mechanism",
+                "support region confirmation"
+              ],
+              "originalDecision": "needs_more_information",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.3594,
+              "title": "Cross-border SaaS missing retention schedule",
+              "type": "evidence_quality_note"
+            },
+            {
+              "addedControls": [
+                "Require current subprocessor register before approval.",
+                "Require 30-day subprocessor change notification and right to object.",
+                "Add reviewer question: Are support and hosting locations consistent with transfer assessment?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-saas-001",
+              "domains": [
+                "privacy",
+                "saas",
+                "third-party-risk"
+              ],
+              "finalOutcome": "conditional approval with subprocessor disclosure",
+              "memoryId": "learn-saas-subprocessors-001",
+              "missingEvidence": [
+                "subprocessor register",
+                "cross-border transfer mechanism"
+              ],
+              "originalDecision": "needs_more_information",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.33,
+              "title": "SaaS vendor missing subprocessor list",
+              "type": "control_pattern"
+            },
+            {
+              "addedControls": [
+                "Keep annual SOC 2 and ISO evidence refresh on reviewer calendar.",
+                "Monitor subprocessor changes and retention exceptions quarterly.",
+                "Confirm accountable human owner before operational approval."
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-complete-001",
+              "domains": [
+                "privacy",
+                "security",
+                "third-party-risk"
+              ],
+              "finalOutcome": "approval with monitoring",
+              "memoryId": "learn-complete-package-001",
+              "missingEvidence": [],
+              "originalDecision": "approve",
+              "reviewerDecision": "approve",
+              "score": 0.33,
+              "title": "Complete vendor package approved with monitoring",
+              "type": "case_outcome"
+            },
+            {
+              "addedControls": [
+                "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
+                "Require signed model-training exclusion and human oversight plan before reconsideration.",
+                "Add reviewer question: Does the vendor use prompts, tickets, or submitted records for model improvement?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-ai-001",
+              "domains": [
+                "ai-governance",
+                "privacy",
+                "customer-data"
+              ],
+              "finalOutcome": "rejected and escalated",
+              "memoryId": "learn-ai-training-reject-001",
+              "missingEvidence": [
+                "model-training exclusion",
+                "signed DPA",
+                "human oversight plan"
+              ],
+              "originalDecision": "conditional_approval",
+              "reviewerDecision": "reject",
+              "score": 0.2565,
+              "title": "AI vendor permitted customer-data training",
+              "type": "decision_override"
+            }
+          ],
+          "similar_cases_found": 5,
+          "topPattern": "Healthcare analytics vendor missing model-training exclusion"
+        },
+        "precedent": {
+          "advisoryOnly": true,
+          "confidence": 0.78,
+          "pattern": "healthcare analytics + missing DPA/model-training exclusion -> conditional approval/human review",
+          "recommendation": "conditional_human_review"
+        }
+      },
+      "retry_count": 0,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "success",
+      "target_agent": "Deterministic Decision Owner",
+      "timestamp": "2026-06-05T06:23:40.815680Z",
+      "tool_used": "local-jsonl",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "compass_advisory_unavailable",
+      "agent_name": "Compass Advisory Critic",
+      "confidence": 0.7,
+      "input_summary": "Sample mode requested.",
+      "memory_key": "compassAdvisory",
+      "output_summary": "Skipped live Compass call; deterministic local council remains active.",
+      "payload": {},
+      "retry_count": 0,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "fallback_used",
+      "target_agent": "Deterministic Decision Owner",
+      "timestamp": "2026-06-05T06:23:40.826263Z",
+      "tool_used": "sample_mode",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "revise_required_controls",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.92,
+      "input_summary": "Specialist challenges, precedent pattern, and Compass advisory status.",
+      "memory_key": "requiredActions",
+      "output_summary": "Required controls revised to 14 action(s); final risk=high.",
+      "payload": {
+        "llm_advisory_only": true,
+        "required_actions": [
+          "Assign the accountable business unit or requester before approval.",
+          "Confirm the operating geography and regulatory perimeter.",
+          "Ask the domain owner whether esg, hse and bcm obligations apply.",
+          "Require cross-border transfer mechanism and hosting/support region confirmation.",
+          "Require current subprocessor register and change-notification terms.",
+          "Require retention schedule and deletion assistance evidence.",
+          "Require deletion certificate process covering active systems, backups, exceptions, and evidence retention.",
+          "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+          "Require BCP/DR and exit assistance evidence for critical workflows.",
+          "Resolve evidence gap: Business owner is not identified.",
+          "Resolve evidence gap: Jurisdiction or geography is missing.",
+          "Resolve evidence gap: ESG, HSE And BCM applicability needs confirmation.",
+          "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+          "Require cross-border transfer mechanism and support-region confirmation."
+        ],
+        "specialist_challenge_count": 2
+      },
+      "retry_count": 0,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "needs_revision",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:40.832306Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "escalate_human_review",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.94,
+      "input_summary": "Unresolved high-risk gaps or insufficient proof remained after council review.",
+      "memory_key": "humanReviewRequired",
+      "output_summary": "Escalated to accountable human reviewer; no autonomous approval permitted.",
+      "payload": {
+        "decision": "conditional_approval",
+        "risk_level": "high"
+      },
+      "retry_count": 1,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "escalated",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:40.838679Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "apply_deterministic_policy",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.95,
+      "input_summary": "Node deterministic result, specialist critiques, precedent, and advisory-only Compass output.",
+      "memory_key": "decisionDraft",
+      "output_summary": "Final decision sealed as conditional_approval by deterministic policy owner.",
+      "payload": {
+        "compass_status": "skipped_sample_mode",
+        "final_owner": "Deterministic Decision Owner",
+        "live_advisory_runtime": "custom",
+        "llm_advisory_only": true
+      },
+      "retry_count": 0,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "success",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:40.844559Z",
+      "tool_used": "deterministic_rules_engine",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "package_audit_trace",
+      "agent_name": "Audit Packager",
+      "confidence": 0.93,
+      "input_summary": "Decision, evidence, missing proof, council trace, and human review boundary.",
+      "memory_key": "finalDecision",
+      "output_summary": "Packaged judge-readable audit trace with evidence, specialist challenges, and final owner.",
+      "payload": {
+        "log_file": "logs/trace-fixture-02_data_processing_addendum_and_cross_border_terms.jsonl",
+        "trace_events": 15
+      },
+      "retry_count": 0,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "success",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:40.849958Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    },
+    {
+      "action": "finalize_response",
+      "agent_name": "Audit Packager",
+      "confidence": 0.94,
+      "input_summary": "Final packaged decision and trace summary.",
+      "memory_key": "finalDecision",
+      "output_summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+      "payload": {
+        "decision": "conditional_approval",
+        "risk_level": "high"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+      "status": "success",
+      "target_agent": "",
+      "timestamp": "2026-06-05T06:23:40.854443Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46"
+    }
+  ],
+  "agents": [
+    {
+      "name": "Intake Agent",
+      "role": "Extracts case facts, missing facts, and delegates evidence needs."
+    },
+    {
+      "name": "Evidence Retrieval Agent",
+      "role": "Searches supplied and local evidence signals, retries weak coverage, and reports sufficiency."
+    },
+    {
+      "name": "Privacy Specialist",
+      "role": "Reviews DPA, subprocessors, retention, transfer, data categories, and model-training exclusions."
+    },
+    {
+      "name": "Security Specialist",
+      "role": "Reviews SOC 2, ISO, access control, encryption, logging, BCP, and technical assurance evidence."
+    },
+    {
+      "name": "Responsible AI Specialist",
+      "role": "Challenges AI use, model training, automation, oversight, and transparency risk."
+    },
+    {
+      "name": "Learning & Precedent Specialist",
+      "role": "Looks up deterministic synthetic precedent patterns as advisory memory."
+    },
+    {
+      "name": "Compass Advisory Critic",
+      "role": "Runs live Compass advisory review when configured; never owns the final decision."
+    },
+    {
+      "name": "Final Advisory Reviewer",
+      "role": "Optional live CrewAI advisory reviewer when AGENT_RUNTIME=crewai_live; advisory only."
+    },
+    {
+      "name": "Deterministic Decision Owner",
+      "role": "Applies deterministic policy and remains final decision authority."
+    },
+    {
+      "name": "Audit Packager",
+      "role": "Packages the decision, evidence, collaboration trace, and review artifacts."
+    }
+  ],
+  "execution_time_seconds": 0.268,
+  "log_file": "logs/fixture_dpa_cross_border_trace.jsonl",
+  "output": {
+    "artifacts": [
+      {
+        "path": "logs/trace-fixture-02_data_processing_addendum_and_cross_border_terms.jsonl",
+        "type": "trace_log"
+      },
+      {
+        "source": "deterministic_node_bridge_plus_python_council",
+        "type": "decision_payload"
+      }
+    ],
+    "collaboration_summary": {
+      "delegated_tasks": [
+        "Intake Agent -> Evidence Retrieval Agent: evidence needs and missing facts"
+      ],
+      "escalations": [
+        "Deterministic Decision Owner escalated unresolved high-risk gaps to human review"
+      ],
+      "final_decision_owner": "Deterministic Decision Owner",
+      "retries": [
+        "Evidence Retrieval Agent refined search with domain keywords using local-fallback"
+      ],
+      "shared_context_updates": [
+        "case facts updated",
+        "fixture document analysis updated",
+        "evidence matches and gaps updated",
+        "retrieval context updated",
+        "specialist finding added: Privacy Specialist",
+        "specialist finding added: Security Specialist",
+        "specialist finding added: Responsible AI Specialist",
+        "synthetic precedent added",
+        "governed learning memory updated",
+        "Compass advisory skipped in sample mode",
+        "required action added"
+      ],
+      "specialist_challenges": [
+        "Privacy proof incomplete: transfer impact assessment, subprocessor objection workflow, retention table, signed DPA.",
+        "Security or continuity proof incomplete: business continuity or exit evidence."
+      ],
+      "validations": [
+        "No material AI/model-training signal detected beyond standard human-review boundary."
+      ]
+    },
+    "decision": "conditional_approval",
+    "decision_authority": {
+      "final_owner": "Deterministic Decision Owner",
+      "llm_advisory_only": true
+    },
+    "evidence_used": [
+      {
+        "chunkIndex": 38,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance",
+          "continuity"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4956,
+        "snippet": "corrective actions, owners, deadlines, residual risk acceptance, and executive escalation for overdue blockers. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for remediation. - Approval blocker: ...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "chunkIndex": 11,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4826,
+        "snippet": "endum, Apex DataWorks Ltd. shall require every work package to identify scope, owners, data, systems, locations, subcontractors, acceptance tests, and blockers. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, a...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "chunkIndex": 15,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4826,
+        "snippet": "hat it may not do, and which activities need a separate change order. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for service description. - Approval blocker: unresolved gaps affecting final tr...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "chunkIndex": 28,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4826,
+        "snippet": "HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for service levels. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate proc...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "chunkIndex": 29,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4826,
+        "snippet": "sing Addendum, Apex DataWorks Ltd. shall state credits do not replace corrective actions, regulatory duties, or termination rights for chronic failure. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and review...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "chunkIndex": 36,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4826,
+        "snippet": "ired evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for incident management. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 22 | Area: Incident Management | Customer: Riverstone Operations Group | Provider: Apex DataWorks Ltd. | Evidence cadence: onboarding and annual refresh 23. Notif...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "chunkIndex": 41,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4826,
+        "snippet": "ions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for exit management. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 26 | Area: Exit Management | Customer: Riverstone Operations G...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "chunkIndex": 45,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4826,
+        "snippet": "ate, exception status, and reviewer for insurance. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 29 | Area: Insurance | Customer: Riverstone Operations Group | Provider: Apex DataWorks Ltd. | Evidence cadence: onboarding and annual refresh 30. Confidentiality Synthetic test fixture - Page 9 of 28 Data Processing Addendum And C...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "evidence_id": "FIXTURE-02",
+        "snippet": "Data Processing Addendum And Cross-Border Transfer Terms Data Processing Addendum And Cross-Border Transfer Terms Apex DataWorks Ltd. processor terms for HR, CRM, marketing, support, and analytics data Synthetic legal-style test document for agent evaluation. ",
+        "source": "node-citation",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      }
+    ],
+    "executive_summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "fixture_document_analysis": {
+      "detected_domain": "privacy",
+      "documents_used": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "02_data_processing_addendum_and_cross_border_terms.pdf",
+          "pages": 28,
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        }
+      ],
+      "expected_profile_match": true,
+      "extraction_status": "text_extracted",
+      "matched_missing_evidence": [
+        "transfer impact assessment",
+        "subprocessor objection workflow",
+        "retention table",
+        "deletion certificate process"
+      ],
+      "matched_risk_domains": [
+        "privacy",
+        "subprocessors",
+        "retention",
+        "cross-border transfer"
+      ],
+      "rejected": [],
+      "target_agent": "Privacy Specialist"
+    },
+    "human_review_required": true,
+    "learning_memory": {
+      "advisoryOnly": true,
+      "browserEmbeddingsRetained": false,
+      "control_suggestions": [
+        "Require signed model-training exclusion for patient or customer data before production.",
+        "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+        "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+        "Require retention schedule and deletion assistance evidence.",
+        "Require cross-border transfer mechanism and support-region confirmation.",
+        "Add reviewer question: Are any support teams accessing records outside approved regions?",
+        "Require current subprocessor register before approval.",
+        "Require 30-day subprocessor change notification and right to object."
+      ],
+      "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+      "provider": "local-jsonl",
+      "repeatedEvidenceGaps": [
+        "model-training exclusion",
+        "DPA amendment",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "support region confirmation",
+        "subprocessor register",
+        "signed DPA",
+        "human oversight plan"
+      ],
+      "similar_cases_found": 5
+    },
+    "live_advisory": {
+      "advisoryOnly": true,
+      "agents": [],
+      "cards": [],
+      "enabled": false,
+      "final_decision_owner": "Deterministic Decision Owner",
+      "model": "gpt-4.1",
+      "runtime": "custom",
+      "status": "skipped_custom_runtime",
+      "summary": {}
+    },
+    "live_compass": {
+      "advisory": {},
+      "enabled": false,
+      "model": "gpt-5.1",
+      "status": "skipped_sample_mode"
+    },
+    "missing_evidence": [
+      "transfer impact assessment",
+      "subprocessor objection workflow",
+      "retention table",
+      "deletion certificate process",
+      "signed DPA",
+      "retention and deletion evidence",
+      "cross-border transfer mechanism",
+      "subprocessor register",
+      "business continuity or exit evidence",
+      "Business owner is not identified.",
+      "Jurisdiction or geography is missing.",
+      "ESG, HSE And BCM applicability needs confirmation."
+    ],
+    "rag_evidence_memory": {
+      "browserEmbeddingsRetained": false,
+      "collection": "p42_compliance_evidence",
+      "durable": false,
+      "evidenceMatches": [
+        {
+          "chunkIndex": 38,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance",
+            "continuity"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4956,
+          "snippet": "corrective actions, owners, deadlines, residual risk acceptance, and executive escalation for overdue blockers. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for remediation. - Approval blocker: ...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        },
+        {
+          "chunkIndex": 11,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4826,
+          "snippet": "endum, Apex DataWorks Ltd. shall require every work package to identify scope, owners, data, systems, locations, subcontractors, acceptance tests, and blockers. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, a...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        },
+        {
+          "chunkIndex": 15,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4826,
+          "snippet": "hat it may not do, and which activities need a separate change order. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for service description. - Approval blocker: unresolved gaps affecting final tr...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        },
+        {
+          "chunkIndex": 28,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4826,
+          "snippet": "HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for service levels. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate proc...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        },
+        {
+          "chunkIndex": 29,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4826,
+          "snippet": "sing Addendum, Apex DataWorks Ltd. shall state credits do not replace corrective actions, regulatory duties, or termination rights for chronic failure. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and review...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        },
+        {
+          "chunkIndex": 36,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4826,
+          "snippet": "ired evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for incident management. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 22 | Area: Incident Management | Customer: Riverstone Operations Group | Provider: Apex DataWorks Ltd. | Evidence cadence: onboarding and annual refresh 23. Notif...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        },
+        {
+          "chunkIndex": 41,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4826,
+          "snippet": "ions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for exit management. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 26 | Area: Exit Management | Customer: Riverstone Operations G...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        },
+        {
+          "chunkIndex": 45,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4826,
+          "snippet": "ate, exception status, and reviewer for insurance. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 29 | Area: Insurance | Customer: Riverstone Operations Group | Provider: Apex DataWorks Ltd. | Evidence cadence: onboarding and annual refresh 30. Confidentiality Synthetic test fixture - Page 9 of 28 Data Processing Addendum And C...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        }
+      ],
+      "fixtureDocumentsUsed": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "02_data_processing_addendum_and_cross_border_terms.pdf",
+          "pages": 28,
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        }
+      ],
+      "indexedChunkCount": 157,
+      "missingEvidenceSignals": [
+        "transfer impact assessment",
+        "subprocessor objection workflow",
+        "retention table",
+        "deletion certificate process",
+        "signed DPA",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "subprocessor register",
+        "business continuity or exit evidence",
+        "Business owner is not identified.",
+        "Jurisdiction or geography is missing.",
+        "ESG, HSE And BCM applicability needs confirmation."
+      ],
+      "provider": "local-fallback",
+      "qdrantConfigured": false,
+      "retrievedMatchCount": 8
+    },
+    "required_actions": [
+      "Assign the accountable business unit or requester before approval.",
+      "Confirm the operating geography and regulatory perimeter.",
+      "Ask the domain owner whether esg, hse and bcm obligations apply.",
+      "Require cross-border transfer mechanism and hosting/support region confirmation.",
+      "Require current subprocessor register and change-notification terms.",
+      "Require retention schedule and deletion assistance evidence.",
+      "Require deletion certificate process covering active systems, backups, exceptions, and evidence retention.",
+      "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+      "Require BCP/DR and exit assistance evidence for critical workflows.",
+      "Resolve evidence gap: Business owner is not identified.",
+      "Resolve evidence gap: Jurisdiction or geography is missing.",
+      "Resolve evidence gap: ESG, HSE And BCM applicability needs confirmation.",
+      "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+      "Require cross-border transfer mechanism and support-region confirmation."
+    ],
+    "reviewer_questions": [
+      "Has any analytics data been used for model improvement or service training?",
+      "Are any support teams accessing records outside approved regions?"
+    ],
+    "risk_level": "high",
+    "summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
+  },
+  "result": {
+    "artifacts": [
+      {
+        "path": "logs/trace-fixture-02_data_processing_addendum_and_cross_border_terms.jsonl",
+        "type": "trace_log"
+      },
+      {
+        "source": "deterministic_node_bridge_plus_python_council",
+        "type": "decision_payload"
+      }
+    ],
+    "collaboration_summary": {
+      "delegated_tasks": [
+        "Intake Agent -> Evidence Retrieval Agent: evidence needs and missing facts"
+      ],
+      "escalations": [
+        "Deterministic Decision Owner escalated unresolved high-risk gaps to human review"
+      ],
+      "final_decision_owner": "Deterministic Decision Owner",
+      "retries": [
+        "Evidence Retrieval Agent refined search with domain keywords using local-fallback"
+      ],
+      "shared_context_updates": [
+        "case facts updated",
+        "fixture document analysis updated",
+        "evidence matches and gaps updated",
+        "retrieval context updated",
+        "specialist finding added: Privacy Specialist",
+        "specialist finding added: Security Specialist",
+        "specialist finding added: Responsible AI Specialist",
+        "synthetic precedent added",
+        "governed learning memory updated",
+        "Compass advisory skipped in sample mode",
+        "required action added"
+      ],
+      "specialist_challenges": [
+        "Privacy proof incomplete: transfer impact assessment, subprocessor objection workflow, retention table, signed DPA.",
+        "Security or continuity proof incomplete: business continuity or exit evidence."
+      ],
+      "validations": [
+        "No material AI/model-training signal detected beyond standard human-review boundary."
+      ]
+    },
+    "decision": "conditional_approval",
+    "decision_authority": {
+      "final_owner": "Deterministic Decision Owner",
+      "llm_advisory_only": true
+    },
+    "evidence_used": [
+      {
+        "chunkIndex": 38,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance",
+          "continuity"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4956,
+        "snippet": "corrective actions, owners, deadlines, residual risk acceptance, and executive escalation for overdue blockers. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for remediation. - Approval blocker: ...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "chunkIndex": 11,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4826,
+        "snippet": "endum, Apex DataWorks Ltd. shall require every work package to identify scope, owners, data, systems, locations, subcontractors, acceptance tests, and blockers. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, a...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "chunkIndex": 15,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4826,
+        "snippet": "hat it may not do, and which activities need a separate change order. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for service description. - Approval blocker: unresolved gaps affecting final tr...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "chunkIndex": 28,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4826,
+        "snippet": "HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for service levels. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate proc...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "chunkIndex": 29,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4826,
+        "snippet": "sing Addendum, Apex DataWorks Ltd. shall state credits do not replace corrective actions, regulatory duties, or termination rights for chronic failure. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and review...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "chunkIndex": 36,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4826,
+        "snippet": "ired evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for incident management. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 22 | Area: Incident Management | Customer: Riverstone Operations Group | Provider: Apex DataWorks Ltd. | Evidence cadence: onboarding and annual refresh 23. Notif...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "chunkIndex": 41,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4826,
+        "snippet": "ions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for exit management. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 26 | Area: Exit Management | Customer: Riverstone Operations G...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "chunkIndex": 45,
+        "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-02",
+        "score": 0.4826,
+        "snippet": "ate, exception status, and reviewer for insurance. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 29 | Area: Insurance | Customer: Riverstone Operations Group | Provider: Apex DataWorks Ltd. | Evidence cadence: onboarding and annual refresh 30. Confidentiality Synthetic test fixture - Page 9 of 28 Data Processing Addendum And C...",
+        "source": "fixture_pdf",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      },
+      {
+        "evidence_id": "FIXTURE-02",
+        "snippet": "Data Processing Addendum And Cross-Border Transfer Terms Data Processing Addendum And Cross-Border Transfer Terms Apex DataWorks Ltd. processor terms for HR, CRM, marketing, support, and analytics data Synthetic legal-style test document for agent evaluation. ",
+        "source": "node-citation",
+        "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+      }
+    ],
+    "executive_summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "fixture_document_analysis": {
+      "detected_domain": "privacy",
+      "documents_used": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "02_data_processing_addendum_and_cross_border_terms.pdf",
+          "pages": 28,
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        }
+      ],
+      "expected_profile_match": true,
+      "extraction_status": "text_extracted",
+      "matched_missing_evidence": [
+        "transfer impact assessment",
+        "subprocessor objection workflow",
+        "retention table",
+        "deletion certificate process"
+      ],
+      "matched_risk_domains": [
+        "privacy",
+        "subprocessors",
+        "retention",
+        "cross-border transfer"
+      ],
+      "rejected": [],
+      "target_agent": "Privacy Specialist"
+    },
+    "human_review_required": true,
+    "learning_memory": {
+      "advisoryOnly": true,
+      "browserEmbeddingsRetained": false,
+      "control_suggestions": [
+        "Require signed model-training exclusion for patient or customer data before production.",
+        "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+        "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+        "Require retention schedule and deletion assistance evidence.",
+        "Require cross-border transfer mechanism and support-region confirmation.",
+        "Add reviewer question: Are any support teams accessing records outside approved regions?",
+        "Require current subprocessor register before approval.",
+        "Require 30-day subprocessor change notification and right to object."
+      ],
+      "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+      "provider": "local-jsonl",
+      "repeatedEvidenceGaps": [
+        "model-training exclusion",
+        "DPA amendment",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "support region confirmation",
+        "subprocessor register",
+        "signed DPA",
+        "human oversight plan"
+      ],
+      "similar_cases_found": 5
+    },
+    "live_advisory": {
+      "advisoryOnly": true,
+      "agents": [],
+      "cards": [],
+      "enabled": false,
+      "final_decision_owner": "Deterministic Decision Owner",
+      "model": "gpt-4.1",
+      "runtime": "custom",
+      "status": "skipped_custom_runtime",
+      "summary": {}
+    },
+    "live_compass": {
+      "advisory": {},
+      "enabled": false,
+      "model": "gpt-5.1",
+      "status": "skipped_sample_mode"
+    },
+    "missing_evidence": [
+      "transfer impact assessment",
+      "subprocessor objection workflow",
+      "retention table",
+      "deletion certificate process",
+      "signed DPA",
+      "retention and deletion evidence",
+      "cross-border transfer mechanism",
+      "subprocessor register",
+      "business continuity or exit evidence",
+      "Business owner is not identified.",
+      "Jurisdiction or geography is missing.",
+      "ESG, HSE And BCM applicability needs confirmation."
+    ],
+    "rag_evidence_memory": {
+      "browserEmbeddingsRetained": false,
+      "collection": "p42_compliance_evidence",
+      "durable": false,
+      "evidenceMatches": [
+        {
+          "chunkIndex": 38,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance",
+            "continuity"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4956,
+          "snippet": "corrective actions, owners, deadlines, residual risk acceptance, and executive escalation for overdue blockers. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for remediation. - Approval blocker: ...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        },
+        {
+          "chunkIndex": 11,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4826,
+          "snippet": "endum, Apex DataWorks Ltd. shall require every work package to identify scope, owners, data, systems, locations, subcontractors, acceptance tests, and blockers. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, a...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        },
+        {
+          "chunkIndex": 15,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4826,
+          "snippet": "hat it may not do, and which activities need a separate change order. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for service description. - Approval blocker: unresolved gaps affecting final tr...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        },
+        {
+          "chunkIndex": 28,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4826,
+          "snippet": "HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for service levels. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate proc...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        },
+        {
+          "chunkIndex": 29,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4826,
+          "snippet": "sing Addendum, Apex DataWorks Ltd. shall state credits do not replace corrective actions, regulatory duties, or termination rights for chronic failure. The obligation applies to HR, CRM, support, supplier, marketing, and analytics processing under documented instructions and to all records concerning processing instructions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and review...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        },
+        {
+          "chunkIndex": 36,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4826,
+          "snippet": "ired evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for incident management. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 22 | Area: Incident Management | Customer: Riverstone Operations Group | Provider: Apex DataWorks Ltd. | Evidence cadence: onboarding and annual refresh 23. Notif...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        },
+        {
+          "chunkIndex": 41,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4826,
+          "snippet": "ions, subprocessor chain, transfer safeguards, deletion records, and data subject request queues. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for exit management. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 26 | Area: Exit Management | Customer: Riverstone Operations G...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        },
+        {
+          "chunkIndex": 45,
+          "documentId": "fixture-02_data_processing_addendum_and_cross_border_terms.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-02",
+          "score": 0.4826,
+          "snippet": "ate, exception status, and reviewer for insurance. - Approval blocker: unresolved gaps affecting final transfer impact assessment, subprocessor objection workflow, retention table, deletion certificate process must remain visible in the risk register until accepted by Customer. Clause 29 | Area: Insurance | Customer: Riverstone Operations Group | Provider: Apex DataWorks Ltd. | Evidence cadence: onboarding and annual refresh 30. Confidentiality Synthetic test fixture - Page 9 of 28 Data Processing Addendum And C...",
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        }
+      ],
+      "fixtureDocumentsUsed": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "02_data_processing_addendum_and_cross_border_terms.pdf",
+          "pages": 28,
+          "source": "fixture_pdf",
+          "title": "Data Processing Addendum And Cross-Border Transfer Terms"
+        }
+      ],
+      "indexedChunkCount": 157,
+      "missingEvidenceSignals": [
+        "transfer impact assessment",
+        "subprocessor objection workflow",
+        "retention table",
+        "deletion certificate process",
+        "signed DPA",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "subprocessor register",
+        "business continuity or exit evidence",
+        "Business owner is not identified.",
+        "Jurisdiction or geography is missing.",
+        "ESG, HSE And BCM applicability needs confirmation."
+      ],
+      "provider": "local-fallback",
+      "qdrantConfigured": false,
+      "retrievedMatchCount": 8
+    },
+    "required_actions": [
+      "Assign the accountable business unit or requester before approval.",
+      "Confirm the operating geography and regulatory perimeter.",
+      "Ask the domain owner whether esg, hse and bcm obligations apply.",
+      "Require cross-border transfer mechanism and hosting/support region confirmation.",
+      "Require current subprocessor register and change-notification terms.",
+      "Require retention schedule and deletion assistance evidence.",
+      "Require deletion certificate process covering active systems, backups, exceptions, and evidence retention.",
+      "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+      "Require BCP/DR and exit assistance evidence for critical workflows.",
+      "Resolve evidence gap: Business owner is not identified.",
+      "Resolve evidence gap: Jurisdiction or geography is missing.",
+      "Resolve evidence gap: ESG, HSE And BCM applicability needs confirmation.",
+      "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+      "Require cross-border transfer mechanism and support-region confirmation."
+    ],
+    "reviewer_questions": [
+      "Has any analytics data been used for model improvement or service training?",
+      "Are any support teams accessing records outside approved regions?"
+    ],
+    "risk_level": "high",
+    "summary": "Deterministic review supports conditional approval with named controls. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
+  },
+  "run_id": "fixture-02_data_processing_addendum_and_cross_border_terms",
+  "status": "success",
+  "trace_id": "trace-fixture-02_data_processing_addendum_and_cross_border_terms-254dba46",
+  "use_case_id": "21"
+}

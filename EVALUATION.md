@@ -99,6 +99,35 @@ python scripts/agentathon_preflight.py
 
 The regeneration script executes the actual orchestrator for the three canonical input examples, writes `output_examples/example_1_output.json` through `example_3_output.json`, copies stable matching traces to `logs/example_1_trace.jsonl` through `logs/example_3_trace.jsonl`, and refreshes `logs/demo_trace.jsonl`. Preflight verifies that each output example's `trace_id` exists in its referenced `log_file`.
 
+## Fixture Contract Demo Inputs
+
+Six synthetic text-based PDFs are available under `test-fixtures/compliance-documents/` for the cockpit and `/run` demos. They cover enterprise SaaS, DPA/cross-border terms, AI accelerator import/export controls, managed platform integration, media/audience analytics, and cloud AI model services. They are generated fixtures, not real contracts, and are safe for public demo use.
+
+The product cockpit can recognize these fixture PDFs by filename and enrich the evidence draft with provider, service summary, detected domain, missing evidence signals, and risk domains. The Agentathon wrapper also accepts fixture references without browser upload:
+
+```json
+{
+  "input": {
+    "query": "Can we approve this vendor?",
+    "documents": [
+      { "filename": "06_cloud_ai_model_services_statement_of_work.pdf" }
+    ]
+  }
+}
+```
+
+The fixture resolver only reads manifest-listed files below `test-fixtures/compliance-documents/`. It rejects path traversal and hosted Vercel/Railway/dashboard URLs. PDF extraction is limited to these generated text-based fixtures; this is not arbitrary scanned-PDF OCR.
+
+Run the fixture validation matrix:
+
+```bash
+python scripts/fixture_demo_matrix.py
+python scripts/agentathon_preflight.py
+npm run qa
+```
+
+The matrix validates expected risk domains, missing evidence terms, required action keywords, decision band, minimum risk, human-review boundary, trace collaboration, and no raw embeddings. It regenerates `output_examples/fixture_*_output.json` and `logs/fixture_*_trace.jsonl` through the actual council path.
+
 For UI or demo-flow changes, add a human browser check on top of `npm run qa`: verify that the chat is usable, evidence states are visible, the decision room renders a business-first memo, and technical trace details are behind progressive disclosure. The intended validation split is visual, functional, and output quality:
 
 - Visual: no blank first-viewport states, clipped labels, or overlapping right-rail content.

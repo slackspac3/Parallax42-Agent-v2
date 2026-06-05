@@ -203,6 +203,29 @@ curl http://localhost:8000/compass/probe
 
 `OPENAI_BASE_URL` is normalized for the official direct Agentathon Compass path. `https://compass.core42.ai` is corrected to `https://compass.core42.ai/v1`; duplicate `/v1/v1` and known frontend URLs are rejected. If `OPENAI_BASE_URL` is not exported, `compass_doctor.py` reports that the default is used only for normalization and is not live proof. The optional Parallax42 Vercel gateway uses `COMPASS_GATEWAY_BASE_URL` and `COMPASS_GATEWAY_TOKEN` in the existing Node product runtime. It is not the official Agentathon Compass direct path unless explicitly configured as an OpenAI-compatible `/v1` endpoint.
 
+## Fixture Contract Demo Inputs
+
+The repo includes six synthetic, generated, text-based PDFs under `test-fixtures/compliance-documents/`. They are not real contracts and contain no confidential company or patient data:
+
+- `01_enterprise_saas_master_services_agreement.pdf`
+- `02_data_processing_addendum_and_cross_border_terms.pdf`
+- `03_ai_accelerator_chip_import_export_control_agreement.pdf`
+- `04_managed_platform_integration_services_agreement.pdf`
+- `05_media_buying_and_audience_analytics_order_form.pdf`
+- `06_cloud_ai_model_services_statement_of_work.pdf`
+
+These fixtures can be uploaded in the product cockpit for a reliable demo, or referenced directly by Agentathon `/run` JSON through `input.documents[].filename` or `input.documents[].path`. The wrapper safely resolves only manifest-listed files under `test-fixtures/compliance-documents/`, rejects path traversal and hosted dashboard URLs, extracts text from the generated PDF text streams when possible, and falls back to fixture metadata if extraction fails. This is not a claim of arbitrary scanned-PDF OCR.
+
+Validate the full fixture matrix:
+
+```bash
+python scripts/fixture_demo_matrix.py
+python scripts/agentathon_preflight.py
+npm run qa
+```
+
+`scripts/fixture_demo_matrix.py` runs all six fixture inputs through the actual council, asserts risk domains, missing evidence, required action keywords, human-review boundary, trace collaboration, and no raw embedding leakage, then writes fresh outputs under `output_examples/fixture_*_output.json` and traces under `logs/fixture_*_trace.jsonl`.
+
 ## Azure Migration Path
 
 The current submitted version is GitHub/Vercel/Docker-oriented. It can be migrated to Azure without changing the core product architecture by moving each runtime boundary to the closest Azure service and keeping the same environment contracts.

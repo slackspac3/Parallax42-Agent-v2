@@ -1,0 +1,16 @@
+{
+  "run_id": "fixture-dpa-cross-border",
+  "use_case_id": "21",
+  "input": {
+    "query": "Review this DPA-ish cross-border processing pack. I think support can happen outside region and the deletion evidence is vague.",
+    "documents": [
+      {
+        "path": "test-fixtures/compliance-documents/02_data_processing_addendum_and_cross_border_terms.pdf"
+      }
+    ]
+  },
+  "options": {
+    "sample_mode": true,
+    "max_iterations": 3
+  }
+}

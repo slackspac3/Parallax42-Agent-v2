@@ -1,0 +1,1753 @@
+{
+  "agent_trace": [
+    {
+      "action": "receive_case",
+      "agent_name": "Intake Agent",
+      "confidence": 0.86,
+      "input_summary": "Review an AI accelerator import for UAE and Singapore from the US. Supplier ships restricted hardware, supports firmware remotely, and the final end-use certificate is missing.",
+      "memory_key": "caseFacts",
+      "output_summary": "Received evaluator request and started case fact extraction.",
+      "payload": {
+        "sample_mode": true,
+        "use_case_id": "21"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "success",
+      "target_agent": "Intake Agent",
+      "timestamp": "2026-06-05T06:23:40.889953Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "extract_case_facts",
+      "agent_name": "Intake Agent",
+      "confidence": 0.72,
+      "input_summary": "Evaluator input plus normalized Node case.",
+      "memory_key": "caseFacts",
+      "output_summary": "Extracted supplier=Submitted compliance case, geography=missing, missing facts=2.",
+      "payload": {
+        "caseFacts": {
+          "aiRiskSignal": "analytics_governance",
+          "aiUse": "Analytics workflow requires data-use governance confirmation.",
+          "dataCategories": [
+            "customer support data",
+            "supplier or finance workflow data",
+            "export-control hardware and support records",
+            "audience and marketing analytics data"
+          ],
+          "evidenceReferences": [
+            "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+            "FIXTURE-03"
+          ],
+          "fixtureDomain": "export-control",
+          "geography": "",
+          "integrations": [],
+          "owner": "",
+          "riskSignals": [
+            "export-control",
+            "sanctions",
+            "third-party-risk",
+            "technical-risk",
+            "remote-support"
+          ],
+          "supplier": "Submitted compliance case",
+          "workflow": "Review an AI accelerator import for UAE and Singapore from the US. Supplier ships restricted hardware, supports firmware remotely, and the final end-use certificate is missing."
+        },
+        "missing_case_facts": [
+          "owner",
+          "geography"
+        ]
+      },
+      "retry_count": 0,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "needs_revision",
+      "target_agent": "Evidence Retrieval Agent",
+      "timestamp": "2026-06-05T06:23:41.001416Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "delegate_evidence_search",
+      "agent_name": "Intake Agent",
+      "confidence": 0.87,
+      "input_summary": "Case facts, evidence references, risk signals, and missing facts.",
+      "memory_key": "evidenceMatches",
+      "output_summary": "Delegated evidence retrieval for privacy, security, AI governance, continuity, and precedent context.",
+      "payload": {},
+      "retry_count": 0,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "success",
+      "target_agent": "Evidence Retrieval Agent",
+      "timestamp": "2026-06-05T06:23:41.010043Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "ingest_fixture_document",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.86,
+      "input_summary": "Generated fixture PDF reference supplied in evaluator input.",
+      "memory_key": "fixtureDocumentAnalysis",
+      "output_summary": "Ingested 1 fixture document(s); domain=export-control; extraction=text_extracted.",
+      "payload": {
+        "detected_domain": "export-control",
+        "documents_used": [
+          {
+            "extractionStatus": "text_extracted",
+            "filename": "03_ai_accelerator_chip_import_export_control_agreement.pdf",
+            "pages": 29,
+            "source": "fixture_pdf",
+            "title": "AI Accelerator Chip Import And Export Control Agreement"
+          }
+        ],
+        "expected_profile_match": true,
+        "extraction_status": "text_extracted",
+        "matched_missing_evidence": [
+          "final classification",
+          "license analysis",
+          "end-use certificate",
+          "import permit",
+          "delivery-site approval",
+          "remote support runbook"
+        ],
+        "matched_risk_domains": [
+          "export-control",
+          "sanctions",
+          "third-party-risk",
+          "technical-risk",
+          "remote-support"
+        ],
+        "rejected": [],
+        "target_agent": "Security Specialist"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "success",
+      "target_agent": "Security Specialist",
+      "timestamp": "2026-06-05T06:23:41.016259Z",
+      "tool_used": "fixture_pdf_text_extractor",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "retrieve_evidence",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.52,
+      "input_summary": "Supplied request evidence, Node citations, local sample snippets, and case-scoped evidence memory.",
+      "memory_key": "evidenceMatches",
+      "output_summary": "Retrieved 9 evidence match(es); memory provider=local-fallback; sufficiency=weak.",
+      "payload": {
+        "localEvidenceArtifacts": [
+          "live-health.json",
+          "benchmark-report.json",
+          "readiness.json",
+          "sample-agent-run.json"
+        ],
+        "match_count": 9,
+        "missingEvidence": [
+          "final classification",
+          "license analysis",
+          "end-use certificate",
+          "import permit",
+          "delivery-site approval",
+          "remote support runbook",
+          "signed DPA",
+          "retention and deletion evidence",
+          "cross-border transfer mechanism",
+          "subprocessor register",
+          "business continuity or exit evidence",
+          "Business owner is not identified.",
+          "Jurisdiction or geography is missing."
+        ],
+        "retrievalContext": {
+          "browserEmbeddingsRetained": false,
+          "collection": "p42_compliance_evidence",
+          "durable": false,
+          "evidenceMatches": [
+            {
+              "chunkIndex": 27,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4946,
+              "snippet": "ging scope, location, subprocessors, integrations, data classes, AI use, or access model. The obligation applies to procurement, import, warehousing, delivery, firmware support, and chain-of-custody control for AI accelerator hardware and to all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for change control. - Approval blocker: un...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            },
+            {
+              "chunkIndex": 26,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4824,
+              "snippet": "all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for subcontracting. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontr...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            },
+            {
+              "chunkIndex": 35,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4459,
+              "snippet": "rds, change records, audit evidence, and decision files for defined periods. The obligation applies to procurement, import, warehousing, delivery, firmware support, and chain-of-custody control for AI accelerator hardware and to all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for records retention. - Approval blocker: unresolved g...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            },
+            {
+              "chunkIndex": 110,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4459,
+              "snippet": "cation, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook. Synthetic test fixture - Page 20 of 29 AI Accelerator Chip Import And Export Control Agreement SCN-01 | Trigger: new production launch | Evidence: ticket, owner, chronology, impact, control response, closure approval | Reviewer: customer control owner D.2 Scenario - Material Subprocessor Change If a material subprocessor change occurs, Provider shall open a tracked record, identify the affected service b...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            },
+            {
+              "chunkIndex": 111,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4459,
+              "snippet": "e, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook. SCN-02 | Trigger: material subprocessor change | Evidence: ticket, owner, chronology, impact, control response, closure approval | Reviewer: customer control owner D.3 Scenario - Privileged Support Request If a privileged support request occurs, Provider shall open a tracked record, id...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            },
+            {
+              "chunkIndex": 10,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4337,
+              "snippet": ". - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 01 | Area: Definitions And Interpretation | Customer: Meridian Research Compute | Provider: HelioChip Logistics Ltd. | Evidence cadence: onboarding and annual refresh 2. Order Of Precedence For AI Accelerator Import And Export Control, HelioChip Logistics Ltd. shall res...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            },
+            {
+              "chunkIndex": 34,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4337,
+              "snippet": "oncerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for documentation. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 19 | Area: Documentation | Custom...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            },
+            {
+              "chunkIndex": 22,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4215,
+              "snippet": "ss, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for policies and standards. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Meridian Research Compute | Provider: HelioChip Logistics ...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            }
+          ],
+          "fixtureDocumentsUsed": [
+            {
+              "extractionStatus": "text_extracted",
+              "filename": "03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "pages": 29,
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            }
+          ],
+          "indexedChunkCount": 166,
+          "missingEvidenceSignals": [
+            "final classification",
+            "license analysis",
+            "end-use certificate",
+            "import permit",
+            "delivery-site approval",
+            "remote support runbook",
+            "signed DPA",
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "subprocessor register",
+            "business continuity or exit evidence",
+            "Business owner is not identified.",
+            "Jurisdiction or geography is missing."
+          ],
+          "provider": "local-fallback",
+          "qdrantConfigured": false,
+          "retrievedMatchCount": 8
+        }
+      },
+      "retry_count": 0,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "needs_revision",
+      "target_agent": "Privacy Specialist",
+      "timestamp": "2026-06-05T06:23:41.079304Z",
+      "tool_used": "local-fallback",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "retry_evidence_search",
+      "agent_name": "Evidence Retrieval Agent",
+      "confidence": 0.45,
+      "input_summary": "Initial evidence coverage was weak or missing key proof.",
+      "memory_key": "missingEvidence",
+      "output_summary": "Retried with privacy/security/AI/continuity keywords through local-fallback; retained only sanitized evidence metadata.",
+      "payload": {
+        "missingEvidence": [
+          "final classification",
+          "license analysis",
+          "end-use certificate",
+          "import permit",
+          "delivery-site approval",
+          "remote support runbook",
+          "signed DPA",
+          "retention and deletion evidence",
+          "cross-border transfer mechanism",
+          "subprocessor register",
+          "business continuity or exit evidence",
+          "Business owner is not identified.",
+          "Jurisdiction or geography is missing."
+        ],
+        "retrievalContext": {
+          "browserEmbeddingsRetained": false,
+          "collection": "p42_compliance_evidence",
+          "durable": false,
+          "evidenceMatches": [
+            {
+              "chunkIndex": 27,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4946,
+              "snippet": "ging scope, location, subprocessors, integrations, data classes, AI use, or access model. The obligation applies to procurement, import, warehousing, delivery, firmware support, and chain-of-custody control for AI accelerator hardware and to all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for change control. - Approval blocker: un...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            },
+            {
+              "chunkIndex": 26,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4824,
+              "snippet": "all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for subcontracting. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontr...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            },
+            {
+              "chunkIndex": 35,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4459,
+              "snippet": "rds, change records, audit evidence, and decision files for defined periods. The obligation applies to procurement, import, warehousing, delivery, firmware support, and chain-of-custody control for AI accelerator hardware and to all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for records retention. - Approval blocker: unresolved g...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            },
+            {
+              "chunkIndex": 110,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4459,
+              "snippet": "cation, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook. Synthetic test fixture - Page 20 of 29 AI Accelerator Chip Import And Export Control Agreement SCN-01 | Trigger: new production launch | Evidence: ticket, owner, chronology, impact, control response, closure approval | Reviewer: customer control owner D.2 Scenario - Material Subprocessor Change If a material subprocessor change occurs, Provider shall open a tracked record, identify the affected service b...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            },
+            {
+              "chunkIndex": 111,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "privacy",
+                "security",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4459,
+              "snippet": "e, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook. SCN-02 | Trigger: material subprocessor change | Evidence: ticket, owner, chronology, impact, control response, closure approval | Reviewer: customer control owner D.3 Scenario - Privileged Support Request If a privileged support request occurs, Provider shall open a tracked record, id...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            },
+            {
+              "chunkIndex": 10,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4337,
+              "snippet": ". - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 01 | Area: Definitions And Interpretation | Customer: Meridian Research Compute | Provider: HelioChip Logistics Ltd. | Evidence cadence: onboarding and annual refresh 2. Order Of Precedence For AI Accelerator Import And Export Control, HelioChip Logistics Ltd. shall res...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            },
+            {
+              "chunkIndex": 34,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "privacy",
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4337,
+              "snippet": "oncerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for documentation. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 19 | Area: Documentation | Custom...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            },
+            {
+              "chunkIndex": 22,
+              "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "domains": [
+                "ai-governance"
+              ],
+              "evidence_id": "FIXTURE-03",
+              "score": 0.4215,
+              "snippet": "ss, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for policies and standards. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Meridian Research Compute | Provider: HelioChip Logistics ...",
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            }
+          ],
+          "fixtureDocumentsUsed": [
+            {
+              "extractionStatus": "text_extracted",
+              "filename": "03_ai_accelerator_chip_import_export_control_agreement.pdf",
+              "pages": 29,
+              "source": "fixture_pdf",
+              "title": "AI Accelerator Chip Import And Export Control Agreement"
+            }
+          ],
+          "indexedChunkCount": 166,
+          "missingEvidenceSignals": [
+            "final classification",
+            "license analysis",
+            "end-use certificate",
+            "import permit",
+            "delivery-site approval",
+            "remote support runbook",
+            "signed DPA",
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "subprocessor register",
+            "business continuity or exit evidence",
+            "Business owner is not identified.",
+            "Jurisdiction or geography is missing."
+          ],
+          "provider": "local-fallback",
+          "qdrantConfigured": false,
+          "retrievedMatchCount": 8
+        }
+      },
+      "retry_count": 1,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "retry",
+      "target_agent": "Privacy Specialist",
+      "timestamp": "2026-06-05T06:23:41.093667Z",
+      "tool_used": "local-fallback",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "critique_privacy_gap",
+      "agent_name": "Privacy Specialist",
+      "confidence": 0.8,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "Privacy proof incomplete: signed DPA, retention and deletion evidence, cross-border transfer mechanism, subprocessor register.",
+      "payload": {
+        "requiredActions": [
+          "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+          "Require retention schedule and deletion assistance evidence.",
+          "Require cross-border transfer mechanism and hosting/support region confirmation.",
+          "Require current subprocessor register and change-notification terms."
+        ],
+        "severity": "high"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "needs_revision",
+      "target_agent": "Security Specialist",
+      "timestamp": "2026-06-05T06:23:41.106365Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "critique_security_gap",
+      "agent_name": "Security Specialist",
+      "confidence": 0.8,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "Security or continuity proof incomplete: final classification, license analysis, end-use certificate, import permit.",
+      "payload": {
+        "requiredActions": [
+          "Require final export-control classification with manufacturer/counsel evidence before shipment.",
+          "Require documented license analysis and hold points for export, re-export, and import approvals.",
+          "Require final end-use and end-user certificate before hardware release or firmware support.",
+          "Require destination import permit or documented no-permit analysis before delivery.",
+          "Require approved delivery-site, chain-of-custody, and restricted-party screening evidence.",
+          "Require remote support runbook covering named personnel, MFA, logging, approval windows, and firmware controls.",
+          "Require BCP/DR and exit assistance evidence for critical workflows."
+        ],
+        "severity": "medium"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "needs_revision",
+      "target_agent": "Responsible AI Specialist",
+      "timestamp": "2026-06-05T06:23:41.113218Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "validate_evidence",
+      "agent_name": "Responsible AI Specialist",
+      "confidence": 0.86,
+      "input_summary": "Case facts, evidence matches, missing evidence, and prior specialist context.",
+      "memory_key": "specialistFindings",
+      "output_summary": "AI/analytics signal remains inside human oversight boundary.",
+      "payload": {
+        "requiredActions": [
+          "Confirm human oversight and no automated approval for AI-assisted workflow outputs."
+        ],
+        "severity": "medium"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "success",
+      "target_agent": "Learning & Precedent Specialist",
+      "timestamp": "2026-06-05T06:23:41.120635Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "retrieve_precedent",
+      "agent_name": "Learning & Precedent Specialist",
+      "confidence": 0.62,
+      "input_summary": "Case facts, missing evidence, and specialist challenges.",
+      "memory_key": "learningContext",
+      "output_summary": "Matched precedent pattern: general incomplete evidence -> human review controls; similar learning cases=5, top pattern=Healthcare analytics vendor missing model-training exclusion.",
+      "payload": {
+        "learningContext": {
+          "advisoryOnly": true,
+          "browserEmbeddingsRetained": false,
+          "controlSuggestions": [
+            "Require signed model-training exclusion for patient or customer data before production.",
+            "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+            "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+            "Require retention schedule and deletion assistance evidence.",
+            "Require cross-border transfer mechanism and support-region confirmation.",
+            "Add reviewer question: Are any support teams accessing records outside approved regions?",
+            "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
+            "Require signed model-training exclusion and human oversight plan before reconsideration."
+          ],
+          "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+          "provider": "local-jsonl",
+          "qdrantConfigured": false,
+          "repeatedEvidenceGaps": [
+            "model-training exclusion",
+            "DPA amendment",
+            "retention and deletion evidence",
+            "cross-border transfer mechanism",
+            "support region confirmation",
+            "signed DPA",
+            "human oversight plan",
+            "subprocessor register"
+          ],
+          "similarCases": [
+            {
+              "addedControls": [
+                "Require signed model-training exclusion for patient or customer data before production.",
+                "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+                "Add reviewer question: Has any analytics data been used for model improvement or service training?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-healthcare-001",
+              "domains": [
+                "privacy",
+                "ai-governance",
+                "healthcare"
+              ],
+              "finalOutcome": "conditional approval after DPA amendment",
+              "memoryId": "learn-healthcare-training-001",
+              "missingEvidence": [
+                "model-training exclusion",
+                "DPA amendment"
+              ],
+              "originalDecision": "conditional_approval",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.3717,
+              "title": "Healthcare analytics vendor missing model-training exclusion",
+              "type": "case_outcome"
+            },
+            {
+              "addedControls": [
+                "Require retention schedule and deletion assistance evidence.",
+                "Require cross-border transfer mechanism and support-region confirmation.",
+                "Add reviewer question: Are any support teams accessing records outside approved regions?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-cross-border-001",
+              "domains": [
+                "privacy",
+                "saas",
+                "cross-border"
+              ],
+              "finalOutcome": "conditional approval after retention schedule",
+              "memoryId": "learn-cross-border-retention-001",
+              "missingEvidence": [
+                "retention and deletion evidence",
+                "cross-border transfer mechanism",
+                "support region confirmation"
+              ],
+              "originalDecision": "needs_more_information",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.33,
+              "title": "Cross-border SaaS missing retention schedule",
+              "type": "evidence_quality_note"
+            },
+            {
+              "addedControls": [
+                "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
+                "Require signed model-training exclusion and human oversight plan before reconsideration.",
+                "Add reviewer question: Does the vendor use prompts, tickets, or submitted records for model improvement?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-ai-001",
+              "domains": [
+                "ai-governance",
+                "privacy",
+                "customer-data"
+              ],
+              "finalOutcome": "rejected and escalated",
+              "memoryId": "learn-ai-training-reject-001",
+              "missingEvidence": [
+                "model-training exclusion",
+                "signed DPA",
+                "human oversight plan"
+              ],
+              "originalDecision": "conditional_approval",
+              "reviewerDecision": "reject",
+              "score": 0.3161,
+              "title": "AI vendor permitted customer-data training",
+              "type": "decision_override"
+            },
+            {
+              "addedControls": [
+                "Require current subprocessor register before approval.",
+                "Require 30-day subprocessor change notification and right to object.",
+                "Add reviewer question: Are support and hosting locations consistent with transfer assessment?"
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-saas-001",
+              "domains": [
+                "privacy",
+                "saas",
+                "third-party-risk"
+              ],
+              "finalOutcome": "conditional approval with subprocessor disclosure",
+              "memoryId": "learn-saas-subprocessors-001",
+              "missingEvidence": [
+                "subprocessor register",
+                "cross-border transfer mechanism"
+              ],
+              "originalDecision": "needs_more_information",
+              "reviewerDecision": "conditional_approval",
+              "score": 0.3022,
+              "title": "SaaS vendor missing subprocessor list",
+              "type": "control_pattern"
+            },
+            {
+              "addedControls": [
+                "Keep annual SOC 2 and ISO evidence refresh on reviewer calendar.",
+                "Monitor subprocessor changes and retention exceptions quarterly.",
+                "Confirm accountable human owner before operational approval."
+              ],
+              "advisoryOnly": true,
+              "caseId": "synthetic-memory-complete-001",
+              "domains": [
+                "privacy",
+                "security",
+                "third-party-risk"
+              ],
+              "finalOutcome": "approval with monitoring",
+              "memoryId": "learn-complete-package-001",
+              "missingEvidence": [],
+              "originalDecision": "approve",
+              "reviewerDecision": "approve",
+              "score": 0.3022,
+              "title": "Complete vendor package approved with monitoring",
+              "type": "case_outcome"
+            }
+          ],
+          "similar_cases_found": 5,
+          "topPattern": "Healthcare analytics vendor missing model-training exclusion"
+        },
+        "precedent": {
+          "advisoryOnly": true,
+          "confidence": 0.62,
+          "pattern": "general incomplete evidence -> human review controls",
+          "recommendation": "conditional_human_review"
+        }
+      },
+      "retry_count": 0,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "success",
+      "target_agent": "Deterministic Decision Owner",
+      "timestamp": "2026-06-05T06:23:41.131245Z",
+      "tool_used": "local-jsonl",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "compass_advisory_unavailable",
+      "agent_name": "Compass Advisory Critic",
+      "confidence": 0.7,
+      "input_summary": "Sample mode requested.",
+      "memory_key": "compassAdvisory",
+      "output_summary": "Skipped live Compass call; deterministic local council remains active.",
+      "payload": {},
+      "retry_count": 0,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "fallback_used",
+      "target_agent": "Deterministic Decision Owner",
+      "timestamp": "2026-06-05T06:23:41.142873Z",
+      "tool_used": "sample_mode",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "revise_required_controls",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.92,
+      "input_summary": "Specialist challenges, precedent pattern, and Compass advisory status.",
+      "memory_key": "requiredActions",
+      "output_summary": "Required controls revised to 14 action(s); final risk=critical.",
+      "payload": {
+        "llm_advisory_only": true,
+        "required_actions": [
+          "Assign the accountable business unit or requester before approval.",
+          "Confirm the operating geography and regulatory perimeter.",
+          "Ask the domain owner whether esg, hse and bcm obligations apply.",
+          "Require final export-control classification with manufacturer/counsel evidence before shipment.",
+          "Require documented license analysis and hold points for export, re-export, and import approvals.",
+          "Require final end-use and end-user certificate before hardware release or firmware support.",
+          "Require destination import permit or documented no-permit analysis before delivery.",
+          "Require approved delivery-site, chain-of-custody, and restricted-party screening evidence.",
+          "Require remote support runbook covering named personnel, MFA, logging, approval windows, and firmware controls.",
+          "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+          "Require retention schedule and deletion assistance evidence.",
+          "Require cross-border transfer mechanism and hosting/support region confirmation.",
+          "Require current subprocessor register and change-notification terms.",
+          "Require BCP/DR and exit assistance evidence for critical workflows."
+        ],
+        "specialist_challenge_count": 2
+      },
+      "retry_count": 0,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "needs_revision",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:41.150285Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "escalate_human_review",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.94,
+      "input_summary": "Unresolved high-risk gaps or insufficient proof remained after council review.",
+      "memory_key": "humanReviewRequired",
+      "output_summary": "Escalated to accountable human reviewer; no autonomous approval permitted.",
+      "payload": {
+        "decision": "needs_more_information",
+        "risk_level": "critical"
+      },
+      "retry_count": 1,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "escalated",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:41.156700Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "apply_deterministic_policy",
+      "agent_name": "Deterministic Decision Owner",
+      "confidence": 0.95,
+      "input_summary": "Node deterministic result, specialist critiques, precedent, and advisory-only Compass output.",
+      "memory_key": "decisionDraft",
+      "output_summary": "Final decision sealed as needs_more_information by deterministic policy owner.",
+      "payload": {
+        "compass_status": "skipped_sample_mode",
+        "final_owner": "Deterministic Decision Owner",
+        "live_advisory_runtime": "custom",
+        "llm_advisory_only": true
+      },
+      "retry_count": 0,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "success",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:41.162900Z",
+      "tool_used": "deterministic_rules_engine",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "package_audit_trace",
+      "agent_name": "Audit Packager",
+      "confidence": 0.93,
+      "input_summary": "Decision, evidence, missing proof, council trace, and human review boundary.",
+      "memory_key": "finalDecision",
+      "output_summary": "Packaged judge-readable audit trace with evidence, specialist challenges, and final owner.",
+      "payload": {
+        "log_file": "logs/trace-fixture-03_ai_accelerator_chip_import_export_control_agreement.jsonl",
+        "trace_events": 15
+      },
+      "retry_count": 0,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "success",
+      "target_agent": "Audit Packager",
+      "timestamp": "2026-06-05T06:23:41.169105Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    },
+    {
+      "action": "finalize_response",
+      "agent_name": "Audit Packager",
+      "confidence": 0.94,
+      "input_summary": "Final packaged decision and trace summary.",
+      "memory_key": "finalDecision",
+      "output_summary": "Deterministic review needs more information before a compliance decision can progress. Risk is critical; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+      "payload": {
+        "decision": "needs_more_information",
+        "risk_level": "critical"
+      },
+      "retry_count": 0,
+      "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+      "status": "success",
+      "target_agent": "",
+      "timestamp": "2026-06-05T06:23:41.174736Z",
+      "tool_used": "",
+      "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87"
+    }
+  ],
+  "agents": [
+    {
+      "name": "Intake Agent",
+      "role": "Extracts case facts, missing facts, and delegates evidence needs."
+    },
+    {
+      "name": "Evidence Retrieval Agent",
+      "role": "Searches supplied and local evidence signals, retries weak coverage, and reports sufficiency."
+    },
+    {
+      "name": "Privacy Specialist",
+      "role": "Reviews DPA, subprocessors, retention, transfer, data categories, and model-training exclusions."
+    },
+    {
+      "name": "Security Specialist",
+      "role": "Reviews SOC 2, ISO, access control, encryption, logging, BCP, and technical assurance evidence."
+    },
+    {
+      "name": "Responsible AI Specialist",
+      "role": "Challenges AI use, model training, automation, oversight, and transparency risk."
+    },
+    {
+      "name": "Learning & Precedent Specialist",
+      "role": "Looks up deterministic synthetic precedent patterns as advisory memory."
+    },
+    {
+      "name": "Compass Advisory Critic",
+      "role": "Runs live Compass advisory review when configured; never owns the final decision."
+    },
+    {
+      "name": "Final Advisory Reviewer",
+      "role": "Optional live CrewAI advisory reviewer when AGENT_RUNTIME=crewai_live; advisory only."
+    },
+    {
+      "name": "Deterministic Decision Owner",
+      "role": "Applies deterministic policy and remains final decision authority."
+    },
+    {
+      "name": "Audit Packager",
+      "role": "Packages the decision, evidence, collaboration trace, and review artifacts."
+    }
+  ],
+  "execution_time_seconds": 0.314,
+  "log_file": "logs/fixture_ai_accelerator_export_trace.jsonl",
+  "output": {
+    "artifacts": [
+      {
+        "path": "logs/trace-fixture-03_ai_accelerator_chip_import_export_control_agreement.jsonl",
+        "type": "trace_log"
+      },
+      {
+        "source": "deterministic_node_bridge_plus_python_council",
+        "type": "decision_payload"
+      }
+    ],
+    "collaboration_summary": {
+      "delegated_tasks": [
+        "Intake Agent -> Evidence Retrieval Agent: evidence needs and missing facts"
+      ],
+      "escalations": [
+        "Deterministic Decision Owner escalated unresolved high-risk gaps to human review"
+      ],
+      "final_decision_owner": "Deterministic Decision Owner",
+      "retries": [
+        "Evidence Retrieval Agent refined search with domain keywords using local-fallback"
+      ],
+      "shared_context_updates": [
+        "case facts updated",
+        "fixture document analysis updated",
+        "evidence matches and gaps updated",
+        "retrieval context updated",
+        "specialist finding added: Privacy Specialist",
+        "specialist finding added: Security Specialist",
+        "specialist finding added: Responsible AI Specialist",
+        "synthetic precedent added",
+        "governed learning memory updated",
+        "Compass advisory skipped in sample mode",
+        "required action added"
+      ],
+      "specialist_challenges": [
+        "Privacy proof incomplete: signed DPA, retention and deletion evidence, cross-border transfer mechanism, subprocessor register.",
+        "Security or continuity proof incomplete: final classification, license analysis, end-use certificate, import permit."
+      ],
+      "validations": [
+        "AI/analytics signal remains inside human oversight boundary."
+      ]
+    },
+    "decision": "needs_more_information",
+    "decision_authority": {
+      "final_owner": "Deterministic Decision Owner",
+      "llm_advisory_only": true
+    },
+    "evidence_used": [
+      {
+        "chunkIndex": 27,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4946,
+        "snippet": "ging scope, location, subprocessors, integrations, data classes, AI use, or access model. The obligation applies to procurement, import, warehousing, delivery, firmware support, and chain-of-custody control for AI accelerator hardware and to all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for change control. - Approval blocker: un...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "chunkIndex": 26,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4824,
+        "snippet": "all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for subcontracting. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontr...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "chunkIndex": 35,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4459,
+        "snippet": "rds, change records, audit evidence, and decision files for defined periods. The obligation applies to procurement, import, warehousing, delivery, firmware support, and chain-of-custody control for AI accelerator hardware and to all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for records retention. - Approval blocker: unresolved g...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "chunkIndex": 110,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4459,
+        "snippet": "cation, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook. Synthetic test fixture - Page 20 of 29 AI Accelerator Chip Import And Export Control Agreement SCN-01 | Trigger: new production launch | Evidence: ticket, owner, chronology, impact, control response, closure approval | Reviewer: customer control owner D.2 Scenario - Material Subprocessor Change If a material subprocessor change occurs, Provider shall open a tracked record, identify the affected service b...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "chunkIndex": 111,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4459,
+        "snippet": "e, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook. SCN-02 | Trigger: material subprocessor change | Evidence: ticket, owner, chronology, impact, control response, closure approval | Reviewer: customer control owner D.3 Scenario - Privileged Support Request If a privileged support request occurs, Provider shall open a tracked record, id...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "chunkIndex": 10,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4337,
+        "snippet": ". - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 01 | Area: Definitions And Interpretation | Customer: Meridian Research Compute | Provider: HelioChip Logistics Ltd. | Evidence cadence: onboarding and annual refresh 2. Order Of Precedence For AI Accelerator Import And Export Control, HelioChip Logistics Ltd. shall res...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "chunkIndex": 34,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4337,
+        "snippet": "oncerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for documentation. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 19 | Area: Documentation | Custom...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "chunkIndex": 22,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4215,
+        "snippet": "ss, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for policies and standards. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Meridian Research Compute | Provider: HelioChip Logistics ...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "evidence_id": "FIXTURE-03",
+        "snippet": "AI Accelerator Chip Import And Export Control Agreement AI Accelerator Chip Import And Export Control Agreement HelioChip Logistics Ltd. and Meridian Research Compute - controlled AI accelerator procurement, import, re-export, and end-use restrictions Syntheti",
+        "source": "node-citation",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      }
+    ],
+    "executive_summary": "Deterministic review needs more information before a compliance decision can progress. Risk is critical; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "fixture_document_analysis": {
+      "detected_domain": "export-control",
+      "documents_used": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        }
+      ],
+      "expected_profile_match": true,
+      "extraction_status": "text_extracted",
+      "matched_missing_evidence": [
+        "final classification",
+        "license analysis",
+        "end-use certificate",
+        "import permit",
+        "delivery-site approval",
+        "remote support runbook"
+      ],
+      "matched_risk_domains": [
+        "export-control",
+        "sanctions",
+        "third-party-risk",
+        "technical-risk",
+        "remote-support"
+      ],
+      "rejected": [],
+      "target_agent": "Security Specialist"
+    },
+    "human_review_required": true,
+    "learning_memory": {
+      "advisoryOnly": true,
+      "browserEmbeddingsRetained": false,
+      "control_suggestions": [
+        "Require signed model-training exclusion for patient or customer data before production.",
+        "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+        "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+        "Require retention schedule and deletion assistance evidence.",
+        "Require cross-border transfer mechanism and support-region confirmation.",
+        "Add reviewer question: Are any support teams accessing records outside approved regions?",
+        "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
+        "Require signed model-training exclusion and human oversight plan before reconsideration."
+      ],
+      "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+      "provider": "local-jsonl",
+      "repeatedEvidenceGaps": [
+        "model-training exclusion",
+        "DPA amendment",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "support region confirmation",
+        "signed DPA",
+        "human oversight plan",
+        "subprocessor register"
+      ],
+      "similar_cases_found": 5
+    },
+    "live_advisory": {
+      "advisoryOnly": true,
+      "agents": [],
+      "cards": [],
+      "enabled": false,
+      "final_decision_owner": "Deterministic Decision Owner",
+      "model": "gpt-4.1",
+      "runtime": "custom",
+      "status": "skipped_custom_runtime",
+      "summary": {}
+    },
+    "live_compass": {
+      "advisory": {},
+      "enabled": false,
+      "model": "gpt-5.1",
+      "status": "skipped_sample_mode"
+    },
+    "missing_evidence": [
+      "final classification",
+      "license analysis",
+      "end-use certificate",
+      "import permit",
+      "delivery-site approval",
+      "remote support runbook",
+      "signed DPA",
+      "retention and deletion evidence",
+      "cross-border transfer mechanism",
+      "subprocessor register",
+      "business continuity or exit evidence",
+      "Business owner is not identified."
+    ],
+    "rag_evidence_memory": {
+      "browserEmbeddingsRetained": false,
+      "collection": "p42_compliance_evidence",
+      "durable": false,
+      "evidenceMatches": [
+        {
+          "chunkIndex": 27,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4946,
+          "snippet": "ging scope, location, subprocessors, integrations, data classes, AI use, or access model. The obligation applies to procurement, import, warehousing, delivery, firmware support, and chain-of-custody control for AI accelerator hardware and to all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for change control. - Approval blocker: un...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        },
+        {
+          "chunkIndex": 26,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4824,
+          "snippet": "all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for subcontracting. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontr...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        },
+        {
+          "chunkIndex": 35,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4459,
+          "snippet": "rds, change records, audit evidence, and decision files for defined periods. The obligation applies to procurement, import, warehousing, delivery, firmware support, and chain-of-custody control for AI accelerator hardware and to all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for records retention. - Approval blocker: unresolved g...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        },
+        {
+          "chunkIndex": 110,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4459,
+          "snippet": "cation, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook. Synthetic test fixture - Page 20 of 29 AI Accelerator Chip Import And Export Control Agreement SCN-01 | Trigger: new production launch | Evidence: ticket, owner, chronology, impact, control response, closure approval | Reviewer: customer control owner D.2 Scenario - Material Subprocessor Change If a material subprocessor change occurs, Provider shall open a tracked record, identify the affected service b...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        },
+        {
+          "chunkIndex": 111,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4459,
+          "snippet": "e, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook. SCN-02 | Trigger: material subprocessor change | Evidence: ticket, owner, chronology, impact, control response, closure approval | Reviewer: customer control owner D.3 Scenario - Privileged Support Request If a privileged support request occurs, Provider shall open a tracked record, id...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        },
+        {
+          "chunkIndex": 10,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4337,
+          "snippet": ". - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 01 | Area: Definitions And Interpretation | Customer: Meridian Research Compute | Provider: HelioChip Logistics Ltd. | Evidence cadence: onboarding and annual refresh 2. Order Of Precedence For AI Accelerator Import And Export Control, HelioChip Logistics Ltd. shall res...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        },
+        {
+          "chunkIndex": 34,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4337,
+          "snippet": "oncerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for documentation. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 19 | Area: Documentation | Custom...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        },
+        {
+          "chunkIndex": 22,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4215,
+          "snippet": "ss, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for policies and standards. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Meridian Research Compute | Provider: HelioChip Logistics ...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        }
+      ],
+      "fixtureDocumentsUsed": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        }
+      ],
+      "indexedChunkCount": 166,
+      "missingEvidenceSignals": [
+        "final classification",
+        "license analysis",
+        "end-use certificate",
+        "import permit",
+        "delivery-site approval",
+        "remote support runbook",
+        "signed DPA",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "subprocessor register",
+        "business continuity or exit evidence",
+        "Business owner is not identified.",
+        "Jurisdiction or geography is missing."
+      ],
+      "provider": "local-fallback",
+      "qdrantConfigured": false,
+      "retrievedMatchCount": 8
+    },
+    "required_actions": [
+      "Assign the accountable business unit or requester before approval.",
+      "Confirm the operating geography and regulatory perimeter.",
+      "Ask the domain owner whether esg, hse and bcm obligations apply.",
+      "Require final export-control classification with manufacturer/counsel evidence before shipment.",
+      "Require documented license analysis and hold points for export, re-export, and import approvals.",
+      "Require final end-use and end-user certificate before hardware release or firmware support.",
+      "Require destination import permit or documented no-permit analysis before delivery.",
+      "Require approved delivery-site, chain-of-custody, and restricted-party screening evidence.",
+      "Require remote support runbook covering named personnel, MFA, logging, approval windows, and firmware controls.",
+      "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+      "Require retention schedule and deletion assistance evidence.",
+      "Require cross-border transfer mechanism and hosting/support region confirmation.",
+      "Require current subprocessor register and change-notification terms.",
+      "Require BCP/DR and exit assistance evidence for critical workflows."
+    ],
+    "reviewer_questions": [
+      "Has any analytics data been used for model improvement or service training?",
+      "Are any support teams accessing records outside approved regions?"
+    ],
+    "risk_level": "critical",
+    "summary": "Deterministic review needs more information before a compliance decision can progress. Risk is critical; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
+  },
+  "result": {
+    "artifacts": [
+      {
+        "path": "logs/trace-fixture-03_ai_accelerator_chip_import_export_control_agreement.jsonl",
+        "type": "trace_log"
+      },
+      {
+        "source": "deterministic_node_bridge_plus_python_council",
+        "type": "decision_payload"
+      }
+    ],
+    "collaboration_summary": {
+      "delegated_tasks": [
+        "Intake Agent -> Evidence Retrieval Agent: evidence needs and missing facts"
+      ],
+      "escalations": [
+        "Deterministic Decision Owner escalated unresolved high-risk gaps to human review"
+      ],
+      "final_decision_owner": "Deterministic Decision Owner",
+      "retries": [
+        "Evidence Retrieval Agent refined search with domain keywords using local-fallback"
+      ],
+      "shared_context_updates": [
+        "case facts updated",
+        "fixture document analysis updated",
+        "evidence matches and gaps updated",
+        "retrieval context updated",
+        "specialist finding added: Privacy Specialist",
+        "specialist finding added: Security Specialist",
+        "specialist finding added: Responsible AI Specialist",
+        "synthetic precedent added",
+        "governed learning memory updated",
+        "Compass advisory skipped in sample mode",
+        "required action added"
+      ],
+      "specialist_challenges": [
+        "Privacy proof incomplete: signed DPA, retention and deletion evidence, cross-border transfer mechanism, subprocessor register.",
+        "Security or continuity proof incomplete: final classification, license analysis, end-use certificate, import permit."
+      ],
+      "validations": [
+        "AI/analytics signal remains inside human oversight boundary."
+      ]
+    },
+    "decision": "needs_more_information",
+    "decision_authority": {
+      "final_owner": "Deterministic Decision Owner",
+      "llm_advisory_only": true
+    },
+    "evidence_used": [
+      {
+        "chunkIndex": 27,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4946,
+        "snippet": "ging scope, location, subprocessors, integrations, data classes, AI use, or access model. The obligation applies to procurement, import, warehousing, delivery, firmware support, and chain-of-custody control for AI accelerator hardware and to all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for change control. - Approval blocker: un...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "chunkIndex": 26,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4824,
+        "snippet": "all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for subcontracting. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontr...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "chunkIndex": 35,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4459,
+        "snippet": "rds, change records, audit evidence, and decision files for defined periods. The obligation applies to procurement, import, warehousing, delivery, firmware support, and chain-of-custody control for AI accelerator hardware and to all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for records retention. - Approval blocker: unresolved g...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "chunkIndex": 110,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4459,
+        "snippet": "cation, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook. Synthetic test fixture - Page 20 of 29 AI Accelerator Chip Import And Export Control Agreement SCN-01 | Trigger: new production launch | Evidence: ticket, owner, chronology, impact, control response, closure approval | Reviewer: customer control owner D.2 Scenario - Material Subprocessor Change If a material subprocessor change occurs, Provider shall open a tracked record, identify the affected service b...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "chunkIndex": 111,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "privacy",
+          "security",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4459,
+        "snippet": "e, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook. SCN-02 | Trigger: material subprocessor change | Evidence: ticket, owner, chronology, impact, control response, closure approval | Reviewer: customer control owner D.3 Scenario - Privileged Support Request If a privileged support request occurs, Provider shall open a tracked record, id...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "chunkIndex": 10,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4337,
+        "snippet": ". - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 01 | Area: Definitions And Interpretation | Customer: Meridian Research Compute | Provider: HelioChip Logistics Ltd. | Evidence cadence: onboarding and annual refresh 2. Order Of Precedence For AI Accelerator Import And Export Control, HelioChip Logistics Ltd. shall res...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "chunkIndex": 34,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "privacy",
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4337,
+        "snippet": "oncerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for documentation. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 19 | Area: Documentation | Custom...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "chunkIndex": 22,
+        "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+        "domains": [
+          "ai-governance"
+        ],
+        "evidence_id": "FIXTURE-03",
+        "score": 0.4215,
+        "snippet": "ss, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for policies and standards. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Meridian Research Compute | Provider: HelioChip Logistics ...",
+        "source": "fixture_pdf",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      },
+      {
+        "evidence_id": "FIXTURE-03",
+        "snippet": "AI Accelerator Chip Import And Export Control Agreement AI Accelerator Chip Import And Export Control Agreement HelioChip Logistics Ltd. and Meridian Research Compute - controlled AI accelerator procurement, import, re-export, and end-use restrictions Syntheti",
+        "source": "node-citation",
+        "title": "AI Accelerator Chip Import And Export Control Agreement"
+      }
+    ],
+    "executive_summary": "Deterministic review needs more information before a compliance decision can progress. Risk is critical; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "fixture_document_analysis": {
+      "detected_domain": "export-control",
+      "documents_used": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        }
+      ],
+      "expected_profile_match": true,
+      "extraction_status": "text_extracted",
+      "matched_missing_evidence": [
+        "final classification",
+        "license analysis",
+        "end-use certificate",
+        "import permit",
+        "delivery-site approval",
+        "remote support runbook"
+      ],
+      "matched_risk_domains": [
+        "export-control",
+        "sanctions",
+        "third-party-risk",
+        "technical-risk",
+        "remote-support"
+      ],
+      "rejected": [],
+      "target_agent": "Security Specialist"
+    },
+    "human_review_required": true,
+    "learning_memory": {
+      "advisoryOnly": true,
+      "browserEmbeddingsRetained": false,
+      "control_suggestions": [
+        "Require signed model-training exclusion for patient or customer data before production.",
+        "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
+        "Add reviewer question: Has any analytics data been used for model improvement or service training?",
+        "Require retention schedule and deletion assistance evidence.",
+        "Require cross-border transfer mechanism and support-region confirmation.",
+        "Add reviewer question: Are any support teams accessing records outside approved regions?",
+        "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
+        "Require signed model-training exclusion and human oversight plan before reconsideration."
+      ],
+      "note": "Learning memory is advisory. Deterministic policy and current evidence remain authoritative.",
+      "provider": "local-jsonl",
+      "repeatedEvidenceGaps": [
+        "model-training exclusion",
+        "DPA amendment",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "support region confirmation",
+        "signed DPA",
+        "human oversight plan",
+        "subprocessor register"
+      ],
+      "similar_cases_found": 5
+    },
+    "live_advisory": {
+      "advisoryOnly": true,
+      "agents": [],
+      "cards": [],
+      "enabled": false,
+      "final_decision_owner": "Deterministic Decision Owner",
+      "model": "gpt-4.1",
+      "runtime": "custom",
+      "status": "skipped_custom_runtime",
+      "summary": {}
+    },
+    "live_compass": {
+      "advisory": {},
+      "enabled": false,
+      "model": "gpt-5.1",
+      "status": "skipped_sample_mode"
+    },
+    "missing_evidence": [
+      "final classification",
+      "license analysis",
+      "end-use certificate",
+      "import permit",
+      "delivery-site approval",
+      "remote support runbook",
+      "signed DPA",
+      "retention and deletion evidence",
+      "cross-border transfer mechanism",
+      "subprocessor register",
+      "business continuity or exit evidence",
+      "Business owner is not identified."
+    ],
+    "rag_evidence_memory": {
+      "browserEmbeddingsRetained": false,
+      "collection": "p42_compliance_evidence",
+      "durable": false,
+      "evidenceMatches": [
+        {
+          "chunkIndex": 27,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4946,
+          "snippet": "ging scope, location, subprocessors, integrations, data classes, AI use, or access model. The obligation applies to procurement, import, warehousing, delivery, firmware support, and chain-of-custody control for AI accelerator hardware and to all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for change control. - Approval blocker: un...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        },
+        {
+          "chunkIndex": 26,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4824,
+          "snippet": "all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for subcontracting. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 13 | Area: Subcontr...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        },
+        {
+          "chunkIndex": 35,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4459,
+          "snippet": "rds, change records, audit evidence, and decision files for defined periods. The obligation applies to procurement, import, warehousing, delivery, firmware support, and chain-of-custody control for AI accelerator hardware and to all records concerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for records retention. - Approval blocker: unresolved g...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        },
+        {
+          "chunkIndex": 110,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4459,
+          "snippet": "cation, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook. Synthetic test fixture - Page 20 of 29 AI Accelerator Chip Import And Export Control Agreement SCN-01 | Trigger: new production launch | Evidence: ticket, owner, chronology, impact, control response, closure approval | Reviewer: customer control owner D.2 Scenario - Material Subprocessor Change If a material subprocessor change occurs, Provider shall open a tracked record, identify the affected service b...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        },
+        {
+          "chunkIndex": 111,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "privacy",
+            "security",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4459,
+          "snippet": "e, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook. SCN-02 | Trigger: material subprocessor change | Evidence: ticket, owner, chronology, impact, control response, closure approval | Reviewer: customer control owner D.3 Scenario - Privileged Support Request If a privileged support request occurs, Provider shall open a tracked record, id...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        },
+        {
+          "chunkIndex": 10,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4337,
+          "snippet": ". - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 01 | Area: Definitions And Interpretation | Customer: Meridian Research Compute | Provider: HelioChip Logistics Ltd. | Evidence cadence: onboarding and annual refresh 2. Order Of Precedence For AI Accelerator Import And Export Control, HelioChip Logistics Ltd. shall res...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        },
+        {
+          "chunkIndex": 34,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "privacy",
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4337,
+          "snippet": "oncerning controlled integrated circuits, firmware packages, remote support access, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for documentation. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 19 | Area: Documentation | Custom...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        },
+        {
+          "chunkIndex": 22,
+          "documentId": "fixture-03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "domains": [
+            "ai-governance"
+          ],
+          "evidence_id": "FIXTURE-03",
+          "score": 0.4215,
+          "snippet": "ss, delivery sites, and end-use files. - Required evidence: owner, approval date, artifact ID, renewal date, exception status, and reviewer for policies and standards. - Approval blocker: unresolved gaps affecting final classification, license analysis, end-use certificate, import permit, delivery-site approval, remote support runbook must remain visible in the risk register until accepted by Customer. Clause 10 | Area: Policies And Standards | Customer: Meridian Research Compute | Provider: HelioChip Logistics ...",
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        }
+      ],
+      "fixtureDocumentsUsed": [
+        {
+          "extractionStatus": "text_extracted",
+          "filename": "03_ai_accelerator_chip_import_export_control_agreement.pdf",
+          "pages": 29,
+          "source": "fixture_pdf",
+          "title": "AI Accelerator Chip Import And Export Control Agreement"
+        }
+      ],
+      "indexedChunkCount": 166,
+      "missingEvidenceSignals": [
+        "final classification",
+        "license analysis",
+        "end-use certificate",
+        "import permit",
+        "delivery-site approval",
+        "remote support runbook",
+        "signed DPA",
+        "retention and deletion evidence",
+        "cross-border transfer mechanism",
+        "subprocessor register",
+        "business continuity or exit evidence",
+        "Business owner is not identified.",
+        "Jurisdiction or geography is missing."
+      ],
+      "provider": "local-fallback",
+      "qdrantConfigured": false,
+      "retrievedMatchCount": 8
+    },
+    "required_actions": [
+      "Assign the accountable business unit or requester before approval.",
+      "Confirm the operating geography and regulatory perimeter.",
+      "Ask the domain owner whether esg, hse and bcm obligations apply.",
+      "Require final export-control classification with manufacturer/counsel evidence before shipment.",
+      "Require documented license analysis and hold points for export, re-export, and import approvals.",
+      "Require final end-use and end-user certificate before hardware release or firmware support.",
+      "Require destination import permit or documented no-permit analysis before delivery.",
+      "Require approved delivery-site, chain-of-custody, and restricted-party screening evidence.",
+      "Require remote support runbook covering named personnel, MFA, logging, approval windows, and firmware controls.",
+      "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
+      "Require retention schedule and deletion assistance evidence.",
+      "Require cross-border transfer mechanism and hosting/support region confirmation.",
+      "Require current subprocessor register and change-notification terms.",
+      "Require BCP/DR and exit assistance evidence for critical workflows."
+    ],
+    "reviewer_questions": [
+      "Has any analytics data been used for model improvement or service training?",
+      "Are any support teams accessing records outside approved regions?"
+    ],
+    "risk_level": "critical",
+    "summary": "Deterministic review needs more information before a compliance decision can progress. Risk is critical; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
+  },
+  "run_id": "fixture-03_ai_accelerator_chip_import_export_control_agreement",
+  "status": "success",
+  "trace_id": "trace-fixture-03_ai_accelerator_chip_import_export_control_agreement-d0453d87",
+  "use_case_id": "21"
+}

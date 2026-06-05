@@ -1,0 +1,16 @@
+{
+  "run_id": "fixture-ai-accelerator-export",
+  "use_case_id": "21",
+  "input": {
+    "query": "Review an AI accelerator import for UAE and Singapore from the US. Supplier ships restricted hardware, supports firmware remotely, and the final end-use certificate is missing.",
+    "documents": [
+      {
+        "filename": "03_ai_accelerator_chip_import_export_control_agreement.pdf"
+      }
+    ]
+  },
+  "options": {
+    "sample_mode": true,
+    "max_iterations": 3
+  }
+}
