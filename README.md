@@ -103,6 +103,65 @@ gh run list --workflow agentathon-preflight.yml --limit 5
 gh run view <run-id> --log-failed
 ```
 
+## Run And Test From Online GitHub
+
+Use these links when reviewing the submitted repository without a local checkout:
+
+| Online item | Link | What to verify |
+| --- | --- | --- |
+| Source repository | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent> | Root `run.py`, `Dockerfile`, `metadata.json`, examples, logs, docs, and workflows are present on `main`. |
+| GitHub Pages cockpit | <https://slackspac3.github.io/Parallax42-Compliance-Intelligence-Agent/> | Static product cockpit loads from `public/` and uses the configured hosted product routes in `public/config.js`. |
+| Agentathon Preflight workflow | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/agentathon-preflight.yml> | Latest run should show `agentathon-preflight` and `docker-smoke` jobs passing. This is the online proof that Docker builds, the container starts, `GET /health` works, and `POST /run` works in CI sample mode. |
+| CI workflow | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/ci.yml> | Latest run should pass `npm run qa` after Node, Python, and Playwright setup. |
+| Pages deployment workflow | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/pages.yml> | Latest run should deploy the static cockpit to GitHub Pages when `public/` changes. |
+| Architecture doc | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/blob/main/docs/AGENTATHON_SYSTEM_ARCHITECTURE.md> | Evaluator path, product path, Compass boundaries, Qdrant/local fallback, learning memory, optional CrewAI, and safe/unsafe claims are documented together. |
+| Metadata | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/blob/main/metadata.json> | Use Case 21 metadata, agents, tools, and endpoint declarations are visible. |
+| Input examples | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/tree/main/input_examples> | At least three valid synthetic JSON inputs are committed. |
+| Output examples | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/tree/main/output_examples> | Runtime-generated outputs differ by case and include trace/log references. |
+| Trace logs | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/tree/main/logs> | JSONL traces show delegation, retry/fallback, critique, validation, escalation, shared context, and final synthesis. |
+
+Important boundary: GitHub Pages is static, so it does not run the root FastAPI `run.py` server or expose `POST /run` from the Pages URL. The online `/run` verification happens in the Agentathon Preflight GitHub Actions workflow, where CI builds the Docker image, starts the container on port `8000`, calls `GET /health`, and posts `input_examples/example_1.json` to `/run`.
+
+To test the online product cockpit:
+
+1. Open <https://slackspac3.github.io/Parallax42-Compliance-Intelligence-Agent/>.
+2. Confirm the status panel can reach the configured hosted product routes from `public/config.js`.
+3. In chat, enter a compliance scenario such as:
+
+```text
+Review an AI accelerator import for UAE and Singapore. The supplier will ship restricted hardware, provide firmware support, and has no final end-use certificate.
+```
+
+4. If the cockpit asks for export origin, answer:
+
+```text
+from the US
+```
+
+The expected behavior is that the chat records the export-origin jurisdiction, keeps the import geography as UAE/Singapore, and advances instead of repeating the same question. If an unrelated answer is given, the chat should say it could not map the answer to the active question and ask for clarification again.
+
+To test the online Agentathon submission proof:
+
+1. Open <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/agentathon-preflight.yml>.
+2. Select the latest run on `main`.
+3. Confirm both jobs pass:
+   - `agentathon-preflight`
+   - `docker-smoke`
+4. In `docker-smoke`, confirm the log includes:
+   - `docker build -t parallax42-agentathon .`
+   - container run with `SAMPLE_MODE=true`
+   - successful `curl http://127.0.0.1:8000/health`
+   - successful `curl -X POST http://127.0.0.1:8000/run ... -d @input_examples/example_1.json`
+
+CI uses sample mode and a dummy key so secrets are not exposed in GitHub Actions. Final live Compass verification still requires a deployment/runtime with:
+
+```text
+OPENAI_API_KEY=<real Compass key>
+OPENAI_BASE_URL=https://compass.core42.ai/v1
+SAMPLE_MODE=false
+REQUIRE_COMPASS=true
+```
+
 Compass/OpenAI-compatible variables are placeholders in `.env.example`:
 
 ```text
