@@ -10,6 +10,8 @@ npm run qa
 
 This runs syntax checks, static page checks, unit tests, local benchmarks, and CrewAI dry-run validation. The product application is a Node/CommonJS Vercel/static app, so there is no React, Vite, Redis, Postgres, or durable queue setup required for this QA path. The separate Agentathon evaluator wrapper is FastAPI/Docker-capable and is validated through the preflight commands below.
 
+The consolidated evaluator and product architecture is documented in [`docs/AGENTATHON_SYSTEM_ARCHITECTURE.md`](docs/AGENTATHON_SYSTEM_ARCHITECTURE.md).
+
 ## Agentathon Preflight
 
 Run the wrapper submission checks from the repository root:

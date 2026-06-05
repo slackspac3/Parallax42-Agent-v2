@@ -1,0 +1,329 @@
+# Agentathon System Architecture
+
+This document is the judge-facing architecture view for the G42 Agentathon submission. It explains how the repository satisfies the evaluator API shape while preserving the existing Parallax42 product runtime.
+
+## 1. Architectural Position
+
+Parallax42 has two intentionally separate execution surfaces:
+
+| Surface | Primary files | Purpose | Current claim |
+| --- | --- | --- | --- |
+| Agentathon evaluator path | `run.py`, `app/`, `scripts/agentathon_run.js`, `metadata.json`, `input_examples/`, `output_examples/`, `logs/` | Reproducible API for technical screening on port 8000. | Submission API, multi-agent trace, deterministic final decision, Docker/CI smoke. |
+| Product demo path | `server.js`, `api/`, `lib/`, `public/` | Existing Node/CommonJS Vercel/static product experience. | Browser cockpit, smart intake, evidence workflow, review pack UI, product-hosted integrations. |
+
+The FastAPI wrapper is not a rewrite of the product. It is a screening adapter that makes the existing compliance engine and evidence workflow judgeable through a standard `/run` contract.
+
+## 2. End-to-End Diagram
+
+```text
+Online GitHub submission
+  -> Dockerfile / python run.py
+  -> FastAPI app on 0.0.0.0:8000
+     -> GET /health
+     -> GET /metadata
+     -> GET /logs
+     -> GET /compass/probe
+     -> GET /evidence/memory/status
+     -> learning memory endpoints
+     -> POST /run
+        -> Agentathon request schema
+        -> Python multi-agent council orchestrator
+        -> evidence memory provider
+           -> local fallback, or Qdrant when configured and smoke-tested
+        -> governed learning memory
+           -> local JSONL/sample memory, or Qdrant when configured
+        -> optional Compass advisory critic
+           -> official OPENAI_* direct path for evaluator mode
+        -> Node bridge
+           -> scripts/agentathon_run.js
+           -> lib/ deterministic compliance engine
+        -> Deterministic Decision Owner
+        -> JSON response + logs/trace-*.jsonl
+```
+
+Product demo flow:
+
+```text
+Browser cockpit in public/
+  -> Vercel API route or local server.js mirror
+  -> server-side Compass gateway client
+  -> smart intake / active-question validation
+  -> evidence indexing and retrieval boundary
+  -> deterministic compliance engine
+  -> optional advisory council output
+  -> human-review decision pack and trace
+```
+
+## 3. Runtime Boundaries
+
+| Boundary | Env / URL | Used by | What it is | What it is not |
+| --- | --- | --- | --- | --- |
+| Agentathon direct Compass | `OPENAI_API_KEY`, `OPENAI_BASE_URL=https://compass.core42.ai/v1` | `app/compass_client.py`, `/compass/probe`, `/run`, `scripts/compass_doctor.py`, optional embeddings | Official OpenAI-compatible contract for the FastAPI evaluator path. | Not the browser product gateway and not the droplet backend. |
+| Product Compass gateway | `COMPASS_GATEWAY_BASE_URL`, `COMPASS_GATEWAY_TOKEN` | Existing Node/Vercel product APIs and `lib/compassGatewayClient.js` | Server-side product model boundary for smart intake, advisory LLM, and embeddings. | Not automatically proof of the official Agentathon direct Compass endpoint unless it exposes compatible `/v1` routes and is allowed by rules. |
+| Product backend / droplet | `PARALLAX42_BACKEND_URL`, optional `P42_CREWAI_SERVICE_URL` | Backend relay, parser/OCR support, optional remote product services | Product infrastructure for the richer hosted demo. | Not a Compass API and should not be used as `OPENAI_BASE_URL`. |
+| Qdrant | `P42_VECTOR_STORE_PROVIDER=qdrant`, `QDRANT_URL`, `QDRANT_API_KEY`, `QDRANT_COLLECTION` | Evidence memory and optional learning memory | Durable vector memory when configured and smoke-tested. | Not active by default and not claimed unless `qdrant_smoke.py` passes. |
+| Local fallback memory | no external service required | CI, local demos, sample mode | Deterministic fallback for evidence and governed learning memory. | Not production-durable RAG. |
+
+## 4. Agentathon `/run` Flow
+
+`POST /run` accepts the official evaluator-style payload:
+
+```json
+{
+  "run_id": "eval-001",
+  "use_case_id": "21",
+  "input": {
+    "query": "...",
+    "case": {},
+    "evidence": []
+  },
+  "options": {
+    "sample_mode": false,
+    "max_iterations": 3
+  }
+}
+```
+
+The response includes the official fields plus backward-compatible details:
+
+```text
+run_id
+status
+use_case_id
+output
+agents
+agent_trace
+trace_id
+log_file
+execution_time_seconds
+```
+
+The orchestrator sequence is:
+
+1. Intake Agent extracts case facts and identifies missing facts.
+2. Evidence Retrieval Agent indexes/searches evidence through local fallback or Qdrant.
+3. Privacy, Security, and Responsible AI specialists validate or challenge the evidence.
+4. Learning & Precedent Specialist retrieves advisory similar-case patterns and controls.
+5. Compass Advisory Critic attempts live advisory review when non-sample mode and credentials allow it.
+6. Deterministic Decision Owner applies deterministic policy and remains final authority.
+7. Audit Packager writes structured output and JSONL trace logs under `logs/`.
+
+The trace is deliberately non-linear. It includes delegation, evidence retry or fallback, critique, validation, escalation, shared context updates, and final synthesis.
+
+## 5. Final Decision Authority
+
+The system separates advisory intelligence from approval authority:
+
+| Input source | Can influence required actions? | Can directly approve/reject? | Notes |
+| --- | --- | --- | --- |
+| Deterministic rules engine | Yes | Yes | Final owner for decision, risk level, required actions, and human-review boundary. |
+| Specialist council findings | Yes | No | Converted into controls only through deterministic policy. |
+| Compass advisory | Yes, as reviewer questions or notes | No | Advisory only. Failures are structured as unavailable. |
+| Governed learning memory | Yes, when current gaps support it | No | Similar cases and control suggestions are advisory only. |
+| CrewAI live runtime | Yes, if enabled and successful | No | Optional path; disabled by default and not required for Docker/CI. |
+
+The output records:
+
+```text
+decision_authority.final_owner = Deterministic Decision Owner
+decision_authority.llm_advisory_only = true
+human_review_required = true/false based on deterministic policy
+```
+
+## 6. Live AI And Compass Usage
+
+There are two live-AI stories, and they should not be mixed:
+
+1. Agentathon evaluator mode uses `OPENAI_API_KEY` and `OPENAI_BASE_URL=https://compass.core42.ai/v1`.
+   - `/compass/probe` checks `/models` and `/chat/completions`.
+   - `scripts/compass_doctor.py --strict` is the live proof command.
+   - `REQUIRE_COMPASS=true` makes non-sample `/run` return a structured error if Compass is unavailable.
+
+2. Product demo mode uses the Parallax42 server-side gateway.
+   - The browser never receives model keys.
+   - The gateway supports smart intake, advisory LLM responses, and embeddings for product workflows.
+   - This keeps the product aligned with the long-term architecture while the FastAPI wrapper satisfies evaluator shape.
+
+`SAMPLE_MODE=true` is a deterministic fallback for CI and reproducible demos. It is not a live Compass proof and does not load canned output examples.
+
+## 7. Conversation And Clarification Loop
+
+The product chat has an active-question contract:
+
+```text
+active question
+  -> user answer
+  -> field extraction
+  -> answer validation
+     -> relevant answer: update case and advance
+     -> useful but different answer: capture context and keep the active question
+     -> unrelated answer: do not pollute case state, repeat the active clarification
+     -> unknown/pending: record a known gap and continue when policy allows
+```
+
+Example:
+
+```text
+Question: From which country or export-control jurisdiction will the supplier ship?
+Answer: from the US
+Result: exportOriginJurisdiction = US, import geography remains UAE/Singapore, next question advances.
+```
+
+This prevents unrelated responses from being treated as compliance facts and keeps the conversation adaptive while still auditable.
+
+## 8. Evidence RAG Memory
+
+Evidence memory supports two providers:
+
+| Provider | When used | Behavior |
+| --- | --- | --- |
+| `qdrant` | `P42_VECTOR_STORE_PROVIDER=qdrant`, Qdrant env vars, and Compass embedding env are configured | Chunks evidence, embeds through Compass/OpenAI-compatible embeddings, stores `type=evidence_chunk` payloads, searches by `caseId`, returns citation-safe snippets. |
+| `local-fallback` | Default when Qdrant or embeddings are unavailable | Uses lexical retrieval over synthetic/input evidence. Useful for CI and deterministic demos; not durable. |
+
+The browser/API response does not expose raw embedding vectors. Evidence results include safe fields such as snippet, title, document ID, evidence ID, chunk index, domain, and score.
+
+Smoke command:
+
+```bash
+python scripts/qdrant_smoke.py
+python scripts/agentathon_preflight.py --qdrant-smoke
+```
+
+## 9. Governed Learning Memory
+
+Learning memory is advisory precedent storage, not model training.
+
+Supported artifact types:
+
+```text
+case_outcome
+reviewer_feedback
+control_pattern
+decision_override
+evidence_quality_note
+```
+
+Providers:
+
+| Provider | When used | Behavior |
+| --- | --- | --- |
+| `qdrant` | Qdrant and Compass embeddings are configured | Stores/retrieves learning artifacts as advisory vector memory. |
+| `local-jsonl` | Default fallback | Reads synthetic seed data from `data/sample_learning_memory.json` and optional local JSONL feedback. |
+
+Learning memory can surface similar cases, repeated evidence gaps, and suggested controls. It cannot silently mutate policy or override the Deterministic Decision Owner.
+
+## 10. Optional CrewAI Runtime
+
+The stable default runtime is the custom orchestrator. Live CrewAI is optional:
+
+```text
+AGENT_RUNTIME=crewai_live
+CREWAI_ENABLE_LIVE_LLM=1
+```
+
+Default Docker/CI does not require CrewAI. If live CrewAI is enabled and fails, the wrapper records advisory unavailability and continues through the deterministic path. CrewAI outputs are non-authoritative.
+
+## 11. Security And Trust Boundaries
+
+| Boundary | Current behavior |
+| --- | --- |
+| Secrets | `.env` is ignored; `.env.example` contains placeholders only; preflight scans for obvious committed secrets. |
+| Browser keys | Browser never receives Compass, gateway, Qdrant, or embedding provider keys. |
+| Embeddings | Raw embedding vectors are not returned to browser/API callers. |
+| Documents | Sample/evaluator data is synthetic. Production OCR/parser persistence is not claimed in this repo. |
+| Audit | Logs are JSONL and hash/audit capable, but enterprise-durable audit storage is not claimed unless configured separately. |
+| RBAC | Audit-mode identity and route policy support exist; enforced production RBAC is not claimed unless configured and verified. |
+| Approval | No autonomous approval. Human review boundary remains explicit. |
+
+## 12. File Map
+
+| Area | Files |
+| --- | --- |
+| FastAPI evaluator API | `run.py`, `app/main.py`, `app/schemas.py` |
+| Agentathon orchestrator | `app/agentathon_orchestrator.py`, `app/trace_logger.py` |
+| Compass diagnostics | `app/compass_client.py`, `scripts/compass_doctor.py` |
+| Node bridge | `app/node_bridge.py`, `scripts/agentathon_run.js` |
+| Evidence memory | `app/evidence_memory.py`, `scripts/qdrant_smoke.py`, `lib/evidenceVectorStore.js` |
+| Governed learning memory | `app/learning_memory.py`, `data/sample_learning_memory.json`, `lib/learningMemory.js` |
+| Optional CrewAI | `app/crewai_runtime.py`, `docs/CREWAI_ARCHITECTURE.md`, `requirements-crewai.txt` |
+| Product runtime | `server.js`, `api/`, `lib/`, `public/` |
+| Examples and traces | `input_examples/`, `output_examples/`, `logs/` |
+| Submission checks | `scripts/agentathon_preflight.py`, `.github/workflows/agentathon-preflight.yml`, `Dockerfile` |
+
+## 13. Verification Commands
+
+Core local checks:
+
+```bash
+npm run qa
+python scripts/agentathon_preflight.py
+python scripts/agentathon_preflight.py --run-api
+python scripts/agentathon_preflight.py --json
+python -m json.tool metadata.json
+```
+
+Docker:
+
+```bash
+python scripts/agentathon_preflight.py --docker
+```
+
+If Docker is not installed locally, this reports `SKIPPED_DOCKER_CLI_MISSING`. GitHub Actions verifies Docker through `.github/workflows/agentathon-preflight.yml`.
+
+Compass:
+
+```bash
+export OPENAI_API_KEY=<real Compass key>
+export OPENAI_BASE_URL=https://compass.core42.ai/v1
+export SAMPLE_MODE=false
+export REQUIRE_COMPASS=true
+python scripts/compass_doctor.py --strict
+curl http://localhost:8000/compass/probe
+```
+
+Qdrant:
+
+```bash
+export P42_VECTOR_STORE_PROVIDER=qdrant
+export QDRANT_URL=<qdrant-url>
+export QDRANT_API_KEY=<qdrant-key>
+export QDRANT_COLLECTION=p42_compliance_evidence
+python scripts/qdrant_smoke.py
+```
+
+Artifact regeneration:
+
+```bash
+python scripts/regenerate_agentathon_artifacts.py
+python scripts/agentathon_preflight.py
+```
+
+## 14. Safe And Unsafe Claims
+
+Safe claims when the current checks pass:
+
+- Root `run.py` exposes the Agentathon evaluator API on port 8000.
+- `/run`, `/health`, `/metadata`, `/logs`, and `/compass/probe` exist.
+- Docker CI smoke verifies image build plus `/health` and `/run` in sample mode.
+- Multi-agent traces show delegation, retry/fallback, critique, validation, escalation, shared context, and deterministic final ownership.
+- Output examples are generated from runtime examples and are not loaded as canned responses.
+- Product chat validates active clarifying answers before advancing.
+- Qdrant and live CrewAI are optional paths, not defaults.
+
+Unsafe claims unless separately verified:
+
+- Official direct Compass is live-verified.
+- Qdrant is active.
+- Compass embeddings are live-verified.
+- Live CrewAI is active.
+- Enforced production RBAC is active.
+- Enterprise-durable audit persistence is implemented.
+- Product gateway, Railway, Vercel, or droplet endpoints are the official Agentathon `OPENAI_BASE_URL`.
+
+## 15. Submission Narrative
+
+The concise architecture narrative is:
+
+```text
+Parallax42 preserves the existing Node/Vercel product and adds a root FastAPI Agentathon wrapper for reproducible screening. The wrapper exposes the required /run API, runs a multi-agent compliance council, retrieves evidence through local fallback or Qdrant, reads governed learning memory, attempts live Compass advisory in non-sample mode, delegates deterministic execution to the existing Node rules engine, and writes JSONL trace logs. Compass, learning memory, and CrewAI remain advisory; the Deterministic Decision Owner is the final authority and human review remains explicit. The product UI uses a separate server-side gateway for live smart intake and demo workflows, while the evaluator path uses the official OPENAI_* Compass contract.
+```

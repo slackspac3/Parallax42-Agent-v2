@@ -60,6 +60,8 @@ Selected use case: **21 Legal Intelligence**.
 
 The existing product runtime is still the Node/CommonJS app under `server.js`, `api/`, `lib/`, and `public/`. For Agentathon screening, the repo root also includes a Python FastAPI wrapper that starts on `0.0.0.0:8000`, exposes `GET /health`, `GET /metadata`, `GET /logs`, `GET /compass/probe`, and `POST /run`, then delegates deterministic execution to `scripts/agentathon_run.js`.
 
+For the consolidated judge-facing architecture, see [`docs/AGENTATHON_SYSTEM_ARCHITECTURE.md`](docs/AGENTATHON_SYSTEM_ARCHITECTURE.md).
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate
@@ -441,6 +443,7 @@ Learning memory endpoints are advisory:
 - [End State](docs/END_STATE.md)
 - [Work-Backward Roadmap](docs/ROADMAP.md)
 - [Golden Demo Workflow](docs/GOLDEN_DEMO_WORKFLOW.md)
+- [Agentathon System Architecture](docs/AGENTATHON_SYSTEM_ARCHITECTURE.md)
 - [Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md)
 - [Milestone 1 CrewAI Flow Runtime](docs/MILESTONE_1_CREWAI_FLOW.md)
 - [Benchmark Report](docs/BENCHMARK_REPORT.md)
