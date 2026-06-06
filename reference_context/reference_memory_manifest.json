@@ -1,0 +1,152 @@
+{
+  "name": "Parallax42 Reference Intelligence Memory Manifest",
+  "reviewedAt": "2026-06-06",
+  "reviewScope": "Submission-facing advisory reference memory for legal intelligence, compliance controls, Responsible AI, security, procurement, sanctions/export, and HSE/ESG prompts.",
+  "reviewMethod": "Official-source spot check plus local reference corpus regeneration. This is not live regulatory crawling and is not legal advice.",
+  "advisoryOnly": true,
+  "humanReviewRequired": true,
+  "browserReceivesRawEmbeddings": false,
+  "deterministicDecisionOwnerRemainsAuthoritative": true,
+  "lanes": [
+    {
+      "lane": "ai_governance",
+      "status": "current_advisory_manifest",
+      "primaryAnchors": [
+        {
+          "name": "NIST AI Risk Management Framework",
+          "url": "https://www.nist.gov/itl/ai-risk-management-framework",
+          "notes": "AI RMF 1.0, Generative AI Profile, and 2026 Critical Infrastructure Profile concept note are advisory anchors for AI risk, human oversight, transparency, monitoring, and governance questions."
+        },
+        {
+          "name": "Regulation (EU) 2024/1689 Artificial Intelligence Act",
+          "url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj",
+          "notes": "Official EUR-Lex text used as an issue-spotting anchor for high-risk AI, prohibited practices, transparency, human oversight, and documentation questions when EU context is relevant."
+        },
+        {
+          "name": "ISO/IEC 42001:2023",
+          "url": "https://www.iso.org/standard/81230.html",
+          "notes": "AI management system anchor; ISO copyrighted content is not copied into the repo."
+        }
+      ]
+    },
+    {
+      "lane": "security",
+      "status": "current_advisory_manifest",
+      "primaryAnchors": [
+        {
+          "name": "NIST Cybersecurity Framework 2.0",
+          "url": "https://www.nist.gov/cyberframework",
+          "notes": "Advisory anchor for govern, identify, protect, detect, respond, and recover evidence questions."
+        },
+        {
+          "name": "NIST SP 800-53 Rev. 5",
+          "url": "https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final",
+          "notes": "Security and privacy control-family anchor for access, audit, incident response, configuration, and risk assessment questions."
+        },
+        {
+          "name": "NIST SP 800-171 Rev. 3",
+          "url": "https://csrc.nist.gov/publications/detail/sp/800-171/rev-3/final",
+          "notes": "Sensitive information and supplier handling anchor."
+        }
+      ]
+    },
+    {
+      "lane": "compliance_privacy",
+      "status": "current_advisory_manifest",
+      "primaryAnchors": [
+        {
+          "name": "NIST Privacy Framework",
+          "url": "https://www.nist.gov/privacy-framework",
+          "notes": "Privacy Framework 1.0 and 1.1 initial public draft references are advisory anchors for privacy-risk questions."
+        },
+        {
+          "name": "GDPR Regulation (EU) 2016/679",
+          "url": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "notes": "Official EU privacy legal text anchor; used only for issue spotting and evidence questions, not legal advice."
+        }
+      ]
+    },
+    {
+      "lane": "sanctions_export",
+      "status": "current_advisory_manifest",
+      "primaryAnchors": [
+        {
+          "name": "Trade.gov Consolidated Screening List",
+          "url": "https://www.trade.gov/consolidated-screening-list",
+          "notes": "US Government consolidated screening list anchor for restricted-party and export/end-user escalation questions."
+        },
+        {
+          "name": "OFAC Sanctions List Service",
+          "url": "https://ofac.treasury.gov/sanctions-list-service",
+          "notes": "OFAC list/data anchor for sanctions screening escalation. The app does not make a sanctions determination."
+        },
+        {
+          "name": "Export Administration Regulations",
+          "url": "https://www.ecfr.gov/current/title-15/subtitle-B/chapter-VII/subchapter-C",
+          "notes": "eCFR EAR anchor for export-control issue spotting. The app does not make license determinations."
+        }
+      ]
+    },
+    {
+      "lane": "legal_contract",
+      "status": "curated_advisory_sample",
+      "primaryAnchors": [
+        {
+          "name": "CourtListener REST API",
+          "url": "https://www.courtlistener.com/api/rest/v4/",
+          "notes": "Citation verification and legal-reference import path. Live calls require token/configuration and remain advisory."
+        },
+        {
+          "name": "CUAD-compatible clause patterns",
+          "url": "https://www.atticusprojectai.org/cuad",
+          "notes": "Clause-type pattern anchor. Repo uses curated/synthetic clause fixtures unless an external dataset is provided."
+        }
+      ]
+    },
+    {
+      "lane": "compass_runtime",
+      "status": "current_api_boundary_reference",
+      "primaryAnchors": [
+        {
+          "name": "Core42 Compass API documentation",
+          "url": "https://www.core42.ai/compass/documentation/use-compass-apis",
+          "notes": "Compass supports text generation, embeddings, and OpenAI/Azure OpenAI deployment API types. Browser clients never receive Compass keys."
+        }
+      ]
+    }
+  ],
+  "repoArtifacts": {
+    "referenceDocs": [
+      "docs/REFERENCE_INTELLIGENCE_DATA.md",
+      "docs/LEGAL_INTELLIGENCE_DATA.md",
+      "docs/RESPONSIBLE_AI_CONTROLS.md"
+    ],
+    "referenceContext": [
+      "reference_context/sanitised_enterprise_ai_governance_context.md",
+      "reference_context/security/nist_reference_manifest.md",
+      "reference_context/ai_governance/nist_ai_governance_reference.md",
+      "reference_context/legal/cuad_clause_reference.md",
+      "reference_context/legal/courtlistener_reference.md"
+    ],
+    "learningMemory": [
+      "data/sample_learning_memory.json"
+    ]
+  },
+  "refreshCommands": [
+    "npm run reference:intelligence",
+    "npm run reference:index",
+    "npm run qdrant:smoke"
+  ],
+  "safeClaims": [
+    "Reference memory is advisory and public/synthetic.",
+    "Reference memory can improve questions, risk-domain detection, and control suggestions.",
+    "Deterministic policy and current evidence remain authoritative.",
+    "Raw embeddings and provider keys are not returned to browser/API callers."
+  ],
+  "unsafeClaims": [
+    "Reference memory is legal advice.",
+    "Reference memory is live regulatory monitoring.",
+    "Reference memory authorizes production use.",
+    "Reference memory makes sanctions, export-license, or compliance certification determinations."
+  ]
+}

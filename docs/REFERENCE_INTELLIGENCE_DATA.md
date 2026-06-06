@@ -2,6 +2,18 @@
 
 Parallax42 separates reference intelligence from uploaded evidence, governed learning memory, and deterministic decisions.
 
+## Current Reference Memory Snapshot
+
+Reference memory was reviewed for the submission on **2026-06-06**. The review is captured in:
+
+```text
+reference_context/reference_memory_manifest.json
+```
+
+The manifest records the official/advisory anchors used for the current submission, including NIST AI RMF, NIST CSF 2.0, NIST Privacy Framework, NIST SP 800-53, NIST SP 800-171, EU AI Act Regulation (EU) 2024/1689, GDPR Regulation (EU) 2016/679, Trade.gov Consolidated Screening List, OFAC Sanctions List Service, eCFR EAR, CourtListener, CUAD-compatible clause patterns, and Core42 Compass API documentation.
+
+This is a curated/static reference snapshot, not live regulatory monitoring. It is safe for judge review because it uses public or synthetic context, does not include secrets, does not contain raw embeddings, and does not claim legal advice or compliance certification.
+
 ## Boundaries
 
 - **Uploaded evidence** is what the council can cite for the current case: contracts, DPAs, SOWs, SOC reports, policy excerpts, approvals, and user-provided facts.
@@ -22,6 +34,28 @@ Reference intelligence must not be described as legal advice, a sanctions determ
 | Procurement / vendor risk | `procurement_risk`, `supplier_risk` | Open Contracting Data Standard, World Bank debarred firms, SAM.gov, USAspending.gov, TED | Supplier onboarding, outsourcing, debarment, sourcing-control prompts |
 | Sanctions / export controls | `sanctions_export`, `trade_compliance` | Trade.gov CSL, OFAC, BIS/EAR via eCFR, EU/UN sanctions lists | Restricted-party, export-control, end-use, import/export escalation prompts |
 | HSE / ESG | `hse_esg`, `operational_compliance` | OSHA, EPA, CSRD/taxonomy via EUR-Lex, UN Global Compact | Safety, environmental, sustainability, incident and operational evidence prompts |
+
+## Freshness And Refresh Policy
+
+The submission does not rely on broad live crawling. Refreshes should be explicit, auditable, and bounded:
+
+1. Review the official source anchors in `reference_context/reference_memory_manifest.json`.
+2. Run local/safe importers:
+
+```bash
+npm run reference:intelligence
+npm run reference:index
+```
+
+3. If Qdrant and embeddings are configured, run:
+
+```bash
+npm run qdrant:smoke
+```
+
+4. Verify that all generated records remain advisory-only and that no raw embeddings or keys appear in output.
+
+Do not claim that reference memory is current legal advice, a live sanctions screen, a license determination, an OCR system, or a production certification. Use it to improve questions, detect likely domains, and suggest reviewer controls.
 
 ## Implemented Importers
 
