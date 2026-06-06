@@ -254,6 +254,26 @@ AGENT_RUNTIME=custom
 CREWAI_ENABLE_LIVE_LLM=0
 ```
 
+### Compass Model And Key Selection
+
+The submitted system uses Core42 Compass as the server-side LLM and embedding runtime. The model and URL choices are based on the public Core42 Compass API documentation at <https://www.core42.ai/compass/documentation/use-compass-apis>, which documents the `https://api.core42.ai/v1` API base, OpenAI-compatible chat/completions, and model/embedding deployment names.
+
+Current model split:
+
+| Purpose | Env var | Current value | Why |
+| --- | --- | --- | --- |
+| Fast structured intake and advisory JSON | `MODEL_FAST`, `MODEL_NAME` | `gpt-4.1` | Used for lower-latency structured tasks, JSON repair, and simple advisory checks. |
+| Deeper specialist/council reasoning | `MODEL_REASONING`, `REASONING_MODEL_NAME`, `CREWAI_LLM_MODEL` | `gpt-5.1` | Used for richer privacy/security/Responsible AI/CrewAI advisory analysis where reasoning depth matters more than speed. |
+| Evidence and reference retrieval | `EMBEDDING_MODEL`, `EMBEDDINGS_MODEL` | `text-embedding-3-large` | Used for server-side embeddings into Qdrant/reference memory. Raw embeddings are never returned to the browser. |
+
+Credential boundary:
+
+- The deployed online demo uses the project owner's own Compass credentials configured server-side in Vercel/gateway settings.
+- The repo does not contain a real Compass key.
+- The system does not depend on an Agentathon-provided key being committed or available locally.
+- If evaluators provide their own Compass key, they can set `OPENAI_API_KEY` and keep the same `OPENAI_BASE_URL=https://api.core42.ai/v1`.
+- Compass is the model runtime only; official/public reference anchors remain the source context for legal, compliance, security, RAI, sanctions/export, procurement, and HSE/ESG reasoning.
+
 No secrets are committed. `SAMPLE_MODE=true` is accepted for CI/local reproducibility, but it does not switch to canned outputs; the wrapper still runs the deterministic Node rules engine and Python council. With `SAMPLE_MODE=false`, `/run` attempts a live Compass/OpenAI-compatible advisory call when `OPENAI_API_KEY` is configured. That advisory is recorded as advisory only; the Deterministic Decision Owner remains final authority. Qdrant is verified active for the deployed Vercel product path through the droplet-hosted Qdrant service; local and FastAPI Agentathon Qdrant checks still require local `P42_VECTOR_STORE_PROVIDER=qdrant`, `QDRANT_URL`, `QDRANT_API_KEY`, and embedding env vars. Enforced RBAC and live CrewAI remain separate claims unless their configured runtime checks pass.
 
 Known limitations: the Agentathon path returns structured JSON and trace logs, not the browser cockpit; the decision is a human-review compliance package, not legal advice or automatic approval; Compass failures return structured `live_compass.status=unavailable`; local `python scripts/qdrant_smoke.py` reports `SKIPPED` unless local Qdrant and embedding env vars are exported; live CrewAI is not part of the default Docker dependency set.
@@ -275,6 +295,8 @@ curl http://localhost:8000/compass/probe
 ```
 
 `OPENAI_BASE_URL` is normalized for the direct Compass path. The repo now defaults to `https://api.core42.ai/v1` because Core42's Compass API documentation (<https://www.core42.ai/compass/documentation/use-compass-apis>) uses that base for OpenAI-compatible chat completions. The earlier prompt-era value `https://compass.core42.ai/v1` is kept as a legacy accepted diagnostic alias, but it returned HTML/405 in prior probes and should not be used as the final proof URL unless Core42 confirms access for that host. Duplicate `/v1/v1` and known frontend URLs are rejected. If `OPENAI_BASE_URL` is not exported, `compass_doctor.py` reports that the default is used only for normalization and is not live proof. The optional Parallax42 Vercel gateway uses `COMPASS_GATEWAY_BASE_URL` and `COMPASS_GATEWAY_TOKEN` in the existing Node product runtime. It is not the Agentathon direct Compass path unless explicitly configured as an OpenAI-compatible `/v1` endpoint and allowed by the rules.
+
+The online demo is currently configured with the project owner's Compass key, not a key issued by the Agentathon organizers. This is intentional: the repo exposes the standard `OPENAI_API_KEY` / `OPENAI_BASE_URL` contract so the same code can run with the owner's key, an evaluator-provided key, or a future managed secret. The browser never receives that key.
 
 ## Fixture Contract Demo Inputs
 

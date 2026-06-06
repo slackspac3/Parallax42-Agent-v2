@@ -81,6 +81,26 @@ CI uses `SAMPLE_MODE=true`, `OPENAI_API_KEY=dummy`, and `OPENAI_BASE_URL=https:/
 
 Compass output is advisory only. It can contribute reviewer questions and advisory notes, but the Deterministic Decision Owner remains the final decision authority and human review remains required.
 
+## Compass Model And Credential Boundary
+
+The current Compass configuration follows the public Core42 Compass API documentation at <https://www.core42.ai/compass/documentation/use-compass-apis>. The repo defaults to:
+
+```text
+OPENAI_BASE_URL=https://api.core42.ai/v1
+MODEL_FAST=gpt-4.1
+MODEL_REASONING=gpt-5.1
+EMBEDDING_MODEL=text-embedding-3-large
+CREWAI_LLM_MODEL=gpt-5.1
+```
+
+Why this split is used:
+
+- `gpt-4.1` is the fast/default model for structured intake, JSON advisory tasks, and lower-latency checks.
+- `gpt-5.1` is the reasoning/advisory model for deeper specialist council output, CrewAI live advisory analysis, and final advisory review.
+- `text-embedding-3-large` is the embedding model for evidence chunks, reference memory, governed learning memory, and Qdrant search.
+
+The deployed online product demo uses the project owner's own Compass credentials configured server-side in Vercel/gateway settings. It does not rely on a committed key and does not assume an Agentathon-provided key is available. If evaluators provide a Compass key, they can set `OPENAI_API_KEY` with the same documented `OPENAI_BASE_URL`. Compass is the runtime provider for LLM/embedding calls, not the source of legal/compliance/security authority.
+
 Reference intelligence is separate from Compass. Compass is the server-side LLM and embedding runtime used to analyze, summarize, critique, and retrieve. It is not a legal, compliance, security, sanctions, export-control, procurement, HSE, or ESG source of truth. The current reference-source map is recorded in `reference_context/reference_memory_manifest.json` and includes expanded official/public anchors for NIST, EU, OECD, ISO, Singapore, UAE, OFAC, BIS, UN/EU sanctions, CourtListener, SEC EDGAR, procurement/debarment, and HSE/ESG references. UAE-specific anchors are included for AI strategy/ethics, data protection, DIFC/ADGM privacy, cybersecurity, export-control/non-proliferation, AML/CFT and targeted financial sanctions, procurement, environment, and workforce context.
 
 Future roadmap: a governed knowledge connector API should allow approved live sources such as case-law APIs, sanctions lists, export-control lists, regulatory guidance, procurement/debarment datasets, and internal policy registers to refresh advisory memory with source hashes, parser versions, reviewer status, and correction history. That connector API is not claimed as complete in this submission.

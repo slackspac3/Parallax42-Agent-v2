@@ -146,6 +146,16 @@ The Compass direct base is `https://api.core42.ai/v1` because Core42's Compass A
 
 Compass is a model and embeddings runtime, not a regulatory knowledge source. Reference intelligence comes from official/public anchors in `reference_context/reference_memory_manifest.json`, including NIST, EU, OECD, ISO, Singapore, UAE, OFAC, BIS, UN/EU sanctions, CourtListener, SEC EDGAR, procurement/debarment, and HSE/ESG sources. The roadmap adds a governed knowledge connector API for allowlisted live sources and correction history; that is future functionality and does not change the current submission boundary.
 
+Model selection is explicit:
+
+```text
+MODEL_FAST / MODEL_NAME = gpt-4.1
+MODEL_REASONING / REASONING_MODEL_NAME / CREWAI_LLM_MODEL = gpt-5.1
+EMBEDDING_MODEL / EMBEDDINGS_MODEL = text-embedding-3-large
+```
+
+`gpt-4.1` is used for lower-latency structured intake and JSON advisory work. `gpt-5.1` is used for deeper specialist/council reasoning and live CrewAI advisory output. `text-embedding-3-large` is used for server-side evidence/reference/learning memory embeddings. The deployed online demo uses the project owner's Compass credentials stored server-side, not a committed key and not an assumed Agentathon-issued key. The same code can run with evaluator-provided credentials by setting `OPENAI_API_KEY`.
+
 ## 4. Agentathon `/run` Flow
 
 `POST /run` accepts the official evaluator-style payload:
@@ -224,6 +234,7 @@ There are two live-AI stories, and they should not be mixed:
    - `/compass/probe` checks `/models` and `/chat/completions`.
    - `scripts/compass_doctor.py --strict` is the live proof command.
    - `REQUIRE_COMPASS=true` makes non-sample `/run` return a structured error if Compass is unavailable.
+   - `MODEL_FAST=gpt-4.1`, `MODEL_REASONING=gpt-5.1`, and `EMBEDDING_MODEL=text-embedding-3-large` follow the documented Compass-compatible model split used by this repo.
 
 2. Product demo mode uses the Parallax42 server-side gateway.
    - The browser never receives model keys.
