@@ -33,6 +33,64 @@ The Deterministic Decision Owner remains final authority. Compass responses, gov
 
 ## 2. End-to-End Diagram
 
+GitHub renders the following Mermaid diagram as the visual architecture view:
+
+```mermaid
+flowchart LR
+  Judge["Judge / evaluator"]
+
+  subgraph OnlineProduct["Online product demo path"]
+    Pages["GitHub Pages cockpit<br/>static public/"]
+    Vercel["Vercel product APIs<br/>api/ + server.js mirror"]
+    Gateway["Server-side Compass gateway/API boundary<br/>smart intake, advisory LLM, embeddings"]
+    EvidenceAPI["Evidence index/search APIs<br/>sanitized snippets only"]
+    Backend["Ocean/DigitalOcean backend<br/>parser relay and optional services"]
+    Qdrant[("Droplet-hosted Qdrant<br/>p42_compliance_evidence")]
+    ProductCouncil["Product council + deterministic engine<br/>human-review decision pack"]
+  end
+
+  subgraph EvaluatorPath["Agentathon evaluator reproduction path"]
+    Repo["GitHub repo + Actions"]
+    Docker["Docker smoke<br/>python run.py"]
+    FastAPI["FastAPI evaluator<br/>0.0.0.0:8000"]
+    Run["POST /run"]
+    Council["Python multi-agent council<br/>intake, retrieval, specialists, learning"]
+    DirectCompass["Direct Compass diagnostics/advisory<br/>OPENAI_API_KEY + OPENAI_BASE_URL"]
+    Memory["Evidence and learning memory<br/>local fallback or Qdrant when env set"]
+    Bridge["Node bridge<br/>scripts/agentathon_run.js"]
+    Rules["Deterministic rules engine<br/>lib/"]
+    Logs["Structured JSON response<br/>logs/*.jsonl"]
+  end
+
+  Owner["Deterministic Decision Owner<br/>final authority"]
+
+  Judge --> Pages
+  Pages --> Vercel
+  Vercel --> Gateway
+  Vercel --> EvidenceAPI
+  Vercel --> Backend
+  EvidenceAPI --> Qdrant
+  Gateway -. "advisory only" .-> ProductCouncil
+  Qdrant -. "retrieval context only" .-> ProductCouncil
+  ProductCouncil --> Owner
+
+  Judge --> Repo
+  Repo --> Docker
+  Docker --> FastAPI
+  FastAPI --> Run
+  Run --> Council
+  Council --> DirectCompass
+  Council --> Memory
+  Council --> Bridge
+  Bridge --> Rules
+  DirectCompass -. "advisory only" .-> Owner
+  Memory -. "context only" .-> Owner
+  Rules --> Owner
+  Owner --> Logs
+```
+
+Key reading: the online product demo and the evaluator `/run` path are intentionally separate surfaces. Both preserve the same governance boundary: hosted AI, Qdrant retrieval, learning memory, and optional CrewAI are advisory; deterministic policy owns the final decision and human-review boundary.
+
 ```text
 Online GitHub submission
   -> Dockerfile / python run.py
