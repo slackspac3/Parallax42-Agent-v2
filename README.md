@@ -21,7 +21,33 @@ The implementation defaults to deterministic compliance decisions, with CrewAI-s
 
 ## Judge Quick Start
 
-For the normal cockpit demo:
+The judge demo is intended to be run online first:
+
+| Demo surface | Link | Purpose |
+| --- | --- | --- |
+| GitHub Pages cockpit | <https://slackspac3.github.io/Parallax42-Compliance-Intelligence-Agent/> | Primary browser demo for chat intake, fixture upload, evidence memory, council run, and review pack. |
+| Vercel product API health | <https://parallax42-compliance-intelligence.vercel.app/api/health> | Shows hosted runtime status, Compass gateway configuration, Qdrant feature status, parser relay status, and advisory runtime flags without exposing secrets. |
+| GitHub source | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent> | Root `run.py`, Dockerfile, examples, logs, docs, workflows, and source evidence. |
+| Agentathon Preflight workflow | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/agentathon-preflight.yml> | Online Docker plus `/health` and `/run` proof for the root FastAPI evaluator wrapper. |
+
+The online product cockpit uses GitHub Pages for the static UI, Vercel for server-side product APIs and Compass gateway calls, and the DigitalOcean/Ocean droplet for backend services including Qdrant-backed evidence memory. Local commands are secondary reproduction tools.
+
+Suggested demo prompt:
+
+```text
+Assess whether we can onboard a UAE healthcare analytics vendor using patient data, Microsoft 365, and cross-border cloud processing.
+```
+
+Suggested demo steps:
+
+1. Attach a synthetic compliance document from `test-fixtures/compliance-documents/`, for example `02_data_processing_addendum_and_cross_border_terms.pdf`.
+2. Run Council.
+3. Review the decision memo.
+4. Export Executive Review Pack PDF.
+
+### Secondary: Local Cockpit
+
+Use local commands only when reproducing or extending the online demo:
 
 ```bash
 npm install
@@ -41,19 +67,6 @@ The local server defaults to `http://127.0.0.1:3020`. If the judging environment
 PORT=3000 npm run dev
 ```
 
-Suggested demo prompt:
-
-```text
-Assess whether we can onboard a UAE healthcare analytics vendor using patient data, Microsoft 365, and cross-border cloud processing.
-```
-
-Suggested demo steps:
-
-1. Attach a synthetic compliance document from `test-fixtures/compliance-documents/`, for example `02_data_processing_addendum_and_cross_border_terms.pdf`.
-2. Run Council.
-3. Review the decision memo.
-4. Export Executive Review Pack PDF.
-
 ## Agentathon Evaluation
 
 Selected use case: **21 Legal Intelligence**.
@@ -70,6 +83,7 @@ The intended submission review path is online-first. Reviewers should start with
 | --- | --- | --- |
 | Source repository | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent> | Root `run.py`, `Dockerfile`, `metadata.json`, examples, logs, docs, and workflows are present on `main`. |
 | GitHub Pages cockpit | <https://slackspac3.github.io/Parallax42-Compliance-Intelligence-Agent/> | Static product cockpit loads and uses hosted product routes from `public/config.js`. |
+| Vercel product API | <https://parallax42-compliance-intelligence.vercel.app/api/health> | Hosted product runtime reports Compass gateway, Qdrant, parser relay, learning memory, and advisory runtime status. |
 | Agentathon Preflight workflow | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/agentathon-preflight.yml> | Latest run should show `agentathon-preflight` and `docker-smoke` jobs passing. This is the online proof that Docker builds, the container starts, `GET /health` works, and `POST /run` works in CI sample mode. |
 | CI workflow | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/ci.yml> | Latest run should pass `npm run qa` after Node, Python, and Playwright setup. |
 | Pages deployment workflow | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/pages.yml> | Latest run should deploy the static cockpit to GitHub Pages when `public/` changes. |
@@ -146,6 +160,33 @@ from the US
 
 The expected behavior is that the chat records the export-origin jurisdiction, keeps the import geography as UAE/Singapore, and advances instead of repeating the same question. If an unrelated answer is given, the chat should say it could not map the answer to the active question and ask for clarification again.
 
+To test online Qdrant-backed evidence memory without exposing any Qdrant key, use the Vercel product API. The server holds the encrypted Qdrant credentials and returns only sanitized evidence snippets:
+
+```bash
+curl https://parallax42-compliance-intelligence.vercel.app/api/health
+
+curl -X POST https://parallax42-compliance-intelligence.vercel.app/api/evidence/index \
+  -H "Content-Type: application/json" \
+  -d '{"caseId":"judge-online-qdrant-smoke","documents":[{"evidenceId":"judge-smoke-001","title":"Synthetic Qdrant Smoke Evidence","text":"The vendor is prohibited from using customer data for model training. The DPA lists subprocessors and a 30-day deletion SLA."}]}'
+
+curl -X POST https://parallax42-compliance-intelligence.vercel.app/api/evidence/search \
+  -H "Content-Type: application/json" \
+  -d '{"caseId":"judge-online-qdrant-smoke","query":"model training exclusion subprocessors deletion SLA","topK":3}'
+```
+
+Expected online Qdrant indicators:
+
+```text
+provider=qdrant
+storage=server_side_qdrant_vector_db
+collection=p42_compliance_evidence
+model=text-embedding-3-large
+browserEmbeddingsRetained=false
+matches >= 1
+```
+
+The droplet-hosted Qdrant endpoint is proxied at `https://api.parallax42.bhavukarora.com/qdrant/` and correctly returns `401 Unauthorized` without an API key. Judges should not need direct Qdrant credentials; the Vercel product API is the intended proof path.
+
 To test the online Agentathon submission proof:
 
 1. Open <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/agentathon-preflight.yml>.
@@ -182,15 +223,16 @@ AGENT_RUNTIME=custom
 CREWAI_ENABLE_LIVE_LLM=0
 ```
 
-No secrets are committed. `SAMPLE_MODE=true` is accepted for CI/local reproducibility, but it does not switch to canned outputs; the wrapper still runs the deterministic Node rules engine and Python council. With `SAMPLE_MODE=false`, `/run` attempts a live Compass/OpenAI-compatible advisory call when `OPENAI_API_KEY` is configured. That advisory is recorded as advisory only; the Deterministic Decision Owner remains final authority. Qdrant, enforced RBAC, and live CrewAI are optional/configurable paths and are not claimed active unless those environment variables are set and separately verified.
+No secrets are committed. `SAMPLE_MODE=true` is accepted for CI/local reproducibility, but it does not switch to canned outputs; the wrapper still runs the deterministic Node rules engine and Python council. With `SAMPLE_MODE=false`, `/run` attempts a live Compass/OpenAI-compatible advisory call when `OPENAI_API_KEY` is configured. That advisory is recorded as advisory only; the Deterministic Decision Owner remains final authority. Qdrant is verified active for the deployed Vercel product path through the droplet-hosted Qdrant service; local and FastAPI Agentathon Qdrant checks still require local `P42_VECTOR_STORE_PROVIDER=qdrant`, `QDRANT_URL`, `QDRANT_API_KEY`, and embedding env vars. Enforced RBAC and live CrewAI remain separate claims unless their configured runtime checks pass.
 
-Known limitations: the Agentathon path returns structured JSON and trace logs, not the browser cockpit; the decision is a human-review compliance package, not legal advice or automatic approval; Compass failures return structured `live_compass.status=unavailable`; Qdrant is inactive unless Qdrant and Compass embedding env vars are configured and smoke-tested; live CrewAI is not active by default.
+Known limitations: the Agentathon path returns structured JSON and trace logs, not the browser cockpit; the decision is a human-review compliance package, not legal advice or automatic approval; Compass failures return structured `live_compass.status=unavailable`; local `python scripts/qdrant_smoke.py` reports `SKIPPED` unless local Qdrant and embedding env vars are exported; live CrewAI is not part of the default Docker dependency set.
 
 Live Compass boundary:
 
 - **Agentathon evaluation path:** `run.py` uses the OpenAI-compatible Compass environment contract: `OPENAI_API_KEY` plus `OPENAI_BASE_URL=https://api.core42.ai/v1`. This is the path used by `/run`, `/compass/probe`, `scripts/compass_doctor.py`, and optional Compass embeddings for Qdrant. It exists because the technical screening expects a reproducible root-level API that can be run in Docker without browser clicks or private hosted services.
 - **Product demo path:** the existing Node/Vercel application may use `COMPASS_GATEWAY_BASE_URL` and `COMPASS_GATEWAY_TOKEN` for server-side smart intake, embeddings, and hosted-demo workflows. That Vercel gateway is product infrastructure, not the official Agentathon Compass base URL unless it is explicitly configured to expose OpenAI-compatible `/v1` routes.
 - **Backend/droplet path:** `PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com` supports the product's parser/OCR/backend relay and optional remote CrewAI service. It is not used as the Agentathon Compass API and should not be set as `OPENAI_BASE_URL`.
+- **Qdrant droplet path:** deployed product RAG uses Qdrant running on the DigitalOcean/Ocean droplet behind Nginx at `https://api.parallax42.bhavukarora.com/qdrant/`. The public endpoint requires the server-side Qdrant API key; Vercel stores that key encrypted and returns sanitized snippets only.
 - **Why the split exists:** the product keeps its richer hosted architecture, while the Agentathon wrapper exposes judgeable equivalent behavior: deterministic final decisioning, advisory Compass hooks, multi-agent trace logs, and structured fallback when live Compass is unavailable. This avoids rewriting the Node product while satisfying the evaluator's API shape.
 
 Compass diagnostics:
@@ -526,7 +568,7 @@ P42_CREWAI_SERVICE_TOKEN=<server-side-service-token>
 P42_AUTH_MODE=audit
 ```
 
-Qdrant is required for the full RAG and governed learning memory demo. The local-file vector store remains a demo fallback only. The remote Python CrewAI service is required for live CrewAI execution from Vercel because Vercel's Node runtime does not install the Python CrewAI adapter. Governed learning stores auditable reviewer memory and precedent patterns; it is not model retraining and never silently changes the deterministic council decision. Live LLM specialists are advisory only, and human approval remains required.
+For the deployed online product demo, Qdrant-backed evidence memory is already configured server-side through Vercel and the Ocean/DigitalOcean droplet. For a self-hosted, local, or separate Agentathon runtime to show the same durable RAG behavior, Qdrant and embedding env vars must be exported; otherwise the runtime falls back to local-file demo storage. The remote Python CrewAI service is required for live CrewAI execution from Vercel because Vercel's Node runtime does not install the Python CrewAI adapter. Governed learning stores auditable reviewer memory and precedent patterns; it is not model retraining and never silently changes the deterministic council decision. Live LLM specialists are advisory only, and human approval remains required.
 
 After configuring Qdrant and the Compass gateway, run:
 

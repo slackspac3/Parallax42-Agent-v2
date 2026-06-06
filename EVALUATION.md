@@ -8,11 +8,30 @@ Start with the online GitHub evidence rather than a local checkout:
 | --- | --- | --- |
 | Repository | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent> | Root `run.py`, `Dockerfile`, `metadata.json`, examples, logs, and docs are present on `main`. |
 | GitHub Pages cockpit | <https://slackspac3.github.io/Parallax42-Compliance-Intelligence-Agent/> | Static product cockpit loads and uses hosted product routes from `public/config.js`. |
+| Vercel product API | <https://parallax42-compliance-intelligence.vercel.app/api/health> | Hosted runtime reports Compass gateway, Qdrant-backed evidence memory, parser relay, learning memory, and advisory runtime status without exposing secrets. |
 | Agentathon Preflight | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/agentathon-preflight.yml> | Latest `main` run passes both `agentathon-preflight` and `docker-smoke`. This is the online Docker plus `/health` and `/run` proof. |
 | CI | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/ci.yml> | Latest `main` run passes `npm run qa`. |
 | Architecture | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/blob/main/docs/AGENTATHON_SYSTEM_ARCHITECTURE.md> | Online-first evaluator path, product path, and runtime boundaries are documented. |
 
 GitHub Pages is a static cockpit and does not host the FastAPI evaluator API. The online `/run` test is the `docker-smoke` job in the Agentathon Preflight workflow: it builds the Docker image, starts the container on port `8000`, calls `GET /health`, and posts `input_examples/example_1.json` to `/run`.
+
+The online product demo uses Vercel for server-side product APIs and the Compass gateway, plus the DigitalOcean/Ocean droplet for backend services. Qdrant is running on the droplet behind Nginx at `https://api.parallax42.bhavukarora.com/qdrant/`; that endpoint requires an API key and returns `401 Unauthorized` without one. Vercel stores the Qdrant key as an encrypted environment variable and exposes only safe evidence index/search responses to the browser.
+
+Online Qdrant proof path:
+
+```bash
+curl https://parallax42-compliance-intelligence.vercel.app/api/health
+
+curl -X POST https://parallax42-compliance-intelligence.vercel.app/api/evidence/index \
+  -H "Content-Type: application/json" \
+  -d '{"caseId":"judge-online-qdrant-smoke","documents":[{"evidenceId":"judge-smoke-001","title":"Synthetic Qdrant Smoke Evidence","text":"The vendor is prohibited from using customer data for model training. The DPA lists subprocessors and a 30-day deletion SLA."}]}'
+
+curl -X POST https://parallax42-compliance-intelligence.vercel.app/api/evidence/search \
+  -H "Content-Type: application/json" \
+  -d '{"caseId":"judge-online-qdrant-smoke","query":"model training exclusion subprocessors deletion SLA","topK":3}'
+```
+
+Expected indicators are `provider=qdrant`, `storage=server_side_qdrant_vector_db`, `collection=p42_compliance_evidence`, `model=text-embedding-3-large`, `browserEmbeddingsRetained=false`, and at least one sanitized match.
 
 ## Secondary Local QA
 
@@ -54,10 +73,11 @@ The repository intentionally separates three runtime boundaries:
 | Agentathon direct Compass | `OPENAI_API_KEY`, `OPENAI_BASE_URL=https://api.core42.ai/v1` | FastAPI `/run`, `/compass/probe`, `scripts/compass_doctor.py`, optional Compass embeddings | Uses the current Core42 Compass API documentation's OpenAI-compatible base and keeps the root `run.py` execution reproducible in Docker. |
 | Product Vercel gateway | `COMPASS_GATEWAY_BASE_URL`, `COMPASS_GATEWAY_TOKEN` | Existing Node/Vercel smart intake, embeddings, hosted demo support | Keeps server-side tokens out of the browser and preserves the product runtime. It is not the Agentathon direct Compass base URL unless it exposes OpenAI-compatible `/v1` routes. |
 | Product backend/droplet | `PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com`, optional `P42_CREWAI_SERVICE_URL` | OCR/parser, backend relay, optional remote CrewAI/product services | Supports the richer product demo. It is not a Compass API and should not be used as `OPENAI_BASE_URL`. |
+| Product Qdrant memory | Vercel encrypted `P42_VECTOR_STORE_PROVIDER=qdrant`, `QDRANT_URL`, `QDRANT_API_KEY`, `QDRANT_COLLECTION` | Online product evidence indexing/search and governed memory surfaces | Qdrant runs on the droplet and is used by Vercel server-side product APIs. The browser never receives Qdrant keys or raw embeddings. |
 
 The Agentathon wrapper uses direct Compass for live advisory when available because the judging API should not depend on browser clicks, uploaded files, Vercel routing, or the droplet backend. The Node/Vercel/droplet stack remains the product vision and can demonstrate richer functionality, but the submitted `/run` path provides equivalent judgeable evidence: multi-agent collaboration, deterministic final decision ownership, advisory live-LLM boundary, RAG/learning status, and JSONL traces.
 
-Optional Qdrant RAG evidence memory is active only when `P42_VECTOR_STORE_PROVIDER=qdrant`, `QDRANT_URL`, and the Compass embedding env vars are configured. The Agentathon `/run` path then chunks synthetic/input evidence, embeds through Compass, stores case-scoped evidence chunks in Qdrant, searches by `caseId`, and returns citation-safe snippets only. Raw embeddings are never returned. Without that configuration, `/run` reports `rag_evidence_memory.provider=local-fallback`; this fallback is not durable production RAG.
+Qdrant RAG evidence memory is verified active in the deployed online product path: Vercel product APIs index/search through the droplet-hosted Qdrant collection `p42_compliance_evidence` using Compass-compatible embeddings and return citation-safe snippets only. For the local FastAPI Agentathon wrapper, Qdrant remains env-dependent: when `P42_VECTOR_STORE_PROVIDER=qdrant`, `QDRANT_URL`, `QDRANT_API_KEY`, and embedding env vars are exported, `/run` chunks synthetic/input evidence, embeds it, stores case-scoped chunks in Qdrant, searches by `caseId`, and returns sanitized snippets. Without local Qdrant or embeddings, `/run` reports `rag_evidence_memory.provider=local-fallback`; this fallback is not durable production RAG.
 
 ```bash
 python scripts/qdrant_smoke.py
@@ -221,7 +241,7 @@ The generated snapshots are written under `evidence/`, including readiness, live
 ## Known Limitations
 
 - Compass gateway LLM and embedding calls require server-side environment configuration; the Agentathon non-sample path attempts a live advisory call when credentials are present.
-- Local vector storage is the default; Qdrant REST is optional only when configured.
+- Online product vector storage is Qdrant-backed through Vercel and the droplet; local/CI vector storage falls back unless Qdrant env vars are exported.
 - Governed learning memory is advisory precedent storage, not model retraining.
 - Optional live CrewAI advisory specialists for the Agentathon wrapper require `AGENT_RUNTIME=crewai_live`, `CREWAI_ENABLE_LIVE_LLM=1`, optional CrewAI dependencies, and server-side Compass credentials; final decisions remain deterministic.
 - Local OCR/document parsing is not implemented in this repository.

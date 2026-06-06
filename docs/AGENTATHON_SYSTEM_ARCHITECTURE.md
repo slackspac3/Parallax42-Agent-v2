@@ -61,7 +61,7 @@ Browser cockpit in public/
 | Agentathon direct Compass | `OPENAI_API_KEY`, `OPENAI_BASE_URL=https://api.core42.ai/v1` | `app/compass_client.py`, `/compass/probe`, `/run`, `scripts/compass_doctor.py`, optional embeddings | Current Core42 Compass API documentation's OpenAI-compatible base for the FastAPI evaluator path. | Not the browser product gateway and not the droplet backend. |
 | Product Compass gateway | `COMPASS_GATEWAY_BASE_URL`, `COMPASS_GATEWAY_TOKEN` | Existing Node/Vercel product APIs and `lib/compassGatewayClient.js` | Server-side product model boundary for smart intake, advisory LLM, and embeddings. | Not automatically proof of the official Agentathon direct Compass endpoint unless it exposes compatible `/v1` routes and is allowed by rules. |
 | Product backend / droplet | `PARALLAX42_BACKEND_URL`, optional `P42_CREWAI_SERVICE_URL` | Backend relay, parser/OCR support, optional remote product services | Product infrastructure for the richer hosted demo. | Not a Compass API and should not be used as `OPENAI_BASE_URL`. |
-| Qdrant | `P42_VECTOR_STORE_PROVIDER=qdrant`, `QDRANT_URL`, `QDRANT_API_KEY`, `QDRANT_COLLECTION` | Evidence memory and optional learning memory | Durable vector memory when configured and smoke-tested. | Not active by default and not claimed unless `qdrant_smoke.py` passes. |
+| Qdrant | Deployed product: encrypted Vercel `P42_VECTOR_STORE_PROVIDER=qdrant`, `QDRANT_URL`, `QDRANT_API_KEY`, `QDRANT_COLLECTION`. Local/FastAPI: same env vars when exported. | Evidence memory and optional learning memory | Active in the deployed Vercel product evidence API through the droplet-hosted Qdrant collection `p42_compliance_evidence`; env-dependent for local/FastAPI runs. | Not active in every runtime by default and not claimed for local/FastAPI unless `qdrant_smoke.py` or equivalent env-specific smoke passes. |
 | Local fallback memory | no external service required | CI, local demos, sample mode | Deterministic fallback for evidence and governed learning memory. | Not production-durable RAG. |
 
 The Compass direct base is `https://api.core42.ai/v1` because Core42's Compass API documentation (<https://www.core42.ai/compass/documentation/use-compass-apis>) uses that host for OpenAI-compatible calls. The earlier `https://compass.core42.ai/v1` value came from the initial Agentathon prompt assumptions and is still accepted by diagnostics as a legacy alias, but prior probes returned HTML from `/models` and 405 HTML from `/chat/completions`; it is therefore not the final proof URL unless Core42 explicitly confirms it for the issued key.
@@ -188,6 +188,18 @@ Evidence memory supports two providers:
 
 The browser/API response does not expose raw embedding vectors. Evidence results include safe fields such as snippet, title, document ID, evidence ID, chunk index, domain, and score.
 
+Deployed product proof is online-first. The GitHub Pages cockpit calls Vercel product APIs; those APIs use encrypted server-side Qdrant credentials to index/search the droplet-hosted collection. The verified product health and evidence API indicators are:
+
+```text
+provider=qdrant
+storage=server_side_qdrant_vector_db
+collection=p42_compliance_evidence
+model=text-embedding-3-large
+browserEmbeddingsRetained=false
+```
+
+The droplet proxy is `https://api.parallax42.bhavukarora.com/qdrant/`. It is expected to return `401 Unauthorized` without the Qdrant API key. Judges should test Qdrant through the Vercel product API, not by requesting direct credentials.
+
 Smoke command:
 
 ```bash
@@ -266,6 +278,8 @@ Primary online checks:
 | --- | --- | --- |
 | Repository contents | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent> | Root evaluator files, examples, logs, docs, Dockerfile, and workflows are visible on `main`. |
 | Product cockpit | <https://slackspac3.github.io/Parallax42-Compliance-Intelligence-Agent/> | Static cockpit loads and reaches the configured hosted product routes. |
+| Vercel product API health | <https://parallax42-compliance-intelligence.vercel.app/api/health> | Hosted product runtime reports Compass gateway, Qdrant evidence memory, learning memory, parser relay, and advisory runtime status without exposing secrets. |
+| Vercel evidence API | `POST https://parallax42-compliance-intelligence.vercel.app/api/evidence/index`, `POST /api/evidence/search` | Online Qdrant proof path returns `provider=qdrant`, `storage=server_side_qdrant_vector_db`, and sanitized matches. |
 | Agentathon Preflight | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/agentathon-preflight.yml> | `agentathon-preflight` and `docker-smoke` jobs pass. |
 | CI | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/ci.yml> | `npm run qa` passes online. |
 
@@ -327,12 +341,14 @@ Safe claims when the current checks pass:
 - Multi-agent traces show delegation, retry/fallback, critique, validation, escalation, shared context, and deterministic final ownership.
 - Output examples are generated from runtime examples and are not loaded as canned responses.
 - Product chat validates active clarifying answers before advancing.
-- Qdrant and live CrewAI are optional paths, not defaults.
+- Deployed product evidence indexing/search uses Qdrant through Vercel and the droplet-hosted collection.
+- Local/FastAPI Qdrant is env-dependent and falls back when Qdrant or embeddings are unavailable.
+- Live CrewAI is optional, not default.
 
 Unsafe claims unless separately verified:
 
 - Official direct Compass is live-verified.
-- Qdrant is active.
+- Qdrant is active in every runtime without env-specific verification.
 - Compass embeddings are live-verified.
 - Live CrewAI is active.
 - Enforced production RBAC is active.
