@@ -138,6 +138,27 @@ Acceptance:
 - tool descriptions are allowlisted and read-only by default
 - write-capable actions require explicit human confirmation
 
+## Milestone 5.5: Governed Knowledge Connector API
+
+Goal: let Parallax42 plug in live reference sources without treating the model provider as the source of truth.
+
+Build:
+
+- connector registry for allowlisted sources such as case-law APIs, sanctions lists, export-control lists, regulatory guidance, procurement/debarment datasets, and internal policy registers
+- source contract with URL, owner, license, schema version, refresh cadence, trust tier, parser version, and last successful sync
+- bounded fetch/index endpoints with source hashes, timestamps, and correction history
+- reviewer validation status before new or changed source records influence advisory reference memory
+- supersession model for stale or corrected records instead of silent deletion
+- citation-safe retrieval response that returns source metadata and snippets only, never raw embeddings or provider keys
+
+Acceptance:
+
+- a connector can refresh a small allowlisted source without broad crawling
+- every imported record has source provenance, hash, timestamp, parser version, and reviewer status
+- corrections are auditable and previous records remain inspectable
+- unavailable or malformed sources produce structured errors and do not pollute reference memory
+- live source updates remain advisory and cannot override deterministic policy, human review, or evidence requirements
+
 ## Milestone 6: Demo Recording And Submission Freeze
 
 Goal: package the proof.

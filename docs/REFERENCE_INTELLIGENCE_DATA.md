@@ -10,7 +10,17 @@ Reference memory was reviewed for the submission on **2026-06-06**. The review i
 reference_context/reference_memory_manifest.json
 ```
 
-The manifest records the official/advisory anchors used for the current submission, including NIST AI RMF, NIST CSF 2.0, NIST Privacy Framework, NIST SP 800-53, NIST SP 800-171, EU AI Act Regulation (EU) 2024/1689, GDPR Regulation (EU) 2016/679, Trade.gov Consolidated Screening List, OFAC Sanctions List Service, eCFR EAR, CourtListener, CUAD-compatible clause patterns, and Core42 Compass API documentation.
+The manifest records the official/advisory anchors used for the current submission. The expanded snapshot now includes:
+
+- AI governance: NIST AI RMF, NIST AI RMF Generative AI Profile, EU AI Act Regulation (EU) 2024/1689, OECD AI Principles, ISO/IEC 42001, ISO/IEC 23894, UAE National Strategy for Artificial Intelligence 2031, and Dubai AI Ethics references.
+- Security: NIST CSF 2.0, NIST SP 800-53, NIST SP 800-171, NIST SSDF SP 800-218, CISA Cybersecurity Performance Goals, OWASP ASVS / Top 10, ISO/IEC 27001, and UAE Cyber Security Council references.
+- Privacy and compliance: NIST Privacy Framework, GDPR Regulation (EU) 2016/679, EDPB guidance, UK ICO AI/data-protection guidance, Singapore PDPA, UAE data-protection portal references, DIFC Data Protection Law, and ADGM Office of Data Protection references.
+- Sanctions and export controls: Trade.gov Consolidated Screening List, OFAC Sanctions List Service, eCFR EAR, BIS Entity List, BIS Denied Persons List, UN Security Council Consolidated List, EU Sanctions Map, Singapore Customs Strategic Goods Control, UAE Executive Office for Control and Non-Proliferation, and UAE AML/CFT references.
+- Legal and contract: CourtListener, Free Law Project, CUAD-compatible clause patterns, and SEC EDGAR APIs.
+- Procurement and vendor risk: Open Contracting Data Standard, World Bank debarment data, SAM.gov exclusions, USAspending.gov, EU TED, and UAE Ministry of Finance references.
+- HSE and ESG: OSHA, EPA ECHO, EU CSRD, ESRS, UN Global Compact, IFRS Sustainability Standards, GRI Standards, UAE Ministry of Climate Change and Environment, and UAE Ministry of Human Resources and Emiratisation references.
+
+Core42 Compass is intentionally recorded separately as a **runtime anchor**, not as a legal, compliance, security, procurement, sanctions, export-control, HSE, or ESG knowledge source. Compass is the server-side LLM and embedding provider used to analyze, summarize, critique, and retrieve against the reference and evidence memory. The authority for reference intelligence comes from the public/official anchors and from human reviewer validation, not from the model provider.
 
 This is a curated/static reference snapshot, not live regulatory monitoring. It is safe for judge review because it uses public or synthetic context, does not include secrets, does not contain raw embeddings, and does not claim legal advice or compliance certification.
 
@@ -34,6 +44,34 @@ Reference intelligence must not be described as legal advice, a sanctions determ
 | Procurement / vendor risk | `procurement_risk`, `supplier_risk` | Open Contracting Data Standard, World Bank debarred firms, SAM.gov, USAspending.gov, TED | Supplier onboarding, outsourcing, debarment, sourcing-control prompts |
 | Sanctions / export controls | `sanctions_export`, `trade_compliance` | Trade.gov CSL, OFAC, BIS/EAR via eCFR, EU/UN sanctions lists | Restricted-party, export-control, end-use, import/export escalation prompts |
 | HSE / ESG | `hse_esg`, `operational_compliance` | OSHA, EPA, CSRD/taxonomy via EUR-Lex, UN Global Compact | Safety, environmental, sustainability, incident and operational evidence prompts |
+
+## UAE-Specific Coverage
+
+The reference manifest now includes UAE-specific anchors for:
+
+- AI governance and ethics: UAE National Strategy for Artificial Intelligence 2031 and Dubai AI Ethics references.
+- Privacy and data protection: UAE data-protection portal, DIFC Data Protection Law, and ADGM Office of Data Protection.
+- Cybersecurity: UAE Cyber Security Council.
+- Export and sanctions escalation: UAE Executive Office for Control and Non-Proliferation and UAE AML/CFT / targeted-financial-sanctions references.
+- Procurement and local operating context: UAE Ministry of Finance.
+- HSE and ESG: UAE Ministry of Climate Change and Environment and UAE Ministry of Human Resources and Emiratisation.
+
+These anchors help the system ask UAE-relevant questions for geography, regulator perimeter, cross-border processing, AI use, import/export, sanctions, workforce, environment, and procurement context. They are advisory references only. The system does not make UAE legal determinations or replace accountable counsel, compliance, export-control, cybersecurity, HSE, procurement, or privacy review.
+
+## Future Knowledge Connector API
+
+The near-term roadmap should add a governed knowledge connector API so approved live sources can be plugged into reference memory without changing the council architecture.
+
+Target behavior:
+
+- Connectors can pull bounded updates from allowlisted sources such as case-law APIs, sanctions lists, export-control lists, regulatory guidance, procurement/debarment datasets, and internal policy registers.
+- Each connector declares its source URL, data license, refresh cadence, schema, trust tier, and last successful sync.
+- Updates create auditable import records with source hash, fetched timestamp, parser version, reviewer status, and correction history.
+- New or changed records remain advisory until validated by configured review policy.
+- Corrections can supersede stale records without deleting the audit trail.
+- Runtime responses expose source names, timestamps, and citation-safe snippets, never provider keys or raw embeddings.
+
+This API is a roadmap item. The current submission uses curated/static reference snapshots, local importers, and optional Qdrant indexing. It does not claim live regulatory monitoring or automatic sanctions/export determination.
 
 ## Freshness And Refresh Policy
 

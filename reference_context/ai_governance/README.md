@@ -6,9 +6,13 @@ Reference freshness: reviewed for submission on 2026-06-06. See `reference_conte
 
 Typical sources:
 - NIST AI Risk Management Framework
+- NIST AI RMF Generative AI Profile
 - OECD AI principles
 - EU AI Act text via EUR-Lex
-- Model card and system card patterns
+- ISO/IEC 42001 and ISO/IEC 23894 anchors
+- UAE National Strategy for Artificial Intelligence 2031
+- Dubai AI Ethics references
+- Model card and system card patterns, as advisory documentation patterns
 
 This lane is not model training and does not authorize AI production use.
 

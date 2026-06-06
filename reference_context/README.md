@@ -15,6 +15,7 @@ reference_context/reference_memory_manifest.json
 - Governed learning memory remains separate from reference context and is not model training.
 - Deterministic policy and current evidence remain authoritative.
 - Browser/API callers do not receive raw embeddings, provider keys, or secret tokens.
+- Compass is a server-side LLM and embedding runtime provider. It is not treated as a legal, compliance, security, sanctions, export-control, procurement, HSE, or ESG reference authority.
 
 ## Refresh
 
@@ -36,3 +37,17 @@ npm run qdrant:smoke
 ```
 
 Local Qdrant smoke may skip or fail when the local shell lacks credentials or cannot reach the deployed vector service. The deployed online product proof path is the Vercel evidence API described in `README.md` and `EVALUATION.md`.
+
+## Future Knowledge Connector API
+
+The roadmap includes a governed connector API for live reference updates from allowlisted sources such as case-law APIs, sanctions lists, export-control lists, regulatory guidance, procurement/debarment datasets, and internal policy registers.
+
+That API should preserve the current boundaries:
+
+- each connector declares source URL, license, schema, refresh cadence, trust tier, and last sync;
+- imports write source hashes, timestamps, parser versions, reviewer status, and correction history;
+- new or corrected records remain advisory until validated by configured review policy;
+- stale records are superseded rather than silently deleted;
+- responses return citation-safe snippets and source metadata, not raw embeddings, provider keys, or autonomous determinations.
+
+This connector API is not part of the current submission claim. The current reference memory is a curated/static snapshot with bounded local importers and optional indexing.

@@ -8,8 +8,11 @@ Typical sources:
 - NIST CSF 2.0
 - NIST SP 800-53
 - NIST SP 800-171
+- NIST SP 800-218 Secure Software Development Framework
 - CISA guidance
 - OWASP ASVS / Top 10
+- ISO/IEC 27001 anchor
+- UAE Cyber Security Council references
 
 This lane supports evidence questions for identity, access, encryption, logging, vulnerability management, incident response, and recovery.
 

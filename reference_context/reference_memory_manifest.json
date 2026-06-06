@@ -18,14 +18,39 @@
           "notes": "AI RMF 1.0, Generative AI Profile, and 2026 Critical Infrastructure Profile concept note are advisory anchors for AI risk, human oversight, transparency, monitoring, and governance questions."
         },
         {
+          "name": "NIST AI RMF Generative AI Profile",
+          "url": "https://www.nist.gov/itl/ai-risk-management-framework/nist-ai-rmf-generative-ai-profile",
+          "notes": "Advisory anchor for generative-AI misuse, measurement, provenance, incident response, content risk, and governance controls."
+        },
+        {
           "name": "Regulation (EU) 2024/1689 Artificial Intelligence Act",
           "url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj",
           "notes": "Official EUR-Lex text used as an issue-spotting anchor for high-risk AI, prohibited practices, transparency, human oversight, and documentation questions when EU context is relevant."
         },
         {
+          "name": "OECD AI Principles",
+          "url": "https://oecd.ai/en/ai-principles",
+          "notes": "International AI principles anchor for human-centred values, transparency, robustness, accountability, and responsible stewardship questions."
+        },
+        {
+          "name": "UAE National Strategy for Artificial Intelligence 2031",
+          "url": "https://ai.gov.ae/strategy/",
+          "notes": "UAE-specific AI strategy anchor for national AI governance, sector priorities, capability development, and public-sector AI context."
+        },
+        {
+          "name": "Dubai AI Ethics Principles and Guidelines",
+          "url": "https://www.digitaldubai.ae/initiatives/ai-ethics",
+          "notes": "UAE/Dubai advisory anchor for responsible AI principles, fairness, accountability, transparency, and explainability prompts."
+        },
+        {
           "name": "ISO/IEC 42001:2023",
           "url": "https://www.iso.org/standard/81230.html",
           "notes": "AI management system anchor; ISO copyrighted content is not copied into the repo."
+        },
+        {
+          "name": "ISO/IEC 23894:2023",
+          "url": "https://www.iso.org/standard/77304.html",
+          "notes": "AI risk management anchor; ISO copyrighted content is not copied into the repo."
         }
       ]
     },
@@ -47,6 +72,36 @@
           "name": "NIST SP 800-171 Rev. 3",
           "url": "https://csrc.nist.gov/publications/detail/sp/800-171/rev-3/final",
           "notes": "Sensitive information and supplier handling anchor."
+        },
+        {
+          "name": "NIST SP 800-218 Secure Software Development Framework",
+          "url": "https://csrc.nist.gov/publications/detail/sp/800-218/final",
+          "notes": "Secure software development, supply-chain, release, and vulnerability-management evidence anchor."
+        },
+        {
+          "name": "CISA Cross-Sector Cybersecurity Performance Goals",
+          "url": "https://www.cisa.gov/cross-sector-cybersecurity-performance-goals",
+          "notes": "Advisory anchor for baseline cybersecurity outcome questions and supplier control prompts."
+        },
+        {
+          "name": "OWASP Application Security Verification Standard",
+          "url": "https://owasp.org/www-project-application-security-verification-standard/",
+          "notes": "Application security verification anchor for access, authentication, session, API, logging, and configuration questions."
+        },
+        {
+          "name": "OWASP Top 10",
+          "url": "https://owasp.org/www-project-top-ten/",
+          "notes": "Application security risk anchor for web/API supplier assurance prompts."
+        },
+        {
+          "name": "ISO/IEC 27001:2022",
+          "url": "https://www.iso.org/standard/27001",
+          "notes": "Information security management anchor; ISO copyrighted content is not copied into the repo."
+        },
+        {
+          "name": "UAE Cyber Security Council",
+          "url": "https://www.csc.gov.ae/",
+          "notes": "UAE-specific cybersecurity anchor for national cyber governance and security-control context."
         }
       ]
     },
@@ -63,6 +118,36 @@
           "name": "GDPR Regulation (EU) 2016/679",
           "url": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
           "notes": "Official EU privacy legal text anchor; used only for issue spotting and evidence questions, not legal advice."
+        },
+        {
+          "name": "European Data Protection Board Guidelines",
+          "url": "https://www.edpb.europa.eu/our-work-tools/our-documents/guidelines_en",
+          "notes": "EU supervisory guidance anchor for transfer, controller/processor, data-subject-rights, and accountability questions."
+        },
+        {
+          "name": "UK ICO AI and Data Protection Guidance",
+          "url": "https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/artificial-intelligence/guidance-on-ai-and-data-protection/",
+          "notes": "Advisory anchor for AI/privacy risks, explainability, fairness, security, accuracy, and governance prompts."
+        },
+        {
+          "name": "Singapore Personal Data Protection Act",
+          "url": "https://www.pdpc.gov.sg/overview-of-pdpa/the-legislation/personal-data-protection-act",
+          "notes": "Singapore privacy anchor for PDPA obligations, consent, purpose limitation, protection, retention, and transfer prompts."
+        },
+        {
+          "name": "UAE Data Protection Laws",
+          "url": "https://u.ae/en/about-the-uae/digital-uae/data/data-protection-laws",
+          "notes": "UAE-specific official portal anchor for UAE personal data protection and related privacy-law issue spotting."
+        },
+        {
+          "name": "DIFC Data Protection Law No. 5 of 2020",
+          "url": "https://www.difc.ae/business/laws-regulations/legal-database/data-protection-law-difc-law-no-5-2020",
+          "notes": "UAE/DIFC-specific privacy anchor for financial free-zone data-protection prompts."
+        },
+        {
+          "name": "ADGM Office of Data Protection",
+          "url": "https://www.adgm.com/legal-services/office-of-data-protection",
+          "notes": "UAE/ADGM-specific privacy anchor for ADGM data-protection prompts."
         }
       ]
     },
@@ -84,6 +169,41 @@
           "name": "Export Administration Regulations",
           "url": "https://www.ecfr.gov/current/title-15/subtitle-B/chapter-VII/subchapter-C",
           "notes": "eCFR EAR anchor for export-control issue spotting. The app does not make license determinations."
+        },
+        {
+          "name": "BIS Entity List",
+          "url": "https://www.bis.gov/entity-list",
+          "notes": "US restricted-party anchor for export-control escalation questions. The app does not make screening determinations."
+        },
+        {
+          "name": "BIS Denied Persons List",
+          "url": "https://www.bis.gov/denied-persons-list",
+          "notes": "US denied-party anchor for export-control escalation questions. The app does not make screening determinations."
+        },
+        {
+          "name": "UN Security Council Consolidated List",
+          "url": "https://main.un.org/securitycouncil/en/content/un-sc-consolidated-list",
+          "notes": "UN sanctions-list anchor for restricted-party escalation prompts."
+        },
+        {
+          "name": "EU Sanctions Map",
+          "url": "https://www.sanctionsmap.eu/",
+          "notes": "EU sanctions reference anchor for jurisdictional sanctions issue spotting."
+        },
+        {
+          "name": "Singapore Customs Strategic Goods Control",
+          "url": "https://www.customs.gov.sg/businesses/strategic-goods-control/",
+          "notes": "Singapore-specific strategic goods control anchor for import/export evidence prompts."
+        },
+        {
+          "name": "UAE Executive Office for Control and Non-Proliferation",
+          "url": "https://www.uaeiec.gov.ae/",
+          "notes": "UAE-specific strategic trade-control anchor for controlled-goods, end-use, licensing, and escalation prompts."
+        },
+        {
+          "name": "UAE Executive Office of Anti-Money Laundering and Counter Terrorism Financing",
+          "url": "https://www.uaeamlcft.gov.ae/",
+          "notes": "UAE-specific AML/CFT and targeted-financial-sanctions anchor for sanctions and counterparty escalation prompts."
         }
       ]
     },
@@ -100,19 +220,112 @@
           "name": "CUAD-compatible clause patterns",
           "url": "https://www.atticusprojectai.org/cuad",
           "notes": "Clause-type pattern anchor. Repo uses curated/synthetic clause fixtures unless an external dataset is provided."
+        },
+        {
+          "name": "SEC EDGAR APIs",
+          "url": "https://www.sec.gov/search-filings/edgar-application-programming-interfaces",
+          "notes": "Public company filing and exhibit lookup anchor for contract/source verification when SEC context is relevant."
+        },
+        {
+          "name": "Free Law Project",
+          "url": "https://free.law/",
+          "notes": "Public legal-data ecosystem anchor. Live ingestion requires explicit configuration and remains advisory."
         }
       ]
     },
     {
-      "lane": "compass_runtime",
-      "status": "current_api_boundary_reference",
+      "lane": "procurement_vendor_risk",
+      "status": "current_advisory_manifest",
       "primaryAnchors": [
         {
-          "name": "Core42 Compass API documentation",
-          "url": "https://www.core42.ai/compass/documentation/use-compass-apis",
-          "notes": "Compass supports text generation, embeddings, and OpenAI/Azure OpenAI deployment API types. Browser clients never receive Compass keys."
+          "name": "Open Contracting Data Standard",
+          "url": "https://standard.open-contracting.org/latest/en/",
+          "notes": "Procurement data model anchor for supplier, award, contract, milestone, and implementation evidence prompts."
+        },
+        {
+          "name": "World Bank Listing of Ineligible Firms and Individuals",
+          "url": "https://www.worldbank.org/en/projects-operations/procurement/debarred-firms",
+          "notes": "Debarment-reference anchor for supplier-risk escalation. Live checks require configured official data access."
+        },
+        {
+          "name": "SAM.gov Exclusions",
+          "url": "https://sam.gov/content/exclusions",
+          "notes": "US exclusions-reference anchor for debarment and supplier-risk escalation. Live checks require configured official data access."
+        },
+        {
+          "name": "USAspending.gov",
+          "url": "https://www.usaspending.gov/",
+          "notes": "US public spending data anchor for procurement context and supplier history prompts."
+        },
+        {
+          "name": "Tenders Electronic Daily",
+          "url": "https://ted.europa.eu/",
+          "notes": "EU public procurement notice anchor for sourcing and tender-history context."
+        },
+        {
+          "name": "UAE Ministry of Finance Procurement",
+          "url": "https://mof.gov.ae/",
+          "notes": "UAE federal finance/procurement anchor for local supplier and government-procurement context."
         }
       ]
+    },
+    {
+      "lane": "hse_esg",
+      "status": "current_advisory_manifest",
+      "primaryAnchors": [
+        {
+          "name": "OSHA Laws and Regulations",
+          "url": "https://www.osha.gov/laws-regs",
+          "notes": "Occupational safety anchor for workplace and operational compliance prompts."
+        },
+        {
+          "name": "EPA ECHO",
+          "url": "https://echo.epa.gov/",
+          "notes": "Environmental compliance data anchor for supplier and facility prompts where US context is relevant."
+        },
+        {
+          "name": "Corporate Sustainability Reporting Directive",
+          "url": "https://eur-lex.europa.eu/eli/dir/2022/2464/oj",
+          "notes": "EU sustainability reporting anchor for ESG evidence and reporting prompts."
+        },
+        {
+          "name": "European Sustainability Reporting Standards",
+          "url": "https://eur-lex.europa.eu/eli/reg_del/2023/2772/oj",
+          "notes": "EU ESRS anchor for sustainability disclosure evidence prompts."
+        },
+        {
+          "name": "UN Global Compact Ten Principles",
+          "url": "https://unglobalcompact.org/what-is-gc/mission/principles",
+          "notes": "Human rights, labour, environment, and anti-corruption principles anchor for supplier due-diligence prompts."
+        },
+        {
+          "name": "IFRS Sustainability Standards",
+          "url": "https://www.ifrs.org/issued-standards/ifrs-sustainability-standards-navigator/",
+          "notes": "ISSB/IFRS sustainability standards anchor for governance, climate, and sustainability disclosure prompts."
+        },
+        {
+          "name": "GRI Standards",
+          "url": "https://www.globalreporting.org/standards/",
+          "notes": "Sustainability reporting anchor for ESG topic and evidence prompts."
+        },
+        {
+          "name": "UAE Ministry of Climate Change and Environment",
+          "url": "https://moccae.gov.ae/",
+          "notes": "UAE-specific environment and climate policy anchor for local ESG and operational compliance prompts."
+        },
+        {
+          "name": "UAE Ministry of Human Resources and Emiratisation",
+          "url": "https://www.mohre.gov.ae/",
+          "notes": "UAE-specific labour and workplace-policy anchor for local workforce, safety, and employment-context prompts."
+        }
+      ]
+    }
+  ],
+  "runtimeAnchors": [
+    {
+      "name": "Core42 Compass API documentation",
+      "url": "https://www.core42.ai/compass/documentation/use-compass-apis",
+      "notes": "Compass is recorded as the server-side LLM and embeddings runtime provider only. It is not a legal, compliance, security, procurement, sanctions, export-control, HSE, or ESG reference source."
     }
   ],
   "repoArtifacts": {

@@ -66,6 +66,10 @@ CI uses `SAMPLE_MODE=true`, `OPENAI_API_KEY=dummy`, and `OPENAI_BASE_URL=https:/
 
 Compass output is advisory only. It can contribute reviewer questions and advisory notes, but the Deterministic Decision Owner remains the final decision authority and human review remains required.
 
+Reference intelligence is separate from Compass. Compass is the server-side LLM and embedding runtime used to analyze, summarize, critique, and retrieve. It is not a legal, compliance, security, sanctions, export-control, procurement, HSE, or ESG source of truth. The current reference-source map is recorded in `reference_context/reference_memory_manifest.json` and includes expanded official/public anchors for NIST, EU, OECD, ISO, Singapore, UAE, OFAC, BIS, UN/EU sanctions, CourtListener, SEC EDGAR, procurement/debarment, and HSE/ESG references. UAE-specific anchors are included for AI strategy/ethics, data protection, DIFC/ADGM privacy, cybersecurity, export-control/non-proliferation, AML/CFT and targeted financial sanctions, procurement, environment, and workforce context.
+
+Future roadmap: a governed knowledge connector API should allow approved live sources such as case-law APIs, sanctions lists, export-control lists, regulatory guidance, procurement/debarment datasets, and internal policy registers to refresh advisory memory with source hashes, parser versions, reviewer status, and correction history. That connector API is not claimed as complete in this submission.
+
 ## Live Compass Boundary
 
 The repository intentionally separates three runtime boundaries:

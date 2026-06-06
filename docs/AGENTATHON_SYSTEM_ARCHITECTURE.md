@@ -142,6 +142,8 @@ Browser cockpit in public/
 
 The Compass direct base is `https://api.core42.ai/v1` because Core42's Compass API documentation (<https://www.core42.ai/compass/documentation/use-compass-apis>) uses that host for OpenAI-compatible calls. The earlier `https://compass.core42.ai/v1` value came from the initial Agentathon prompt assumptions and is still accepted by diagnostics as a legacy alias, but prior probes returned HTML from `/models` and 405 HTML from `/chat/completions`; it is therefore not the final proof URL unless Core42 explicitly confirms it for the issued key.
 
+Compass is a model and embeddings runtime, not a regulatory knowledge source. Reference intelligence comes from official/public anchors in `reference_context/reference_memory_manifest.json`, including NIST, EU, OECD, ISO, Singapore, UAE, OFAC, BIS, UN/EU sanctions, CourtListener, SEC EDGAR, procurement/debarment, and HSE/ESG sources. The roadmap adds a governed knowledge connector API for allowlisted live sources and correction history; that is future functionality and does not change the current submission boundary.
+
 ## 4. Agentathon `/run` Flow
 
 `POST /run` accepts the official evaluator-style payload:

@@ -8,6 +8,10 @@ Typical sources:
 - GDPR and EUR-Lex
 - EDPB guidance
 - UK ICO guidance
+- Singapore PDPA / PDPC references
+- UAE data-protection portal references
+- DIFC Data Protection Law
+- ADGM Office of Data Protection
 - FTC privacy/security enforcement actions
 - NIST Privacy Framework
 

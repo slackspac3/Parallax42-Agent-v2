@@ -8,8 +8,12 @@ Typical sources:
 - Trade.gov Consolidated Screening List
 - OFAC sanctions lists
 - BIS/EAR public regulations through eCFR
-- EU sanctions list
+- BIS Entity List and Denied Persons List
+- EU sanctions list / EU Sanctions Map
 - UN sanctions list
+- Singapore Customs Strategic Goods Control
+- UAE Executive Office for Control and Non-Proliferation
+- UAE AML/CFT and targeted-financial-sanctions references
 
 This lane supports escalation and screening questions. It is not a license determination.
 

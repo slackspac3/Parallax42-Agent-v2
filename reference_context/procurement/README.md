@@ -11,6 +11,7 @@ Typical sources:
 - USAspending.gov
 - EU TED / eProcurement data
 - UK Find a Tender / Contracts Finder
+- UAE Ministry of Finance references
 
 This lane supports reviewer questions and risk signals. It does not replace sourcing, sanctions, finance, legal, or risk approvals.
 
