@@ -17,6 +17,8 @@ GitHub Pages is a static cockpit and does not host the FastAPI evaluator API. Th
 
 The online product demo uses Vercel for server-side product APIs and the Compass gateway, plus the DigitalOcean/Ocean droplet for backend services. Qdrant is running on the droplet behind Nginx at `https://api.parallax42.bhavukarora.com/qdrant/`; that endpoint requires an API key and returns `401 Unauthorized` without one. Vercel stores the Qdrant key as an encrypted environment variable and exposes only safe evidence index/search responses to the browser.
 
+Final submission positioning: the judge-facing product demo is online-first. The GitHub Pages cockpit calls Vercel product APIs, which keep Compass, Qdrant, and backend service credentials server-side. The local Docker/FastAPI path remains the evaluator reproduction path for `run.py`, `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run`. Compass and retrieval outputs are advisory; the Deterministic Decision Owner remains final authority.
+
 Online Qdrant proof path:
 
 ```bash

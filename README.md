@@ -32,6 +32,14 @@ The judge demo is intended to be run online first:
 
 The online product cockpit uses GitHub Pages for the static UI, Vercel for server-side product APIs and Compass gateway calls, and the DigitalOcean/Ocean droplet for backend services including Qdrant-backed evidence memory. Local commands are secondary reproduction tools.
 
+Final submission positioning:
+
+- The judge-facing product demo is online-first: GitHub Pages cockpit -> Vercel product APIs -> server-side Compass gateway/API boundary -> Ocean/DigitalOcean backend services.
+- The root FastAPI/Docker path remains the evaluator reproduction path: `run.py` exposes `GET /health`, `GET /metadata`, `GET /logs`, `GET /compass/probe`, and `POST /run` on port `8000`.
+- Compass is used server-side. The browser never receives Compass keys, Qdrant keys, or raw embeddings.
+- The deployed product path uses Compass-backed smart intake/advisory calls and Compass-compatible embeddings through hosted server-side routes. The direct `OPENAI_API_KEY` / `OPENAI_BASE_URL` path is preserved for evaluator-style FastAPI execution and strict diagnostics.
+- Deterministic Decision Owner remains final authority. Compass, governed learning memory, Qdrant retrieval, and optional CrewAI outputs are advisory inputs, not autonomous approvals.
+
 Suggested demo prompt:
 
 ```text

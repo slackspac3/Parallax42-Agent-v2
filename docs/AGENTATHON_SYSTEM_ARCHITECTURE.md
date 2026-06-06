@@ -13,6 +13,24 @@ Parallax42 has two intentionally separate execution surfaces:
 
 The FastAPI wrapper is not a rewrite of the product. It is a screening adapter that makes the existing compliance engine and evidence workflow judgeable through a standard `/run` contract.
 
+## 1.1 Final Submission Positioning
+
+The final judge-facing product demo is online-first:
+
+```text
+GitHub Pages cockpit
+  -> Vercel product APIs
+  -> server-side Compass gateway/API boundary
+  -> Ocean/DigitalOcean backend services
+  -> droplet-hosted Qdrant evidence memory
+```
+
+The local and Docker paths are reproduction/evaluator paths, not the primary product demo. The root `run.py` path remains important because it exposes the standardized Agentathon API surface on port `8000`: `GET /health`, `GET /metadata`, `GET /logs`, `GET /compass/probe`, and `POST /run`.
+
+Compass is used server-side. The browser never receives Compass keys, Qdrant keys, service tokens, or raw embeddings. The deployed product path uses Compass-backed smart intake/advisory calls and Compass-compatible embeddings through hosted server-side routes. The direct `OPENAI_API_KEY` / `OPENAI_BASE_URL` contract is preserved for evaluator-style FastAPI execution and strict diagnostics.
+
+The Deterministic Decision Owner remains final authority. Compass responses, governed learning memory, Qdrant retrieval, and optional CrewAI output can inform reviewer questions and controls, but they cannot autonomously approve, reject, or silently mutate policy.
+
 ## 2. End-to-End Diagram
 
 ```text
