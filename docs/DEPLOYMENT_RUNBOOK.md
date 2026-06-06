@@ -112,3 +112,28 @@ python scripts/agentathon_preflight.py --docker
 ```
 
 `--docker` reports `SKIPPED_DOCKER_CLI_MISSING` when the local Docker CLI is unavailable; that is not a claim that Docker was locally verified.
+
+## Optional Public FastAPI Container
+
+The current public demo is GitHub Pages + Vercel product APIs. That is not the root FastAPI evaluator wrapper. If a final reviewer requires a public `run.py` URL, deploy the existing Dockerfile to a container host and use these checks before publishing the URL:
+
+```bash
+curl https://<fastapi-host>/health
+curl https://<fastapi-host>/metadata
+curl https://<fastapi-host>/logs
+curl https://<fastapi-host>/compass/probe
+curl -X POST https://<fastapi-host>/run \
+  -H "Content-Type: application/json" \
+  -d @input_examples/example_1.json
+```
+
+Required signal:
+
+```text
+service identifies Parallax42 Compliance Intelligence Agent
+/metadata returns Use Case 21 metadata
+/run accepts the Agentathon wrapper payload
+logs are written under /logs/ or the configured container log directory
+```
+
+Do not reuse a Railway/Ocean product-backend URL as FastAPI proof unless those checks pass against this repo's API shape.

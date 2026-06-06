@@ -27,6 +27,8 @@ GitHub Pages cockpit
 
 The local and Docker paths are reproduction/evaluator paths, not the primary product demo. The root `run.py` path remains important because it exposes the standardized Agentathon API surface on port `8000`: `GET /health`, `GET /metadata`, `GET /logs`, `GET /compass/probe`, and `POST /run`.
 
+Current public-hosting status: the FastAPI evaluator wrapper is implemented in the repository and verified through Docker/GitHub Actions, but it is not the public GitHub Pages or Vercel product URL. GitHub Pages is static, Vercel serves the Node/CommonJS product APIs, and the product backend/droplet routes are not the Agentathon `run.py` API unless separately redeployed from this repo Dockerfile. This avoids misleading judges: the online product demo proves product behavior; the CI Docker smoke proves the required FastAPI evaluator behavior.
+
 Compass is used server-side. The browser never receives Compass keys, Qdrant keys, service tokens, or raw embeddings. The deployed product path uses Compass-backed smart intake/advisory calls and Compass-compatible embeddings through hosted server-side routes. The direct `OPENAI_API_KEY` / `OPENAI_BASE_URL` contract is preserved for evaluator-style FastAPI execution and strict diagnostics.
 
 The Deterministic Decision Owner remains final authority. Compass responses, governed learning memory, Qdrant retrieval, and optional CrewAI output can inform reviewer questions and controls, but they cannot autonomously approve, reject, or silently mutate policy.
@@ -362,6 +364,18 @@ Primary online checks:
 | CI | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/ci.yml> | `npm run qa` passes online. |
 
 The online `docker-smoke` job is the primary evaluator API proof. It builds the image, runs `python run.py` inside the container, calls `GET /health`, and posts `input_examples/example_1.json` to `POST /run`.
+
+If a public FastAPI URL is required by the final submission form, the safe deployment is to run this repo's existing Dockerfile on Railway, Azure Container Apps, App Service for Containers, or another container host and then verify:
+
+```text
+GET  /health
+GET  /metadata
+GET  /logs
+GET  /compass/probe
+POST /run
+```
+
+Do not use a product backend URL as FastAPI proof unless those endpoints and the official Agentathon request/response schema are present.
 
 Secondary local checks:
 

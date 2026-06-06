@@ -2,7 +2,7 @@
 
 | G42 Requirement | Current Evidence | Status | Exceed Strategy |
 | --- | --- | --- | --- |
-| Live production deployment | Online GitHub Pages cockpit, Vercel product APIs, Ocean/DigitalOcean backend services, droplet-hosted Qdrant, and GitHub Actions Docker `/run` proof. | Strong | Keep CI/Agentathon Preflight green and include Vercel health/Qdrant evidence in the demo. |
+| Live production deployment | Online GitHub Pages cockpit, Vercel product APIs, Ocean/DigitalOcean backend services, droplet-hosted Qdrant, and GitHub Actions Docker `/run` proof. | Strong for product demo; evaluator FastAPI is CI/Docker-proven rather than public-hosted. | Keep CI/Agentathon Preflight green and include Vercel health/Qdrant evidence in the demo. If the final form requires a public FastAPI URL, deploy this repo Dockerfile to a container host and verify `/health`, `/metadata`, and `/run`. |
 | Cloud-agnostic or Azure-compatible | Azure migration design exists in source Parallax42/Risk Intelligence work. | Partial | Add Azure deployment reference architecture and IaC later. |
 | Secure API / sovereign LLM integration | Server-side Compass gateway/API boundary, no browser-held model keys, and direct FastAPI `OPENAI_API_KEY` / `OPENAI_BASE_URL` diagnostics for evaluator reproduction. | Strong | Add live strict Compass artifact when issued credentials are available. |
 | Structured data processing/reporting | Agent outputs JSON decisions, controls, evidence IDs, trace; `npm run capture:evidence` exports JSON artifacts. | Strong | Add CSV export and signed audit pack endpoint. |
@@ -20,4 +20,4 @@
 
 ## Positioning
 
-The submission should not claim every enterprise hardening task is complete. It should claim the agent already has an online-first product demo, a standardized root FastAPI `/run` wrapper, visible multi-agent traces, server-side Compass usage, deployed Qdrant-backed product evidence memory, advisory governed learning, and a clear hardening path that is more mature than a demonstration-only prototype. It should not claim direct Compass strict verification, enforced RBAC, enterprise-durable audit, arbitrary scanned-PDF OCR, or live CrewAI unless those checks are separately verified.
+The submission should not claim every enterprise hardening task is complete. It should claim the agent already has an online-first product demo, a standardized root FastAPI `/run` wrapper verified through Docker/CI, visible multi-agent traces, server-side Compass usage, deployed Qdrant-backed product evidence memory, advisory governed learning, and a clear hardening path that is more mature than a demonstration-only prototype. It should not claim a public hosted FastAPI URL, direct Compass strict verification, enforced RBAC, enterprise-durable audit, arbitrary scanned-PDF OCR, or live CrewAI unless those checks are separately verified.

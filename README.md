@@ -36,6 +36,7 @@ Final submission positioning:
 
 - The judge-facing product demo is online-first: GitHub Pages cockpit -> Vercel product APIs -> server-side Compass gateway/API boundary -> Ocean/DigitalOcean backend services.
 - The root FastAPI/Docker path remains the evaluator reproduction path: `run.py` exposes `GET /health`, `GET /metadata`, `GET /logs`, `GET /compass/probe`, and `POST /run` on port `8000`.
+- The public Vercel/GitHub Pages demo is not the FastAPI server. The public online proof for FastAPI is the GitHub Actions Docker smoke job, which builds the repo image, starts `python run.py`, and calls `/health` plus `/run` inside CI.
 - Compass is used server-side. The browser never receives Compass keys, Qdrant keys, or raw embeddings.
 - The deployed product path uses Compass-backed smart intake/advisory calls and Compass-compatible embeddings through hosted server-side routes. The direct `OPENAI_API_KEY` / `OPENAI_BASE_URL` path is preserved for evaluator-style FastAPI execution and strict diagnostics.
 - Deterministic Decision Owner remains final authority. Compass, governed learning memory, Qdrant retrieval, and optional CrewAI outputs are advisory inputs, not autonomous approvals.
@@ -102,6 +103,28 @@ The intended submission review path is online-first. Reviewers should start with
 | Trace logs | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/tree/main/logs> | JSONL traces show delegation, retry/fallback, critique, validation, escalation, shared context, and final synthesis. |
 
 Important boundary: GitHub Pages is static, so it does not run the root FastAPI `run.py` server or expose `POST /run` from the Pages URL. The online `/run` verification happens in the Agentathon Preflight GitHub Actions workflow, where CI builds the Docker image, starts the container on port `8000`, calls `GET /health`, and posts `input_examples/example_1.json` to `/run`.
+
+### FastAPI Evaluator Hosting Status
+
+| Surface | Status | What it proves | What it does not prove |
+| --- | --- | --- | --- |
+| Root `run.py` in repo | Implemented | The required FastAPI evaluator wrapper exists and starts on `0.0.0.0:8000`. | It is not an internet-hosted URL by itself. |
+| GitHub Actions `agentathon-preflight.yml` | Active proof | Docker builds, `python run.py` starts in the container, `GET /health` works, and `POST /run` works against `input_examples/example_1.json`. | It does not make FastAPI publicly browsable outside the CI job. |
+| GitHub Pages cockpit | Product demo | Browser product experience, chat intake, evidence upload, council view, review pack. | It is static and does not host FastAPI. |
+| Vercel product API | Product runtime | Online Node/Vercel product APIs, Compass gateway, Qdrant-backed evidence memory, remote CrewAI advisory path. | It is not the official root `run.py` FastAPI evaluator API. |
+| Railway/Ocean product backends | Product/backend services only unless redeployed from this repo Dockerfile | Parser/backend/service support. | Do not treat those URLs as Agentathon FastAPI proof unless they expose this repo's `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run` schema. |
+
+This is intentional for the current submission: the repository and Docker workflow satisfy the evaluator shape, while the public demo shows the richer product workflow. If the final judging form explicitly requires a public FastAPI URL in addition to the GitHub repository link, deploy this repo's `Dockerfile` to Railway, Azure Container Apps, or another container host and verify:
+
+```bash
+curl https://<fastapi-host>/health
+curl https://<fastapi-host>/metadata
+curl -X POST https://<fastapi-host>/run \
+  -H "Content-Type: application/json" \
+  -d @input_examples/example_1.json
+```
+
+Safe claim today: FastAPI is implemented and verified by CI/Docker. Do not claim a public hosted FastAPI endpoint unless that container deployment is added and checked.
 
 ### Secondary: Local Run
 

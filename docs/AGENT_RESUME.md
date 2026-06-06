@@ -12,6 +12,7 @@ Strengthen compliance visibility across enterprise workflows by turning intake, 
 
 - Online-first judge demo through GitHub Pages, Vercel product APIs, server-side Compass gateway/API boundary, and Ocean/DigitalOcean backend services.
 - Root Agentathon evaluator wrapper: `run.py` exposes `POST /run`, `GET /health`, `GET /metadata`, `GET /logs`, and `GET /compass/probe` on port `8000`.
+- FastAPI evaluator proof is currently the repository plus GitHub Actions Docker smoke, not a separate public FastAPI URL.
 - Compliance-domain triage across third-party, privacy, AI/model governance, continuity, finance/project compliance, Microsoft licensing, ESG/HSE/BCM, physical security, technical risk, and regulatory reporting.
 - Evidence-backed obligation mapping with named evidence IDs rather than unsupported free-form advice.
 - Blocking-gap identification with action owners expressed as concrete controls.
@@ -34,6 +35,7 @@ Strengthen compliance visibility across enterprise workflows by turning intake, 
 ## Current Limitations
 
 - The judge-facing product demo is online-first; local setup is a reproduction path and not the primary demo surface.
+- Public online product URLs are GitHub Pages/Vercel/remote services. They should not be described as the FastAPI evaluator wrapper unless the repo Dockerfile is deployed as a public container API and `/metadata` plus official `/run` are verified.
 - Direct Compass strict verification depends on a valid Compass key and the documented `OPENAI_BASE_URL=https://api.core42.ai/v1`; the product demo uses a separate server-side gateway boundary.
 - Enforced RBAC is not claimed unless production tenant, issuer, audience, and JWKS configuration are set and tested.
 - Audit records are hash chained locally; production retention should use durable mounted storage or a managed database.

@@ -19,6 +19,21 @@ The online product demo uses Vercel for server-side product APIs and the Compass
 
 Final submission positioning: the judge-facing product demo is online-first. The GitHub Pages cockpit calls Vercel product APIs, which keep Compass, Qdrant, and backend service credentials server-side. The local Docker/FastAPI path remains the evaluator reproduction path for `run.py`, `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run`. Compass and retrieval outputs are advisory; the Deterministic Decision Owner remains final authority.
 
+### FastAPI Evaluator Status
+
+The submitted repository includes the required FastAPI evaluator surface, but the public browser demo is not served by FastAPI.
+
+| Question | Current answer |
+| --- | --- |
+| Does the repo include root `run.py`? | Yes. |
+| Does `run.py` expose the required evaluator API on port `8000`? | Yes; verified locally/preflight and by CI Docker smoke. |
+| Is the FastAPI wrapper publicly hosted at the GitHub Pages URL? | No. GitHub Pages is static. |
+| Is the FastAPI wrapper publicly hosted at the Vercel product API URL? | No. Vercel hosts the Node/CommonJS product APIs. |
+| Is the public Railway/Ocean URL the Agentathon FastAPI wrapper? | Not claimed unless it exposes this repo's `/metadata`, `/logs`, `/compass/probe`, and official `/run` schema. Treat Railway/Ocean URLs as product/backend services unless redeployed from this repo Dockerfile. |
+| What is the online proof for FastAPI today? | The GitHub Actions `agentathon-preflight.yml` Docker smoke job on `main`. |
+
+Judging risk: if evaluators pull the GitHub repository or rely on Docker/CI, this satisfies the FastAPI requirement. If the final submission form requires a separate public FastAPI URL, deploy this repo's `Dockerfile` to a container host and verify `/health`, `/metadata`, and `/run` before claiming that URL.
+
 Online Qdrant proof path:
 
 ```bash
