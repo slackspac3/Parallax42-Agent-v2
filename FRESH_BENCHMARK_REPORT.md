@@ -2,6 +2,39 @@
 
 Generated from a fresh local benchmark of `/Users/bhavuk.arora/Parallax42-Compliance-Intelligence-Agent` on 2026-06-05. This is an evidence report, not a product-change log.
 
+## 2026-06-06 Current Supersession Addendum
+
+The rest of this file preserves the earlier benchmark evidence. The following items supersede older status notes:
+
+| Area | Current status | Evidence / interpretation |
+|---|---|---|
+| Compass/model-boundary baseline commit | `0666073 Document Compass model and credential boundary` | Pushed to `main` before this benchmark-report update; working tree was clean after that push. |
+| FastAPI evaluator wrapper | PASS for repository and Docker/CI proof; not public-hosted | Root `run.py` remains the evaluator surface. GitHub Actions Docker smoke is the online proof that `python run.py` starts, `/health` works, and `/run` accepts the Agentathon payload. GitHub Pages, Vercel, Railway, and Ocean product URLs are not the FastAPI wrapper unless this repo Dockerfile is separately deployed there. |
+| Public online demo | PASS | GitHub Pages cockpit + Vercel product APIs + server-side Compass gateway + droplet-hosted Qdrant + remote CrewAI advisory service. |
+| Online CrewAI | PASS for deployed product path | Live smoke against `POST https://parallax42-compliance-intelligence.vercel.app/api/agent/run` with `X-Agent-Runtime: crewai_llm` returned `HTTP 200`, `mode=crewai_llm_live`, `runtime.manifestSource=remote_crewai_service_llm`, `runtime.degraded=false`, and about `81.8s` runtime. This is advisory only; deterministic decision ownership remains intact. |
+| Direct public FastAPI URL | NOT CLAIMED | Railway/Ocean product endpoints must not be used as FastAPI proof unless they expose this repo's `/metadata`, `/logs`, `/compass/probe`, and official `/run` schema. A separate public FastAPI deployment is optional unless the final submission form requires a browsable API URL. |
+| Compass base URL | UPDATED | Current docs/defaults use `OPENAI_BASE_URL=https://api.core42.ai/v1`, based on Core42 Compass API documentation. Earlier `https://compass.core42.ai/v1` failures remain historical evidence only. |
+| Compass models | DOCUMENTED | `MODEL_FAST=gpt-4.1` for fast structured/JSON work; `MODEL_REASONING=gpt-5.1` and `CREWAI_LLM_MODEL=gpt-5.1` for deeper advisory/CrewAI specialist reasoning; `EMBEDDING_MODEL=text-embedding-3-large` for evidence/reference/learning embeddings. |
+| Compass credentials | DOCUMENTED | The deployed online demo uses the project owner's own Compass credentials stored server-side in Vercel/gateway settings. No real key is committed. The system does not assume an Agentathon-issued key; evaluator-provided keys can be supplied through `OPENAI_API_KEY`. |
+| RBAC | PARTIAL | RBAC policy and Entra/JWKS-compatible scaffolding exist. Online deployment remains `auth.mode=audit`, `auth.enforced=false`; do not claim enforced RBAC. |
+| Qdrant | PASS for deployed product path; local/FastAPI env-dependent | Vercel product API reports Qdrant-backed evidence memory and governed memory through the droplet-hosted collection. Local/FastAPI Qdrant remains an env-specific smoke-test claim. |
+
+Current safe wording:
+
+```text
+The repository contains and CI/Docker-verifies the required FastAPI /run evaluator wrapper. The public demo is a separate Vercel/GitHub Pages product runtime with live Compass-backed smart intake, Qdrant evidence memory, and remote CrewAI advisory execution. Compass is used with the project owner's server-side key and documented Core42 model names; AI/CrewAI outputs remain advisory and deterministic policy owns the final decision.
+```
+
+Current unsafe wording:
+
+```text
+Public FastAPI URL is live.
+Railway/Ocean/Vercel product endpoints are the official FastAPI evaluator.
+RBAC is enforced online.
+Compass/CrewAI autonomously approves cases.
+The project uses an Agentathon-issued Compass key.
+```
+
 > Supersession note: this report captured the earlier `https://compass.core42.ai/v1` probe failure. Current implementation/docs now default to `OPENAI_BASE_URL=https://api.core42.ai/v1` based on Core42's Compass API documentation, while keeping `https://compass.core42.ai/v1` only as a legacy diagnostic alias. Treat any `compass.core42.ai/v1` references below as historical evidence, not current setup guidance.
 
 ## 1. Current Git and CI Status

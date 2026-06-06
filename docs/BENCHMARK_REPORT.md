@@ -1,5 +1,34 @@
 # Benchmark Report
 
+## Current Addendum: 2026-06-06
+
+This addendum reflects the latest pushed submission state after the Compass model-boundary and FastAPI/public-demo documentation updates.
+
+| Area | Current status | Evidence / boundary |
+| --- | --- | --- |
+| FastAPI evaluator wrapper | PASS for repo + CI/Docker proof; not public-hosted | Root `run.py` and Docker workflow verify `/health` and `/run` on port `8000`. GitHub Pages/Vercel/Railway product URLs should not be described as the FastAPI wrapper unless this repo Dockerfile is deployed there and `/metadata`, `/logs`, `/compass/probe`, and official `/run` are verified. |
+| Online product runtime | PASS | Vercel `/api/health` reports Compass gateway, Qdrant-backed product evidence memory, governed learning memory, remote CrewAI service configuration, and audit-mode auth without exposing secrets. |
+| Online CrewAI proof | PASS | Live smoke against `POST https://parallax42-compliance-intelligence.vercel.app/api/agent/run` with `X-Agent-Runtime: crewai_llm` returned `mode=crewai_llm_live`, `runtime.manifestSource=remote_crewai_service_llm`, `runtime.degraded=false`, `HTTP 200`, and about `81.8s` runtime. CrewAI output is advisory only. |
+| Compass model boundary | DOCUMENTED | Current docs and `.env.example` use `OPENAI_BASE_URL=https://api.core42.ai/v1`, `MODEL_FAST=gpt-4.1`, `MODEL_REASONING=gpt-5.1`, `CREWAI_LLM_MODEL=gpt-5.1`, and `EMBEDDING_MODEL=text-embedding-3-large`, based on Core42 Compass API documentation. |
+| Compass credential boundary | DOCUMENTED | The deployed demo uses the project owner's own Compass credentials configured server-side. The repo contains no real key and does not assume an Agentathon-issued key. Evaluators can provide their own key through `OPENAI_API_KEY`. |
+| RBAC | PARTIAL | Route policy and Entra/JWKS-compatible code exist, with roles such as `platform_admin`, `risk_admin`, reviewers, `auditor`, and `read_only`. Online deployment reports `auth.mode=audit` and `auth.enforced=false`; do not claim enforced RBAC. |
+| Workflow status at addendum time | IN PROGRESS for model-boundary commit, previous green | `Agentathon Preflight` and `CI` for commit `0666073` were running when checked; commit `88d1a9f` was green for both workflows. This report update may trigger a newer workflow run. |
+
+Safe current claims:
+
+- Agentathon FastAPI wrapper exists and is CI/Docker verified.
+- Online product demo is live through GitHub Pages, Vercel APIs, Compass gateway, droplet-hosted Qdrant, and remote CrewAI advisory runtime.
+- Live online CrewAI advisory path works and did not degrade in the latest smoke.
+- Compass model choices and own-key boundary are documented.
+- Deterministic Decision Owner remains final authority.
+
+Unsafe current claims:
+
+- A public FastAPI `/run` endpoint is live.
+- Railway/Ocean/Vercel product endpoints are the FastAPI evaluator wrapper.
+- RBAC is enforced online.
+- CrewAI or Compass can approve cases autonomously.
+
 ## Baseline Evidence Already Available
 
 Parallax42 deterministic golden-case evals passed:
@@ -53,7 +82,8 @@ Generated benchmark output is written to `evidence/benchmark-report.json`.
 - Responsible AI test suite against prompt injection, unsupported approval language, bias-sensitive assumptions, and data minimization.
 - Reliability run showing repeated executions with trace and decision consistency.
 - Demo video still needs to be recorded and linked.
-- Direct Compass strict verification requires valid Compass credentials; product Compass usage remains server-side through the hosted gateway/API boundary.
+- Direct Compass strict verification through the FastAPI `/compass/probe` path requires valid runtime credentials. The product demo uses the project owner's server-side Compass credentials through the hosted gateway/API boundary.
+- Public FastAPI hosting is not currently claimed. If the final form requires a public API URL, deploy this repo Dockerfile to a container host and verify `/health`, `/metadata`, and `/run`.
 
 ## Target Acceptance Threshold
 
@@ -64,4 +94,5 @@ Before submitting, the package should show:
 - p95 local deterministic run latency under 500 ms
 - p95 live backend no-upload run latency under an agreed operational threshold
 - clear fallback labeling whenever live AI is unavailable
-- no claim of enforced RBAC, enterprise-durable audit, arbitrary scanned-PDF OCR, or live CrewAI unless separate checks pass
+- no claim of public hosted FastAPI, enforced RBAC, enterprise-durable audit, or arbitrary scanned-PDF OCR unless separate checks pass
+- live CrewAI can be claimed for the deployed Vercel product path only when referencing the latest online smoke evidence: `remote_crewai_service_llm`, `degraded=false`, advisory-only
