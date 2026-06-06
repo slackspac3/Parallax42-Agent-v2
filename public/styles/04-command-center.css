@@ -26,7 +26,7 @@ body[data-run-mode="chat"][data-workspace-view="output"] .command-center {
     "runway decision";
 }
 
-body[data-run-mode="chat"][data-workspace-view="chat"] .runway { display: none; }
+body[data-workspace-view="chat"] .runway { display: none; }
 body[data-run-mode="chat"][data-workspace-view="output"] .case-panel { display: none; }
 
 /* Mode visibility */
@@ -164,4 +164,3 @@ body[data-run-mode="chat"] .runway { align-content: start; gap: 16px; }
   background: linear-gradient(180deg, rgba(10, 18, 30, 0.98), rgba(6, 12, 22, 0.99));
   border-left: 1px solid var(--line);
 }
-

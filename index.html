@@ -278,9 +278,13 @@
             <span class="eyebrow">Intelligence Panel</span>
             <strong>Fixed analyst view</strong>
           </div>
-          <div class="intel-rail-tabs" aria-label="Analyst panel sections">
-            <span class="is-active">Live case intelligence</span>
-            <span>Council trace</span>
+          <div class="intel-rail-tabs" role="tablist" aria-label="Analyst panel sections">
+            <button type="button" class="is-active" role="tab" aria-selected="true" aria-controls="caseIntelligencePanel" data-intel-rail-tab="case">
+              Live case intelligence
+            </button>
+            <button type="button" role="tab" aria-selected="false" aria-controls="agentActivity" data-intel-rail-tab="council">
+              Council trace
+            </button>
           </div>
           <div class="agent-activity" id="agentActivity" aria-live="polite"></div>
           <section id="caseIntelligencePanel" class="case-intelligence-panel" aria-live="polite">

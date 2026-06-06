@@ -128,6 +128,8 @@ const benchmarksJsonLink = document.querySelector('#benchmarksJsonLink');
 const goldenDemoLink = document.querySelector('#goldenDemoLink');
 const topHealth = document.querySelector('#topHealth');
 const councilOutputTab = document.querySelector('#councilOutputTab');
+const decisionRail = document.querySelector('.decision-rail');
+const intelRailTabs = document.querySelectorAll('[data-intel-rail-tab]');
 const missionWelcome = document.querySelector('#missionWelcome');
 const caseDraftPanel = document.querySelector('#caseDraftPanel');
 const caseIntelReadiness = document.querySelector('#caseIntelReadiness');
@@ -173,6 +175,7 @@ document.body.dataset.mainSection = activeMainSection;
 let chatRunReadiness = null;
 let chatMissingFields = [];
 let workspaceView = 'chat';
+let activeIntelRailTab = 'case';
 let activeQuestion = 'What do you need reviewed?';
 let lastCouncilNarrative = null;
 let liveCasePreviewTimer = null;
@@ -2249,6 +2252,10 @@ function getCouncilOutputRun() {
   return candidates.find((run) => !councilRunHasCaseConflict(run)) || candidates[0] || null;
 }
 
+function getReviewPackExportRun() {
+  return getCouncilOutputRun() || getLatestCompletedRun(activeRunMode) || latestCompletedRun || lastRun;
+}
+
 function councilOutputIntegrity(run = {}, options = {}) {
   if (!run || !isCompletedRun(run)) {
     return { ok: false, message: 'No completed council output is available yet.' };
@@ -2277,6 +2284,18 @@ function setWorkspaceView(view = 'chat', options = {}) {
       ensureDecisionRoomVisible();
     });
   }
+}
+
+function setIntelRailTab(tab = 'case') {
+  activeIntelRailTab = tab === 'council' ? 'council' : 'case';
+  if (decisionRail) {
+    decisionRail.dataset.intelRailView = activeIntelRailTab;
+  }
+  intelRailTabs.forEach((button) => {
+    const selected = button.dataset.intelRailTab === activeIntelRailTab;
+    button.classList.toggle('is-active', selected);
+    button.setAttribute('aria-selected', selected ? 'true' : 'false');
+  });
 }
 
 function ensureDecisionRoomVisible(options = {}) {
@@ -5731,6 +5750,12 @@ agentActivity?.addEventListener('click', (event) => {
   renderAgentActivity(lastCouncilActivity);
 });
 
+intelRailTabs.forEach((button) => {
+  button.addEventListener('click', () => {
+    setIntelRailTab(button.dataset.intelRailTab);
+  });
+});
+
 document.querySelectorAll('[data-scenario]').forEach((button) => {
   button.addEventListener('click', () => {
     setRunMode('demo', { skipRender: true });
@@ -5931,7 +5956,8 @@ exportRun.addEventListener('click', () => {
 });
 
 execReviewPack?.addEventListener('click', async () => {
-  if (!lastRun?.ok) {
+  const exportRunResult = getReviewPackExportRun();
+  if (!exportRunResult?.ok) {
     execReviewPack.textContent = 'Run council first';
     window.setTimeout(() => {
       execReviewPack.textContent = 'Exec review pack';
@@ -5944,19 +5970,19 @@ execReviewPack?.addEventListener('click', async () => {
     const response = await apiFetch('/api/export/review-pack', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ run: lastRun, narrative: lastCouncilNarrative })
+      body: JSON.stringify({ run: exportRunResult, narrative: lastCouncilNarrative })
     });
     if (response.pdfBase64) {
       downloadBase64(
-        response.fileName || `p42-exec-review-${lastRun.runId || lastRun.case?.caseId || 'case'}.pdf`,
+        response.fileName || `p42-exec-review-${exportRunResult.runId || exportRunResult.case?.caseId || 'case'}.pdf`,
         response.pdfBase64,
         response.contentType || 'application/pdf'
       );
     } else {
-      downloadText(`p42-exec-review-${lastRun.runId || lastRun.case?.caseId || 'case'}.html`, buildExecReviewHtml(lastRun), 'text/html');
+      downloadText(`p42-exec-review-${exportRunResult.runId || exportRunResult.case?.caseId || 'case'}.html`, buildExecReviewHtml(exportRunResult), 'text/html');
     }
   } catch {
-    downloadText(`p42-exec-review-${lastRun.runId || lastRun.case?.caseId || 'case'}.html`, buildExecReviewHtml(lastRun), 'text/html');
+    downloadText(`p42-exec-review-${exportRunResult.runId || exportRunResult.case?.caseId || 'case'}.html`, buildExecReviewHtml(exportRunResult), 'text/html');
   } finally {
     execReviewPack.disabled = false;
     execReviewPack.textContent = 'Exec review pack';
@@ -6021,6 +6047,7 @@ completedRunHistory = loadCompletedRunHistory();
 restoreChatSession();
 renderRunHistorySelect();
 updateChatInputCounter();
+setIntelRailTab('case');
 setRunMode('chat');
 applyScenario(currentScenarioKey);
 hydrateConfigForm();

@@ -93,8 +93,7 @@
     animation: none;
   }
 
-  body[data-workspace-view="output"] .command-center,
-  body[data-run-complete="true"] .command-center {
+  body[data-workspace-view="output"] .command-center {
     grid-template-areas: "tabs runway decision";
   }
 
@@ -578,21 +577,30 @@
     border-bottom: 1px solid rgba(207, 232, 222, 0.1);
   }
 
-  .intel-rail-tabs span {
+  .intel-rail-tabs button {
     min-height: 46px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 0;
     border-bottom: 2px solid transparent;
+    background: transparent;
     color: rgba(234, 244, 255, 0.58);
     font-size: 12px;
     font-weight: 850;
     letter-spacing: 0.4px;
     text-transform: uppercase;
+    cursor: pointer;
   }
 
-  .intel-rail-tabs .is-active,
-  .intel-rail-tabs span:first-child {
+  .intel-rail-tabs button:hover,
+  .intel-rail-tabs button:focus-visible {
+    color: rgba(234, 244, 255, 0.88);
+    background: rgba(96, 165, 250, 0.04);
+    outline: none;
+  }
+
+  .intel-rail-tabs button.is-active {
     color: var(--info);
     border-bottom-color: var(--info);
     background: rgba(96, 165, 250, 0.055);
@@ -615,6 +623,15 @@
     border-radius: 0;
     background: transparent;
     box-shadow: none;
+  }
+
+  .decision-rail[data-intel-rail-view="case"] .agent-activity,
+  .decision-rail[data-intel-rail-view="council"] .case-intelligence-panel {
+    display: none;
+  }
+
+  .decision-rail[data-intel-rail-view="council"] .agent-activity {
+    display: block;
   }
 
   body[data-workspace-view="chat"] .decision-card,
@@ -857,4 +874,3 @@
     font-size: 13px;
   }
 }
-
