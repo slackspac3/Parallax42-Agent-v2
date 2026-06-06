@@ -646,6 +646,53 @@ test('conversation confirms corrected owner after spelling clarification then as
   assert.match(result.reply, /Which geography or regulatory perimeter applies/i);
 });
 
+test('conversation records AI usage scope answers and does not repeat the answered active question', () => {
+  const aiUseQuestion = 'Can you confirm whether these AI capabilities (private assistant, retrieval, document intelligence, policy Q&A, meeting summaries, and compliance evidence extraction) will be used only by internal employees, also by external customers, or for any specific regulated or high-risk workflows such as compliance decisions or HR matters?';
+  const result = processConversation({
+    message: 'Will be used only by internal employees and compliance and HR matters wont be a use case',
+    activeQuestion: aiUseQuestion,
+    caseDraft: {
+      supplierName: 'Aster Cognitive Cloud',
+      brief: 'Review the Cloud AI Model Services SOW and focus on all risks.',
+      businessUnit: 'IT',
+      riskSignals: ['AI/model use', 'personal data'],
+      evidenceSignals: ['model governance'],
+      documents: [{
+        evidenceId: 'UP-01',
+        title: 'Cloud AI Model Services Statement Of Work',
+        extractionStatus: 'metadata_fallback',
+        indexStatus: 'indexed',
+        summary: 'Cloud AI Model Services SOW for private assistant, retrieval, document intelligence, policy Q&A, meeting summaries, and compliance evidence extraction.',
+        signals: ['model governance', 'responsible-ai']
+      }],
+      llmIntake: {
+        used: true,
+        confidence: 0.92,
+        nextBestQuestion: aiUseQuestion
+      },
+      activeQuestion: aiUseQuestion,
+      questions: [aiUseQuestion],
+      askedQuestions: [aiUseQuestion]
+    },
+    llmAssessment: {
+      provider: 'compass_gateway',
+      used: true,
+      confidence: 0.9,
+      nextBestQuestion: aiUseQuestion,
+      naturalResponse: 'Understood: use is internal-only, and compliance and HR workflows are excluded from the planned use.'
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.caseDraft.aiUsageScope.audience, 'internal_employees_only');
+  assert.deepEqual(result.caseDraft.aiUsageScope.excludedWorkflows, ['compliance decisions', 'HR matters']);
+  assert.equal(result.caseDraft.recentlyAnsweredFields.ai_usage_scope, 2);
+  assert.equal(result.caseDraft.answerValidation?.status, undefined);
+  assert.ok(!result.questions.some((question) => /internal employees|external customers|compliance decisions|HR matters/i.test(question)));
+  assert.ok(!result.caseDraft.activeQuestion.includes('internal employees'));
+  assert.ok(result.questions.some((question) => /geography|regulatory perimeter/i.test(question)));
+});
+
 test('conversation records pending active clarification as a known gap instead of re-asking it', () => {
   const originQuestion = 'From which country or export-control jurisdiction will the supplier ship the AI accelerator hardware (for example, US, EU, UK, or another country)?';
   const result = processConversation({

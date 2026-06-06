@@ -176,6 +176,18 @@ test('renderAssistantTurn shows structured smart-intake diagnostics without hidi
   assert.match(html, /managed integration partner context/);
 });
 
+test('renderAssistantHistoryTurn preserves original assistant text instead of replacing it with a summary', () => {
+  const chatUi = loadChatUiModule();
+  const prose = 'Understood: you want a full-risk review of the Aster Cognitive Cloud SOW. 1) Data and privacy - Risks: inadvertent processing of PII without proper controls. - What to check/require: DPA, retention schedule, and model-training prohibition. 2) Security and access controls - Risks: vague IAM commitments. - What to check/require: SSO, MFA, logging, and incident response.';
+
+  const html = chatUi.renderAssistantHistoryTurn({ text: prose });
+
+  assert.match(html, /full-risk review of the Aster Cognitive Cloud SOW/);
+  assert.match(html, /DPA, retention schedule, and model-training prohibition/);
+  assert.match(html, /Security and access controls/);
+  assert.doesNotMatch(html, /I captured the useful facts/);
+});
+
 test('renderThinkingLoader does not invent retry progress before backend metadata returns', () => {
   const chatUi = loadChatUiModule();
   const html = chatUi.renderThinkingLoader({

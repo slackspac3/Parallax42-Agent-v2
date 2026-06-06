@@ -363,9 +363,12 @@
   }
 
   function renderAssistantHistoryTurn(message) {
+    const proseText = String(message && message.text || '');
     return `
       <div class="advisor-history-bubble">
-        <p>${escapeHtml(assistantRawSummary(message && message.text))}</p>
+        <div class="advisor-history-prose">
+          ${renderAssistantProse(proseText || assistantRawSummary(message && message.text))}
+        </div>
       </div>
     `;
   }

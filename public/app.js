@@ -3210,7 +3210,6 @@ function renderAssistantTurn(message = {}, options = {}) {
   const smartIntakeDegraded = Boolean(message.smartIntakeDegraded);
   const smartIntakeDiagnostic = Boolean(message.smartIntakeDiagnostic || message.invalidCompassResponse);
   const question = normalizeAssistantQuestion(message.displayedQuestion || message.nextBestQuestion) || assistantQuestionFromText(message.text);
-  if (question && !message.displayedQuestion) message.displayedQuestion = question;
   const acknowledgement = assistantAcknowledgement(message.text);
   return window.P42AppModules.chatUi.renderAssistantTurn(message, {
     acknowledgement,
@@ -4963,12 +4962,19 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     const smartIntakeUnavailable = Boolean(llmAttempt.smartIntakeUnavailable || conversationPlan.smartIntakeUnavailable);
     const smartIntakeDegraded = Boolean(llmAttempt.smartIntakeDegraded || conversationPlan.smartIntakeDegraded);
     const invalidCompassResponse = Boolean(llmAttempt.invalidCompassResponse || conversationPlan.source === 'compass_invalid_response');
+    const hasServerQuestionSignal = Array.isArray(result.questions)
+      || Object.prototype.hasOwnProperty.call(returnedDraft, 'activeQuestion');
     const structuredQuestion = structuredAssistantQuestion(
-      llmAttempt.nextBestQuestion,
-      conversationPlan.nextQuestion,
-      returnedDraft.llmIntake?.nextBestQuestion,
-      returnedDraft.conversationPlan?.nextQuestion
-    );
+      Array.isArray(result.questions) ? result.questions[0] : '',
+      returnedDraft.activeQuestion || ''
+    ) || (!hasServerQuestionSignal
+      ? structuredAssistantQuestion(
+        llmAttempt.nextBestQuestion,
+        conversationPlan.nextQuestion,
+        returnedDraft.llmIntake?.nextBestQuestion,
+        returnedDraft.conversationPlan?.nextQuestion
+      )
+      : '');
     pendingMessage.generatedByCompass = Boolean(llmAttempt.used || conversationPlan.usedLlm);
     pendingMessage.compassNaturalResponse = Boolean(llmAttempt.naturalResponse && pendingMessage.text === llmAttempt.naturalResponse);
     pendingMessage.nextBestQuestion = structuredQuestion;
@@ -4996,8 +5002,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
           : 'Compass is busy, so I used deterministic intake for this turn. You can keep going or retry smart intake.');
     }
     pendingMessage.displayedQuestion = structuredQuestion
-      || (Array.isArray(result.questions) && result.questions[0])
-      || assistantQuestionFromText(pendingMessage.text);
+      || (!hasServerQuestionSignal ? assistantQuestionFromText(pendingMessage.text) : '');
     renderChatMessages();
     if (result.run?.ok) {
       registerCompletedRun('chat', result.run);
