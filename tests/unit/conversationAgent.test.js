@@ -1267,6 +1267,41 @@ test('conversation maps terse answers to the latest visible question instead of 
   assert.doesNotMatch(result.reply, /could not map/i);
 });
 
+test('conversation maps all of them to uploaded agreement review focus question', () => {
+  const visibleQuestion = 'For this Enterprise SaaS MSA with VectorCloud, which area do you want to prioritize in the review: Data protection and DPA terms, AI/model-training use of your data, security and access controls, business continuity/SLAs, or commercial/legal terms?';
+  const staleQuestion = 'Who is the accountable business unit or workflow owner?';
+  const result = processConversation({
+    message: 'all of them',
+    eventType: 'user_answer',
+    activeQuestion: staleQuestion,
+    history: [
+      { role: 'assistant', text: visibleQuestion, displayedQuestion: visibleQuestion },
+      { role: 'user', text: 'all of them', answeringQuestion: staleQuestion }
+    ],
+    caseDraft: {
+      supplierName: 'VectorCloud Systems Inc.',
+      brief: 'Review Enterprise SaaS Master Services Agreement for workflow automation, supplier analytics, CRM reporting, case management, and AI-assisted summaries.',
+      activeQuestion: staleQuestion,
+      questions: [staleQuestion],
+      askedQuestions: [visibleQuestion],
+      documents: [{
+        evidenceId: 'MSA-01',
+        title: 'Enterprise SaaS Master Services Agreement',
+        extractionStatus: 'backend_parsed',
+        signals: ['agreement', 'data processing', 'AI-assisted summaries']
+      }],
+      evidenceSignals: ['agreement', 'data processing', 'AI-assisted summaries'],
+      riskSignals: ['privacy', 'AI/model use', 'cloud security', 'business continuity', 'third-party risk']
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.caseDraft.answerValidation?.status, undefined);
+  assert.equal(result.caseDraft.reviewFocus, 'all listed review areas');
+  assert.equal(result.caseDraft.recentlyAnsweredFields.review_focus > 0, true);
+  assert.doesNotMatch(result.reply, /could not map/i);
+  assert.ok(!result.questions.some((question) => /which area|prioritize|focus/i.test(question)));
+});
+
 test('post-council ambiguous geography update asks add or replace before mutating case', () => {
   const result = processConversation({
     message: 'Syria',
