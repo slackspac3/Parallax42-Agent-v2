@@ -88,3 +88,43 @@ test('review pack can carry advisory narrative without changing decision ownersh
   assert.match(markdown, /Board summary: the review is ready/);
   assert.match(markdown, /Final decision owner: deterministic compliance engine/);
 });
+
+test('review pack PDF uses complete prose instead of ellipsized or raw JSON specialist text', () => {
+  const run = runComplianceAgent({
+    businessUnit: 'IT',
+    geography: 'UAE and US',
+    supplierName: 'Aster Cognitive Cloud',
+    brief: 'Review an AI assistant SOW for internal policy search and compliance evidence extraction.',
+    documents: [
+      {
+        evidenceId: 'SOW-01',
+        title: 'Cloud AI Model Services Statement of Work',
+        summary: 'The service supports retrieval, document intelligence, meeting summaries, and policy question answering. Data owner approval, retention approval, final RAI assessment, robustness evidence, and model rollback plan are missing.',
+        signals: ['responsible-ai', 'privacy', 'retention approval missing', 'model rollback plan missing']
+      }
+    ]
+  });
+  run.orchestration = {
+    llmOutput: {
+      outputAvailable: true,
+      specialists: [
+        {
+          specialist: 'Privacy Specialist',
+          assessment: '{"specialist":"privacy","assessment":"DPA coverage and retention approval need reviewer confirmation before approval.","unresolvedRisks":["retention approval missing","data owner approval missing"],"recommendedActions":["Require retention approval","Confirm data owner approval"],"confidence":"medium"}',
+          confidence: 0.71
+        }
+      ]
+    }
+  };
+
+  const pack = buildReviewPack(run, { generatedAt: '2026-05-15T00:00:00.000Z' });
+  const pdfText = buildReviewPackPdf(pack).toString('latin1');
+
+  assert.match(pdfText, /DPA coverage and retention/);
+  assert.match(pdfText, /approval need reviewer/);
+  assert.match(pdfText, /confirmation before approval/);
+  assert.doesNotMatch(pdfText, /\.\.\./);
+  assert.doesNotMatch(pdfText, /"specialist"/);
+  assert.doesNotMatch(pdfText, /unresolvedRisks/);
+  assert.doesNotMatch(pdfText, /recommendedActions/);
+});
