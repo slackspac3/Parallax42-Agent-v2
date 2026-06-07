@@ -177,6 +177,8 @@ let chatMissingFields = [];
 let workspaceView = 'chat';
 let activeIntelRailTab = 'case';
 let activeQuestion = 'What do you need reviewed?';
+let activeQuestionId = '';
+let activeQuestionField = '';
 let lastCouncilNarrative = null;
 let liveCasePreviewTimer = null;
 let chatSessionSaveTimer = null;
@@ -185,7 +187,9 @@ let chatMessages = [
   {
     role: 'assistant',
     text: 'What do you need reviewed?',
-    displayedQuestion: 'What do you need reviewed?'
+    displayedQuestion: 'What do you need reviewed?',
+    displayedQuestionId: '',
+    displayedQuestionField: ''
   }
 ];
 
@@ -938,7 +942,11 @@ function chatSessionPayload() {
         role: message.role,
         text: message.text || '',
         displayedQuestion: message.displayedQuestion || '',
+        displayedQuestionId: message.displayedQuestionId || '',
+        displayedQuestionField: message.displayedQuestionField || '',
         answeringQuestion: message.answeringQuestion || '',
+        answeringQuestionId: message.answeringQuestionId || '',
+        answeringQuestionField: message.answeringQuestionField || '',
         generatedByCompass: Boolean(message.generatedByCompass),
         compassNaturalResponse: Boolean(message.compassNaturalResponse),
         nextBestQuestion: message.nextBestQuestion || '',
@@ -952,6 +960,8 @@ function chatSessionPayload() {
     evidenceIndexMeta,
     evidenceIndexValidation,
     activeQuestion,
+    activeQuestionId,
+    activeQuestionField,
     chatRunReadiness,
     chatMissingFields
   };
@@ -998,6 +1008,8 @@ function restoreChatSession() {
     ? session.evidenceIndexValidation
     : evidenceIndexValidation;
   activeQuestion = cleanEvidenceText(session.activeQuestion || activeQuestion);
+  activeQuestionId = cleanEvidenceText(session.activeQuestionId || activeQuestionId);
+  activeQuestionField = cleanEvidenceText(session.activeQuestionField || activeQuestionField);
   chatRunReadiness = session.chatRunReadiness || chatRunReadiness;
   chatMissingFields = Array.isArray(session.chatMissingFields) ? session.chatMissingFields : chatMissingFields;
   return true;
@@ -1343,6 +1355,7 @@ function mergeChatCaseDraft(patch = {}, options = {}) {
     documents: mergeDraftDocuments(base.documents, patch.documents, 18),
     documentContext: mergeDocumentContext(base.documentContext || {}, patch.documentContext || {}),
     questions: mergeDraftArray(base.questions, patch.questions, 24),
+    questionMetadata: Array.isArray(patch.questionMetadata) ? patch.questionMetadata.slice(0, 8) : Array.isArray(base.questionMetadata) ? base.questionMetadata.slice(0, 8) : [],
     askedQuestions: mergeDraftArray(base.askedQuestions, patch.askedQuestions, 32),
     caseAmendments: mergeDraftRecords(base.caseAmendments, patch.caseAmendments, 32),
     materialChanges: mergeDraftRecords(base.materialChanges, patch.materialChanges, 32),
@@ -1359,6 +1372,8 @@ function mergeChatCaseDraft(patch = {}, options = {}) {
   if (!patch.indexedEvidence) merged.indexedEvidence = base.indexedEvidence;
   if (!patch.retrievalContext) merged.retrievalContext = base.retrievalContext;
   if (!Object.prototype.hasOwnProperty.call(patch, 'activeQuestion')) merged.activeQuestion = base.activeQuestion;
+  if (!Object.prototype.hasOwnProperty.call(patch, 'activeQuestionId')) merged.activeQuestionId = base.activeQuestionId;
+  if (!Object.prototype.hasOwnProperty.call(patch, 'activeQuestionField')) merged.activeQuestionField = base.activeQuestionField;
   chatCaseDraft = merged;
   scheduleChatSessionSave();
   return chatCaseDraft;
@@ -3281,6 +3296,20 @@ function structuredAssistantQuestion(...candidates) {
   return '';
 }
 
+function normalizeQuestionMetadata(metadata = {}, fallbackQuestion = '') {
+  if (!metadata || typeof metadata !== 'object') return {};
+  const text = cleanEvidenceText(metadata.text || fallbackQuestion);
+  const id = cleanEvidenceText(metadata.id || metadata.questionId || '');
+  const field = cleanEvidenceText(metadata.field || metadata.questionField || '');
+  return (id || field || text) ? { id, field, text } : {};
+}
+
+function firstQuestionMetadataFromResult(result = {}, fallbackQuestion = '') {
+  const serverMetadata = Array.isArray(result.questionMetadata) ? result.questionMetadata[0] : null;
+  const draftMetadata = Array.isArray(result.caseDraft?.questionMetadata) ? result.caseDraft.questionMetadata[0] : null;
+  return normalizeQuestionMetadata(serverMetadata || draftMetadata || {}, fallbackQuestion);
+}
+
 function isLikelyTruncatedQuestion(question = '') {
   const text = cleanEvidenceText(question);
   if (!text) return false;
@@ -3393,11 +3422,17 @@ function renderAssistantTurn(message = {}, options = {}) {
   });
 }
 
-function persistActiveQuestion(question = '') {
+function persistActiveQuestion(question = '', metadata = {}) {
   const clean = cleanEvidenceText(question);
+  const meta = normalizeQuestionMetadata(metadata, clean);
   activeQuestion = clean;
+  activeQuestionId = meta.id || '';
+  activeQuestionField = meta.field || '';
   const draft = mergeChatCaseDraft({
     activeQuestion: clean,
+    activeQuestionId,
+    activeQuestionField,
+    questionMetadata: clean ? [{ ...meta, text: meta.text || clean }] : [],
     questions: clean ? [clean] : [],
     askedQuestions: unique([
       ...(chatCaseDraft.askedQuestions || []),
@@ -3405,6 +3440,7 @@ function persistActiveQuestion(question = '') {
     ]).slice(-24)
   });
   if (!clean) draft.questions = [];
+  if (!clean) draft.questionMetadata = [];
   return clean;
 }
 
@@ -3416,7 +3452,11 @@ function refreshActiveQuestionFromLatestAssistant() {
   }
   const question = latestAssistant.displayedQuestion || assistantQuestionFromText(latestAssistant.text || '');
   if (question) latestAssistant.displayedQuestion = question;
-  return persistActiveQuestion(question);
+  return persistActiveQuestion(question, {
+    id: latestAssistant.displayedQuestionId || '',
+    field: latestAssistant.displayedQuestionField || '',
+    text: question
+  });
 }
 
 function renderAssistantHistoryTurn(message = {}) {
@@ -3558,11 +3598,15 @@ function resetChatCaseSession(options = {}) {
   chatRunReadiness = null;
   chatMissingFields = [];
   activeQuestion = 'What do you need reviewed?';
+  activeQuestionId = '';
+  activeQuestionField = '';
   chatMessages = [
     {
       role: 'assistant',
       text: 'What do you need reviewed?',
-      displayedQuestion: 'What do you need reviewed?'
+      displayedQuestion: 'What do you need reviewed?',
+      displayedQuestionId: '',
+      displayedQuestionField: ''
     }
   ];
   removeStorage(storageKeys.evidenceIndexMeta);
@@ -3766,7 +3810,11 @@ function chatMessageSignature(message = {}, index = -1, latestAssistantIndex = -
     thinkingStepIndex: Number(message.thinkingStepIndex || 0),
     retryNote: message.retryNote || '',
     displayedQuestion: message.displayedQuestion || '',
+    displayedQuestionId: message.displayedQuestionId || '',
+    displayedQuestionField: message.displayedQuestionField || '',
     answeringQuestion: message.answeringQuestion || '',
+    answeringQuestionId: message.answeringQuestionId || '',
+    answeringQuestionField: message.answeringQuestionField || '',
     smartIntakeUnavailable: Boolean(message.smartIntakeUnavailable),
     smartIntakeDegraded: Boolean(message.smartIntakeDegraded),
     smartIntakeDiagnostic: Boolean(message.smartIntakeDiagnostic || message.invalidCompassResponse),
@@ -3921,11 +3969,13 @@ function renderConversationState(result = {}) {
   const completeActions = actions.filter((action) => action.status === 'complete' || action.status === 'not_required').length;
   const progress = actions.length ? Math.min(82, 18 + Math.round((completeActions / actions.length) * 62)) : 18;
   const questions = Array.isArray(result.questions) ? result.questions : [];
+  const questionMetadata = firstQuestionMetadataFromResult(result, questions[0] || '');
   const missing = Array.isArray(result.missingFields) ? result.missingFields : [];
   const runReadiness = result.runReadiness || {};
   chatRunReadiness = result.runReadiness || null;
   chatMissingFields = missing;
   const draft = result.caseDraft || chatCaseDraft || {};
+  persistActiveQuestion(questions[0] || draft.activeQuestion || '', questionMetadata);
   const evidenceSignals = Array.isArray(draft.evidenceSignals) ? draft.evidenceSignals : [];
   const riskSignals = Array.isArray(draft.riskSignals) ? draft.riskSignals : [];
   const retrievalMatches = Array.isArray(draft.retrievalContext?.evidenceMatches)
@@ -5006,8 +5056,20 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   const questionAtTurnStart = cleanEvidenceText(Object.prototype.hasOwnProperty.call(options, 'activeQuestion')
     ? options.activeQuestion
     : activeQuestion || chatCaseDraft.activeQuestion || '');
+  const questionIdAtTurnStart = cleanEvidenceText(Object.prototype.hasOwnProperty.call(options, 'activeQuestionId')
+    ? options.activeQuestionId
+    : activeQuestionId || chatCaseDraft.activeQuestionId || '');
+  const questionFieldAtTurnStart = cleanEvidenceText(Object.prototype.hasOwnProperty.call(options, 'activeQuestionField')
+    ? options.activeQuestionField
+    : activeQuestionField || chatCaseDraft.activeQuestionField || '');
   if (!options.silentUser) {
-    chatMessages.push({ role: 'user', text: message, answeringQuestion: questionAtTurnStart || '' });
+    chatMessages.push({
+      role: 'user',
+      text: message,
+      answeringQuestion: questionAtTurnStart || '',
+      answeringQuestionId: questionIdAtTurnStart || '',
+      answeringQuestionField: questionFieldAtTurnStart || ''
+    });
   }
   const pendingMessage = {
     role: 'assistant',
@@ -5072,6 +5134,8 @@ async function submitChatMessage(rawMessage = '', options = {}) {
         message,
         caseDraft: chatCaseDraftForConversation(),
         activeQuestion: questionAtTurnStart,
+        activeQuestionId: questionIdAtTurnStart,
+        activeQuestionField: questionFieldAtTurnStart,
         eventType,
         history: chatMessages
           .filter((item) => item && !item.pending && (item.role === 'user' || item.role === 'assistant'))
@@ -5080,7 +5144,11 @@ async function submitChatMessage(rawMessage = '', options = {}) {
             role: item.role,
             text: item.text || '',
             displayedQuestion: item.displayedQuestion || '',
-            answeringQuestion: item.answeringQuestion || ''
+            displayedQuestionId: item.displayedQuestionId || '',
+            displayedQuestionField: item.displayedQuestionField || '',
+            answeringQuestion: item.answeringQuestion || '',
+            answeringQuestionId: item.answeringQuestionId || '',
+            answeringQuestionField: item.answeringQuestionField || ''
           })),
         uploadedEvidence: uploadedEvidenceForConversation(),
         retrievalQuery: options.forceRun ? retrievalQueryFromDraft() : '',
@@ -5132,9 +5200,12 @@ async function submitChatMessage(rawMessage = '', options = {}) {
         returnedDraft.conversationPlan?.nextQuestion
       )
       : '');
+    const questionMetadata = firstQuestionMetadataFromResult(result, structuredQuestion);
     pendingMessage.generatedByCompass = Boolean(llmAttempt.used || conversationPlan.usedLlm);
     pendingMessage.compassNaturalResponse = Boolean(llmAttempt.naturalResponse && pendingMessage.text === llmAttempt.naturalResponse);
     pendingMessage.nextBestQuestion = structuredQuestion;
+    pendingMessage.displayedQuestionId = questionMetadata.id || '';
+    pendingMessage.displayedQuestionField = questionMetadata.field || '';
     pendingMessage.smartIntakeUnavailable = smartIntakeUnavailable;
     pendingMessage.smartIntakeDegraded = smartIntakeDegraded;
     pendingMessage.smartIntakeDiagnostic = invalidCompassResponse;
@@ -5160,6 +5231,11 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     }
     pendingMessage.displayedQuestion = structuredQuestion
       || (!hasServerQuestionSignal ? assistantQuestionFromText(pendingMessage.text) : '');
+    if (pendingMessage.displayedQuestion) {
+      persistActiveQuestion(pendingMessage.displayedQuestion, questionMetadata);
+    } else if (hasServerQuestionSignal) {
+      persistActiveQuestion('');
+    }
     renderChatMessages();
     if (result.run?.ok) {
       registerCompletedRun('chat', result.run);

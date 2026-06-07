@@ -215,6 +215,8 @@
       ['brief', MAX_BRIEF_CHARS],
       ['serviceDescription', MAX_BRIEF_CHARS],
       ['activeQuestion', 1000],
+      ['activeQuestionId', 160],
+      ['activeQuestionField', 160],
       ['currentEventType', 120],
       ['councilStatus', 120],
       ['councilStaleReason', MAX_SUMMARY_CHARS],
@@ -240,6 +242,9 @@
       if (values.length) next[entry[0]] = values;
     });
     if (draft.recentlyAnsweredFields) next.recentlyAnsweredFields = sanitizeDictionary(draft.recentlyAnsweredFields, 120);
+    if (draft.aiUsageScope) next.aiUsageScope = sanitizeDictionary(draft.aiUsageScope, MAX_SUMMARY_CHARS);
+    const questionMetadata = sanitizeRecordList(draft.questionMetadata, 8, 1000);
+    if (questionMetadata.length) next.questionMetadata = questionMetadata;
     if (draft.lastCouncilRun) next.lastCouncilRun = sanitizeDictionary(draft.lastCouncilRun, MAX_SUMMARY_CHARS);
     if (draft.pendingCaseUpdateClarification) next.pendingCaseUpdateClarification = sanitizeDictionary(draft.pendingCaseUpdateClarification, MAX_SUMMARY_CHARS);
     const caseAmendments = sanitizeRecordList(draft.caseAmendments, 32, MAX_SUMMARY_CHARS);

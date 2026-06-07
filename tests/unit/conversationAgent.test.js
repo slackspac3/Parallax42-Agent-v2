@@ -826,6 +826,48 @@ test('conversation maps shared SaaS hosting answer to visible AI hosting questio
   assert.ok(!result.questions.some((question) => /multi-tenant cloud service|dedicated\/private environment/i.test(question)));
 });
 
+test('conversation uses stable active question field when question text is stale', () => {
+  const first = processConversation({
+    message: 'Review the Cloud AI Model Services SOW for legal and compliance contract review.',
+    caseDraft: {
+      supplierName: 'Aster Cognitive Cloud',
+      businessUnit: 'Legal And Privacy',
+      geography: 'UAE and US',
+      documents: [{
+        evidenceId: 'SOW-01',
+        title: 'Cloud AI Model Services Statement Of Work',
+        extractionStatus: 'backend_parsed',
+        indexStatus: 'indexed',
+        summary: 'Cloud AI Model Services SOW for private assistant, retrieval, document intelligence, policy Q&A, meeting summaries, and compliance evidence extraction.',
+        signals: ['model governance', 'responsible-ai']
+      }],
+      evidenceSignals: ['contract document', 'model governance'],
+      riskSignals: ['AI/model use', 'personal data']
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(first.questionMetadata[0].field, 'ai_usage_scope');
+  assert.equal(first.caseDraft.activeQuestionField, 'ai_usage_scope');
+  assert.match(first.caseDraft.activeQuestionId, /^q_ai_usage_scope_/);
+
+  const second = processConversation({
+    message: 'shared saas environment',
+    eventType: 'user_answer',
+    activeQuestion: 'Which area do you want to prioritize in the review?',
+    activeQuestionId: first.caseDraft.activeQuestionId,
+    activeQuestionField: first.caseDraft.activeQuestionField,
+    caseDraft: {
+      ...first.caseDraft,
+      activeQuestion: 'Which area do you want to prioritize in the review?',
+      questions: ['Which area do you want to prioritize in the review?']
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(second.caseDraft.aiUsageScope.hostingModel, 'multi_tenant_saas');
+  assert.equal(second.caseDraft.answerValidation?.status, undefined);
+  assert.doesNotMatch(second.reply, /could not map/i);
+});
+
 test('conversation records pending active clarification as a known gap instead of re-asking it', () => {
   const originQuestion = 'From which country or export-control jurisdiction will the supplier ship the AI accelerator hardware (for example, US, EU, UK, or another country)?';
   const result = processConversation({
