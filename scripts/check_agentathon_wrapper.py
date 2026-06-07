@@ -481,19 +481,21 @@ def check_crewai_runtime_modes() -> None:
 
 
 def check_base_url_normalization() -> None:
-    current = normalize_openai_base_url("https://api.core42.ai/v1")
-    assert current["normalized"] == "https://api.core42.ai/v1"
-    assert current["official"] is True
-    assert current["accepted_direct"] is True
-    assert normalize_openai_base_url("https://api.core42.ai/v1/")["normalized"] == "https://api.core42.ai/v1"
-    normalized_root = normalize_openai_base_url("https://api.core42.ai")
-    assert normalized_root["normalized"] == "https://api.core42.ai/v1"
+    official = normalize_openai_base_url("https://compass.core42.ai/v1")
+    assert official["normalized"] == "https://compass.core42.ai/v1"
+    assert official["official"] is True
+    assert official["accepted_direct"] is True
+    assert official["provider_variant"] == "official_agentathon_template"
+    assert normalize_openai_base_url("https://compass.core42.ai/v1/")["normalized"] == "https://compass.core42.ai/v1"
+    normalized_root = normalize_openai_base_url("https://compass.core42.ai")
+    assert normalized_root["normalized"] == "https://compass.core42.ai/v1"
     assert normalized_root["warnings"], "expected /v1 normalization warning"
-    legacy = normalize_openai_base_url("https://compass.core42.ai/v1")
-    assert legacy["normalized"] == "https://compass.core42.ai/v1"
-    assert legacy["official"] is False
-    assert legacy["accepted_direct"] is True
-    assert legacy["provider_variant"] == "legacy_agentathon_prompt"
+    alternate = normalize_openai_base_url("https://api.core42.ai/v1")
+    assert alternate["normalized"] == "https://api.core42.ai/v1"
+    assert alternate["official"] is False
+    assert alternate["accepted_direct"] is True
+    assert alternate["provider_variant"] == "core42_public_api"
+    assert normalize_openai_base_url("https://api.core42.ai/")["normalized"] == "https://api.core42.ai/v1"
     assert normalize_openai_base_url("not a url")["ok"] is False
     frontend = normalize_openai_base_url("https://g42.genai.works")
     assert frontend["ok"] is False

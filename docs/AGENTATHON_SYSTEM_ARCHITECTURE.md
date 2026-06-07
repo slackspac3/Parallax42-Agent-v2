@@ -136,13 +136,13 @@ Browser cockpit in public/
 
 | Boundary | Env / URL | Used by | What it is | What it is not |
 | --- | --- | --- | --- | --- |
-| Agentathon direct Compass | `OPENAI_API_KEY`, `OPENAI_BASE_URL=https://api.core42.ai/v1` | `app/compass_client.py`, `/compass/probe`, `/run`, `scripts/compass_doctor.py`, optional embeddings | Current Core42 Compass API documentation's OpenAI-compatible base for the FastAPI evaluator path. | Not the browser product gateway and not the droplet backend. |
+| Agentathon direct Compass | `OPENAI_API_KEY`, `OPENAI_BASE_URL=https://compass.core42.ai/v1` | `app/compass_client.py`, `/compass/probe`, `/run`, `scripts/compass_doctor.py`, optional embeddings | Official Agentathon template base first; runtime also accepts `https://api.core42.ai/v1` when confirmed for the issued key. | Not the browser product gateway and not the droplet backend. |
 | Product Compass gateway | `COMPASS_GATEWAY_BASE_URL`, `COMPASS_GATEWAY_TOKEN` | Existing Node/Vercel product APIs and `lib/compassGatewayClient.js` | Server-side product model boundary for smart intake, advisory LLM, and embeddings. | Not automatically proof of the official Agentathon direct Compass endpoint unless it exposes compatible `/v1` routes and is allowed by rules. |
 | Product backend / droplet | `PARALLAX42_BACKEND_URL`, optional `P42_CREWAI_SERVICE_URL` | Backend relay, parser/OCR support, optional remote product services | Product infrastructure for the richer hosted demo. | Not a Compass API and should not be used as `OPENAI_BASE_URL`. |
 | Qdrant | Deployed product: encrypted Vercel `P42_VECTOR_STORE_PROVIDER=qdrant`, `QDRANT_URL`, `QDRANT_API_KEY`, `QDRANT_COLLECTION`. Local/FastAPI: same env vars when exported. | Evidence memory and optional learning memory | Active in the deployed Vercel product evidence API through the droplet-hosted Qdrant collection `p42_compliance_evidence`; env-dependent for local/FastAPI runs. | Not active in every runtime by default and not claimed for local/FastAPI unless `qdrant_smoke.py` or equivalent env-specific smoke passes. |
 | Local fallback memory | no external service required | CI, local demos, sample mode | Deterministic fallback for evidence and governed learning memory. | Not production-durable RAG. |
 
-The Compass direct base is `https://api.core42.ai/v1` because Core42's Compass API documentation (<https://www.core42.ai/compass/documentation/use-compass-apis>) uses that host for OpenAI-compatible calls. The earlier `https://compass.core42.ai/v1` value came from the initial Agentathon prompt assumptions and is still accepted by diagnostics as a legacy alias, but prior probes returned HTML from `/models` and 405 HTML from `/chat/completions`; it is therefore not the final proof URL unless Core42 explicitly confirms it for the issued key.
+The active `.env.example` Compass placeholder is the official Agentathon template `https://compass.core42.ai/v1`. Runtime diagnostics also accept `https://api.core42.ai/v1` as an alternate Core42 public API base when Core42/Agentathon confirms it for the issued key. If either host returns HTML or `405` from OpenAI-compatible paths, treat that as endpoint/key mismatch evidence rather than live Compass proof.
 
 Compass is a model and embeddings runtime, not a regulatory knowledge source. Reference intelligence comes from official/public anchors in `reference_context/reference_memory_manifest.json`, including NIST, EU, OECD, ISO, Singapore, UAE, OFAC, BIS, UN/EU sanctions, CourtListener, SEC EDGAR, procurement/debarment, and HSE/ESG sources. The roadmap adds a governed knowledge connector API for allowlisted live sources and correction history; that is future functionality and does not change the current submission boundary.
 
@@ -230,7 +230,7 @@ human_review_required = true/false based on deterministic policy
 
 There are two live-AI stories, and they should not be mixed:
 
-1. Agentathon evaluator mode uses `OPENAI_API_KEY` and `OPENAI_BASE_URL=https://api.core42.ai/v1`.
+1. Agentathon evaluator mode uses `OPENAI_API_KEY` and the official template `OPENAI_BASE_URL=https://compass.core42.ai/v1`; it can also use `https://api.core42.ai/v1` when confirmed for the issued key.
    - `/compass/probe` checks `/models` and `/chat/completions`.
    - `scripts/compass_doctor.py --strict` is the live proof command.
    - `REQUIRE_COMPASS=true` makes non-sample `/run` return a structured error if Compass is unavailable.
@@ -385,12 +385,12 @@ Primary online checks:
 
 | Online check | Link | Expected result |
 | --- | --- | --- |
-| Repository contents | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent> | Root evaluator files, examples, logs, docs, Dockerfile, and workflows are visible on `main`. |
-| Product cockpit | <https://slackspac3.github.io/Parallax42-Compliance-Intelligence-Agent/> | Static cockpit loads and reaches the configured hosted product routes. |
+| Repository contents | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone> | Root evaluator files, examples, logs, docs, Dockerfile, and workflows are visible on `main`. |
+| Product cockpit | <https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/> | Static cockpit loads and reaches the configured hosted product routes. |
 | Vercel product API health | <https://parallax42-compliance-intelligence.vercel.app/api/health> | Hosted product runtime reports Compass gateway, Qdrant evidence memory, learning memory, parser relay, and advisory runtime status without exposing secrets. |
 | Vercel evidence API | `POST https://parallax42-compliance-intelligence.vercel.app/api/evidence/index`, `POST /api/evidence/search` | Online Qdrant proof path returns `provider=qdrant`, `storage=server_side_qdrant_vector_db`, and sanitized matches. |
-| Agentathon Preflight | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/agentathon-preflight.yml> | `agentathon-preflight` and `docker-smoke` jobs pass. |
-| CI | <https://github.com/slackspac3/Parallax42-Compliance-Intelligence-Agent/actions/workflows/ci.yml> | `npm run qa` passes online. |
+| Agentathon Preflight | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/actions/workflows/agentathon-preflight.yml> | `agentathon-preflight` and `docker-smoke` jobs pass. |
+| CI | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/actions/workflows/ci.yml> | `npm run qa` passes online. |
 
 The online `docker-smoke` job is the primary evaluator API proof. It builds the image, runs `python run.py` inside the container, calls `GET /health`, and posts `input_examples/example_1.json` to `POST /run`.
 
@@ -428,7 +428,7 @@ Compass:
 
 ```bash
 export OPENAI_API_KEY=<real Compass key>
-export OPENAI_BASE_URL=https://api.core42.ai/v1
+export OPENAI_BASE_URL=https://compass.core42.ai/v1
 export SAMPLE_MODE=false
 export REQUIRE_COMPASS=true
 python scripts/compass_doctor.py --strict

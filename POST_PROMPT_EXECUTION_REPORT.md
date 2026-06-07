@@ -1,6 +1,6 @@
 # POST_PROMPT_EXECUTION_REPORT
 
-> Supersession note: this report captured the earlier `https://compass.core42.ai/v1` probe failure. Current implementation/docs now default to `OPENAI_BASE_URL=https://api.core42.ai/v1` based on Core42's Compass API documentation, while keeping `https://compass.core42.ai/v1` only as a legacy diagnostic alias. Treat any `compass.core42.ai/v1` references below as historical evidence, not current setup guidance.
+> Clone supersession note, 2026-06-07: this historical report captured an earlier `https://compass.core42.ai/v1` probe failure. Current clone docs and `.env.example` keep the official Agentathon template `OPENAI_BASE_URL=https://compass.core42.ai/v1` first, while runtime diagnostics also accept `https://api.core42.ai/v1` when Core42/Agentathon confirms that alternate base for the issued key. Treat older default/legacy wording below as historical evidence, not current clone setup guidance.
 
 ## 1. Executive Status
 

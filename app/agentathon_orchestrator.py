@@ -604,7 +604,7 @@ class AgentathonOrchestrator:
             "decision": "needs_more_information",
             "risk_level": "high",
             "required_actions": [
-                "Verify OPENAI_API_KEY and OPENAI_BASE_URL=https://api.core42.ai/v1, then rerun with REQUIRE_COMPASS=true."
+                "Verify OPENAI_API_KEY and the official template OPENAI_BASE_URL=https://compass.core42.ai/v1, or use https://api.core42.ai/v1 only when Core42/Agentathon confirms it for the issued key; then rerun with REQUIRE_COMPASS=true."
             ],
             "evidence_used": [],
             "missing_evidence": ["live Compass advisory"],

@@ -4,7 +4,7 @@
 
 Primary demo surfaces:
 
-- Static cockpit: `https://slackspac3.github.io/Parallax42-Compliance-Intelligence-Agent/`
+- Static cockpit: `https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/`
 - Compliance Intelligence Agent API: `https://parallax42-compliance-intelligence.vercel.app`
 - API health: `https://parallax42-compliance-intelligence.vercel.app/api/health`
 - Compass gateway health: `https://parallax42-compass-gateway.vercel.app/api/health`
@@ -54,7 +54,7 @@ curl -sS -X POST http://127.0.0.1:8000/run \
 Compass compatibility:
 
 - Preferred Parallax42 path: `COMPASS_GATEWAY_BASE_URL` plus `COMPASS_GATEWAY_TOKEN`.
-- Direct evaluator path: `OPENAI_BASE_URL=https://api.core42.ai/v1` plus `OPENAI_API_KEY`, following the current Core42 Compass API documentation.
+- Direct evaluator path: `OPENAI_BASE_URL=https://compass.core42.ai/v1` plus `OPENAI_API_KEY`, following the official Agentathon template. Runtime also accepts `https://api.core42.ai/v1` when Core42/Agentathon confirms that base for the issued key.
 - Embeddings remain `text-embedding-3-large`; final compliance decisions remain deterministic.
 
 ## Demo Path

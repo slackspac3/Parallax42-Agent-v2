@@ -7,6 +7,8 @@ on:
 jobs:
   agentathon-preflight:
     runs-on: ubuntu-latest
+    env:
+      HAS_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY != '' }}
 
     steps:
       - name: Checkout
@@ -48,15 +50,20 @@ jobs:
         env:
           SAMPLE_MODE: "true"
           OPENAI_API_KEY: dummy
-          OPENAI_BASE_URL: https://api.core42.ai/v1
+          OPENAI_BASE_URL: https://compass.core42.ai/v1
 
       - name: Run strict Compass doctor
+        if: env.HAS_OPENAI_API_KEY == 'true'
         run: python scripts/compass_doctor.py --strict
         env:
           SAMPLE_MODE: "false"
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL || 'https://api.core42.ai/v1' }}
           MODEL_FAST: ${{ vars.MODEL_FAST || 'gpt-4.1' }}
+
+      - name: Skip strict Compass doctor
+        if: env.HAS_OPENAI_API_KEY != 'true'
+        run: echo "Strict Compass skipped because OPENAI_API_KEY secret is not configured."
 
       - name: Upload Agentathon logs
         if: always()
@@ -98,7 +105,7 @@ jobs:
             -p 8000:8000 \
             -e SAMPLE_MODE=true \
             -e OPENAI_API_KEY=dummy \
-            -e OPENAI_BASE_URL=https://api.core42.ai/v1 \
+            -e OPENAI_BASE_URL=https://compass.core42.ai/v1 \
             parallax42-agentathon
           for i in $(seq 1 60); do
             if curl -fsS http://127.0.0.1:8000/health; then

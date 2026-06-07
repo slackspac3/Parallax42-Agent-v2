@@ -23,7 +23,7 @@ Settings -> Pages -> Source -> GitHub Actions
 Smoke check after deployment:
 
 ```text
-https://slackspac3.github.io/Parallax42-Compliance-Intelligence-Agent/
+https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/
 ```
 
 The cockpit reads `public/config.js` and defaults to the Vercel relay outside localhost.

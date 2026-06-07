@@ -6,7 +6,7 @@ Record a short demo that proves the agent is production-oriented and audit-aware
 
 ## Flow
 
-1. Open the online cockpit: <https://slackspac3.github.io/Parallax42-Compliance-Intelligence-Agent/>.
+1. Open the online cockpit: <https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/>.
 2. Upload or select one of the generated fixture PDFs from `test-fixtures/compliance-documents/`, such as `06_cloud_ai_model_services_statement_of_work.pdf`.
 3. Show the decision: `Do not approve yet` or conditional approval depending on evidence.
 4. Show domain scan:

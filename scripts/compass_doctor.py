@@ -67,7 +67,7 @@ def print_human(summary: Dict[str, Any]) -> None:
     print(f"OPENAI_API_KEY: {summary.get('api_key')}")
     print(f"OPENAI_BASE_URL raw present: {summary.get('openai_base_url_raw_present')}")
     print(f"OPENAI_BASE_URL normalized: {summary.get('normalized_base_url')}")
-    print(f"OPENAI_BASE_URL documented Core42 Compass base: {summary.get('base_url_official')}")
+    print(f"OPENAI_BASE_URL official Agentathon Compass template: {summary.get('base_url_official')}")
     print(f"OPENAI_BASE_URL accepted direct Compass base: {summary.get('base_url_accepted_direct')}")
     print(f"Provider variant: {summary.get('provider_variant')}")
     if summary.get("base_url_warnings"):

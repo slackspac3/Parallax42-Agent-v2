@@ -1,6 +1,26 @@
 # Benchmark Report
 
-## Current Addendum: 2026-06-07
+## Current Clone Addendum: 2026-06-07
+
+This document is clone-specific for `https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone`. The authoritative fresh benchmark snapshot is also recorded in `FRESH_BENCHMARK_REPORT.md`, and the submission checklist is in `CLONE_SUBMISSION_READINESS.md`.
+
+| Area | Current clone status | Evidence / boundary |
+| --- | --- | --- |
+| Submitted repository | PASS | `https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone` is the repo to submit, not the original product repository. |
+| Product cockpit | PASS | `https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/` is the clone Pages cockpit. |
+| Latest visible pushed commit before this update | `bd274fd` | `bd274fd Add strict Compass proof to preflight`; this clone-readiness update should create a newer commit and CI run after push. |
+| Local validation | PASS | `npm run qa`, `python scripts/agentathon_preflight.py`, `python scripts/agentathon_preflight.py --run-api`, `python scripts/fixture_demo_matrix.py`, and `python -m json.tool metadata.json` passed on 2026-06-07. |
+| Docker smoke | PASS on latest visible pushed clone CI | Agentathon Preflight run `27093401770` included a passing `docker-smoke` job for commit `bd274fd`. Use the next run after this clone-readiness push as final submitted-state proof. |
+| Compass | CONFIGURED / ADVISORY | `.env.example` uses the official Agentathon template `OPENAI_BASE_URL=https://compass.core42.ai/v1`; runtime also accepts `https://api.core42.ai/v1` when Core42/Agentathon confirms it for the issued key. Strict CI runs only when `OPENAI_API_KEY` secret exists. |
+| Qdrant | OPTIONAL / ENV-DEPENDENT | Deployed product evidence APIs may use server-side Qdrant. Local/FastAPI evaluator runs do not claim active Qdrant unless `python scripts/qdrant_smoke.py` passes with real env vars. |
+| CrewAI | DRY-RUN BY DEFAULT | CrewAI manifests and dry-run checks pass; live CrewAI is optional and not part of the default Docker dependency set. |
+| RBAC | AUDIT / NOT ENFORCED BY DEFAULT | RBAC/JWT scaffolding exists, but enforced RBAC is not a clone submission claim without configured tenant/JWKS proof. |
+
+Safe clone claims: root `run.py` implements `/run`; deterministic policy owns the final decision; Compass, Qdrant retrieval, learning memory, and optional CrewAI are advisory; no secrets are committed.
+
+Unsafe clone claims: the original repo is the submitted repo; GitHub Pages or Vercel is the official evaluator `/run`; live CrewAI is active by default; Qdrant is active in local/FastAPI without smoke proof; RBAC or production persistence is enforced by default.
+
+## Historical Addendum: 2026-06-07
 
 Latest pushed behavior update: commit `2215cf4 Harden post-council conversation updates`.
 
@@ -20,7 +40,7 @@ This addendum reflects the latest pushed submission state after the Compass mode
 | FastAPI evaluator wrapper | PASS for repo + CI/Docker proof; not public-hosted | Root `run.py` and Docker workflow verify `/health` and `/run` on port `8000`. GitHub Pages/Vercel/Railway product URLs should not be described as the FastAPI wrapper unless this repo Dockerfile is deployed there and `/metadata`, `/logs`, `/compass/probe`, and official `/run` are verified. |
 | Online product runtime | PASS | Vercel `/api/health` reports Compass gateway, Qdrant-backed product evidence memory, governed learning memory, remote CrewAI service configuration, and audit-mode auth without exposing secrets. |
 | Online CrewAI proof | PASS | Live smoke against `POST https://parallax42-compliance-intelligence.vercel.app/api/agent/run` with `X-Agent-Runtime: crewai_llm` returned `mode=crewai_llm_live`, `runtime.manifestSource=remote_crewai_service_llm`, `runtime.degraded=false`, `HTTP 200`, and about `81.8s` runtime. CrewAI output is advisory only. |
-| Compass model boundary | DOCUMENTED | Current docs and `.env.example` use `OPENAI_BASE_URL=https://api.core42.ai/v1`, `MODEL_FAST=gpt-4.1`, `MODEL_REASONING=gpt-5.1`, `CREWAI_LLM_MODEL=gpt-5.1`, and `EMBEDDING_MODEL=text-embedding-3-large`, based on Core42 Compass API documentation. |
+| Compass model boundary | DOCUMENTED | Current docs and `.env.example` use the official template `OPENAI_BASE_URL=https://compass.core42.ai/v1`, while runtime also accepts `https://api.core42.ai/v1` when confirmed for the issued key. Model placeholders remain `MODEL_FAST=gpt-4.1`, `MODEL_REASONING=gpt-5.1`, `CREWAI_LLM_MODEL=gpt-5.1`, and `EMBEDDING_MODEL=text-embedding-3-large`. |
 | Compass credential boundary | DOCUMENTED | The deployed demo uses the project owner's own Compass credentials configured server-side. The repo contains no real key and does not assume an Agentathon-issued key. Evaluators can provide their own key through `OPENAI_API_KEY`. |
 | RBAC | PARTIAL | Route policy and Entra/JWKS-compatible code exist, with roles such as `platform_admin`, `risk_admin`, reviewers, `auditor`, and `read_only`. Online deployment reports `auth.mode=audit` and `auth.enforced=false`; do not claim enforced RBAC. |
 | Workflow status at addendum time | IN PROGRESS for model-boundary commit, previous green | `Agentathon Preflight` and `CI` for commit `0666073` were running when checked; commit `88d1a9f` was green for both workflows. This report update may trigger a newer workflow run. |
