@@ -462,6 +462,8 @@ test('conversation preserves indexed retrieval context through council execution
       supplierName: 'HelioChip Logistics',
       businessUnit: 'Trade Compliance And Export Controls',
       geography: 'UAE',
+      exportOriginJurisdiction: 'US',
+      exportEndUse: 'Internal research compute cluster operated by the UAE buyer',
       brief: 'Review restricted AI accelerator import with freight forwarding and remote firmware support.',
       integrations: ['Firmware support channel'],
       documents: [
@@ -492,7 +494,7 @@ test('conversation preserves indexed retrieval context through council execution
           }
         ]
       },
-      evidenceSignals: ['export classification'],
+      evidenceSignals: ['export classification', 'sanctions screening', 'remote support controls'],
       riskSignals: ['export control', 'remote support access']
     }
   }, { runtime: 'deterministic' });
@@ -562,6 +564,49 @@ test('conversation NLP handles export-control hardware import cases', () => {
   assert.ok(result.missingFields.includes('business_owner'));
   assert.ok(result.missingFields.includes('export_control_evidence'));
   assert.ok(result.questions.some((question) => /upload the export control pack|classify it|analyze it first/i.test(question)));
+});
+
+test('conversation contextually gates export-control cases on end-use and sanctions screening', () => {
+  let runCount = 0;
+  const result = processConversation({
+    forceRun: true,
+    message: 'run it',
+    caseDraft: {
+      supplierName: 'Zenith Compute',
+      businessUnit: 'Trade Compliance And Export Controls',
+      geography: 'Russia',
+      exportOriginJurisdiction: 'US',
+      brief: 'Review a restricted AI chip export from the US to Russia for an unknown end use.',
+      documents: [{
+        evidenceId: 'DOC-EXPORT-01',
+        title: 'Export control pack',
+        extractionStatus: 'backend_parsed',
+        indexStatus: 'indexed',
+        summary: 'Export classification and import permit are attached. End use is unknown and sanctions screening is pending.',
+        signals: ['export classification', 'import permit']
+      }],
+      evidenceSignals: ['export classification', 'import permit'],
+      riskSignals: ['export control', 'sanctions-sensitive geography'],
+      sanctionsSensitiveGeographies: ['Russia'],
+      knownGaps: ['export_end_use']
+    }
+  }, {
+    runtime: 'deterministic',
+    runAgentWithRuntime: () => {
+      runCount += 1;
+      return { ok: true };
+    }
+  });
+
+  assert.equal(runCount, 0);
+  assert.equal(result.shouldRun, false);
+  assert.equal(result.run, null);
+  assert.equal(result.runReadiness.runnable, false);
+  assert.ok(result.caseDraft.knownGaps.includes('export_end_use'));
+  assert.ok(result.runReadiness.executionBlockers.includes('sanctions_screening'));
+  assert.ok(!result.runReadiness.executionBlockers.includes('export_end_use'));
+  assert.ok(result.questions.some((question) => /screened for sanctions|restricted-party|denied-party/i.test(question)));
+  assert.match(result.reply, /Sanctions and restricted-party screening/i);
 });
 
 test('conversation records export origin follow-up without overwriting import geography or repeating the question', () => {
@@ -799,7 +844,7 @@ test('conversation force-run does not execute when owner and geography are missi
 
 test('conversation run readiness allows council with core intake while preserving advisory gaps', () => {
   const result = processConversation({
-    message: 'Review an AI accelerator import for UAE. The accountable owner is Trade Compliance. Attached export classification, end-use certificate, import permit, MFA, session logging, and approved support window.',
+    message: 'Review an AI accelerator import from the US for UAE. The accountable owner is Trade Compliance. Final end use is internal research compute. Attached export classification, end-use certificate, import permit, sanctions screening, MFA, session logging, and approved support window.',
     caseDraft: {
       supplierName: 'Zenith Compute'
     }

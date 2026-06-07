@@ -2459,6 +2459,10 @@ function reviewerMissingItemLabel(item = '') {
   if (/owner|business.?unit|accountable/.test(key)) return 'who owns this review internally';
   if (/geograph|jurisdiction|perimeter|region|country/.test(key)) return 'geography or regulatory perimeter';
   if (/ai.?usage|ai.?use|high.?impact|automated|hr|employment/.test(key)) return 'AI use and high-impact decision boundary';
+  if (/export.?origin|origin.?jurisdiction/.test(key)) return 'export origin jurisdiction';
+  if (/export.?end.?use|end.?user/.test(key)) return 'export end-use and end-user boundary';
+  if (/sanctions|restricted.?party|denied.?party/.test(key)) return 'sanctions and restricted-party screening';
+  if (/remote.?support|firmware/.test(key)) return 'remote support access controls';
   if (/evidence|proof|document|source/.test(key)) return 'source evidence or documents';
   if (/scope|request|review|case/.test(key)) return 'what needs to be reviewed';
   return humanize(item);
