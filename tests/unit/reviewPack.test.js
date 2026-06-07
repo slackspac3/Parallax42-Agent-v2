@@ -128,3 +128,47 @@ test('review pack PDF uses complete prose instead of ellipsized or raw JSON spec
   assert.doesNotMatch(pdfText, /unresolvedRisks/);
   assert.doesNotMatch(pdfText, /recommendedActions/);
 });
+
+test('review pack PDF repairs malformed specialist assessment fragments', () => {
+  const run = runComplianceAgent({
+    businessUnit: 'Legal',
+    geography: 'UAE and US',
+    supplierName: 'Aster Cognitive Cloud',
+    brief: 'Review an AI assistant SOW for legal and compliance contract review.',
+    documents: [
+      {
+        evidenceId: 'SOW-01',
+        title: 'Cloud AI Model Services Statement of Work',
+        summary: 'The SOW covers private assistant retrieval, document intelligence, compliance extraction, Responsible AI controls, retention approval, and data owner approval.',
+        signals: ['responsible-ai', 'privacy', 'human oversight']
+      }
+    ]
+  });
+  run.orchestration = {
+    llmOutput: {
+      outputAvailable: true,
+      specialists: [
+        {
+          specialist: 'Privacy Specialist',
+          assessment: '{"specialist":"privacy","advisoryOnly":true,"assessment":"Evidence shows retention and data owner approval still need confirmation before production."',
+          confidence: 0.71
+        },
+        {
+          specialist: 'Learning & Precedent Specialist',
+          assessment: '", "Has a formal Responsible AI / model risk assessment been completed and accepted by the accountable owner?',
+          confidence: 0.68
+        }
+      ]
+    }
+  };
+
+  const pack = buildReviewPack(run, { generatedAt: '2026-05-15T00:00:00.000Z' });
+  const pdfText = buildReviewPackPdf(pack).toString('latin1');
+
+  assert.match(pdfText, /Evidence shows retention/);
+  assert.match(pdfText, /data owner approval/);
+  assert.match(pdfText, /formal Responsible AI/);
+  assert.doesNotMatch(pdfText, /"advisoryOnly"/);
+  assert.doesNotMatch(pdfText, /"specialist":/);
+  assert.doesNotMatch(pdfText, /", "Has/);
+});
