@@ -2458,6 +2458,7 @@ function reviewerMissingItemLabel(item = '') {
   const key = String(item || '').toLowerCase();
   if (/owner|business.?unit|accountable/.test(key)) return 'who owns this review internally';
   if (/geograph|jurisdiction|perimeter|region|country/.test(key)) return 'geography or regulatory perimeter';
+  if (/ai.?usage|ai.?use|high.?impact|automated|hr|employment/.test(key)) return 'AI use and high-impact decision boundary';
   if (/evidence|proof|document|source/.test(key)) return 'source evidence or documents';
   if (/scope|request|review|case/.test(key)) return 'what needs to be reviewed';
   return humanize(item);

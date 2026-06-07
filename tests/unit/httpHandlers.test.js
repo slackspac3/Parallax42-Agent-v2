@@ -42,7 +42,12 @@ function readyConversationBody() {
         }
       ],
       evidenceSignals: ['SOC 2', 'DPA', 'model training terms', 'BCP/DR'],
-      riskSignals: ['personal data', 'AI/model use', 'critical service', 'finance exposure']
+      riskSignals: ['personal data', 'AI/model use', 'critical service', 'finance exposure'],
+      aiUsageScope: {
+        audience: 'internal_employees_only',
+        taskBoundary: 'retrieval_or_document_assistance_only',
+        excludedWorkflows: ['HR matters', 'compliance decisions', 'legal determinations', 'automated or people-impacting decisions']
+      }
     }
   };
 }

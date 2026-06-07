@@ -298,7 +298,12 @@ test('conversation executes the agent workflow when the draft is complete', () =
         }
       ],
       evidenceSignals: ['SOC 2'],
-      riskSignals: ['personal data', 'AI/model use', 'critical service', 'finance exposure']
+      riskSignals: ['personal data', 'AI/model use', 'critical service', 'finance exposure'],
+      aiUsageScope: {
+        audience: 'internal_employees_only',
+        taskBoundary: 'retrieval_or_document_assistance_only',
+        excludedWorkflows: ['HR matters', 'compliance decisions', 'legal determinations', 'automated or people-impacting decisions']
+      }
     }
   }, { runtime: 'deterministic' });
 
@@ -308,6 +313,47 @@ test('conversation executes the agent workflow when the draft is complete', () =
   assert.equal(result.run.decision.status, 'not_ready');
   assert.ok(result.actions.some((action) => action.id === 'agent_workflow' && action.status === 'complete'));
   assert.match(result.reply, /Decision:/i);
+});
+
+test('conversation blocks AI council until high-impact use boundary is validated', () => {
+  let runCount = 0;
+  const result = processConversation({
+    forceRun: true,
+    message: 'run it',
+    caseDraft: {
+      supplierName: 'Aster Cognitive Cloud',
+      businessUnit: 'IT',
+      geography: 'UAE and US',
+      brief: 'Can we approve this AI assistant SOW for internal policy search and compliance evidence extraction?',
+      documents: [
+        {
+          evidenceId: 'UP-01',
+          title: 'Cloud AI Model Services Statement Of Work',
+          extractionStatus: 'backend_parsed',
+          indexStatus: 'indexed',
+          summary: 'Private assistant, retrieval, document intelligence, policy Q&A, meeting summaries, and compliance evidence extraction.',
+          signals: ['responsible-ai', 'model-governance', 'human-oversight']
+        }
+      ],
+      evidenceSignals: ['model governance'],
+      riskSignals: ['AI/model use', 'personal data']
+    }
+  }, {
+    runtime: 'deterministic',
+    runAgentWithRuntime: () => {
+      runCount += 1;
+      return { ok: true };
+    }
+  });
+
+  assert.equal(runCount, 0);
+  assert.equal(result.shouldRun, false);
+  assert.equal(result.run, null);
+  assert.equal(result.runReadiness.runnable, false);
+  assert.ok(result.missingFields.includes('ai_usage_scope'));
+  assert.ok(result.runReadiness.executionBlockers.includes('ai_usage_scope'));
+  assert.ok(result.questions.some((question) => /HR\/employment|automated|decision affecting people/i.test(question)));
+  assert.match(result.reply, /Before I run the council/i);
 });
 
 test('conversation force run is not blocked when smart intake is degraded and draft is runnable', () => {
