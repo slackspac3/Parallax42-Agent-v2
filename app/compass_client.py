@@ -41,6 +41,24 @@ def _looks_html(text: str) -> bool:
     return prefix.startswith("<!doctype html") or prefix.startswith("<html") or "<html" in prefix
 
 
+def _looks_like_openai_platform_key(value: str) -> bool:
+    return value.startswith("sk-") or value.startswith("sk-proj-")
+
+
+def _payload_error_message(payload: Any) -> str:
+    if not isinstance(payload, dict):
+        return ""
+    error = payload.get("error")
+    if isinstance(error, dict):
+        return _clean(error.get("message") or error.get("code") or error.get("type"))
+    return _clean(error)
+
+
+def _is_invalid_api_key_payload(payload: Any, body_text: str = "") -> bool:
+    message = _payload_error_message(payload) or _clean(body_text)
+    return bool(message and "invalid api key" in message.lower())
+
+
 def normalize_openai_base_url(raw_url: Optional[str]) -> Dict[str, Any]:
     """Normalize and classify the OpenAI-compatible Compass base URL.
 
@@ -197,6 +215,12 @@ class CompassClient:
             "Content-Type": "application/json",
         }
 
+    def _invalid_key_message(self) -> str:
+        hint = ""
+        if self.base_url_info.get("host") == "api.core42.ai" and _looks_like_openai_platform_key(self.api_key):
+            hint = " The exported OPENAI_API_KEY looks like an OpenAI Platform key; Core42 Compass requires a Core42 Compass API key for this base URL."
+        return f"Core42 Compass rejected OPENAI_API_KEY as invalid.{hint}"
+
     def embed_texts(self, texts: List[str], model: Optional[str] = None) -> Dict[str, Any]:
         """Embed texts through the same OpenAI-compatible Compass boundary.
 
@@ -264,6 +288,16 @@ class CompassClient:
                     if attempt < self.retries:
                         continue
                     break
+                if _is_invalid_api_key_payload(payload, response.text):
+                    return {
+                        "ok": False,
+                        "status": "unavailable",
+                        "model": selected_model,
+                        "attempts": attempts,
+                        "error_type": "invalid_api_key",
+                        "message": self._invalid_key_message(),
+                        "recoverable": True,
+                    }
                 data = payload.get("data") if isinstance(payload, dict) else None
                 if not isinstance(data, list):
                     last_error = "invalid_embedding_response"
@@ -322,6 +356,7 @@ class CompassClient:
             "base_url_warnings": base_info.get("warnings", []),
             "base_url_errors": base_info.get("errors", []),
             "api_key_configured": bool(self.api_key),
+            "credential_hint": "openai_platform_key_format" if _looks_like_openai_platform_key(self.api_key) else "unknown",
             "model": self.model_fast(),
             "reasoning_model": self.model_reasoning(),
             "sample_mode": truthy(os.environ.get("SAMPLE_MODE", "false")),
@@ -405,6 +440,11 @@ class CompassClient:
                 result["error_type"] = "non_json_models_response"
                 result["message"] = "Compass /models returned a non-JSON response."
                 return False
+            if _is_invalid_api_key_payload(payload, body_text):
+                endpoint["body_snippet"] = _safe_snippet(body_text)
+                result["error_type"] = "invalid_api_key"
+                result["message"] = self._invalid_key_message()
+                return False
             endpoint["ok"] = bool(200 <= response.status_code < 300 and endpoint.get("openai_shape"))
             if not endpoint["ok"]:
                 result["error_type"] = "invalid_models_response"
@@ -445,6 +485,11 @@ class CompassClient:
                 endpoint["body_snippet"] = _safe_snippet(body_text)
                 result["error_type"] = "non_json_chat_response"
                 result["message"] = "Compass /chat/completions returned a non-JSON response."
+                return False
+            if _is_invalid_api_key_payload(payload, body_text):
+                endpoint["body_snippet"] = _safe_snippet(body_text)
+                result["error_type"] = "invalid_api_key"
+                result["message"] = self._invalid_key_message()
                 return False
             content = self._extract_content(payload)
             endpoint["has_content"] = bool(content)
@@ -512,6 +557,13 @@ class CompassClient:
                     last_error = f"HTTP {response.status_code}"
                     if _looks_html(response.text):
                         last_error = "html_response"
+                    else:
+                        try:
+                            payload = response.json()
+                            if _is_invalid_api_key_payload(payload, response.text):
+                                return self.unavailable("invalid_api_key", self._invalid_key_message(), model=selected_model, attempts=attempts)
+                        except ValueError:
+                            pass
                     if attempt < self.retries:
                         continue
                     break

@@ -39,6 +39,8 @@ const { findSimilarCases, getControlSuggestions, learningMemoryHealth, recordRev
 const { authHealth, authorizeAdminMutation, authorizeRequest } = require('./lib/rbac');
 const { checkRateLimit } = require('./lib/rateLimiter');
 const { backendRelayHandler } = require('./api/_backendRelay');
+const logsApiHandler = require('./api/logs');
+const compassProbeApiHandler = require('./api/compass/probe');
 
 const PORT = Number(process.env.PORT || 3020);
 const PUBLIC_ROOT = path.join(__dirname, 'public');
@@ -126,6 +128,11 @@ async function handleLocalBackendRelay(req, res, url) {
   await backendRelayHandler(req, localRelayResponse(res));
 }
 
+async function handleLocalApiHandler(handler, req, res, url) {
+  req.query = queryObject(url.searchParams);
+  await handler(req, localRelayResponse(res));
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || '127.0.0.1'}`);
 
@@ -167,6 +174,16 @@ const server = http.createServer(async (req, res) => {
           detail: error instanceof Error ? error.message : String(error || 'Unknown metadata error')
         });
       }
+      return;
+    }
+
+    if (req.method === 'GET' && (url.pathname === '/logs' || url.pathname === '/api/logs')) {
+      await handleLocalApiHandler(logsApiHandler, req, res, url);
+      return;
+    }
+
+    if (req.method === 'GET' && (url.pathname === '/compass/probe' || url.pathname === '/api/compass/probe')) {
+      await handleLocalApiHandler(compassProbeApiHandler, req, res, url);
       return;
     }
 
