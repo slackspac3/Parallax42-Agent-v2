@@ -240,8 +240,20 @@ const councilVisualAgents = [
   { id: 'packager', label: 'Audit Packager', short: 'Audit', x: 21, y: 70, svgX: 88, svgY: 300, handoff: 'Packages decision, trace, evidence IDs, and exports.' }
 ];
 
+const councilRunAnimationFrames = [
+  { id: 'intake', detail: 'extracting facts', handoff: 'Case facts -> obligation mapping' },
+  { id: 'obligations', detail: 'mapping domains', handoff: 'Applicable domains -> evidence retrieval' },
+  { id: 'evidence', detail: 'retrieving proof', handoff: 'Citation-ready evidence -> control review' },
+  { id: 'controls', detail: 'challenging gaps', handoff: 'Unresolved gaps -> reviewer actions' },
+  { id: 'review', detail: 'validating boundary', handoff: 'Human-review boundary -> audit packaging' },
+  { id: 'packager', detail: 'sealing trace', handoff: 'Decision, trace, and evidence IDs -> review pack' }
+];
+
 let councilFocusAgent = 'intake';
 let lastCouncilActivity = defaultAgentActivity;
+let councilRunAnimationTimer = null;
+let councilRunAnimationActive = false;
+let councilRunAnimationFrameIndex = 0;
 
 const agentLabels = {
   runtime_router: 'Runtime Router',
@@ -2585,7 +2597,47 @@ function buildCouncilAgentViews(items = defaultAgentActivity) {
   });
 }
 
-function renderAgentActivity(items = defaultAgentActivity) {
+function buildCouncilRunAnimationItems(activeFrameIndex = 0) {
+  const boundedIndex = Math.max(0, Math.min(councilRunAnimationFrames.length - 1, activeFrameIndex));
+  return councilRunAnimationFrames.map((frame, index) => {
+    const agent = councilVisualAgents.find((item) => item.id === frame.id) || {};
+    return {
+      id: frame.id,
+      label: agent.label || titleCase(frame.id),
+      detail: index < boundedIndex ? 'validated' : index === boundedIndex ? frame.detail : 'queued',
+      handoff: frame.handoff,
+      status: index < boundedIndex ? 'complete' : index === boundedIndex ? 'active' : 'queued'
+    };
+  });
+}
+
+function stopCouncilRunAnimation() {
+  if (councilRunAnimationTimer) {
+    window.clearInterval(councilRunAnimationTimer);
+    councilRunAnimationTimer = null;
+  }
+  councilRunAnimationActive = false;
+}
+
+function startCouncilRunAnimation(context = {}) {
+  stopCouncilRunAnimation();
+  councilRunAnimationActive = true;
+  councilRunAnimationFrameIndex = 0;
+  if (typeof setIntelRailTab === 'function') setIntelRailTab('council');
+  const renderFrame = () => {
+    const items = buildCouncilRunAnimationItems(councilRunAnimationFrameIndex);
+    const currentFrame = councilRunAnimationFrames[councilRunAnimationFrameIndex] || councilRunAnimationFrames[0];
+    renderAgentActivity(items, {
+      animationSource: context.source || 'council_run',
+      handoff: currentFrame?.handoff || ''
+    });
+    councilRunAnimationFrameIndex = (councilRunAnimationFrameIndex + 1) % councilRunAnimationFrames.length;
+  };
+  renderFrame();
+  councilRunAnimationTimer = window.setInterval(renderFrame, 1200);
+}
+
+function renderAgentActivity(items = defaultAgentActivity, renderOptions = {}) {
   if (!agentActivity) return;
   lastCouncilActivity = items;
   const views = buildCouncilAgentViews(items);
@@ -2598,10 +2650,14 @@ function renderAgentActivity(items = defaultAgentActivity) {
   }
   const focus = views.find((item) => item.id === councilFocusAgent) || active;
   const completed = views.filter((item) => item.status === 'complete').length;
-  const noActiveCase = activeRunMode === 'chat' && workspaceView === 'chat' && !hasChatContext() && !uploadedEvidence.length && !lastRuns.chat?.ok;
+  const noActiveCase = !councilRunAnimationActive && activeRunMode === 'chat' && workspaceView === 'chat' && !hasChatContext() && !uploadedEvidence.length && !lastRuns.chat?.ok;
   const isRunActive = !noActiveCase && views.some((item) => item.status === 'active');
   const activeLabel = noActiveCase ? 'Council' : active?.status === 'active' ? active.label : 'Decision core';
   const activitySummary = noActiveCase ? 'queued for intake' : active?.status === 'active' ? 'is working' : 'is ready';
+  const currentHandoff = renderOptions.handoff
+    || (items || []).find((item) => item.id === active?.id)?.handoff
+    || active?.handoff
+    || 'Specialists pass only validated signals to the deterministic decision owner.';
   agentActivity.innerHTML = `
     <details class="council-trace-details">
       <summary>
@@ -2615,6 +2671,13 @@ function renderAgentActivity(items = defaultAgentActivity) {
           <strong>${escapeHtml(activeLabel)} ${escapeHtml(activitySummary)}</strong>
         </div>
         <small>Deterministic specialist validation</small>
+      </div>
+      <div class="council-handoff-strip" aria-live="polite">
+        <span class="council-handoff-dot ${isRunActive ? 'is-active' : ''}"></span>
+        <div>
+          <strong>${escapeHtml(activeLabel)}</strong>
+          <small>${escapeHtml(currentHandoff)}</small>
+        </div>
       </div>
       <div class="constellation-stage" aria-label="Interactive deterministic council map">
         <svg class="constellation-svg" viewBox="0 0 640 430" aria-hidden="true">
@@ -4124,6 +4187,7 @@ function renderRunResult(result, options = {}) {
   const finalVisible = options.finalVisible !== false;
 
   if (!result.ok) {
+    stopCouncilRunAnimation();
     document.body.classList.remove('has-decision-output');
     document.body.dataset.runComplete = 'false';
     lastRun = result;
@@ -4149,6 +4213,7 @@ function renderRunResult(result, options = {}) {
   }
 
   if (finalVisible) {
+    stopCouncilRunAnimation();
     registerCompletedRun(options.runMode || activeRunMode, result);
   }
   document.body.classList.toggle('has-decision-output', Boolean(finalVisible && result.ok));
@@ -4737,6 +4802,7 @@ function buildExecReviewHtml(result = lastRun) {
 
 function playResult(result, options = {}) {
   clearPlaybackTimers();
+  stopCouncilRunAnimation();
   const stages = getStages(result);
   const runMode = options.runMode || activeRunMode;
   renderRun(result, { stageIndex: -1, activeIndex: 0, finalVisible: false, runMode });
@@ -4753,6 +4819,7 @@ function playResult(result, options = {}) {
 async function runAgent(payload, options = {}) {
   const runMode = options.mode || activeRunMode;
   clearPlaybackTimers();
+  startCouncilRunAnimation({ source: 'run_button' });
   sampleRun.disabled = true;
   document.body.dataset.runComplete = 'false';
   sampleRun.textContent = 'Running';
@@ -4762,14 +4829,6 @@ async function runAgent(payload, options = {}) {
   stageStatus.textContent = 'Runtime Router';
   stageOutput.textContent = 'Selecting the configured orchestration path.';
   flowProgress.style.width = '4%';
-  renderAgentActivity([
-    { label: 'Router', detail: 'selecting runtime', status: 'active' },
-    { label: 'Intake Agent', detail: 'queued', status: 'queued' },
-    { label: 'Obligation Mapper', detail: 'queued', status: 'queued' },
-    { label: 'Evidence Examiner', detail: 'queued', status: 'queued' },
-    { label: 'Risk & Controls', detail: 'queued', status: 'queued' },
-    { label: 'Responsible AI', detail: 'queued', status: 'queued' }
-  ]);
   try {
     const result = await apiFetch('/api/agent/run', {
       method: 'POST',
@@ -4778,6 +4837,7 @@ async function runAgent(payload, options = {}) {
     });
     if (result?.ok) registerCompletedRun(runMode, result);
     if (runMode !== activeRunMode) {
+      stopCouncilRunAnimation();
       lastRuns[runMode] = result;
       loadAuditLog();
       return result;
@@ -4795,6 +4855,7 @@ async function runAgent(payload, options = {}) {
       message: error instanceof Error ? error.message : 'Run failed'
     };
     if (runMode !== activeRunMode) {
+      stopCouncilRunAnimation();
       lastRuns[runMode] = failure;
       loadAuditLog();
       return failure;
@@ -4862,6 +4923,9 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   updateChatInputCounter();
   setRunMode('chat', { skipRender: true });
   clearPlaybackTimers();
+  if (options.forceRun) {
+    startCouncilRunAnimation({ source: 'chat_run' });
+  }
   if (!options.silentUser && !options.forceRun && hasSubstantiveReviewRequestText(message)) {
     mergeChatCaseDraft({ caseRequestStarted: true });
   }
@@ -4900,14 +4964,16 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   stageKicker.textContent = 'NLP intake';
   stageStatus.textContent = 'Parsing message';
   stageOutput.textContent = 'Extracting case fields, risk signals, integrations, and evidence clues.';
-  renderAgentActivity([
-    { label: 'Intake Agent', detail: 'reading', status: 'active' },
-    { label: 'Obligation Mapper', detail: options.forceRun ? 'preparing' : 'queued', status: options.forceRun ? 'active' : 'queued' },
-    { label: 'Evidence Examiner', detail: uploadedEvidence.length ? 'attached' : 'queued', status: uploadedEvidence.length ? 'complete' : 'queued' },
-    { label: 'Risk & Controls', detail: 'queued', status: 'queued' },
-    { label: 'Responsible AI', detail: 'queued', status: 'queued' },
-    { label: 'Audit Packager', detail: 'queued', status: 'queued' }
-  ]);
+  if (!options.forceRun) {
+    renderAgentActivity([
+      { label: 'Intake Agent', detail: 'reading', status: 'active' },
+      { label: 'Obligation Mapper', detail: 'queued', status: 'queued' },
+      { label: 'Evidence Examiner', detail: uploadedEvidence.length ? 'attached' : 'queued', status: uploadedEvidence.length ? 'complete' : 'queued' },
+      { label: 'Risk & Controls', detail: 'queued', status: 'queued' },
+      { label: 'Responsible AI', detail: 'queued', status: 'queued' },
+      { label: 'Audit Packager', detail: 'queued', status: 'queued' }
+    ]);
+  }
 
   try {
     const serverChunkCount = indexedChunkCountForRetrieval();
@@ -5028,6 +5094,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
       playResult(result.run, { runMode: 'chat' });
       loadAuditLog();
     } else {
+      if (options.forceRun) stopCouncilRunAnimation();
       renderConversationState(result);
     }
     return result;
