@@ -1,6 +1,17 @@
 # Benchmark Report
 
-## Current Addendum: 2026-06-06
+## Current Addendum: 2026-06-07
+
+Latest pushed behavior update: commit `2215cf4 Harden post-council conversation updates`.
+
+| Area | Current status | Evidence / boundary |
+| --- | --- | --- |
+| Post-council continuation | PASS | Chat retains uploaded evidence and last council result, classifies clear follow-up facts as additions/replacements, asks add-or-replace clarification for ambiguous material updates, and marks stale results pending rerun. |
+| Active-question routing | PASS | Terse answers are mapped to the latest visible assistant question before stale hidden backend state; data-category answers such as `all of the above` are accepted when the visible question asks for data categories. |
+| Contextual high-risk gates | PASS | Sanctions-sensitive geographies trigger sanctions/restricted-party screening without inventing export end-use certificate questions unless the case is actually export-control-related. |
+| Validation | PASS | Local `npm run qa` passed with 204 unit tests, e2e mock, benchmark, and CrewAI dry-run checks. GitHub `Agentathon Preflight` and `CI` both passed for commit `2215cf4`; Agentathon Preflight included Docker smoke. |
+
+## Prior Addendum: 2026-06-06
 
 This addendum reflects the latest pushed submission state after the Compass model-boundary and FastAPI/public-demo documentation updates.
 

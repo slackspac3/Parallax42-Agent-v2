@@ -46,15 +46,15 @@ Automated evaluator-compatible route:
 python run.py
 curl -sS -X POST http://127.0.0.1:8000/run \
   -H "content-type: application/json" \
-  --data @input_examples/example_1_healthcare_analytics.json
+  --data @input_examples/example_1.json
 ```
 
-`run.py` is a compatibility wrapper over `server.js`, not a FastAPI rewrite. It exposes `GET /health`, `GET /metadata`, and `POST /run` on port `8000` while preserving the same Node/CommonJS compliance runtime.
+`run.py` is the root FastAPI Agentathon evaluator wrapper. It exposes `GET /health`, `GET /metadata`, `GET /logs`, `GET /compass/probe`, and `POST /run` on `0.0.0.0:8000`, then delegates deterministic execution to the existing Node/CommonJS compliance runtime through the Agentathon bridge.
 
 Compass compatibility:
 
 - Preferred Parallax42 path: `COMPASS_GATEWAY_BASE_URL` plus `COMPASS_GATEWAY_TOKEN`.
-- Direct evaluator alias path: `OPENAI_BASE_URL=https://compass.core42.ai/v1` plus `OPENAI_API_KEY`.
+- Direct evaluator path: `OPENAI_BASE_URL=https://api.core42.ai/v1` plus `OPENAI_API_KEY`, following the current Core42 Compass API documentation.
 - Embeddings remain `text-embedding-3-large`; final compliance decisions remain deterministic.
 
 ## Demo Path
@@ -66,7 +66,8 @@ Compass compatibility:
 5. Let the agent identify missing context, evidence IDs, obligations, and blockers.
 6. Run the council.
 7. Review the decision, domain coverage, gaps, controls, citations, trace, and human-approval status.
-8. Generate or export the executive review pack.
+8. Continue the chat with a material update if useful. The product retains the prior evidence/result, distinguishes additions from replacements, marks stale council output for rerun, and asks clarification before ambiguous overwrites.
+9. Generate or export the executive review pack.
 
 ## What Judges Should Evaluate
 
@@ -94,18 +95,20 @@ Implemented:
 - Dry-run CrewAI-shaped orchestration checks.
 - Deterministic compliance engine for final decisions.
 - Optional Compass gateway client for LLM and embeddings.
+- Root FastAPI Agentathon wrapper plus Dockerfile and GitHub Actions Docker smoke for `/health` and `/run`.
 - CourtListener, CUAD-compatible, NIST, and legacy CAP import/index paths for advisory Reference Intelligence memory.
-- Local vector store default with optional Qdrant REST provider when configured.
+- Local vector store fallback with optional Qdrant REST provider when configured; deployed product path uses server-side Qdrant through Vercel/droplet services.
 - Local append-only hash-chained JSONL audit.
 
 Not implemented or not claimed:
 
-- FastAPI application in this repository.
 - React, Vite, or `ui/src`.
-- Redis, Postgres, Celery, durable queues, or Docker runtime.
+- Redis, Postgres, Celery, or durable queues.
 - OpenClaw.
-- Implemented local OCR/parser pipeline.
+- Arbitrary scanned-PDF OCR without external parser/OCR configuration.
 - Production durable audit or vector persistence unless separately configured.
+- Public hosted FastAPI URL unless this repo Dockerfile is deployed to a public container host and `/metadata`, `/logs`, `/compass/probe`, and `/run` are verified.
+- Enforced RBAC unless production identity env vars are configured and tested.
 
 ## Supporting Docs
 

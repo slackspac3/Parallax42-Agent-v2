@@ -19,6 +19,8 @@ The online product demo uses Vercel for server-side product APIs and the Compass
 
 Final submission positioning: the judge-facing product demo is online-first. The GitHub Pages cockpit calls Vercel product APIs, which keep Compass, Qdrant, and backend service credentials server-side. The local Docker/FastAPI path remains the evaluator reproduction path for `run.py`, `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run`. Compass and retrieval outputs are advisory; the Deterministic Decision Owner remains final authority.
 
+The hosted chat also supports post-council continuation. If a user adds new material context after a council result, the app retains the uploaded fixture/evidence and prior result, records whether the new answer is an addition or replacement, and marks the old result pending rerun when needed. Ambiguous changes such as a terse new geography ask an add-or-replace clarification before the case is mutated. This is a product demo behavior; the Agentathon `/run` evaluator path remains a single non-interactive request/response contract.
+
 ### FastAPI Evaluator Status
 
 The submitted repository includes the required FastAPI evaluator surface, but the public browser demo is not served by FastAPI.
@@ -49,6 +51,13 @@ curl -X POST https://parallax42-compliance-intelligence.vercel.app/api/evidence/
 ```
 
 Expected indicators are `provider=qdrant`, `storage=server_side_qdrant_vector_db`, `collection=p42_compliance_evidence`, `model=text-embedding-3-large`, `browserEmbeddingsRetained=false`, and at least one sanitized match.
+
+Online continuation smoke:
+
+1. Run any case through the product council.
+2. Continue the chat with `I want to deploy this in Syria as well`.
+3. Confirm the right rail shows `Case updated after council`, prior evidence remains attached, sanctions/restricted-party screening becomes the next contextual gate, and the prior council result is marked for rerun.
+4. Repeat with a terse ambiguous answer such as `Syria`; the expected behavior is an add-or-replace clarification rather than a silent overwrite.
 
 ## Secondary Local QA
 

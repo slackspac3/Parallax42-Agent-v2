@@ -191,6 +191,16 @@ from the US
 
 The expected behavior is that the chat records the export-origin jurisdiction, keeps the import geography as UAE/Singapore, and advances instead of repeating the same question. If an unrelated answer is given, the chat should say it could not map the answer to the active question and ask for clarification again.
 
+Post-council continuation behavior is intentionally stateful. After the council has run, follow-up chat turns keep the uploaded evidence, prior case facts, and prior decision result attached to the same case. If the user adds a material fact such as an additional geography, new AI user group, or changed scope, the cockpit marks the previous result as pending rerun instead of silently treating it as current. Clear additive language such as `also`, `as well`, or `in addition` appends to the prior case. Clear replacement language such as `replace`, `instead`, or `change to` replaces the prior value. Ambiguous post-council answers ask whether the new fact should be added or used as a replacement before the case is mutated.
+
+Suggested continuation smoke after a council run:
+
+```text
+I want to deploy this in Syria as well
+```
+
+Expected behavior: the prior evidence stays attached, the right rail shows `Case updated after council`, sanctions/restricted-party screening becomes the next contextual gate, and the prior council result is marked for rerun. For a terse ambiguous answer such as `Syria`, expected behavior is an add-or-replace clarification before the case changes.
+
 To test online Qdrant-backed evidence memory without exposing any Qdrant key, use the Vercel product API. The server holds the encrypted Qdrant credentials and returns only sanitized evidence snippets:
 
 ```bash

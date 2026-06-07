@@ -2,7 +2,19 @@
 
 Generated from a fresh local benchmark of `/Users/bhavuk.arora/Parallax42-Compliance-Intelligence-Agent` on 2026-06-05. This is an evidence report, not a product-change log.
 
-## 2026-06-06 Current Supersession Addendum
+## 2026-06-07 Current Supersession Addendum
+
+The rest of this file preserves earlier benchmark evidence. The following items supersede older status notes:
+
+| Area | Current status | Evidence / interpretation |
+|---|---|---|
+| Latest behavior commit | `2215cf4 Harden post-council conversation updates` | Pushed to `main`; working tree was clean after push. |
+| Post-council continuation | PASS | The product chat now retains uploaded evidence and prior council output after a run. Material follow-up facts become auditable case amendments; clear additive language appends, clear replacement language replaces, and ambiguous updates ask add-or-replace before mutation. |
+| Context-aware follow-ups | PASS | The state layer maps answers to the latest visible question, handles data-category answers such as `all of the above`, and keeps high-risk gates contextual to the case domain. |
+| CI status | PASS | GitHub `Agentathon Preflight` and `CI` both passed for commit `2215cf4`; the Agentathon run included Docker smoke. |
+| Local validation | PASS | `npm run qa`, `python scripts/agentathon_preflight.py`, and `python scripts/agentathon_preflight.py --run-api` passed after the continuation update. |
+
+## 2026-06-06 Supersession Addendum
 
 The rest of this file preserves the earlier benchmark evidence. The following items supersede older status notes:
 
@@ -342,10 +354,10 @@ Interpretation:
 | Selected default chat model | `gpt-4.1` |
 | Selected reasoning model | `gpt-5.1` |
 | Selected embedding model | `text-embedding-3-large` |
-| Safe claim | Code is wired for direct Compass through `OPENAI_API_KEY` and `OPENAI_BASE_URL=https://compass.core42.ai/v1`; diagnostics exist. |
+| Safe claim | Code is now wired for direct Compass through `OPENAI_API_KEY` and `OPENAI_BASE_URL=https://api.core42.ai/v1`; diagnostics exist. The `compass.core42.ai/v1` probe above is historical evidence from the earlier prompt-era default. |
 | Unsafe claim | Live direct Compass has been verified. |
 
-The server-side probe found local configuration and attempted direct Compass, but the response was HTML/405, not a valid OpenAI-compatible JSON response. The CLI doctor did not run a live proof because `OPENAI_BASE_URL` was not exported in the shell. A strict live proof remains a P0 blocker if the final screen requires confirmed direct Compass.
+The server-side probe found local configuration and attempted direct Compass through the earlier prompt-era base, but the response was HTML/405, not a valid OpenAI-compatible JSON response. The CLI doctor did not run a live proof because `OPENAI_BASE_URL` was not exported in the shell. A strict live proof remains a P0 blocker if the final screen requires confirmed direct Compass; use the current documented base `https://api.core42.ai/v1`.
 
 ## 9. Runtime Variability / Hardcoding Benchmark
 
@@ -398,14 +410,14 @@ P0 blockers:
 
 | Blocker | Why it matters | Exact command | Current status |
 |---|---|---|---|
-| Direct Compass strict verification | Official screening may treat live Compass as a hard gate. | `OPENAI_API_KEY=... OPENAI_BASE_URL=https://compass.core42.ai/v1 python scripts/compass_doctor.py --strict` | Not verified; API probe returned HTML/405. |
+| Direct Compass strict verification | Official screening may treat live Compass as a hard gate. | `OPENAI_API_KEY=... OPENAI_BASE_URL=https://api.core42.ai/v1 python scripts/compass_doctor.py --strict` | Not verified in this benchmark; older probe against `compass.core42.ai/v1` returned HTML/405. |
 
 P1 score lifts:
 
 | Lift | Why it matters | Exact command |
 |---|---|---|
 | Record final demo | Highest presentation lift; shows judge-visible value. | Use online GitHub links, CI Docker proof, product cockpit fixture upload, and `/run` trace. |
-| Qdrant smoke | Converts RAG from implemented fallback to live durable evidence memory. | `P42_VECTOR_STORE_PROVIDER=qdrant QDRANT_URL=... OPENAI_API_KEY=... OPENAI_BASE_URL=https://compass.core42.ai/v1 python scripts/qdrant_smoke.py` |
+| Qdrant smoke | Converts RAG from implemented fallback to live durable evidence memory. | `P42_VECTOR_STORE_PROVIDER=qdrant QDRANT_URL=... OPENAI_API_KEY=... OPENAI_BASE_URL=https://api.core42.ai/v1 python scripts/qdrant_smoke.py` |
 | Strict Compass in `/run` | Shows non-sample advisory path is truly live. | `REQUIRE_COMPASS=true python scripts/agentathon_preflight.py --run-api --strict-compass` |
 
 P2 nice-to-have:
@@ -436,7 +448,7 @@ Next exact command to run if a real Compass key is available:
 
 ```bash
 OPENAI_API_KEY=<Compass key> \
-OPENAI_BASE_URL=https://compass.core42.ai/v1 \
+OPENAI_BASE_URL=https://api.core42.ai/v1 \
 MODEL_FAST=gpt-4.1 \
 MODEL_REASONING=gpt-5.1 \
 python scripts/compass_doctor.py --strict
@@ -468,6 +480,6 @@ SCORE_WITH_QDRANT: about 84/100
 READY_TO_RECORD_DEMO: yes
 READY_TO_SUBMIT: partial/risky until direct Compass strict verification passes
 P0_BLOCKERS: direct Compass strict verification
-NEXT_STEP: run python scripts/compass_doctor.py --strict with real OPENAI_API_KEY and OPENAI_BASE_URL=https://compass.core42.ai/v1
+NEXT_STEP: run python scripts/compass_doctor.py --strict with real OPENAI_API_KEY and OPENAI_BASE_URL=https://api.core42.ai/v1
 END_SUMMARY
 ```

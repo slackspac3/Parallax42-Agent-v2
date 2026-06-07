@@ -268,6 +268,24 @@ Result: exportOriginJurisdiction = US, import geography remains UAE/Singapore, n
 
 This prevents unrelated responses from being treated as compliance facts and keeps the conversation adaptive while still auditable.
 
+After a council run, the chat treats new information as a case amendment rather than an implicit fresh case. The retained state includes uploaded evidence metadata, indexed evidence context, last council run summary, case version, material changes, and pending clarification state. Update behavior is:
+
+```text
+clear addition: "also", "as well", "in addition", "include"
+  -> append the new geography/scope/data category to the existing case
+  -> mark the previous council result as superseded_pending_rerun when material
+
+clear replacement: "replace", "instead", "change to", "only"
+  -> replace the prior field
+  -> mark the previous council result as superseded_pending_rerun when material
+
+ambiguous post-council update: "Syria" or "external customers"
+  -> ask whether the answer should be added or used as a replacement
+  -> do not mutate the prior case until the user answers
+```
+
+The right rail surfaces this as `Case updated after council` and offers `Rerun council`. Rerun is explicit; ordinary follow-up chat does not silently overwrite the previous decision memo or auto-run a new council result.
+
 ## 8. Evidence RAG Memory
 
 Evidence memory supports two providers:
@@ -444,6 +462,7 @@ Safe claims when the current checks pass:
 - Multi-agent traces show delegation, retry/fallback, critique, validation, escalation, shared context, and deterministic final ownership.
 - Output examples are generated from runtime examples and are not loaded as canned responses.
 - Product chat validates active clarifying answers before advancing.
+- Product chat retains evidence and prior results after a council run; material follow-up changes are recorded as add/replace case amendments and require rerun before the old result is treated as current.
 - Deployed product evidence indexing/search uses Qdrant through Vercel and the droplet-hosted collection.
 - Local/FastAPI Qdrant is env-dependent and falls back when Qdrant or embeddings are unavailable.
 - Live CrewAI is optional, not default.

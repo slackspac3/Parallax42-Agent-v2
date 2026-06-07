@@ -18,6 +18,7 @@ Strengthen compliance visibility across enterprise workflows by turning intake, 
 - Blocking-gap identification with action owners expressed as concrete controls.
 - Human-review decision posture: ready, conditionally ready, or not ready.
 - Multi-agent trace event output for intake, delegation, evidence retrieval, retry/fallback, specialist critique, validation, learning/precedent, deterministic decisioning, and audit packaging.
+- Context-aware post-council continuation: follow-up chat retains uploaded evidence and the prior result, distinguishes additions from replacements for material facts, asks clarification when ambiguous, and marks stale council output for explicit rerun.
 - Hash-chained audit records with integrity verification for run history and reviewer traceability.
 - Route-level RBAC policy and Entra-compatible JWT validation code exist, but submitted/demo mode is audit-mode unless enterprise identity env vars are configured and verified.
 - Deployed product evidence for smart intake, document/fixture analysis, Compass gateway boundary, Qdrant-backed evidence memory, admin health, and golden evals.
@@ -32,6 +33,7 @@ Strengthen compliance visibility across enterprise workflows by turning intake, 
 - Separates hosted product AI from evaluator reproduction: the browser demo uses Vercel server-side Compass routes, while the FastAPI wrapper preserves the direct `OPENAI_API_KEY` / `OPENAI_BASE_URL` contract for `/run` diagnostics.
 - Uses the documented Core42 Compass API base `https://api.core42.ai/v1` with `gpt-4.1` for fast structured work, `gpt-5.1` for deeper advisory/CrewAI specialist reasoning, and `text-embedding-3-large` for embeddings; the deployed demo uses the project owner's own server-side Compass credentials, not a committed or assumed Agentathon-issued key.
 - Keeps deterministic policy as final authority; Compass, Qdrant retrieval, governed learning memory, and optional CrewAI remain advisory inputs.
+- Preserves the user’s case narrative across messy follow-ups: short answers are mapped to the latest visible question, spelling mistakes are clarified, high-risk contextual gates are asked before council execution, and post-council updates are auditable amendments rather than silent overwrites.
 
 ## Current Limitations
 
