@@ -50,6 +50,14 @@ jobs:
           OPENAI_API_KEY: dummy
           OPENAI_BASE_URL: https://api.core42.ai/v1
 
+      - name: Run strict Compass doctor
+        run: python scripts/compass_doctor.py --strict
+        env:
+          SAMPLE_MODE: "false"
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL || 'https://api.core42.ai/v1' }}
+          MODEL_FAST: ${{ vars.MODEL_FAST || 'gpt-4.1' }}
+
       - name: Upload Agentathon logs
         if: always()
         uses: actions/upload-artifact@v4
