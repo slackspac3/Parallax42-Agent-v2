@@ -784,6 +784,48 @@ test('conversation records AI usage scope answers and does not repeat the answer
   assert.ok(result.questions.some((question) => /geography|regulatory perimeter/i.test(question)));
 });
 
+test('conversation maps shared SaaS hosting answer to visible AI hosting question', () => {
+  const visibleQuestion = 'To go deeper on privacy and retention, the next useful step would be to confirm: does Aster host this as a multi-tenant cloud service, or will it run in a dedicated/private environment for your organization?';
+  const staleQuestion = 'Which area do you want to prioritize in the review?';
+  const result = processConversation({
+    message: 'shared saas environment',
+    eventType: 'user_answer',
+    activeQuestion: staleQuestion,
+    history: [
+      { role: 'assistant', text: visibleQuestion, displayedQuestion: visibleQuestion },
+      { role: 'user', text: 'shared saas environment', answeringQuestion: staleQuestion }
+    ],
+    caseDraft: {
+      supplierName: 'Aster Cognitive Cloud',
+      businessUnit: 'Legal And Privacy',
+      geography: 'UAE and US',
+      brief: 'Review the Cloud AI Model Services SOW for legal and compliance contract review.',
+      activeQuestion: staleQuestion,
+      questions: [staleQuestion],
+      askedQuestions: [visibleQuestion],
+      documents: [{
+        evidenceId: 'SOW-01',
+        title: 'Cloud AI Model Services Statement Of Work',
+        extractionStatus: 'backend_parsed',
+        indexStatus: 'indexed',
+        summary: 'Cloud AI Model Services SOW for private assistant, retrieval, document intelligence, policy Q&A, meeting summaries, and compliance evidence extraction.',
+        signals: ['model governance', 'responsible-ai']
+      }],
+      evidenceSignals: ['contract document', 'model governance'],
+      riskSignals: ['AI/model use', 'personal data'],
+      aiUsageScope: { audience: 'internal_employees_only' }
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.caseDraft.aiUsageScope.audience, 'internal_employees_only');
+  assert.equal(result.caseDraft.aiUsageScope.hostingModel, 'multi_tenant_saas');
+  assert.equal(result.caseDraft.recentlyAnsweredFields.ai_usage_scope, 2);
+  assert.equal(result.caseDraft.answerValidation?.status, undefined);
+  assert.doesNotMatch(result.reply, /could not map/i);
+  assert.ok(!result.questions.some((question) => /multi-tenant cloud service|dedicated\/private environment/i.test(question)));
+});
+
 test('conversation records pending active clarification as a known gap instead of re-asking it', () => {
   const originQuestion = 'From which country or export-control jurisdiction will the supplier ship the AI accelerator hardware (for example, US, EU, UK, or another country)?';
   const result = processConversation({
