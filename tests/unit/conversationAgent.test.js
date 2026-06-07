@@ -1386,6 +1386,46 @@ test('conversation maps all of them to uploaded agreement review focus question'
   assert.ok(!result.questions.some((question) => /which area|prioritize|focus/i.test(question)));
 });
 
+test('conversation maps focus on all the areas to active review focus question', () => {
+  const focusQuestion = 'For this Cloud AI Model Services SOW, should the review focus primarily on data handling and retention, responsible AI and model governance, security and monitoring, or should all of these areas be treated as equally in-scope?';
+  const result = processConversation({
+    message: 'Focus on all the areas',
+    eventType: 'user_answer',
+    activeQuestion: focusQuestion,
+    activeQuestionField: 'review_focus',
+    history: [
+      { role: 'assistant', text: focusQuestion, displayedQuestion: focusQuestion, displayedQuestionField: 'review_focus' },
+      { role: 'user', text: 'Focus on all the areas', answeringQuestion: focusQuestion, answeringQuestionField: 'review_focus' }
+    ],
+    caseDraft: {
+      supplierName: 'Aster Cognitive Cloud',
+      businessUnit: 'Compliance',
+      geography: '',
+      brief: 'Review Cloud AI Model Services Statement of Work for private assistant, retrieval, document intelligence, policy Q&A, meeting summaries, and compliance evidence extraction.',
+      activeQuestion: focusQuestion,
+      activeQuestionField: 'review_focus',
+      questions: [focusQuestion],
+      askedQuestions: [focusQuestion],
+      documents: [{
+        evidenceId: 'SOW-01',
+        title: 'Cloud AI Model Services Statement Of Work',
+        extractionStatus: 'backend_parsed',
+        signals: ['responsible-ai', 'privacy', 'security monitoring']
+      }],
+      evidenceSignals: ['contract document', 'responsible-ai', 'privacy', 'security monitoring'],
+      riskSignals: ['AI/model use', 'personal data', 'cloud security', 'human oversight'],
+      missingEvidence: ['independent robustness results', 'final RAI assessment', 'retention approval', 'data owner approval']
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.caseDraft.answerValidation?.status, undefined);
+  assert.equal(result.caseDraft.businessUnit, 'Compliance');
+  assert.equal(result.caseDraft.reviewFocus, 'all listed review areas');
+  assert.equal(result.caseDraft.recentlyAnsweredFields.review_focus > 0, true);
+  assert.doesNotMatch(result.reply, /could not map/i);
+  assert.ok(!result.questions.some((question) => /should the review focus|focus primarily|all of these areas/i.test(question)));
+});
+
 test('post-council ambiguous geography update asks add or replace before mutating case', () => {
   const result = processConversation({
     message: 'Syria',
