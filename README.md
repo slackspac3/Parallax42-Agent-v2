@@ -26,6 +26,7 @@ The judge demo is intended to be run online first:
 | Demo surface | Link | Purpose |
 | --- | --- | --- |
 | GitHub Pages cockpit | <https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/> | Primary browser demo for chat intake, fixture upload, evidence memory, council run, and review pack. |
+| Public evaluator API | <https://agentathon-evaluator-api-production.up.railway.app> | Public FastAPI deployment from this clone for `GET /health`, `GET /metadata`, `GET /logs`, `GET /compass/probe`, and `POST /run`. |
 | Vercel product API health | <https://parallax42-compliance-intelligence.vercel.app/api/health> | Shows hosted runtime status, Compass gateway configuration, Qdrant feature status, parser relay status, and advisory runtime flags without exposing secrets. |
 | GitHub source | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone> | Root `run.py`, Dockerfile, examples, logs, docs, workflows, and source evidence for this submission clone. |
 | Agentathon Preflight workflow | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/actions/workflows/agentathon-preflight.yml> | Online Docker plus `/health` and `/run` proof for the root FastAPI evaluator wrapper. |
@@ -36,7 +37,8 @@ Final submission positioning:
 
 - The judge-facing product demo is online-first: GitHub Pages cockpit -> Vercel product APIs -> server-side Compass gateway/API boundary -> Ocean/DigitalOcean backend services.
 - The root FastAPI/Docker path remains the evaluator reproduction path: `run.py` exposes `GET /health`, `GET /metadata`, `GET /logs`, `GET /compass/probe`, and `POST /run` on port `8000`.
-- The public Vercel/GitHub Pages demo is not the FastAPI server. The public online proof for FastAPI is the GitHub Actions Docker smoke job, which builds the repo image, starts `python run.py`, and calls `/health` plus `/run` inside CI.
+- The public evaluator API is the Railway FastAPI deployment at `https://agentathon-evaluator-api-production.up.railway.app`. GitHub Pages is static and Vercel hosts product APIs; neither should be described as the evaluator `/run` host.
+- GitHub Actions Docker smoke remains the independent reproducibility proof: it builds the repo image, starts `python run.py`, and calls `/health` plus `/run` inside CI.
 - Compass is used server-side. The browser never receives Compass keys, Qdrant keys, or raw embeddings.
 - The deployed product path uses Compass-backed smart intake/advisory calls and Compass-compatible embeddings through hosted server-side routes. The direct `OPENAI_API_KEY` / `OPENAI_BASE_URL` path is preserved for evaluator-style FastAPI execution and strict diagnostics.
 - Deterministic Decision Owner remains final authority. Compass, governed learning memory, Qdrant retrieval, and optional CrewAI outputs are advisory inputs, not autonomous approvals.
@@ -92,6 +94,7 @@ The intended submission review path is online-first. Reviewers should start with
 | --- | --- | --- |
 | Source repository | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone> | Root `run.py`, `Dockerfile`, `metadata.json`, examples, logs, docs, and workflows are present on `main`. |
 | GitHub Pages cockpit | <https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/> | Static product cockpit loads and uses hosted product routes from `public/config.js`. |
+| Public evaluator API | <https://agentathon-evaluator-api-production.up.railway.app> | Public FastAPI wrapper from this clone exposes `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run` as JSON endpoints. |
 | Vercel product API | <https://parallax42-compliance-intelligence.vercel.app/api/health> | Hosted product runtime reports Compass gateway, Qdrant, parser relay, learning memory, and advisory runtime status. |
 | Agentathon Preflight workflow | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/actions/workflows/agentathon-preflight.yml> | Latest run should show `agentathon-preflight` and `docker-smoke` jobs passing. This is the online proof that Docker builds, the container starts, `GET /health` works, and `POST /run` works in CI sample mode. |
 | CI workflow | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/actions/workflows/ci.yml> | Latest run should pass `npm run qa` after Node, Python, and Playwright setup. |
@@ -102,29 +105,32 @@ The intended submission review path is online-first. Reviewers should start with
 | Output examples | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/tree/main/output_examples> | Runtime-generated outputs differ by case and include trace/log references. |
 | Trace logs | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/tree/main/logs> | JSONL traces show delegation, retry/fallback, critique, validation, escalation, shared context, and final synthesis. |
 
-Important boundary: GitHub Pages is static, so it does not run the root FastAPI `run.py` server or expose `POST /run` from the Pages URL. The online `/run` verification happens in the Agentathon Preflight GitHub Actions workflow, where CI builds the Docker image, starts the container on port `8000`, calls `GET /health`, and posts `input_examples/example_1.json` to `/run`.
+Important boundary: GitHub Pages is static, so it does not run the root FastAPI `run.py` server or expose `POST /run` from the Pages URL. The public `/run` endpoint is the Railway evaluator API. The Agentathon Preflight GitHub Actions workflow is the independent Docker proof: CI builds the image, starts the container on port `8000`, calls `GET /health`, and posts `input_examples/example_1.json` to `/run`.
 
 ### FastAPI Evaluator Hosting Status
 
 | Surface | Status | What it proves | What it does not prove |
 | --- | --- | --- | --- |
 | Root `run.py` in repo | Implemented | The required FastAPI evaluator wrapper exists and starts on `0.0.0.0:8000`. | It is not an internet-hosted URL by itself. |
+| Railway evaluator API | Public proof | The clone's FastAPI wrapper is publicly reachable at `https://agentathon-evaluator-api-production.up.railway.app` with JSON `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run`. | It does not make GitHub Pages or Vercel the evaluator API. |
 | GitHub Actions `agentathon-preflight.yml` | Active proof | Docker builds, `python run.py` starts in the container, `GET /health` works, and `POST /run` works against `input_examples/example_1.json`. | It does not make FastAPI publicly browsable outside the CI job. |
 | GitHub Pages cockpit | Product demo | Browser product experience, chat intake, evidence upload, council view, review pack. | It is static and does not host FastAPI. |
 | Vercel product API | Product runtime | Online Node/Vercel product APIs, Compass gateway, Qdrant-backed evidence memory, remote CrewAI advisory path. | It is not the official root `run.py` FastAPI evaluator API. |
-| Railway/Ocean product backends | Product/backend services only unless redeployed from this repo Dockerfile | Parser/backend/service support. | Do not treat those URLs as Agentathon FastAPI proof unless they expose this repo's `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run` schema. |
+| Ocean/droplet backend | Product/backend services only | Parser/backend/service support. | Do not treat those URLs as Agentathon FastAPI proof unless they expose this repo's `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run` schema. |
 
-This is intentional for the current submission: the repository and Docker workflow satisfy the evaluator shape, while the public demo shows the richer product workflow. If the final judging form explicitly requires a public FastAPI URL in addition to the GitHub repository link, deploy this repo's `Dockerfile` to Railway, Azure Container Apps, or another container host and verify:
+This is intentional for the current submission: Railway exposes the public evaluator API, the repository and Docker workflow prove reproducibility, and the public cockpit shows the richer product workflow. Re-verify the public evaluator before submission:
 
 ```bash
-curl https://<fastapi-host>/health
-curl https://<fastapi-host>/metadata
-curl -X POST https://<fastapi-host>/run \
+curl https://agentathon-evaluator-api-production.up.railway.app/health
+curl https://agentathon-evaluator-api-production.up.railway.app/metadata
+curl https://agentathon-evaluator-api-production.up.railway.app/logs
+curl https://agentathon-evaluator-api-production.up.railway.app/compass/probe
+curl -X POST https://agentathon-evaluator-api-production.up.railway.app/run \
   -H "Content-Type: application/json" \
   -d @input_examples/example_1.json
 ```
 
-Safe claim today: FastAPI is implemented and verified by CI/Docker. Do not claim a public hosted FastAPI endpoint unless that container deployment is added and checked.
+Safe claim today: FastAPI is implemented, publicly hosted on Railway, and independently verified by CI/Docker. Keep the boundary explicit: the Railway URL is evaluator API proof; GitHub Pages is product cockpit; Vercel is product API.
 
 ### Secondary: Local Run
 
@@ -190,6 +196,17 @@ from the US
 ```
 
 The expected behavior is that the chat records the export-origin jurisdiction, keeps the import geography as UAE/Singapore, and advances instead of repeating the same question. If an unrelated answer is given, the chat should say it could not map the answer to the active question and ask for clarification again.
+
+The current conversation payload carries stable active question metadata (`activeQuestionId`, `activeQuestionField`, and `questionMetadata`) so terse or natural answers are mapped by field context rather than only by matching the visible question text. Regression coverage includes answers such as `all of them` for review focus and `shared saas environment` for hosting model. For demo reliability, still use complete answers when recording:
+
+```text
+Primary use case is legal and compliance contract review.
+Geography is UAE and US.
+Internal employees only.
+Only internal contract templates.
+Shared multi-tenant SaaS environment.
+Not for HR decisions or automated compliance approvals.
+```
 
 Post-council continuation behavior is intentionally stateful. After the council has run, follow-up chat turns keep the uploaded evidence, prior case facts, and prior decision result attached to the same case. If the user adds a material fact such as an additional geography, new AI user group, or changed scope, the cockpit marks the previous result as pending rerun instead of silently treating it as current. Clear additive language such as `also`, `as well`, or `in addition` appends to the prior case. Clear replacement language such as `replace`, `instead`, or `change to` replaces the prior value. Ambiguous post-council answers ask whether the new fact should be added or used as a replacement before the case is mutated.
 

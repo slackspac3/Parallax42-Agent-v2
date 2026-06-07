@@ -10,13 +10,15 @@ This report is clone-specific. It treats `slackspac3/Parallax42-Agentathon-Onlin
 |---|---|---|
 | Submitted clone repo | PASS | `https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone` |
 | Product cockpit | PASS | `https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/` returned HTTP 200. |
-| Latest visible pushed commit before this update | `bd274fd` | `bd274fd Add strict Compass proof to preflight`; the submitted-state commit is the commit containing this clone-readiness update after push. |
-| Working tree before this update is pushed | MODIFIED | This report, readiness docs, clone links, `.env.example`, workflow, Compass diagnostics, and preflight checks are part of the clone-readiness update. Use the CI run created after this commit is pushed as submitted-state proof. |
-| Agentathon Preflight workflow | PASS on latest visible pushed commit before this update | Run `27093401770`, conclusion `success`, head SHA `bd274fd52913da645c69b7d182a773f871325f06`. |
+| Public evaluator API | PASS | `https://agentathon-evaluator-api-production.up.railway.app` returned JSON HTTP 200 for `/health`, `/metadata`, `/logs`, `/compass/probe`, and `POST /run`. |
+| Latest validated pushed implementation commit | `f4c71bd` | `f4c71bd Add field-aware conversation question metadata`; this docs refresh may create a newer docs-only commit after push. |
+| Working tree before this update is pushed | MODIFIED | Documentation is being refreshed for the latest clone state. Use the CI run created after this commit is pushed as submitted-state proof. |
+| Agentathon Preflight workflow | PASS | Run `27098986398`, conclusion `success`, commit `f4c71bd`. |
 | Docker smoke in workflow | PASS | Job `docker-smoke` succeeded: metadata validation, Docker build, container `/health`, and `/run` smoke. |
-| CI workflow | PASS on latest visible pushed commit before this update | Run `27093401771`, conclusion `success`; job `test` ran `npm run qa`. |
+| CI workflow | PASS | Run `27098986405`, conclusion `success`; job `test` ran `npm run qa`. |
+| Pages workflow | PASS | Run `27098986372`, conclusion `success`; GitHub Pages returned HTTP 200. |
 
-Note: the latest remote CI status listed here is for the latest pushed commit visible before this clone-readiness update. After pushing this update, use the next clone workflow run as the exact submitted-state proof.
+Note: the latest remote CI status listed here is for the latest pushed implementation commit before this docs refresh. After pushing this docs update, use the next clone workflow run as the exact submitted-state proof.
 
 ## 2. Commands Run
 
@@ -38,7 +40,7 @@ gh run list --repo slackspac3/Parallax42-Agentathon-Online-Clone --workflow ci.y
 
 | Check | Result | Evidence |
 |---|---|---|
-| `npm run qa` | PASS | Syntax check passed for 169 JS files; static checks passed; submission check passed; 204 unit tests passed; Playwright advisor regression mock passed; benchmark `4/4 passed`; CrewAI dry-run passed. |
+| `npm run qa` | PASS | Syntax check passed; static checks passed; submission check passed; 207 unit tests passed; Playwright advisor regression mock passed; benchmark `4/4 passed`; CrewAI dry-run passed before this docs refresh. |
 | `python scripts/agentathon_preflight.py` | PASS | Required files, metadata, `.env.example`, examples, logs, secret scan, and static data size all passed. |
 | `python scripts/agentathon_preflight.py --run-api` | PASS | `/health` and `/run` passed in 0.65s; `/run` returned `status=success`. |
 | `python scripts/fixture_demo_matrix.py` | PASS | Six synthetic fixture PDFs produced domain-appropriate outputs; `FIXTURE_DEMO_MATRIX=PASS`. |
@@ -61,10 +63,11 @@ COMPASS_DOCTOR=SKIPPED
 Reason: OPENAI_BASE_URL not exported locally.
 ```
 
-CI status:
+CI and public status:
 
-- The latest pushed clone workflow `27093401770` passed strict Compass doctor because a secret was available at that time.
+- The latest pushed clone workflow `27098986398` passed strict Compass doctor because a secret was available at that time.
 - The workflow is now changed so strict Compass runs only when `OPENAI_API_KEY` secret exists. If the secret is absent, CI prints `Strict Compass skipped because OPENAI_API_KEY secret is not configured.`
+- Public Railway `/compass/probe` returned `ok=true`, `live_compass_verified=true`, and JSON model/chat probes on the documented alternate Core42 base.
 
 Public evaluator status from Railway, validated separately on 2026-06-07:
 
@@ -103,9 +106,11 @@ Do not claim durable Qdrant persistence is active in this clone's local/FastAPI 
 
 - This clone is the submitted repository: `https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone`.
 - The clone Pages cockpit is deployed: `https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/`.
+- The public evaluator API is deployed: `https://agentathon-evaluator-api-production.up.railway.app`.
 - Root `run.py` exposes the evaluator API on port `8000`.
 - `POST /run` accepts JSON and returns structured JSON with `status`, `output`, `agents`, `agent_trace`, `trace_id`, `log_file`, and execution time.
-- Docker smoke passes in GitHub Actions on the latest pushed clone commit.
+- Docker smoke passes in GitHub Actions on the latest pushed implementation commit.
+- Public Railway `/run` returns JSON with `status=success`, live Compass advisory available, local-fallback RAG for the evaluator path, advisory learning memory, and deterministic final ownership.
 - Local preflight, API preflight, fixture matrix, metadata parse, and `npm run qa` passed after the clone-readiness edits.
 - Multi-agent traces show delegation, retry/refinement, critique, validation, escalation, shared context, deterministic decision ownership, and audit packaging.
 - Compass is advisory only.
@@ -118,6 +123,7 @@ Do not claim durable Qdrant persistence is active in this clone's local/FastAPI 
 - The original `Parallax42-Compliance-Intelligence-Agent` repo is the submitted repo.
 - GitHub Pages is the FastAPI evaluator API.
 - Vercel product APIs are the official evaluator `/run` endpoint.
+- Ocean/droplet product backends are the official evaluator `/run` endpoint.
 - Compass/CrewAI autonomously approve cases.
 - Live CrewAI is active in the default Docker build.
 - RBAC is enforced online by default.
@@ -130,10 +136,10 @@ Do not claim durable Qdrant persistence is active in this clone's local/FastAPI 
 | Category | Estimate | Basis |
 |---|---:|---|
 | Required repo structure | 10/10 | Required files, examples, logs, metadata, Dockerfile, and scripts are present. |
-| Standard evaluator API | 10/10 | Local API preflight passed; Docker smoke passes in clone CI. |
+| Standard evaluator API | 10/10 | Local API preflight passed; public Railway `/run` passed; Docker smoke passes in clone CI. |
 | Docker reproducibility | 9/10 | CI Docker build and smoke pass; local Docker was not rerun in this environment. |
 | Multi-agent evidence | 9/10 | Traces show non-linear collaboration patterns and distinct agent roles. |
-| Compass integration | 8/10 | Runtime and public Railway proof pass; local command skipped without exported env; strict CI is now optional unless secret exists. |
+| Compass integration | 8/10 | Runtime and public Railway proof pass on the documented alternate Core42 base; local command skipped without exported env; strict CI is optional unless secret exists. |
 | Secrets hygiene | 10/10 | No real secrets committed; `.env.example` uses placeholders only. |
 | Qdrant / persistence honesty | 8/10 | Optional path is documented and skipped locally without env; no unsupported persistence claim. |
 | Submission clarity | 9/10 | Clone links and readiness docs now distinguish clone submission from original product lineage. |

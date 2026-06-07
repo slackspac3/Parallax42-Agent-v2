@@ -27,7 +27,7 @@ GitHub Pages cockpit
 
 The local and Docker paths are reproduction/evaluator paths, not the primary product demo. The root `run.py` path remains important because it exposes the standardized Agentathon API surface on port `8000`: `GET /health`, `GET /metadata`, `GET /logs`, `GET /compass/probe`, and `POST /run`.
 
-Current public-hosting status: the FastAPI evaluator wrapper is implemented in the repository and verified through Docker/GitHub Actions, but it is not the public GitHub Pages or Vercel product URL. GitHub Pages is static, Vercel serves the Node/CommonJS product APIs, and the product backend/droplet routes are not the Agentathon `run.py` API unless separately redeployed from this repo Dockerfile. This avoids misleading judges: the online product demo proves product behavior; the CI Docker smoke proves the required FastAPI evaluator behavior.
+Current public-hosting status: the FastAPI evaluator wrapper is implemented in the repository, verified through Docker/GitHub Actions, and publicly hosted on Railway at `https://agentathon-evaluator-api-production.up.railway.app`. GitHub Pages is static, Vercel serves the Node/CommonJS product APIs, and the product backend/droplet routes are not the Agentathon `run.py` API. This avoids misleading judges: the online product demo proves product behavior, Railway proves the public evaluator API, and CI Docker smoke proves reproducibility from the submitted repo.
 
 Compass is used server-side. The browser never receives Compass keys, Qdrant keys, service tokens, or raw embeddings. The deployed product path uses Compass-backed smart intake/advisory calls and Compass-compatible embeddings through hosted server-side routes. The direct `OPENAI_API_KEY` / `OPENAI_BASE_URL` contract is preserved for evaluator-style FastAPI execution and strict diagnostics.
 
@@ -53,6 +53,7 @@ flowchart LR
 
   subgraph EvaluatorPath["Agentathon evaluator reproduction path"]
     Repo["GitHub repo + Actions"]
+    Railway["Railway public evaluator API<br/>agentathon-evaluator-api-production"]
     Docker["Docker smoke<br/>python run.py"]
     FastAPI["FastAPI evaluator<br/>0.0.0.0:8000"]
     Run["POST /run"]
@@ -77,6 +78,8 @@ flowchart LR
   ProductCouncil --> Owner
 
   Judge --> Repo
+  Judge --> Railway
+  Railway --> FastAPI
   Repo --> Docker
   Docker --> FastAPI
   FastAPI --> Run
@@ -95,7 +98,7 @@ Key reading: the online product demo and the evaluator `/run` path are intention
 
 ```text
 Online GitHub submission
-  -> Dockerfile / python run.py
+  -> Railway public evaluator API and Dockerfile / python run.py
   -> FastAPI app on 0.0.0.0:8000
      -> GET /health
      -> GET /metadata
@@ -136,6 +139,7 @@ Browser cockpit in public/
 
 | Boundary | Env / URL | Used by | What it is | What it is not |
 | --- | --- | --- | --- | --- |
+| Public evaluator API | `https://agentathon-evaluator-api-production.up.railway.app` | Judges and automated smoke checks | Public FastAPI deployment from this clone exposing `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run` as JSON endpoints. | Not the GitHub Pages cockpit and not the Vercel product API. |
 | Agentathon direct Compass | `OPENAI_API_KEY`, `OPENAI_BASE_URL=https://compass.core42.ai/v1` | `app/compass_client.py`, `/compass/probe`, `/run`, `scripts/compass_doctor.py`, optional embeddings | Official Agentathon template base first; runtime also accepts `https://api.core42.ai/v1` when confirmed for the issued key. | Not the browser product gateway and not the droplet backend. |
 | Product Compass gateway | `COMPASS_GATEWAY_BASE_URL`, `COMPASS_GATEWAY_TOKEN` | Existing Node/Vercel product APIs and `lib/compassGatewayClient.js` | Server-side product model boundary for smart intake, advisory LLM, and embeddings. | Not automatically proof of the official Agentathon direct Compass endpoint unless it exposes compatible `/v1` routes and is allowed by rules. |
 | Product backend / droplet | `PARALLAX42_BACKEND_URL`, optional `P42_CREWAI_SERVICE_URL` | Backend relay, parser/OCR support, optional remote product services | Product infrastructure for the richer hosted demo. | Not a Compass API and should not be used as `OPENAI_BASE_URL`. |
@@ -387,24 +391,25 @@ Primary online checks:
 | --- | --- | --- |
 | Repository contents | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone> | Root evaluator files, examples, logs, docs, Dockerfile, and workflows are visible on `main`. |
 | Product cockpit | <https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/> | Static cockpit loads and reaches the configured hosted product routes. |
+| Public evaluator API | <https://agentathon-evaluator-api-production.up.railway.app> | JSON `/health`, `/metadata`, `/logs`, `/compass/probe`, and `POST /run` are reachable; `/run` returns `status=success` for `input_examples/example_1.json`. |
 | Vercel product API health | <https://parallax42-compliance-intelligence.vercel.app/api/health> | Hosted product runtime reports Compass gateway, Qdrant evidence memory, learning memory, parser relay, and advisory runtime status without exposing secrets. |
 | Vercel evidence API | `POST https://parallax42-compliance-intelligence.vercel.app/api/evidence/index`, `POST /api/evidence/search` | Online Qdrant proof path returns `provider=qdrant`, `storage=server_side_qdrant_vector_db`, and sanitized matches. |
 | Agentathon Preflight | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/actions/workflows/agentathon-preflight.yml> | `agentathon-preflight` and `docker-smoke` jobs pass. |
 | CI | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/actions/workflows/ci.yml> | `npm run qa` passes online. |
 
-The online `docker-smoke` job is the primary evaluator API proof. It builds the image, runs `python run.py` inside the container, calls `GET /health`, and posts `input_examples/example_1.json` to `POST /run`.
+The Railway evaluator API is the public endpoint proof. The online `docker-smoke` job is the independent reproducibility proof: it builds the image, runs `python run.py` inside the container, calls `GET /health`, and posts `input_examples/example_1.json` to `POST /run`.
 
-If a public FastAPI URL is required by the final submission form, the safe deployment is to run this repo's existing Dockerfile on Railway, Azure Container Apps, App Service for Containers, or another container host and then verify:
+Before submitting or recording, verify:
 
 ```text
-GET  /health
-GET  /metadata
-GET  /logs
-GET  /compass/probe
-POST /run
+GET  https://agentathon-evaluator-api-production.up.railway.app/health
+GET  https://agentathon-evaluator-api-production.up.railway.app/metadata
+GET  https://agentathon-evaluator-api-production.up.railway.app/logs
+GET  https://agentathon-evaluator-api-production.up.railway.app/compass/probe
+POST https://agentathon-evaluator-api-production.up.railway.app/run
 ```
 
-Do not use a product backend URL as FastAPI proof unless those endpoints and the official Agentathon request/response schema are present.
+Do not use GitHub Pages, Vercel product APIs, or the Ocean/droplet product backend as FastAPI proof unless those endpoints and the official Agentathon request/response schema are present.
 
 Secondary local checks:
 
@@ -463,24 +468,25 @@ Safe claims when the current checks pass:
 - Output examples are generated from runtime examples and are not loaded as canned responses.
 - Product chat validates active clarifying answers before advancing.
 - Product chat retains evidence and prior results after a council run; material follow-up changes are recorded as add/replace case amendments and require rerun before the old result is treated as current.
+- Product chat carries stable active question IDs and fields so short answers are mapped by question metadata rather than fragile prose matching.
 - Deployed product evidence indexing/search uses Qdrant through Vercel and the droplet-hosted collection.
 - Local/FastAPI Qdrant is env-dependent and falls back when Qdrant or embeddings are unavailable.
 - Live CrewAI is optional, not default.
 
 Unsafe claims unless separately verified:
 
-- Official direct Compass is live-verified.
+- The official placeholder Compass host is live-verified in every environment.
 - Qdrant is active in every runtime without env-specific verification.
 - Compass embeddings are live-verified.
 - Live CrewAI is active.
 - Enforced production RBAC is active.
 - Enterprise-durable audit persistence is implemented.
-- Product gateway, Railway, Vercel, or droplet endpoints are the official Agentathon `OPENAI_BASE_URL`.
+- Product gateway, Vercel, Railway, or droplet endpoints are the official Agentathon `OPENAI_BASE_URL`.
 
 ## 15. Submission Narrative
 
 The concise architecture narrative is:
 
 ```text
-Parallax42 preserves the existing Node/Vercel product and adds a root FastAPI Agentathon wrapper for reproducible screening. The wrapper exposes the required /run API, runs a multi-agent compliance council, retrieves evidence through local fallback or Qdrant, reads governed learning memory, attempts live Compass advisory in non-sample mode, delegates deterministic execution to the existing Node rules engine, and writes JSONL trace logs. Compass, learning memory, and CrewAI remain advisory; the Deterministic Decision Owner is the final authority and human review remains explicit. The product UI uses a separate server-side gateway for live smart intake and demo workflows, while the evaluator path uses the official OPENAI_* Compass contract.
+Parallax42 preserves the existing Node/Vercel product and adds a root FastAPI Agentathon wrapper for reproducible screening. The wrapper is publicly hosted on Railway and independently verified through Docker CI. It exposes the required /run API, runs a multi-agent compliance council, retrieves evidence through local fallback or Qdrant, reads governed learning memory, attempts live Compass advisory in non-sample mode, delegates deterministic execution to the existing Node rules engine, and writes JSONL trace logs. Compass, learning memory, and CrewAI remain advisory; the Deterministic Decision Owner is the final authority and human review remains explicit. The product UI uses a separate server-side gateway for live smart intake and demo workflows, while the evaluator path uses the official OPENAI_* Compass contract.
 ```

@@ -8,28 +8,29 @@ This document is clone-specific for `https://github.com/slackspac3/Parallax42-Ag
 | --- | --- | --- |
 | Submitted repository | PASS | `https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone` is the repo to submit, not the original product repository. |
 | Product cockpit | PASS | `https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/` is the clone Pages cockpit. |
-| Latest visible pushed commit before this update | `bd274fd` | `bd274fd Add strict Compass proof to preflight`; this clone-readiness update should create a newer commit and CI run after push. |
-| Local validation | PASS | `npm run qa`, `python scripts/agentathon_preflight.py`, `python scripts/agentathon_preflight.py --run-api`, `python scripts/fixture_demo_matrix.py`, and `python -m json.tool metadata.json` passed on 2026-06-07. |
-| Docker smoke | PASS on latest visible pushed clone CI | Agentathon Preflight run `27093401770` included a passing `docker-smoke` job for commit `bd274fd`. Use the next run after this clone-readiness push as final submitted-state proof. |
-| Compass | CONFIGURED / ADVISORY | `.env.example` uses the official Agentathon template `OPENAI_BASE_URL=https://compass.core42.ai/v1`; runtime also accepts `https://api.core42.ai/v1` when Core42/Agentathon confirms it for the issued key. Strict CI runs only when `OPENAI_API_KEY` secret exists. |
+| Public evaluator API | PASS | `https://agentathon-evaluator-api-production.up.railway.app` returns JSON for `/health`, `/metadata`, `/logs`, `/compass/probe`, and `POST /run`. |
+| Latest validated pushed implementation commit | `f4c71bd` | `f4c71bd Add field-aware conversation question metadata`; Agentathon Preflight run `27098986398`, CI run `27098986405`, and Pages run `27098986372` passed. |
+| Local validation | PASS | `npm run qa`, `python scripts/agentathon_preflight.py`, `python scripts/agentathon_preflight.py --run-api`, `python scripts/fixture_demo_matrix.py`, and `python -m json.tool metadata.json` passed for the latest implementation state; rerun after docs-only edits if needed. |
+| Docker smoke | PASS | Agentathon Preflight run `27098986398` included passing `agentathon-preflight` and `docker-smoke` jobs for commit `f4c71bd`. |
+| Compass | CONFIGURED / ADVISORY / PUBLIC PROOF | `.env.example` uses the official Agentathon template `OPENAI_BASE_URL=https://compass.core42.ai/v1`; runtime also accepts `https://api.core42.ai/v1` when Core42/Agentathon confirms it for the issued key. Railway `/compass/probe` returned live Compass on the alternate Core42 base; strict CI runs only when `OPENAI_API_KEY` secret exists. |
 | Qdrant | OPTIONAL / ENV-DEPENDENT | Deployed product evidence APIs may use server-side Qdrant. Local/FastAPI evaluator runs do not claim active Qdrant unless `python scripts/qdrant_smoke.py` passes with real env vars. |
 | CrewAI | DRY-RUN BY DEFAULT | CrewAI manifests and dry-run checks pass; live CrewAI is optional and not part of the default Docker dependency set. |
 | RBAC | AUDIT / NOT ENFORCED BY DEFAULT | RBAC/JWT scaffolding exists, but enforced RBAC is not a clone submission claim without configured tenant/JWKS proof. |
 
 Safe clone claims: root `run.py` implements `/run`; deterministic policy owns the final decision; Compass, Qdrant retrieval, learning memory, and optional CrewAI are advisory; no secrets are committed.
 
-Unsafe clone claims: the original repo is the submitted repo; GitHub Pages or Vercel is the official evaluator `/run`; live CrewAI is active by default; Qdrant is active in local/FastAPI without smoke proof; RBAC or production persistence is enforced by default.
+Unsafe clone claims: the original repo is the submitted repo; GitHub Pages or Vercel is the official evaluator `/run`; live CrewAI is active by default; Qdrant is active in local/FastAPI without smoke proof; RBAC or production persistence is enforced by default; the official Compass placeholder host is live in every environment.
 
-## Historical Addendum: 2026-06-07
+## Conversation Behavior Addendum: 2026-06-07
 
-Latest pushed behavior update: commit `2215cf4 Harden post-council conversation updates`.
+Latest pushed behavior update: commit `f4c71bd Add field-aware conversation question metadata`.
 
 | Area | Current status | Evidence / boundary |
 | --- | --- | --- |
 | Post-council continuation | PASS | Chat retains uploaded evidence and last council result, classifies clear follow-up facts as additions/replacements, asks add-or-replace clarification for ambiguous material updates, and marks stale results pending rerun. |
-| Active-question routing | PASS | Terse answers are mapped to the latest visible assistant question before stale hidden backend state; data-category answers such as `all of the above` are accepted when the visible question asks for data categories. |
+| Active-question routing | PASS | Terse answers are mapped to stable active question IDs and fields before falling back to visible-question prose; regression coverage includes review-focus answers such as `all of them` and hosting-model answers such as `shared saas environment`. |
 | Contextual high-risk gates | PASS | Sanctions-sensitive geographies trigger sanctions/restricted-party screening without inventing export end-use certificate questions unless the case is actually export-control-related. |
-| Validation | PASS | Local `npm run qa` passed with 204 unit tests, e2e mock, benchmark, and CrewAI dry-run checks. GitHub `Agentathon Preflight` and `CI` both passed for commit `2215cf4`; Agentathon Preflight included Docker smoke. |
+| Validation | PASS | Local `npm run qa` passed with 207 unit tests, e2e mock, benchmark, and CrewAI dry-run checks before this docs refresh. GitHub `Agentathon Preflight` run `27098986398` and `CI` run `27098986405` both passed for commit `f4c71bd`; Agentathon Preflight included Docker smoke. |
 
 ## Prior Addendum: 2026-06-06
 
@@ -114,7 +115,7 @@ Generated benchmark output is written to `evidence/benchmark-report.json`.
 - Reliability run showing repeated executions with trace and decision consistency.
 - Demo video still needs to be recorded and linked.
 - Direct Compass strict verification through the FastAPI `/compass/probe` path requires valid runtime credentials. The product demo uses the project owner's server-side Compass credentials through the hosted gateway/API boundary.
-- Public FastAPI hosting is not currently claimed. If the final form requires a public API URL, deploy this repo Dockerfile to a container host and verify `/health`, `/metadata`, and `/run`.
+- A public evaluator API is available on Railway. Keep it verified before submission and do not substitute GitHub Pages, Vercel, or the product backend for the evaluator URL.
 
 ## Target Acceptance Threshold
 
@@ -125,5 +126,5 @@ Before submitting, the package should show:
 - p95 local deterministic run latency under 500 ms
 - p95 live backend no-upload run latency under an agreed operational threshold
 - clear fallback labeling whenever live AI is unavailable
-- no claim of public hosted FastAPI, enforced RBAC, enterprise-durable audit, or arbitrary scanned-PDF OCR unless separate checks pass
+- no claim of GitHub Pages/Vercel as FastAPI, enforced RBAC, enterprise-durable audit, Qdrant in every evaluator path, or arbitrary scanned-PDF OCR unless separate checks pass
 - live CrewAI can be claimed for the deployed Vercel product path only when referencing the latest online smoke evidence: `remote_crewai_service_llm`, `degraded=false`, advisory-only

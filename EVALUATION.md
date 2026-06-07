@@ -8,16 +8,17 @@ Start with the online GitHub evidence rather than a local checkout:
 | --- | --- | --- |
 | Repository | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone> | Root `run.py`, `Dockerfile`, `metadata.json`, examples, logs, and docs are present on `main`. |
 | GitHub Pages cockpit | <https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/> | Static product cockpit loads and uses hosted product routes from `public/config.js`. |
+| Public evaluator API | <https://agentathon-evaluator-api-production.up.railway.app> | Public FastAPI wrapper from this clone exposes `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run` as JSON endpoints. |
 | Vercel product API | <https://parallax42-compliance-intelligence.vercel.app/api/health> | Hosted runtime reports Compass gateway, Qdrant-backed evidence memory, parser relay, learning memory, and advisory runtime status without exposing secrets. |
 | Agentathon Preflight | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/actions/workflows/agentathon-preflight.yml> | Latest `main` run passes both `agentathon-preflight` and `docker-smoke`. This is the online Docker plus `/health` and `/run` proof. |
 | CI | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/actions/workflows/ci.yml> | Latest `main` run passes `npm run qa`. |
 | Architecture | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/blob/main/docs/AGENTATHON_SYSTEM_ARCHITECTURE.md> | Online-first evaluator path, product path, and runtime boundaries are documented. |
 
-GitHub Pages is a static cockpit and does not host the FastAPI evaluator API. The online `/run` test is the `docker-smoke` job in the Agentathon Preflight workflow: it builds the Docker image, starts the container on port `8000`, calls `GET /health`, and posts `input_examples/example_1.json` to `/run`.
+GitHub Pages is a static cockpit and does not host the FastAPI evaluator API. The public evaluator API is the Railway deployment at `https://agentathon-evaluator-api-production.up.railway.app`. The separate `docker-smoke` job in the Agentathon Preflight workflow remains the reproducibility proof: it builds the Docker image, starts the container on port `8000`, calls `GET /health`, and posts `input_examples/example_1.json` to `/run`.
 
 The online product demo uses Vercel for server-side product APIs and the Compass gateway, plus the DigitalOcean/Ocean droplet for backend services. Qdrant is running on the droplet behind Nginx at `https://api.parallax42.bhavukarora.com/qdrant/`; that endpoint requires an API key and returns `401 Unauthorized` without one. Vercel stores the Qdrant key as an encrypted environment variable and exposes only safe evidence index/search responses to the browser.
 
-Final submission positioning: the judge-facing product demo is online-first. The GitHub Pages cockpit calls Vercel product APIs, which keep Compass, Qdrant, and backend service credentials server-side. The local Docker/FastAPI path remains the evaluator reproduction path for `run.py`, `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run`. Compass and retrieval outputs are advisory; the Deterministic Decision Owner remains final authority.
+Final submission positioning: the judge-facing product demo is online-first. The GitHub Pages cockpit calls Vercel product APIs, which keep Compass, Qdrant, and backend service credentials server-side. The public evaluator API is Railway; the local Docker/FastAPI path remains the evaluator reproduction path for `run.py`, `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run`. Compass and retrieval outputs are advisory; the Deterministic Decision Owner remains final authority.
 
 The hosted chat also supports post-council continuation. If a user adds new material context after a council result, the app retains the uploaded fixture/evidence and prior result, records whether the new answer is an addition or replacement, and marks the old result pending rerun when needed. Ambiguous changes such as a terse new geography ask an add-or-replace clarification before the case is mutated. This is a product demo behavior; the Agentathon `/run` evaluator path remains a single non-interactive request/response contract.
 
@@ -31,10 +32,11 @@ The submitted repository includes the required FastAPI evaluator surface, but th
 | Does `run.py` expose the required evaluator API on port `8000`? | Yes; verified locally/preflight and by CI Docker smoke. |
 | Is the FastAPI wrapper publicly hosted at the GitHub Pages URL? | No. GitHub Pages is static. |
 | Is the FastAPI wrapper publicly hosted at the Vercel product API URL? | No. Vercel hosts the Node/CommonJS product APIs. |
-| Is the public Railway/Ocean URL the Agentathon FastAPI wrapper? | Not claimed unless it exposes this repo's `/metadata`, `/logs`, `/compass/probe`, and official `/run` schema. Treat Railway/Ocean URLs as product/backend services unless redeployed from this repo Dockerfile. |
-| What is the online proof for FastAPI today? | The GitHub Actions `agentathon-preflight.yml` Docker smoke job on `main`. |
+| Is the public Railway URL the Agentathon FastAPI wrapper? | Yes. `https://agentathon-evaluator-api-production.up.railway.app` exposes this repo's `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run` JSON schema. |
+| Is the Ocean/droplet backend the Agentathon FastAPI wrapper? | No. Treat Ocean/droplet URLs as product/backend services unless they expose this repo's evaluator schema. |
+| What is the online proof for FastAPI today? | Railway public API plus the GitHub Actions `agentathon-preflight.yml` Docker smoke job on `main`. |
 
-Judging risk: if evaluators pull the GitHub repository or rely on Docker/CI, this satisfies the FastAPI requirement. If the final submission form requires a separate public FastAPI URL, deploy this repo's `Dockerfile` to a container host and verify `/health`, `/metadata`, and `/run` before claiming that URL.
+Judging risk: low, provided the form uses the Railway evaluator API URL for the API field and the GitHub Pages URL only for the product demo field. Recheck Railway immediately before submitting.
 
 Online Qdrant proof path:
 
