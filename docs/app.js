@@ -694,8 +694,10 @@ function gatewayStatusCheck(config) {
   }
   return {
     label: 'Compass gateway',
-    url: config.gatewayHealthUrl,
-    detail: (body) => body?.status || body?.mode || body?.service || 'Gateway responded'
+    url: apiUrl('/api/compass/probe'),
+    detail: (body) => body?.gateway_auth_verified
+      ? `${body.model || 'Compass'} gateway authenticated; live model use is reported per interaction.`
+      : body?.message || 'Gateway authentication could not be verified.'
   };
 }
 

@@ -381,6 +381,17 @@ async function installMocks(page, records) {
     }));
   });
 
+  await page.route('**/api/compass/probe', async (route) => {
+    await route.fulfill(jsonResponse({
+      ok: true,
+      configured: true,
+      gateway_auth_verified: true,
+      live_compass_verified: false,
+      model: 'gpt-5.1',
+      message: 'Mock gateway client policy verified.'
+    }));
+  });
+
   await page.route('**/api/benchmarks', async (route) => {
     await route.fulfill(jsonResponse({
       summary: {

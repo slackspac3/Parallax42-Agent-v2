@@ -54,7 +54,7 @@ EMBEDDINGS_MODEL=text-embedding-3-large
 P42_REQUIRE_DURABLE_STORAGE=0
 DATABASE_URL=<encrypted-railway-postgres-url>
 P42_VECTOR_STORE_PROVIDER=qdrant
-P42_DEMO_EMBEDDINGS=true
+P42_DEMO_EMBEDDINGS=false
 QDRANT_URL=<authenticated-railway-qdrant-url>
 QDRANT_API_KEY=<server-side-vector-db-key>
 QDRANT_COLLECTION=p42_compliance_evidence_v2
@@ -63,7 +63,7 @@ P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020,http://lo
 AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
 ```
 
-The deployed online product path is configured through encrypted Vercel environment variables and uses isolated Railway Postgres and Qdrant services. `P42_DEMO_EMBEDDINGS=true` enables explicitly labelled deterministic hash vectors for real credential-free indexing/retrieval; a valid Compass-compatible credential upgrades this to semantic embeddings. A local or separate Agentathon runtime falls back unless equivalent Qdrant and embedding variables are exported.
+The deployed online product path is configured through encrypted Vercel environment variables and uses isolated Railway Postgres and Qdrant services. `P42_DEMO_EMBEDDINGS=false` selects semantic embeddings through the named shared-gateway client; no provider key reaches the app or browser. A local or separate Agentathon runtime falls back unless equivalent Qdrant and gateway variables are exported.
 
 Set `CREWAI_ENABLE_LIVE_LLM=1` only after approved provider credentials are configured in Vercel. Live LLM specialist output is advisory and remains behind deterministic decision guardrails. On Vercel, `AGENT_RUNTIME=crewai_llm` uses the Node-side Compass advisory adapter when the Python CrewAI live adapter is unavailable.
 

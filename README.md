@@ -30,7 +30,7 @@ The judge demo is intended to be run online first:
 | GitHub source | <https://github.com/slackspac3/Parallax42-Agent-v2> | Root `run.py`, Dockerfile, examples, logs, docs, workflows, and source evidence for this submission clone. |
 | Agentathon Preflight workflow | <https://github.com/slackspac3/Parallax42-Agent-v2/actions/workflows/agentathon-preflight.yml> | Online Docker plus `/health` and `/run` proof for the root FastAPI evaluator wrapper. |
 
-The online product cockpit uses GitHub Pages for the static UI, Vercel for server-side product APIs, and an isolated Railway project for Postgres session/case state plus Qdrant vector storage. The public demo uses explicitly labelled deterministic hash embeddings so evidence indexing/retrieval remains testable without a model credential. Compass-powered smart intake, semantic embeddings, and advisory calls remain optional server-side capabilities and are reported as unavailable when a valid credential is not configured. Local commands are secondary reproduction tools.
+The online product cockpit uses GitHub Pages for the static UI, Vercel for server-side product APIs, and an isolated Railway project for Postgres session/case state plus Qdrant vector storage. The deployed demo uses a named, least-privilege client on the shared Parallax42 Compass gateway for GPT-5.1 smart intake, `text-embedding-3-large` semantic retrieval, and advisory specialists. The deterministic engine remains the decision owner, and every response reports whether live Compass output was actually used. Local commands are secondary reproduction tools.
 
 Final submission positioning:
 
@@ -292,7 +292,7 @@ Current model split:
 
 Credential boundary:
 
-- The deployed public demo uses deterministic intake/decisioning and labelled hash embeddings; a rotated Compass credential can be added server-side for optional smart intake, semantic embeddings, and advisory output.
+- The deployed public demo uses live Compass smart intake, semantic embeddings, and advisory specialists through the shared server-side gateway. Deterministic policy logic remains the final decision owner and safe fallback.
 - The repo does not contain a real Compass key.
 - The system does not depend on an Agentathon-provided key being committed or available locally.
 - If evaluators provide their own Compass key, they can set `OPENAI_API_KEY` with the official template `OPENAI_BASE_URL=https://compass.core42.ai/v1`, or use `https://api.core42.ai/v1` if Core42/Agentathon confirms that base for the issued key.
@@ -645,7 +645,7 @@ P42_CREWAI_SERVICE_TOKEN=<server-side-service-token>
 P42_AUTH_MODE=enforced
 ```
 
-For the deployed online product demo, isolated Railway Postgres and Qdrant services are configured server-side through Vercel. With `P42_DEMO_EMBEDDINGS=true`, uploaded evidence is chunked and stored using deterministic lexical hash vectors (`p42-demo-hash-embedding-v1`), so indexing and case-scoped retrieval are genuine and repeatable without claiming Compass semantics. A rotated Compass credential can replace that embedding path and enable smart intake/advisory calls. For a self-hosted, local, or separate Agentathon runtime, equivalent Qdrant and embedding variables must be exported or the runtime uses local-file demo storage. The remote Python CrewAI service is required for live CrewAI execution from Vercel because Vercel's Node runtime does not install the Python CrewAI adapter. Governed learning stores auditable reviewer memory and precedent patterns; it is not model retraining and never silently changes the deterministic council decision. Live LLM specialists are advisory only, and human approval remains required.
+For the deployed online product demo, isolated Railway Postgres and Qdrant services are configured server-side through Vercel. `P42_DEMO_EMBEDDINGS=false` selects live `text-embedding-3-large` vectors through the shared Compass gateway; evidence is chunked and retained behind the API for case-scoped retrieval. For a self-hosted, local, or separate Agentathon runtime, equivalent Qdrant and gateway variables must be exported or the runtime uses local-file demo storage. The remote Python CrewAI service remains optional: Vercel uses the existing JavaScript advisory-council adapter for live Compass specialists while deterministic policy logic owns the final decision. Governed learning stores auditable reviewer memory and precedent patterns; it is not model retraining, and human approval remains required.
 
 After configuring Qdrant and the Compass gateway, run:
 

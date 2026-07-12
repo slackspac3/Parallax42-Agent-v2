@@ -4,7 +4,7 @@ window.P42_CONFIG = {
     ? window.location.origin
     : "https://parallax42-agent-v2.vercel.app",
   backendEnabled: false,
-  gatewayEnabled: false,
+  gatewayEnabled: true,
   defaultBackendUrl: "https://api.parallax42.bhavukarora.com",
   defaultGatewayHealthUrl: "https://parallax42-compass-gateway.vercel.app/api/health"
 };
