@@ -182,12 +182,18 @@ function conversationResponse(body = {}) {
   }
 
   if (eventType === 'evidence_uploaded') {
+    const caseId = body.caseDraft?.caseId || 'case-e2e-upload-first';
+    const caseVersion = 1;
+    mockConversationCaseId = caseId;
+    mockConversationCaseVersion = caseVersion;
     return {
       reply: 'I added the service agreement and indexed citation-ready evidence.',
       questions: ['I can review the uploaded service agreement first. Should I focus on access and security, data processing, commercial terms, or all risks?'],
       runReadiness: { runnable: true, score: 0.88, missingFields: [] },
       caseDraft: baseDraft({
         ...body.caseDraft,
+        caseId,
+        caseVersion,
         supplierName: 'Managed platform integration services agreement',
         businessUnit: body.caseDraft?.businessUnit || 'Finance',
         geography: body.caseDraft?.geography || 'UAE',
@@ -684,6 +690,9 @@ async function main() {
       assert.ok(uploadConversationIndex >= conversationCountBeforeUpload, 'upload completion should trigger evidence intake');
       assert.ok(runConversationIndex > uploadConversationIndex, 'queued Run council should wait until evidence ingestion and intake complete');
       assert.equal(records.conversation[uploadConversationIndex].activeQuestion, '');
+      assert.notEqual(Number(records.conversation[uploadConversationIndex].caseDraft?.caseVersion || 0), 1, 'the authoritative version must originate in the upload response');
+      assert.equal(records.conversation[runConversationIndex].caseDraft.caseVersion, 1, 'queued council must submit the authoritative upload-created case version');
+      assert.equal(records.conversation[runConversationIndex].caseDraft.caseId, mockConversationCaseId, 'queued council must retain the authoritative upload-created case ID');
       assert.ok(records.evidenceIndex.length >= 1, 'evidence indexing API should be called after upload');
       await assertVisibleText(page, '#chatAttachmentStatus', /Evidence ready for council|citation-ready/i);
       await assertVisibleText(page, '#caseIntelDetails', /4 citation-ready|4 server-side|4 indexed/i);

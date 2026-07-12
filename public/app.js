@@ -5707,7 +5707,12 @@ async function submitChatMessage(rawMessage = '', options = {}) {
       chatCaseDraft = { ...returnedDraft };
       scheduleChatSessionSave();
     } else if (eventType === 'evidence_uploaded' && !chatCaseDraft.caseRequestStarted) {
+      const returnedCaseVersion = Number(returnedDraft.caseVersion);
       mergeChatCaseDraft({
+        caseId: returnedDraft.caseId || chatCaseDraft.caseId,
+        ...(Number.isInteger(returnedCaseVersion) && returnedCaseVersion > 0
+          ? { caseVersion: returnedCaseVersion }
+          : {}),
         documents: returnedDraft.documents || chatCaseDraft.documents,
         evidenceSignals: unique([...(chatCaseDraft.evidenceSignals || []), ...(returnedDraft.evidenceSignals || [])]),
         indexedEvidence: returnedDraft.indexedEvidence || chatCaseDraft.indexedEvidence,
