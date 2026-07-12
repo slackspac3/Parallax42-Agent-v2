@@ -1,5 +1,7 @@
 # CLONE_SUBMISSION_READINESS
 
+> **Historical evidence snapshot.** This report preserves an earlier repository and deployment assessment; it is not current operational guidance. See the [current deep code review](docs/DEEP_CODE_REVIEW.md) and [Azure migration plan](docs/AZURE_MIGRATION_PLAN.md).
+
 Updated: 2026-06-07
 
 ## Submission Identity

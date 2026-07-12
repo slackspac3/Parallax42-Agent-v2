@@ -1,5 +1,7 @@
 # Benchmark Report
 
+> **Historical evidence snapshot.** This report preserves an earlier repository and deployment assessment; it is not current operational guidance. See the [current deep code review](DEEP_CODE_REVIEW.md) and [Azure migration plan](AZURE_MIGRATION_PLAN.md).
+
 ## Current Clone Addendum: 2026-06-07
 
 This document is clone-specific for `https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone`. The authoritative fresh benchmark snapshot is also recorded in `FRESH_BENCHMARK_REPORT.md`, and the submission checklist is in `CLONE_SUBMISSION_READINESS.md`.

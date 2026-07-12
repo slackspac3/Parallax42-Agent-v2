@@ -4,6 +4,8 @@ Advisory public reference context for safety, environmental, sustainability, and
 
 Reference freshness: reviewed for submission on 2026-06-06. See `reference_context/reference_memory_manifest.json` for official anchors and review boundary.
 
+Governance: the HSE/Sustainability Owner owns this lane. Review monthly and after a material regulation, reporting-standard, or source change; next scheduled review is 2026-07-31. If overdue, refresh fails, or integrity cannot be verified, exclude the lane from retrieval until the owner revalidates it; stale content cannot support evidence or approval. This is currently an operator control pending tested runtime enforcement.
+
 Typical sources:
 - OSHA data
 - EPA enforcement/compliance datasets

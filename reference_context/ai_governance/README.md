@@ -4,6 +4,8 @@ Advisory public reference context for Responsible AI, model risk, human oversigh
 
 Reference freshness: reviewed for submission on 2026-06-06. See `reference_context/reference_memory_manifest.json` for the official anchors and review boundary.
 
+Governance: the Responsible AI/Model Risk Owner owns this lane. Review monthly and after a material AI-law, framework, model-governance, or source change; next scheduled review is 2026-07-31. If overdue, refresh fails, or integrity cannot be verified, exclude the lane from retrieval until the owner revalidates it; stale content cannot support evidence or approval. This is currently an operator control pending tested runtime enforcement.
+
 Typical sources:
 - NIST AI Risk Management Framework
 - NIST AI RMF Generative AI Profile

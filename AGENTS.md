@@ -4,13 +4,26 @@
 
 This repository is the Parallax42 Compliance Intelligence Agent:
 - Node/CommonJS Vercel/static app.
+- Root FastAPI/Docker evaluator wrapper under `run.py` and `app/`.
+- PostgreSQL-backed hosted sessions, cases, and quotas with an in-process development fallback.
 - Vanilla frontend canonical source under `public/`.
 - GitHub Pages mirrors exist at repo root and `docs/`.
 - API handlers under `api/`.
 - Local server mirror in `server.js`.
 - Core logic under `lib/`.
 
-Do not introduce React, Vite, Tailwind, FastAPI, Redis, Postgres, Celery, OpenClaw, or new frontend build tooling unless the user explicitly asks for that architecture change.
+Do not replace the current vanilla frontend/Node product, existing FastAPI evaluator, or existing PostgreSQL persistence with React, Vite, Tailwind, Redis, Celery, OpenClaw, or new build/runtime frameworks unless the user explicitly asks for that architecture change.
+
+Current hosted truth (verified 2026-07-12):
+
+- Vercel serves the Node product API; the local Node mirror defaults to `http://127.0.0.1:3020`.
+- Railway PostgreSQL persists sessions, cases, and quotas; Railway Qdrant stores hosted vectors.
+- A named authenticated shared-gateway client supplies GPT-5.1 chat/advisory calls and `text-embedding-3-large` semantic embeddings. The provider key remains only inside the shared Compass gateway.
+- JavaScript advisory specialists are active. Python CrewAI is optional and inactive in the hosted product.
+- Demo/session RBAC is enforced; Microsoft Entra SSO is not implemented.
+- Hash-chained audit JSONL is written under serverless `/tmp` and is not durable.
+
+Before changing claims or architecture, consult [`docs/DEEP_CODE_REVIEW.md`](docs/DEEP_CODE_REVIEW.md) and [`docs/AZURE_MIGRATION_PLAN.md`](docs/AZURE_MIGRATION_PLAN.md).
 
 ## Required Skill For Frontend Work
 
@@ -28,20 +41,21 @@ Use it before editing:
 - `public/appModules.js`
 - `public/app.js`
 - `public/styles.css`
+- `public/styles/24-working-demo-qa.css`
 - root `modules/*.js`
-- root `index.html`, `app.js`, `styles.css`, `config.js`
+- root `index.html`, `app.js`, `styles.css`, `styles/24-working-demo-qa.css`, `config.js`
 - `docs/modules/*.js`
-- `docs/index.html`, `docs/app.js`, `docs/styles.css`, `docs/config.js`
+- `docs/index.html`, `docs/app.js`, `docs/styles.css`, `docs/styles/24-working-demo-qa.css`, `docs/config.js`
 
 The skill is the canonical style guide for this app. It supersedes generic frontend taste when working on this repository, while still respecting higher-priority system/developer instructions and the current user request.
 
 Frontend source-of-truth rules:
 - Treat `public/` as the canonical frontend source.
 - Treat `public/modules/` as the preferred place for new browser-side helper code. `public/appModules.js` is a compatibility aggregator and `public/app.js` should stay focused on orchestration/wiring.
-- Treat `public/styles.css` as the canonical CSS source. It is a single hand-maintained file, not a generated bundle from a source folder.
+- Treat `public/styles.css` as the primary hand-maintained CSS source and `public/styles/24-working-demo-qa.css` as the loaded final override layer. Numbered fragments `01`-`23` are generated/reference fragments and are not loaded by `index.html`.
 - Treat repo-root static files and `docs/` static files as deployment mirrors for GitHub Pages.
-- Do not manually edit only one mirror. Any frontend edit must keep `public/`, repo root, and `docs/` byte-for-byte aligned for deployment assets: `index.html`, `modules/*.js`, `appModules.js`, `app.js`, `styles.css`, and `config.js`.
-- Do not run `npm run build:css` as part of normal CSS editing unless the user explicitly requests legacy CSS bundle regeneration; routine CSS changes should be made directly in `public/styles.css`.
+- Do not manually edit only one mirror. Any frontend edit must keep `public/`, repo root, and `docs/` byte-for-byte aligned for deployment assets: `index.html`, `modules/*.js`, `appModules.js`, `app.js`, `styles.css`, `styles/24-working-demo-qa.css`, and `config.js`.
+- `npm run build:css` is a non-destructive validator for `public/styles.css` and the loaded override; it does not regenerate either file.
 - Run `npm run sync:mirrors` after frontend edits, then `npm run check:mirrors`.
 - Run `npm run qa` when feasible.
 
@@ -54,9 +68,9 @@ For the Advisor desktop view, preserve a SaaS workbench structure:
 ## Product Truthfulness
 
 Keep the UI and docs honest:
-- Deterministic compliance engine owns final decisions.
+- Deterministic Node policy is the intended final decision owner; do not claim this as a proven invariant until the parity/authority findings in the deep review are closed.
 - Human approval remains required.
-- CrewAI/live LLM specialists are advisory or traced unless proven otherwise.
+- Active JavaScript Compass specialists and optional Python CrewAI outputs are advisory only.
 - Technical runtime details should remain available, but the main screen should be executive and business-readable.
 - Do not claim unavailable production infrastructure or autonomous approval.
 
@@ -65,8 +79,9 @@ Keep the UI and docs honest:
 - The Compass gateway client is `lib/compassGatewayClient.js`.
 - Conversation intake uses `lib/conversationLlmAssessor.js` for Compass-backed intent classification, case-update extraction, active-question interpretation, and structured intake planning.
 - User-facing conversation prose is generated through `lib/conversationRenderer.js`, which should use the LLM-provided natural response when present and reserve deterministic templates for gateway-unavailable or invalid-response fallback paths.
-- Compass is the only LLM path. There is no OpenAI fallback for conversation intelligence; when `COMPASS_GATEWAY_TOKEN` or the gateway is unavailable, the UI must clearly say smart intake is unavailable rather than silently pretending an AI turn succeeded.
-- The deterministic compliance engine remains the final decision owner even when Compass produces intake, advisory, or specialist text.
+- Compass is the only hosted product LLM path. There is no direct-provider fallback for conversation intelligence; when the named gateway client or gateway is unavailable, the UI must clearly label deterministic fallback rather than pretend a live AI turn succeeded.
+- The provider key must remain inside the shared gateway. This product may hold only its named, least-privilege gateway client token.
+- Deterministic Node policy must remain authoritative when Compass produces intake, advisory, or specialist text. Add parity tests whenever the Python evaluator path is changed.
 
 ## Module CSS Contract
 

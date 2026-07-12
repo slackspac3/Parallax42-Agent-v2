@@ -9,7 +9,9 @@ Primary demo surfaces:
 - API health: `https://parallax42-agent-v2.vercel.app/api/health`
 - Compass gateway health: `https://parallax42-compass-gateway.vercel.app/api/health`
 
-The Compass gateway is required for smart chat intake and shared embeddings/advisory model calls. The deterministic compliance engine remains the authority for final decision status.
+Verified hosted state (2026-07-12): a named authenticated client on the shared Compass gateway supplies GPT-5.1 smart intake/advisory calls and `text-embedding-3-large` semantic embeddings. The underlying provider key remains only in the gateway. JavaScript advisory specialists are active; Python CrewAI is optional and inactive. Deterministic Node policy is the intended final decision authority and fallback.
+
+Railway PostgreSQL persists hosted sessions, cases, and quotas, while authenticated Railway Qdrant stores vectors. Demo/session RBAC is enforced, but Microsoft Entra SSO is not implemented. Serverless audit JSONL remains under `/tmp`, so it is nondurable. Review current correctness and isolation blockers in the [Deep Code Review](docs/DEEP_CODE_REVIEW.md), and use the [Azure Migration Plan](docs/AZURE_MIGRATION_PLAN.md) for the selected cloud path.
 
 ## Selected Hackathon Use Case
 
@@ -19,7 +21,7 @@ The Compass gateway is required for smart chat intake and shared embeddings/advi
 
 Parallax42 applies Legal Intelligence to enterprise agreement and compliance-evidence review. The system reviews contracts, MSAs, DPAs, outsourcing arrangements, and supporting assurance evidence, then produces a human-review decision memo with risks, required actions, citations, and a deterministic specialist trace. CourtListener/CAP references are used only as advisory legal-reference memory for clause and risk comparison, citation checks, and reviewer questions; they are not legal advice and do not approve the case.
 
-The demo should be described as governed L2 autonomy, not unrestricted autonomous approval. The council can loop through intake, retrieval, obligation mapping, risk/control critique, and pack generation, then stops at human review, missing proof, or a low quality-rubric score. The review pack exposes the agent loop spec, agentic pairings, memory lanes, stop conditions, and 0-9 output rubric so judges can inspect the actual operating discipline.
+The demo should be described as a governed-L2 target, not unrestricted autonomous approval. The council can loop through intake, retrieval, obligation mapping, risk/control critique, and pack generation, and is intended to stop at human review, missing proof, or a low quality-rubric score. Current evidence/readiness defects mean those stop conditions are not yet reliable enough for production assurance. The review pack exposes the agent loop spec, agentic pairings, memory lanes, stop conditions, and 0-9 output rubric so judges can inspect the intended discipline.
 
 ## Local Quick Start
 
@@ -55,7 +57,7 @@ Compass compatibility:
 
 - Preferred Parallax42 path: `COMPASS_GATEWAY_BASE_URL` plus `COMPASS_GATEWAY_TOKEN`.
 - Direct evaluator path: `OPENAI_BASE_URL=https://compass.core42.ai/v1` plus `OPENAI_API_KEY`, following the official Agentathon template. Runtime also accepts `https://api.core42.ai/v1` when Core42/Agentathon confirms that base for the issued key.
-- Embeddings remain `text-embedding-3-large`; final compliance decisions remain deterministic.
+- Embeddings remain `text-embedding-3-large`; final compliance decisions are intended to remain owned by deterministic Node policy. The Python authority-parity defect is an open release gate.
 
 ## Demo Path
 
@@ -66,7 +68,7 @@ Compass compatibility:
 5. Let the agent identify missing context, evidence IDs, obligations, and blockers.
 6. Run the council.
 7. Review the decision, domain coverage, gaps, controls, citations, trace, and human-approval status.
-8. Continue the chat with a material update if useful. The product retains the prior evidence/result, distinguishes additions from replacements, marks stale council output for rerun, and asks clarification before ambiguous overwrites.
+8. Continue the chat with a material update as an acceptance test. The intended behavior retains prior evidence/result, distinguishes additions from replacements, marks stale council output for rerun, and asks before ambiguous overwrites; the current stale-version defect is tracked in the deep review.
 9. Generate or export the executive review pack.
 
 ## What Judges Should Evaluate
@@ -75,7 +77,7 @@ Compass compatibility:
 - Quality of the chat-first case-building experience.
 - Deterministic decision logic, blocker naming, controls, and human-approval boundary.
 - Evidence retrieval boundary and citation discipline.
-- Optional CrewAI-shaped orchestration and Compass advisory model path.
+- Active Compass-backed JavaScript advisory specialists, optional Python CrewAI, and intended deterministic fallback/decision ownership, with current authority defects disclosed.
 - Governed agent-loop design: Planner + Doer, Proposer + Critic, Context-Packer + Actor, and Evidence-Weaver + Synthesizer pairings.
 - Council quality rubric across accuracy, appropriateness, and actionability.
 - Separated memory model: scratchpad, episodic log, and reusable advisory knowledge.
@@ -93,13 +95,13 @@ Implemented:
 - Local API mirror in `server.js`.
 - Core compliance, conversation, evidence, runtime, audit, and export logic under `lib/`.
 - Dry-run CrewAI-shaped orchestration checks.
-- Deterministic compliance engine for final decisions.
-- Optional Compass gateway client for LLM and embeddings.
+- Deterministic Node policy as the intended final decision owner; current parity defects are tracked in the deep review.
+- Named authenticated Compass gateway client for hosted GPT-5.1 calls and `text-embedding-3-large` embeddings; the provider key stays in the shared gateway.
 - Root FastAPI Agentathon wrapper plus Dockerfile and GitHub Actions Docker smoke for `/health` and `/run`.
 - CourtListener, CUAD-compatible, NIST, and legacy CAP import/index paths for advisory Reference Intelligence memory.
-- Postgres-backed demo session/case lifecycle state with an in-process development fallback.
-- Local vector store fallback with an isolated Railway Qdrant REST provider configured server-side through Vercel; the public demo uses labelled deterministic hash vectors and semantic indexing requires an approved Compass credential.
-- Local append-only hash-chained JSONL audit.
+- PostgreSQL-backed demo session/case/quota lifecycle state with an in-process development fallback.
+- Local deterministic vector fallback plus authenticated Railway Qdrant configured through Vercel; the hosted demo uses live `text-embedding-3-large` semantic vectors from the shared Compass gateway.
+- Append-only hash-chained JSONL audit, nondurable under serverless `/tmp`.
 
 Not implemented or not claimed:
 
@@ -109,10 +111,12 @@ Not implemented or not claimed:
 - Arbitrary scanned-PDF OCR without external parser/OCR configuration.
 - Production durable audit persistence; session/case Postgres and vector storage are configured separately, while the append-only audit log remains filesystem-based.
 - Public hosted FastAPI URL unless this repo Dockerfile is deployed to a public container host and `/metadata`, `/logs`, `/compass/probe`, and `/run` are verified.
-- Enterprise SSO; the demo/pilot boundary uses enforced session/pilot RBAC and remains separate from a production identity provider.
+- Microsoft Entra SSO; the demo/pilot boundary uses enforced session/pilot RBAC and remains separate from an enterprise identity provider.
 
 ## Supporting Docs
 
+- [Deep Code Review](docs/DEEP_CODE_REVIEW.md)
+- [Azure Migration Plan](docs/AZURE_MIGRATION_PLAN.md)
 - [Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md)
 - [Demo Script](docs/DEMO_SCRIPT.md)
 - [Requirements Traceability](docs/REQUIREMENTS_TRACEABILITY.md)

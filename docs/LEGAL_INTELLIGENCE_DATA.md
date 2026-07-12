@@ -39,4 +39,4 @@ The importer writes normalized records and, when records are available, indexes 
 
 ## Legal Caveat
 
-CAP references are advisory context only. They may be jurisdiction-specific and are not legal advice. They cannot override the deterministic council, cannot approve a contract, and must be reviewed by an accountable human legal/compliance owner.
+CAP references are advisory context only. They may be jurisdiction-specific and are not legal advice. They must not alter policy or approve a contract and must be reviewed by an accountable human legal/compliance owner; current grounding and authority defects are tracked in the [deep review](DEEP_CODE_REVIEW.md).

@@ -1,5 +1,7 @@
 # CODEX_REPO_AUDIT
 
+> **Historical evidence snapshot.** This report preserves an earlier repository and deployment assessment; it is not current operational guidance. See the [current deep code review](docs/DEEP_CODE_REVIEW.md) and [Azure migration plan](docs/AZURE_MIGRATION_PLAN.md).
+
 ## 1. Executive Summary
 
 This repository is a Node/CommonJS Vercel/static demo application for a chat-first Compliance Intelligence Agent. It is not a Python FastAPI application. The browser UI is vanilla HTML/CSS/JS in `public/`, Vercel API handlers live in `api/`, the local development server mirror is `server.js`, and the core decision/runtime logic is in `lib/`.

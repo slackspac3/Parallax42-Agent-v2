@@ -1,12 +1,14 @@
 # Watch The Agent Work Demo Script
 
+> Current-state script, reviewed 2026-07-12. Read the [deep code review](DEEP_CODE_REVIEW.md) before treating a demo result as assurance evidence. The [Azure migration plan](AZURE_MIGRATION_PLAN.md) describes a future hosting target; it is not the current run path.
+
 ## Goal
 
 Record a short demo that proves the agent is production-oriented and audit-aware.
 
 ## Flow
 
-1. Open the online cockpit: <https://slackspac3.github.io/Parallax42-Agent-v2/>.
+1. Open the current Vercel demo: <https://parallax42-agent-v2.vercel.app/>. The GitHub Pages build remains a static mirror.
 2. Upload or select one of the generated fixture PDFs from `test-fixtures/compliance-documents/`, such as `06_cloud_ai_model_services_statement_of_work.pdf`.
 3. Ask: `Can we approve this AI assistant SOW for internal policy search and compliance evidence extraction?`
 4. If the chat asks follow-ups, answer with complete phrases:
@@ -35,15 +37,15 @@ I am uploading a synthetic Cloud AI Model Services Statement of Work. It describ
 
 I can ask in plain English whether this SOW can be approved. The intake flow asks only for missing context, and the current implementation carries stable active question IDs and fields so short answers are mapped by context instead of only by question wording. For the recording, I am using complete answers: legal and compliance contract review, UAE and US, internal employees only, internal templates only, shared multi-tenant SaaS, and no HR decisions or automated compliance approvals.
 
-Architecturally, there are two surfaces. The product cockpit is the browser demo through GitHub Pages and hosted product APIs. Compass and evidence-memory credentials stay server-side; the browser never receives Compass keys, Qdrant keys, service tokens, or raw embeddings.
+Architecturally, there are two surfaces. The current product demo is the browser app and Node API on Vercel, backed by Railway PostgreSQL and Qdrant. A named client of the shared Compass gateway supplies smart intake, advisory specialist responses, and semantic embeddings. Those credentials stay server-side; the browser never receives Compass keys, Qdrant keys, service tokens, or raw embeddings. If the live advisory response is unavailable or invalid, the product records the fallback and continues through deterministic intake and policy logic.
 
 Separately, the submitted evaluator path exposes root run.py, FastAPI on port 8000, POST /run, /health, /metadata, /logs, /compass/probe, Docker smoke, examples, and JSONL traces. That contract is reproduced locally and in CI; it is not hosted by GitHub Pages or Vercel.
 
-Now I run the council. Intake structures the case. Evidence Retrieval reads the SOW signals. Privacy, Security, and Responsible AI specialists validate and challenge the evidence. Learning and Precedent adds advisory memory. The Compass advisory critic can provide server-side advisory reasoning when configured. Then the Deterministic Decision Owner applies policy and Audit Packager writes the trace.
+Now I run the council. Intake structures the case. Evidence Retrieval reads the SOW signals. Node-based Privacy, Security, and Responsible AI specialists request advisory analysis through Compass. Learning and Precedent adds advisory memory. The deterministic policy path packages the decision and trace. The separate Python CrewAI adapter is optional and is not active in the hosted product path.
 
 The result is a high-risk conditional review package. The SOW has positive controls, such as limits on model training, logging controls, retention boundaries, and human oversight. But the council also identifies blockers such as missing final responsible AI assessment, missing independent robustness evidence, retention approval, and required human signoff before go-live.
 
-This trace is the proof: agents retrieve, retry, validate, critique, escalate, and package a decision. The output is not autonomous legal advice or automatic approval. It is an auditable, human-review-ready compliance decision pack with deterministic final decision ownership.
+This trace shows the attempted retrieval, specialist calls, fallbacks, policy evaluation, and packaging. The output is not autonomous legal advice or automatic approval. It is a demo decision pack for human review. Critical evidence/readiness and tenant-isolation findings in the deep review must be fixed before this output is used as production assurance.
 ```
 
 ## Detail Shots To Capture
@@ -60,8 +62,8 @@ This trace is the proof: agents retrieve, retry, validate, critique, escalate, a
    - missing continuity/exit evidence
 3. Show evidence IDs, citation-ready snippets, and trace events.
 4. Show the Vercel product API health endpoint and Qdrant-backed product evidence memory status without exposing keys.
-5. Show the passing Agentathon Preflight Docker job as evaluator API proof. Do not say GitHub Pages hosts `/run`.
-6. Continue the chat after the council with a material update such as `I want to deploy this in Syria as well`; show that the uploaded evidence remains attached, the previous decision is marked pending rerun, and the next gate is sanctions/restricted-party screening. If using a terse answer such as `Syria`, show the add-or-replace clarification.
+5. Show the passing Agentathon Preflight Docker job as local/CI evaluator-contract proof. Do not claim a public Railway evaluator or say that GitHub Pages or Vercel hosts the FastAPI `/run` wrapper.
+6. After the post-council version-hand-off defect in the deep review is fixed and covered by an end-to-end test, continue the chat with a material update such as `I want to deploy this in Syria as well`; show retained evidence, a pending rerun, and the sanctions/restricted-party gate. Until then, keep this shot out of the assurance claim.
 7. Open `/api/benchmarks` or the review pack output to show repeatable proof.
 8. Mention CrewAI as optional/dry-run unless live CrewAI has been explicitly enabled and verified:
 
@@ -69,15 +71,15 @@ This trace is the proof: agents retrieve, retry, validate, critique, escalate, a
 python3 crewai_adapter/compliance_crew.py --dry-run
 ```
 
-9. Close with the architecture boundary: GitHub Pages cockpit -> Vercel product APIs -> isolated Railway Postgres/Qdrant, with the Compass gateway added server-side when configured; the separate FastAPI `/run` contract is reproduced by Docker/CI.
+9. Close with the current boundary: Vercel browser app and Node APIs -> Railway PostgreSQL/Qdrant plus the named shared-Compass client. The separate FastAPI `/run` contract is reproduced locally and in CI; Python CrewAI remains optional.
 
 ## Talk Track
 
-This agent does not replace human approval. It standardizes the compliance review path, retrieves and names evidence, identifies missing controls, blocks unsupported approvals, and produces an audit-ready decision brief.
+This agent does not replace human approval. It is intended to standardize the compliance review path, retrieve and name evidence, identify missing controls, and produce a review brief. Do not claim that unsupported approvals are reliably blocked until the evidence/readiness defects in the deep review are closed.
 
-Compass, Qdrant retrieval, governed learning memory, and optional CrewAI are advisory inputs. The Deterministic Decision Owner remains final authority. The browser never receives Compass keys, Qdrant keys, service tokens, or raw embeddings. The hosted demo uses labelled deterministic hash vectors for repeatable Qdrant retrieval; semantic Compass embeddings are claimed only after their credential and end-to-end smoke pass. The evaluator reports local-fallback RAG unless equivalent Qdrant variables are configured.
+Compass, Qdrant retrieval, governed learning memory, and optional Python CrewAI are advisory inputs. The hosted product currently uses semantic `text-embedding-3-large` vectors through a named shared-gateway client and stores them in Qdrant; deterministic demo embeddings are disabled. Deterministic intake/policy behavior remains available when live advisory output cannot be used. The browser never receives Compass keys, Qdrant keys, service tokens, or raw embeddings. The local FastAPI evaluator falls back unless equivalent gateway and Qdrant variables are configured.
 
-When the conversation continues after a council run, the product does not silently overwrite the prior decision. It treats new high-impact facts as add/replace case amendments, retains the evidence, and asks for an explicit rerun before presenting the updated council result as current.
+The intended continuation behavior is to treat new high-impact facts as case amendments, retain evidence, and require an explicit rerun. A stale-version defect currently breaks the next interaction after some council runs; use the tested single-run path until that review finding is fixed.
 
 ## Agentathon Reproduction Path
 
@@ -102,7 +104,7 @@ Compass approves the case.
 The AI makes the legal decision.
 This is legal advice.
 This supports any scanned PDF.
-RBAC is enforced.
+Enterprise Entra RBAC is enforced.
 Qdrant is active everywhere.
 Live CrewAI is the default evaluator path.
 GitHub Pages hosts /run.
@@ -117,5 +119,5 @@ Compass provides advisory intelligence.
 The Deterministic Decision Owner makes the final policy decision.
 Human review is required.
 This demo uses a supported synthetic text-based SOW.
-The submitted evaluator path is Railway / run.py / FastAPI / POST /run.
+The evaluator contract is reproduced locally and in GitHub Actions through run.py / FastAPI / POST /run; no public evaluator host is currently claimed.
 ```

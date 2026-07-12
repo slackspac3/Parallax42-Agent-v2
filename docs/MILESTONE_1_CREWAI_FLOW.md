@@ -1,10 +1,12 @@
 # Milestone 1: CrewAI Flow Runtime
 
+> **Historical milestone record.** This file preserves the implementation claim and examples from the Milestone 1 pass; it is not the current hosted-runtime status. As of 2026-07-12, active hosted specialists run in Node through the named Compass gateway client, Python CrewAI is optional/inactive, and deterministic behavior is fallback. Use the [deep code review](DEEP_CODE_REVIEW.md), [technical architecture](TECHNICAL_ARCHITECTURE.md), and [Azure migration plan](AZURE_MIGRATION_PLAN.md) for current decisions.
+
 ## Status
 
-Implemented.
+Implemented as a milestone adapter and runtime-contract experiment.
 
-The agent runtime now defaults to CrewAI Flow dry-run orchestration while preserving the deterministic decision engine as a stable fallback.
+At milestone completion, the agent runtime defaulted to CrewAI Flow dry-run orchestration while preserving the deterministic decision engine as a stable fallback. This sentence describes that milestone snapshot, not the current hosted execution path.
 
 ## What Changed
 

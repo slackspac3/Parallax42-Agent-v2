@@ -2,6 +2,18 @@
 
 Parallax42 separates reference intelligence from uploaded evidence, governed learning memory, and deterministic decisions.
 
+## Ownership And Freshness Control
+
+| Control | Policy |
+| --- | --- |
+| Accountable owner | Compliance Intelligence Product Owner; a named person or team alias must be assigned before production use. |
+| Domain reviewers | Legal/Commercial Counsel, Privacy & Compliance, Information Security, Responsible AI/Model Risk, Procurement/Third-Party Risk, Trade Compliance/Sanctions, and HSE/Sustainability own their respective lanes. |
+| Review cadence | Monthly source-anchor review, plus an event-driven review after a material regulatory, standards, licensing, or source change. |
+| Last completed review | 2026-06-06 (submission snapshot). |
+| Next scheduled review | 2026-07-31. |
+| Fail-closed stale behavior | After the next-review date, or after a failed refresh or integrity check, the affected lane must be excluded from automated retrieval and described as unavailable until its domain owner revalidates it. Stale records must never satisfy an evidence requirement, support an approval, or be presented as current guidance. |
+| Enforcement status | This is the required operating policy; automated runtime enforcement is not yet proven. Until it is implemented and tested, the operator must remove or disable a stale lane before indexing or serving it. |
+
 ## Current Reference Memory Snapshot
 
 Reference memory was reviewed for the submission on **2026-06-06**. The review is captured in:
@@ -29,7 +41,7 @@ This is a curated/static reference snapshot, not live regulatory monitoring. It 
 - **Uploaded evidence** is what the council can cite for the current case: contracts, DPAs, SOWs, SOC reports, policy excerpts, approvals, and user-provided facts.
 - **Reference intelligence** is public or curated advisory context used to ask better questions, identify likely obligations, compare clause patterns, and suggest reviewer checks.
 - **Learning memory** is auditable reviewer feedback and prior internal outcomes. It is not model training and never silently changes a decision.
-- **Deterministic council decisioning** remains the final system owner. Human approval is still required.
+- **Deterministic Node council decisioning** is intended to remain the final system owner. Human approval is still required, and the current authority-parity defect must be closed before that ownership is guaranteed.
 
 Reference intelligence must not be described as legal advice, a sanctions determination, a control certification, or production authorization.
 

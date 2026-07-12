@@ -8,12 +8,19 @@ Reference memory was reviewed for the submission on **2026-06-06**. The review i
 reference_context/reference_memory_manifest.json
 ```
 
+## Ownership And Review
+
+- **Accountable owner:** Compliance Intelligence Product Owner; assign a named person or team alias before production use.
+- **Review cadence:** monthly and after any material source, regulatory, standards, or licensing change.
+- **Last review:** 2026-06-06. **Next scheduled review:** 2026-07-31.
+- **Fail closed:** an overdue lane, failed refresh, or failed integrity check makes that lane unavailable for retrieval until its domain owner revalidates it. Stale material cannot satisfy evidence or approval gates. Automated enforcement is not yet proven, so operators must disable stale lanes manually before indexing or serving them.
+
 ## Boundaries
 
 - Reference context is not legal advice, a sanctions result, an export-license decision, a control certification, or autonomous approval.
 - Uploaded case evidence remains separate from reference context.
 - Governed learning memory remains separate from reference context and is not model training.
-- Deterministic policy and current evidence remain authoritative.
+- Deterministic Node policy and verified current evidence are intended to remain authoritative; current grounding and authority-parity defects are tracked in the [deep review](../docs/DEEP_CODE_REVIEW.md).
 - Browser/API callers do not receive raw embeddings, provider keys, or secret tokens.
 - Compass is a server-side LLM and embedding runtime provider. It is not treated as a legal, compliance, security, sanctions, export-control, procurement, HSE, or ESG reference authority.
 

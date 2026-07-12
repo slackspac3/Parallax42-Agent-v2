@@ -1,5 +1,7 @@
 # FINAL_AUTOMATED_ELIGIBILITY_AND_SCORE
 
+> **Historical evidence snapshot.** This report preserves an earlier repository and deployment assessment; it is not current operational guidance. See the [current deep code review](docs/DEEP_CODE_REVIEW.md) and [Azure migration plan](docs/AZURE_MIGRATION_PLAN.md).
+
 ## 1. Executive Verdict
 
 - latest validated implementation commit and message: `f4c71bd` - `Add field-aware conversation question metadata`

@@ -4,6 +4,8 @@ Advisory public reference context for restricted-party, export-control, end-use,
 
 Reference freshness: reviewed for submission on 2026-06-06. See `reference_context/reference_memory_manifest.json` for official anchors and review boundary.
 
+Governance: the Trade Compliance/Sanctions Owner owns this lane. Review monthly and immediately after a material list, control, jurisdiction, or source change; next scheduled review is 2026-07-31. If overdue, refresh fails, or integrity cannot be verified, exclude the lane from retrieval until the owner revalidates it; stale content cannot support evidence, screening results, or approval. This is currently an operator control pending tested runtime enforcement and never replaces a live official screening process.
+
 Typical sources:
 - Trade.gov Consolidated Screening List
 - OFAC sanctions lists

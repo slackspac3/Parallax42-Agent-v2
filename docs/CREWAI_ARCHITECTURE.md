@@ -1,12 +1,14 @@
 # CrewAI Architecture
 
+> **Current hosted state (2026-07-12):** Python CrewAI is optional and inactive. The live Vercel product uses Node specialists through the named Compass gateway client with GPT-5.1; `text-embedding-3-large` powers semantic retrieval. A configured/runtime label such as `crewai_llm` is not proof that the Python CrewAI adapter executed. The Node policy engine should be the sole decision authority; the [deep code review](DEEP_CODE_REVIEW.md) records a current Python authority-parity defect that must be fixed. CrewAI is not required for the selected [Azure migration path](AZURE_MIGRATION_PLAN.md).
+
 ## Why CrewAI
 
-CrewAI gives the submission a recognizable multi-agent orchestration layer for role-specific compliance work while the deterministic Node control engine keeps the demo fast and dependency-light.
+CrewAI provides an optional Python orchestration adapter for role-specific compliance work while the Node policy engine and active Node specialists keep the hosted demo dependency-light.
 
 Final submission boundary: CrewAI is optional and advisory. The default judge-facing product demo and Agentathon `/run` path do not require live CrewAI. Do not claim live CrewAI unless `AGENT_RUNTIME=crewai_live` / `CREWAI_ENABLE_LIVE_LLM=1` or the Vercel remote CrewAI service path has actually executed successfully.
 
-The adapter now follows the current CrewAI Flow-first production pattern:
+The optional adapter follows a CrewAI Flow-first pattern:
 
 - `Flow` state machine as the primary runtime shape
 - `@start` / `@listen` stage model for orchestration
@@ -50,7 +52,7 @@ Official CrewAI documentation referenced:
 | --- | --- | --- |
 | Flow dry run | `python3 crewai_adapter/compliance_flow.py --dry-run` | Validate Flow state, stages, and crew mapping without dependencies. |
 | Crew dry run | `python3 crewai_adapter/compliance_crew.py --dry-run` | Validate crew shape without dependencies. |
-| API default | `AGENT_RUNTIME=crewai_flow` | Route `/api/agent/run` through CrewAI Flow dry-run orchestration plus deterministic decision engine. |
+| Historical Flow-routing example | `AGENT_RUNTIME=crewai_flow` | Route `/api/agent/run` through CrewAI Flow dry-run orchestration plus the Node decision engine; this is not the verified hosted execution path. |
 | Deterministic fallback | `AGENT_RUNTIME=deterministic` | Run the stable local decision engine directly. |
 | Live Flow validation | `python crewai_adapter/compliance_flow.py --live-flow --input examples/high_risk_ai_saas_case.json` | Execute the Flow state machine when CrewAI is installed. |
 | Live LLM specialists | `CREWAI_ENABLE_LIVE_LLM=1 AGENT_RUNTIME=crewai_llm npm run dev` | Run CrewAI agents against a configured LLM and attach advisory task output. |
@@ -64,5 +66,6 @@ Official CrewAI documentation referenced:
 - CrewAI live mode is optional until an approved LLM provider configuration is available.
 - The deterministic decision engine remains the baseline for CI and local reproducibility.
 - Runtime metadata is included in API output and audit payloads.
-- Live LLM specialist output is advisory until eval gates are added; it cannot approve a case by itself.
-- Compass, Qdrant retrieval, and learning memory can provide context to CrewAI, but deterministic policy remains the final decision owner.
+- Live LLM specialist output must remain advisory; immutable policy parity tests are required before claiming it cannot change decision status.
+- Compass, Qdrant retrieval, and learning memory may provide advisory context, but deterministic Node policy must remain the final decision owner. The current Python authority-parity defect must be removed and covered by parity tests before this is claimed as guaranteed.
+- Python orchestration or response normalization must not overwrite the Node policy result. Runtime metadata must distinguish requested, attempted, and actually executed adapters.

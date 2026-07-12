@@ -2,15 +2,18 @@
 
 The target is not a compliance chatbot. The target is an enterprise-grade compliance intelligence worker that can be evaluated, operated, audited, and safely constrained in production.
 
+The current-state defect register is the [deep code review](DEEP_CODE_REVIEW.md). The selected infrastructure end state, migration stages, rollback gates, and recovery objectives are in the [Azure migration plan](AZURE_MIGRATION_PLAN.md).
+
 ## Current Submission Boundary
 
 The final Agentathon submission is an online-first product demo plus a reproducible evaluator wrapper:
 
-- Online product demo: GitHub Pages cockpit -> Vercel product APIs -> isolated Railway Postgres/Qdrant, with optional Compass server-side capabilities.
+- Online product demo: Vercel browser + Node product APIs (with GitHub Pages as a static mirror) -> named Compass gateway client (GPT-5.1 and `text-embedding-3-large`) -> isolated Railway Postgres/Qdrant.
 - Evaluator reproduction: root `run.py` / FastAPI / Docker / `POST /run` on port `8000`.
 - Compass is used server-side. Browser clients never receive Compass keys, Qdrant keys, service tokens, or raw embeddings.
-- Deterministic policy remains final authority; Compass, Qdrant retrieval, governed learning memory, and optional CrewAI are advisory.
-- Enforced RBAC, enterprise-durable audit, arbitrary scanned-PDF OCR, and live CrewAI are not claimed unless separately configured and verified.
+- Active Node specialists are advisory; Python CrewAI is optional and currently inactive. The Node policy engine should be the sole final authority, but the deep review records an open Python authority-parity defect.
+- Demo RBAC is enforced, but Entra-backed identity, enterprise-durable audit, arbitrary scanned-PDF OCR, and live Python CrewAI are not claimed.
+- Railway Postgres durably stores case, session, and quota records. Audit still writes to ephemeral `/tmp` and is not durable.
 
 ## North Star
 
@@ -30,24 +33,21 @@ The agent should exceed the G42 submission ask by showing:
 - model/provider portability
 - measurable reliability, latency, and decision quality
 
-## World-Class Architecture
+## Selected Target Architecture
+
+The minimum Azure path keeps the existing Compass gateway and Qdrant during compute/database parity, then moves edge, identity, durable audit, and derived vector search only behind measured gates.
 
 ```text
-GitHub Pages Cockpit
-  -> Vercel Compliance API
-      -> deterministic fallback agent
-      -> optional CrewAI Flow orchestration
-      -> server-side Compass gateway/API boundary
-      -> optional OpenAI Responses / Agents SDK adapter
-      -> evidence store and retrieval layer
-      -> policy/control library
-      -> audit/event store
-      -> eval and telemetry exporters
-      -> allowlisted Parallax42 backend relay
-          -> Parallax42 FastAPI backend
-          -> Compass gateway
-          -> document/OCR pipeline
-          -> Qdrant vector memory
+Azure Front Door Premium + WAF
+  -> static cockpit origin
+  -> API Management Standard v2 (Private Link inbound + VNet-integrated outbound)
+      -> internal Azure Container Apps Node API
+          -> Node policy engine + active Node specialists
+          -> Azure Database for PostgreSQL Flexible Server
+          -> Blob Storage evidence/export/audit retention
+          -> Azure AI Search derived semantic indexes after shadow validation
+          -> existing named Compass gateway client during initial migration
+          -> optional parser/evaluator and Python CrewAI only when justified
 ```
 
 ## Agent Runtime
@@ -56,8 +56,8 @@ The target runtime is a layered agent stack:
 
 | Layer | End-State Choice | Why |
 | --- | --- | --- |
-| Workflow spine | Custom deterministic orchestrator now; optional CrewAI Flow target | The submission default stays stable and deterministic. CrewAI remains an optional advisory path until dependency, credential, and eval gates are verified. |
-| Specialist collaboration | Custom council now; optional CrewAI Crews target | The current trace already shows role-specific agents. CrewAI maps cleanly to orchestrator, obligation mapper, evidence examiner, risk/control analyst, RAI reviewer, and audit packager when enabled. |
+| Workflow spine | Node policy engine | One authoritative decision owner is simpler to test and audit. Python adapters may transform or explain but must not change the Node result. |
+| Specialist collaboration | Active Node council; optional Python CrewAI | The hosted trace already shows role-specific agents. Add Python CrewAI only when it produces measured value and passes authority-parity gates. |
 | Model/tool execution | Responses API or sovereign Compass-compatible adapter | OpenAI's current tools model supports function calling, file search, remote MCP, web search, shell/computer-use patterns, and tool choice control. |
 | Structured output | JSON Schema / Pydantic / Zod contracts | Structured Outputs are preferred over JSON mode where possible because schema adherence is enforceable. |
 | Guardrails | Input, output, and tool guardrails | Tool guardrails matter because agent-level guardrails do not cover every specialist/tool boundary in delegated workflows. |
@@ -111,11 +111,11 @@ The submission should include:
 
 | Gap | Why It Matters |
 | --- | --- |
-| Live LLM-backed CrewAI specialist output is opt-in and advisory. | The wiring exists, but provider credentials, eval gates, and approval policy must be enabled before live output can influence decisions. |
-| Evidence upload streams to the backend parser/OCR boundary, calls the shared embedding/index gateway, and stores chunk vectors behind the API. | The deployed product path uses Qdrant; local/FastAPI reproduction still falls back unless Qdrant and embedding env vars are exported. |
+| Python CrewAI is optional and inactive; Node specialists are live. | Runtime labels must report requested, attempted, and actually executed paths, and Python must not override the Node decision. |
+| Evidence index/search APIs call the shared embedding gateway and store chunk vectors behind the API; the optional parser relay is disabled in the verified hosted configuration. | Hosted Qdrant uses live semantic embeddings, but evidence assertion/provenance and vector-generation controls have P0/P1 defects in the deep review. |
 | Audit is hash-chained locally but Vercel uses ephemeral `/tmp` unless durable storage is configured. | Enterprise review needs retained records across deployments and function instances. |
-| RBAC middleware and JWT validation are implemented, but live Entra config is not set. | Secure authentication must be enabled in the target enterprise environment. |
-| Evals are local and deterministic only. | World-class agent delivery requires regression, adversarial, and trace-level evals. |
+| Demo RBAC is enforced, but live Entra config is not set. | Enterprise identity needs verified tenant, issuer, audience, app roles, JWKS, and tenant-scoped authorization. |
+| Automated coverage is broad but misses critical adversarial and multi-turn behavior. | Add acceptance gates for evidence-question abuse, contradictions, cross-tenant memory, authority parity, and two-turn post-council continuation. |
 | Demo video is not recorded. | G42 explicitly asks for "Watch the Agent Work." |
 
 ## Source Anchors

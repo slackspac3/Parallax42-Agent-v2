@@ -1,8 +1,10 @@
 # Golden Demo Workflow
 
+> Current demo contract, reviewed 2026-07-12. It is a regression target, not evidence that every decision path is safe. See the [deep code review](DEEP_CODE_REVIEW.md) and the separate [Azure migration plan](AZURE_MIGRATION_PLAN.md).
+
 The golden demo is the canonical path for the G42 submission. It is intentionally high-risk enough to prove the agent can say no, name gaps, require evidence, and preserve human approval.
 
-The judge-facing walkthrough is online-first: GitHub Pages cockpit -> Vercel product APIs -> isolated Railway Postgres/Qdrant, with optional Compass server-side capabilities. The root FastAPI/Docker path remains the evaluator reproduction surface for `run.py` and `POST /run`.
+The judge-facing walkthrough is online-first: Vercel browser app and Node APIs -> isolated Railway PostgreSQL/Qdrant, with a named client of the shared Compass gateway for smart intake, Node advisory specialists, and semantic embeddings. Deterministic fallback remains available when advisory output cannot be used. The root FastAPI/Docker path remains a local/CI evaluator reproduction surface for `run.py` and `POST /run`; no public Railway evaluator is claimed.
 
 ## Replay Endpoint
 
@@ -37,7 +39,7 @@ evidence/golden-demo-run.json
 An internal team wants to procure a critical AI SaaS supplier that:
 
 - processes personal data
-- integrates with Azure AD
+- integrates with Microsoft Entra ID (formerly Azure AD)
 - connects to ServiceNow
 - supports finance reporting in the UAE
 - has a SOC 2 summary
@@ -62,7 +64,7 @@ The agent must:
 
 | Criterion | Expected |
 | --- | --- |
-| Decision | `not_ready` |
+| Decision | `not_ready`; fail the regression if this changes without an approved policy update |
 | High-severity gaps | At least 3 |
 | Applicable domains | Privacy, AI governance, business continuity |
 | Human approval | Required |
@@ -71,13 +73,14 @@ The agent must:
 
 ## What This Proves
 
-- The agent does not rubber-stamp high-risk requests.
+- This fixture is expected not to rubber-stamp the high-risk request; it does not cover the adversarial evidence and negation defects recorded in the deep review.
 - The agent ties decisions to evidence and named gaps.
 - The agent can be evaluated repeatedly.
 - The same path can power the video, benchmark, evidence pack, and regression suite.
-- Compass, Qdrant retrieval, governed learning memory, and optional CrewAI stay advisory; deterministic policy owns the final decision.
+- The hosted path uses Node specialist calls through Compass and semantic Qdrant retrieval; deterministic policy/fallback remains the intended decision boundary.
+- Python CrewAI is optional and inactive in the hosted demo.
 - The browser does not receive Compass keys, Qdrant keys, service tokens, or raw embeddings.
 
 ## Next Upgrade
 
-The next implementation should increase measured live-eval coverage without changing the final authority boundary. Live CrewAI may be enabled only when dependencies, Compass credentials, and eval gates are configured; it remains advisory and must preserve the same API response contract.
+First close the critical evidence/readiness, tenant-isolation, and post-council version defects in the deep review and keep this workflow green as an end-to-end gate. Add adversarial and two-turn cases before expanding live evaluation. Python CrewAI may be enabled only after dependency, credential, parity, and eval gates pass; it remains advisory and must preserve the same API response contract.

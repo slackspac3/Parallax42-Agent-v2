@@ -2,12 +2,14 @@
 
 This roadmap starts from the submission end state and works backward into implementation milestones. The sequencing is designed to maximize reviewer proof first, then deepen production hardening.
 
+> **Current checkpoint (2026-07-12):** the hosted product uses the named Compass gateway client with GPT-5.1 and `text-embedding-3-large`, Railway Postgres for case/session/quota records, and Railway Qdrant for semantic retrieval. Deterministic behavior is fallback. Demo RBAC is enforced but Entra is absent; audit remains ephemeral `/tmp`; active specialists are Node-based and Python CrewAI is optional/inactive. P0 correctness and tenant-isolation blockers are tracked in the [deep code review](DEEP_CODE_REVIEW.md). Azure sequencing is tracked in the [Azure migration plan](AZURE_MIGRATION_PLAN.md).
+
 ## Submission End State
 
 By submission time, the repo should support this story:
 
 ```text
-A reviewer opens the online GitHub Pages cockpit, uses Vercel product APIs backed by isolated Railway Postgres/Qdrant and deterministic retrieval, runs a high-risk compliance case or fixture PDF, sees evidence-backed gaps, inspects the agent trace, confirms human approval controls, exports the audit pack, and sees Agentathon Docker `/run` proof in GitHub Actions.
+A reviewer opens the primary Vercel working demo (or the GitHub Pages static mirror), uses Vercel product APIs backed by a named Compass gateway client plus isolated Railway Postgres/Qdrant semantic retrieval, runs a high-risk compliance case or fixture PDF, sees evidence-backed gaps, inspects the agent trace, confirms human approval controls, exports the audit pack, and sees Agentathon Docker `/run` proof in GitHub Actions.
 ```
 
 ## Milestone 0: Golden Demo Spine
@@ -34,9 +36,9 @@ Acceptance:
 
 ## Milestone 1: Optional CrewAI Flow Runtime
 
-Status: implemented.
+Status: adapter and runtime metadata implemented; hosted Python CrewAI execution is currently inactive.
 
-Goal: keep the stable custom/deterministic orchestrator as the default while providing an optional CrewAI advisory path for future/live validation.
+Goal: keep the Node policy engine as the sole decision authority while providing an optional Python CrewAI advisory path for future/live validation. The hosted product currently uses active Node specialists through the Compass gateway.
 
 Build:
 
@@ -80,21 +82,23 @@ Acceptance:
 
 Goal: make the agent enterprise-operable.
 
+Status: partially implemented. Railway Postgres durably stores case, session, and quota records, and demo RBAC is enforced. Audit is still ephemeral `/tmp`, Entra is not configured, and immutable run history is not complete.
+
 Build:
 
 - hash-chained local audit prototype. `Implemented: append-only JSONL with sequence, previous hash, and record hash`
-- PostgreSQL-ready schema and migration
+- PostgreSQL-backed generic record store for case, session, and quota state. `Implemented in hosted product; managed schema migrations remain open`
 - append-only audit events. `Implemented`
 - run retrieval endpoint. `Implemented: /api/audit/recent with integrity report`
 - role policy middleware. `Implemented`
-- Entra JWT validation design and optional implementation switch. `Implemented: P42_AUTH_MODE=enforced plus RS256/JWKS configuration`
+- Entra JWT validation design and optional implementation switch. `Code exists; hosted demo enforcement is not Entra-backed`
 
 Acceptance:
 
-- every agent run has a durable run ID. `Implemented as audit event id plus case id`
+- every agent run has an immutable, durable run ID. `Open: current case persistence retains only the latest run and audit JSONL is ephemeral`
 - audit records include actor, role, case, evidence IDs, decision, gaps, trace count, model mode. `Implemented`
 - reviewer cannot approve without approver role
-- auditor can read but not mutate. `Implemented for audit/read policy; no mutation endpoint exists`
+- auditor can read but not mutate, and can see only authorized tenant records. `Open: audit read tenancy and public log exposure are P0 review findings`
 
 ## Milestone 4: Evals, Guardrails, And Observability
 
@@ -192,3 +196,5 @@ When choosing work, prefer changes that improve at least one of:
 - measurable evaluation
 
 Avoid building generic AI features that do not strengthen the submission proof.
+
+Before additional feature milestones, close the P0 gates in the [deep code review](DEEP_CODE_REVIEW.md); migration work should follow the dependency order in the [Azure migration plan](AZURE_MIGRATION_PLAN.md).

@@ -1,5 +1,7 @@
 # FRESH_BENCHMARK_REPORT
 
+> **Historical evidence snapshot.** This report preserves an earlier repository and deployment assessment; it is not current operational guidance. See the [current deep code review](docs/DEEP_CODE_REVIEW.md) and [Azure migration plan](docs/AZURE_MIGRATION_PLAN.md).
+
 Generated from `/Users/bhavuk.arora/Parallax42-Agentathon-Online-Clone` on 2026-06-07.
 
 This report is clone-specific. It treats `slackspac3/Parallax42-Agentathon-Online-Clone` as the submitted Agentathon repository and does not rely on the original `Parallax42-Compliance-Intelligence-Agent` repository for evaluator claims.

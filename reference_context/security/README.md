@@ -4,6 +4,8 @@ Advisory public security and technical-risk reference context for supplier assur
 
 Reference freshness: reviewed for submission on 2026-06-06. See `reference_context/reference_memory_manifest.json` for official anchors and review boundary.
 
+Governance: the Information Security Owner owns this lane. Review monthly and after a material framework, threat-guidance, or source change; next scheduled review is 2026-07-31. If overdue, refresh fails, or integrity cannot be verified, exclude the lane from retrieval until the owner revalidates it; stale content cannot support evidence or approval. This is currently an operator control pending tested runtime enforcement.
+
 Typical sources:
 - NIST CSF 2.0
 - NIST SP 800-53

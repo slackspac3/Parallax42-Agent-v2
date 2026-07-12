@@ -1,6 +1,6 @@
 # CrewAI Adapter
 
-This adapter makes CrewAI Flow the primary orchestration shape for the Compliance Intelligence Agent while keeping the base Node demo runnable without Python dependencies.
+This is an optional Python CrewAI adapter. The hosted Vercel product currently uses Node advisory specialists through the named shared-Compass client with deterministic fallback; live Python CrewAI is inactive. See the [deep code review](../docs/DEEP_CODE_REVIEW.md) for runtime-parity findings and the [Azure migration plan](../docs/AZURE_MIGRATION_PLAN.md) for the future deployment boundary.
 
 ## Agents
 
@@ -48,18 +48,20 @@ export CREWAI_LLM_API_KEY=$COMPASS_GATEWAY_TOKEN
 python crewai_adapter/compliance_flow.py --live-llm --input examples/high_risk_ai_saas_case.json
 ```
 
-The live LLM result is advisory analysis. The Node API still applies deterministic decision guardrails.
+The live Python result is advisory analysis and must preserve the Node response contract. Do not enable it until Node/Python decision ownership, telemetry, tenant context, timeouts, and eval parity gates in the deep review are resolved.
 
-## API Runtime
+## Hosted Node Runtime
 
-The Node API defaults to the CrewAI Flow dry-run orchestration path:
+The product runtime name `crewai_llm` selects the Node Compass advisory path in the hosted deployment; it is not proof that the Python CrewAI package ran:
 
 ```bash
-AGENT_RUNTIME=crewai_flow npm run dev
+AGENT_RUNTIME=crewai_llm npm run dev
 ```
 
-Use deterministic fallback explicitly:
+Use deterministic mode explicitly for local fallback:
 
 ```bash
 AGENT_RUNTIME=deterministic npm run dev
 ```
+
+Enable the Python adapter only with `AGENT_RUNTIME=crewai_live` (or the adapter commands above), approved credentials, installed optional dependencies, and passing parity/evaluation gates. Record requested, attempted, actual, and fallback runtimes separately in evidence.
