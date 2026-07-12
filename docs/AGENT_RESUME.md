@@ -10,7 +10,7 @@ Strengthen compliance visibility across enterprise workflows by turning intake, 
 
 ## Current Core Capabilities
 
-- Online-first judge demo through GitHub Pages, Vercel product APIs, server-side Compass gateway/API boundary, and Ocean/DigitalOcean backend services.
+- Online-first judge demo through GitHub Pages, Vercel product APIs, and isolated Railway Postgres/Qdrant, with optional Compass capabilities.
 - Root Agentathon evaluator wrapper: `run.py` exposes `POST /run`, `GET /health`, `GET /metadata`, `GET /logs`, and `GET /compass/probe` on port `8000`.
 - FastAPI evaluator proof is currently the repository plus GitHub Actions Docker smoke, not a separate public FastAPI URL.
 - Compliance-domain triage across third-party, privacy, AI/model governance, continuity, finance/project compliance, Microsoft licensing, ESG/HSE/BCM, physical security, technical risk, and regulatory reporting.
@@ -31,7 +31,7 @@ Strengthen compliance visibility across enterprise workflows by turning intake, 
 - Uses output review and blind-spot challenge concepts before presenting a decision to humans.
 - Explicitly names missing evidence and escalation needs instead of forcing false precision.
 - Separates hosted product AI from evaluator reproduction: the browser demo uses Vercel server-side Compass routes, while the FastAPI wrapper preserves the direct `OPENAI_API_KEY` / `OPENAI_BASE_URL` contract for `/run` diagnostics.
-- Keeps the official Agentathon Compass template `https://compass.core42.ai/v1` first while accepting `https://api.core42.ai/v1` when confirmed for the issued key; model placeholders are `gpt-4.1` for fast structured work, `gpt-5.1` for deeper advisory/CrewAI specialist reasoning, and `text-embedding-3-large` for embeddings. The deployed demo uses the project owner's own server-side Compass credentials, not a committed or assumed Agentathon-issued key.
+- Keeps the official Agentathon Compass template `https://compass.core42.ai/v1` first while accepting `https://api.core42.ai/v1` when confirmed for the issued key; model placeholders are `gpt-4.1` for fast structured work, `gpt-5.1` for deeper advisory/CrewAI specialist reasoning, and `text-embedding-3-large` for embeddings. The deployed public demo uses labelled deterministic retrieval until a rotated server-side Compass credential is configured.
 - Keeps deterministic policy as final authority; Compass, Qdrant retrieval, governed learning memory, and optional CrewAI remain advisory inputs.
 - Preserves the user’s case narrative across messy follow-ups: short answers are mapped to the latest visible question, spelling mistakes are clarified, high-risk contextual gates are asked before council execution, and post-council updates are auditable amendments rather than silent overwrites.
 

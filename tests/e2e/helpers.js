@@ -201,11 +201,42 @@ async function assertFirstViewportLayout(page) {
   }
 }
 
+async function assertResponsiveWorkspace(page, { width, height = 900 } = {}) {
+  await page.setViewportSize({ width, height });
+  await page.waitForFunction(() => document.readyState === 'complete' || document.readyState === 'interactive');
+  const result = await page.evaluate(() => {
+    const selectors = ['.command-center', '.evidence-board', '.audit-section', '.admin-section', '.hardening-section'];
+    const visible = selectors.filter((selector) => {
+      const node = document.querySelector(selector);
+      if (!node) return false;
+      const style = getComputedStyle(node);
+      const rect = node.getBoundingClientRect();
+      return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+    });
+    return {
+      innerWidth: window.innerWidth,
+      documentWidth: document.documentElement.scrollWidth,
+      bodyWidth: document.body.scrollWidth,
+      activeSection: document.body.dataset.mainSection,
+      chatInputWidth: document.querySelector('#chatInput')?.getBoundingClientRect().width || 0,
+      visible
+    };
+  });
+  assert.ok(result.documentWidth <= result.innerWidth + 1, `document should not overflow horizontally at ${width}px (${result.documentWidth}px wide)`);
+  assert.ok(result.bodyWidth <= result.innerWidth + 1, `body should not overflow horizontally at ${width}px (${result.bodyWidth}px wide)`);
+  assert.equal(result.visible.length, 1, `exactly one primary section should be visible at ${width}px: ${result.visible.join(', ')}`);
+  if (result.activeSection === 'agent' && result.chatInputWidth) {
+    assert.ok(result.chatInputWidth >= Math.min(300, width - 80), `chat input should remain usable at ${width}px (${result.chatInputWidth}px wide)`);
+  }
+  return result;
+}
+
 module.exports = {
   ARTIFACT_DIR,
   ROOT,
   assertFirstViewportLayout,
   assertNonBlankWorkbench,
+  assertResponsiveWorkspace,
   assertVisibleText,
   attachBrowserDiagnostics,
   screenshotOnFailure,

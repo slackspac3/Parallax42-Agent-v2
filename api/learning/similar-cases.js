@@ -9,13 +9,17 @@ module.exports = async function handler(req, res) {
   if (!methodGuard(req, res, ['POST'])) return;
   if (!rateLimitGuard(req, res, 'evidenceSearch')) return;
   try {
-    const auth = await authorizeRequest(req, 'agent:run');
+    const auth = await authorizeRequest(req, 'learning:read');
     if (!auth.ok) {
       sendJson(req, res, auth.statusCode, auth.body);
       return;
     }
     const body = await readJsonRequest(req, { limitBytes: STANDARD_RUN_BODY_LIMIT_BYTES });
-    sendJson(req, res, 200, await findSimilarCases(body));
+    sendJson(req, res, 200, await findSimilarCases({
+      ...body,
+      workspaceId: auth.actor.workspaceId || process.env.P42_WORKSPACE_ID || 'parallax42',
+      projectId: auth.actor.projectId || process.env.P42_PROJECT_ID || 'compliance-intelligence-agent'
+    }));
   } catch (error) {
     if (error?.statusCode) {
       sendJsonError(req, res, error, { error: 'similar_cases_failed' });

@@ -103,7 +103,7 @@
           <span class="thinking-orb" aria-hidden="true"></span>
           <div class="thinking-loader-copy">
             <strong>${escapeHtml(message && message.phaseTitle || activeStep[0] || activeStep.label || (isCouncil ? 'Council is working' : 'Advisor is thinking'))}</strong>
-            <p>${escapeHtml(message && message.phaseDetail || activeStep[1] || activeStep.detail || '')}${elapsed ? ` <span class="thinking-elapsed">(${escapeHtml(String(elapsed))}s...)</span>` : ''}</p>
+            <p>${escapeHtml(message && message.phaseDetail || activeStep[1] || activeStep.detail || '')}${elapsed ? ` <span class="thinking-elapsed">(${escapeHtml(String(elapsed))}s…)</span>` : ''}</p>
           </div>
           ${attemptLabel ? `<span class="thinking-attempt-pill">${escapeHtml(attemptLabel)}</span>` : ''}
         </div>

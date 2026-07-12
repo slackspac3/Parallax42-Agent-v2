@@ -8,11 +8,11 @@ This document is clone-specific for `https://github.com/slackspac3/Parallax42-Ag
 | --- | --- | --- |
 | Submitted repository | PASS | `https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone` is the repo to submit, not the original product repository. |
 | Product cockpit | PASS | `https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/` is the clone Pages cockpit. |
-| Public evaluator API | PASS | `https://agentathon-evaluator-api-production.up.railway.app` returns JSON for `/health`, `/metadata`, `/logs`, `/compass/probe`, and `POST /run`. |
+| Evaluator API contract | PASS | Local and CI Docker smoke verify `/health`, `/metadata`, `/logs`, `/compass/probe`, and `POST /run`; v2 does not claim a public evaluator deployment. |
 | Latest validated pushed implementation commit | `f4c71bd` | `f4c71bd Add field-aware conversation question metadata`; Agentathon Preflight run `27098986398`, CI run `27098986405`, and Pages run `27098986372` passed. |
 | Local validation | PASS | `npm run qa`, `python scripts/agentathon_preflight.py`, `python scripts/agentathon_preflight.py --run-api`, `python scripts/fixture_demo_matrix.py`, and `python -m json.tool metadata.json` passed for the latest implementation state; rerun after docs-only edits if needed. |
 | Docker smoke | PASS | Agentathon Preflight run `27098986398` included passing `agentathon-preflight` and `docker-smoke` jobs for commit `f4c71bd`. |
-| Compass | CONFIGURED / ADVISORY / PUBLIC PROOF | `.env.example` uses the official Agentathon template `OPENAI_BASE_URL=https://compass.core42.ai/v1`; runtime also accepts `https://api.core42.ai/v1` when Core42/Agentathon confirms it for the issued key. Railway `/compass/probe` returned live Compass on the alternate Core42 base; strict CI runs only when `OPENAI_API_KEY` secret exists. |
+| Compass | OPTIONAL / ADVISORY | `.env.example` uses the official Agentathon template `OPENAI_BASE_URL=https://compass.core42.ai/v1`; runtime also accepts `https://api.core42.ai/v1` when confirmed for the issued key. The public v2 demo does not claim live Compass until a rotated credential passes strict verification. |
 | Qdrant | OPTIONAL / ENV-DEPENDENT | Deployed product evidence APIs may use server-side Qdrant. Local/FastAPI evaluator runs do not claim active Qdrant unless `python scripts/qdrant_smoke.py` passes with real env vars. |
 | CrewAI | DRY-RUN BY DEFAULT | CrewAI manifests and dry-run checks pass; live CrewAI is optional and not part of the default Docker dependency set. |
 | RBAC | AUDIT / NOT ENFORCED BY DEFAULT | RBAC/JWT scaffolding exists, but enforced RBAC is not a clone submission claim without configured tenant/JWKS proof. |
@@ -39,24 +39,24 @@ This addendum reflects the latest pushed submission state after the Compass mode
 | Area | Current status | Evidence / boundary |
 | --- | --- | --- |
 | FastAPI evaluator wrapper | PASS for repo + CI/Docker proof; not public-hosted | Root `run.py` and Docker workflow verify `/health` and `/run` on port `8000`. GitHub Pages/Vercel/Railway product URLs should not be described as the FastAPI wrapper unless this repo Dockerfile is deployed there and `/metadata`, `/logs`, `/compass/probe`, and official `/run` are verified. |
-| Online product runtime | PASS | Vercel `/api/health` reports Compass gateway, Qdrant-backed product evidence memory, governed learning memory, remote CrewAI service configuration, and audit-mode auth without exposing secrets. |
+| Online product runtime | PENDING DEPLOY | Vercel `/api/health` must report enforced demo auth, isolated Postgres/Qdrant, deterministic demo embeddings, and optional capabilities without exposing secrets. |
 | Online CrewAI proof | PASS | Live smoke against `POST https://parallax42-compliance-intelligence.vercel.app/api/agent/run` with `X-Agent-Runtime: crewai_llm` returned `mode=crewai_llm_live`, `runtime.manifestSource=remote_crewai_service_llm`, `runtime.degraded=false`, `HTTP 200`, and about `81.8s` runtime. CrewAI output is advisory only. |
 | Compass model boundary | DOCUMENTED | Current docs and `.env.example` use the official template `OPENAI_BASE_URL=https://compass.core42.ai/v1`, while runtime also accepts `https://api.core42.ai/v1` when confirmed for the issued key. Model placeholders remain `MODEL_FAST=gpt-4.1`, `MODEL_REASONING=gpt-5.1`, `CREWAI_LLM_MODEL=gpt-5.1`, and `EMBEDDING_MODEL=text-embedding-3-large`. |
-| Compass credential boundary | DOCUMENTED | The deployed demo uses the project owner's own Compass credentials configured server-side. The repo contains no real key and does not assume an Agentathon-issued key. Evaluators can provide their own key through `OPENAI_API_KEY`. |
+| Compass credential boundary | DOCUMENTED | The deployed public demo uses no live Compass claim. The repo contains no real key; evaluators or operators can provide a rotated key server-side through `OPENAI_API_KEY` or the gateway token. |
 | RBAC | PARTIAL | Route policy and Entra/JWKS-compatible code exist, with roles such as `platform_admin`, `risk_admin`, reviewers, `auditor`, and `read_only`. Online deployment reports `auth.mode=audit` and `auth.enforced=false`; do not claim enforced RBAC. |
 | Workflow status at addendum time | IN PROGRESS for model-boundary commit, previous green | `Agentathon Preflight` and `CI` for commit `0666073` were running when checked; commit `88d1a9f` was green for both workflows. This report update may trigger a newer workflow run. |
 
 Safe current claims:
 
 - Agentathon FastAPI wrapper exists and is CI/Docker verified.
-- Online product demo is live through GitHub Pages, Vercel APIs, Compass gateway, droplet-hosted Qdrant, and remote CrewAI advisory runtime.
-- Live online CrewAI advisory path works and did not degrade in the latest smoke.
+- Online product demo targets GitHub Pages, Vercel APIs, isolated Railway Postgres/Qdrant, deterministic retrieval, and optional Compass/CrewAI advisory paths.
+- CrewAI adapters pass dry-run validation; no live public CrewAI claim is made.
 - Compass model choices and own-key boundary are documented.
 - Deterministic Decision Owner remains final authority.
 
 Unsafe current claims:
 
-- A public FastAPI `/run` endpoint is live.
+- A public v2 FastAPI `/run` endpoint is live.
 - Railway/Ocean/Vercel product endpoints are the FastAPI evaluator wrapper.
 - RBAC is enforced online.
 - CrewAI or Compass can approve cases autonomously.
@@ -114,8 +114,8 @@ Generated benchmark output is written to `evidence/benchmark-report.json`.
 - Responsible AI test suite against prompt injection, unsupported approval language, bias-sensitive assumptions, and data minimization.
 - Reliability run showing repeated executions with trace and decision consistency.
 - Demo video still needs to be recorded and linked.
-- Direct Compass strict verification through the FastAPI `/compass/probe` path requires valid runtime credentials. The product demo uses the project owner's server-side Compass credentials through the hosted gateway/API boundary.
-- A public evaluator API is available on Railway. Keep it verified before submission and do not substitute GitHub Pages, Vercel, or the product backend for the evaluator URL.
+- Direct Compass strict verification through the FastAPI `/compass/probe` path requires valid rotated runtime credentials. The public product demo uses labelled deterministic retrieval until those credentials are configured.
+- The evaluator contract is verified locally and by CI Docker smoke. Do not substitute GitHub Pages, Vercel, or product persistence services for a public FastAPI evaluator URL.
 
 ## Target Acceptance Threshold
 

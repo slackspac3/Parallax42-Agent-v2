@@ -30,6 +30,8 @@ LEARNING_TYPES = {
 SAMPLE_MEMORY_PATH = ROOT / "data" / "sample_learning_memory.json"
 LOCAL_JSONL_PATH = ROOT / "data" / "learning_memory.jsonl"
 MAX_TEXT = 520
+DEFAULT_WORKSPACE_ID = "agentathon"
+DEFAULT_PROJECT_ID = "use-case-21"
 
 
 def _clean(value: Any) -> str:
@@ -47,6 +49,14 @@ def _as_list(value: Any) -> List[Any]:
     if isinstance(value, str) and value.strip():
         return [item.strip() for item in re.split(r"[,;\n]", value) if item.strip()]
     return []
+
+
+def _truthy(value: Any) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _scope(value: Any, fallback: str) -> str:
+    return _clean(value) or fallback
 
 
 def _terms(text: str) -> set[str]:
@@ -150,7 +160,10 @@ class LearningArtifact:
         )
 
 
-def load_seed_artifacts() -> List[LearningArtifact]:
+def load_seed_artifacts(sample_mode: Optional[bool] = None) -> List[LearningArtifact]:
+    enabled = _truthy(os.environ.get("SAMPLE_MODE", "false")) if sample_mode is None else bool(sample_mode)
+    if not enabled:
+        return []
     if not SAMPLE_MEMORY_PATH.exists():
         return []
     try:
@@ -159,6 +172,15 @@ def load_seed_artifacts() -> List[LearningArtifact]:
         return []
     records = payload.get("artifacts") if isinstance(payload, dict) else payload
     return [LearningArtifact.from_dict(item) for item in records if isinstance(item, dict)]
+
+
+def _learning_point_id(payload: Dict[str, Any]) -> str:
+    identity = [
+        _clean(payload.get("workspaceId")),
+        _clean(payload.get("projectId")),
+        _clean(payload.get("memoryId")),
+    ]
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"learning:{json.dumps(identity, separators=(',', ':'))}"))
 
 
 def build_learning_query(case_facts: Dict[str, Any], missing_evidence: Sequence[str], domains: Sequence[str]) -> str:
@@ -198,8 +220,18 @@ class LocalLearningMemory:
     durable = False
     configured = False
 
-    def __init__(self, path: Path = LOCAL_JSONL_PATH) -> None:
+    def __init__(
+        self,
+        path: Path = LOCAL_JSONL_PATH,
+        *,
+        workspace_id: str = DEFAULT_WORKSPACE_ID,
+        project_id: str = DEFAULT_PROJECT_ID,
+        sample_mode: Optional[bool] = None,
+    ) -> None:
         self.path = path
+        self.workspace_id = _scope(workspace_id, DEFAULT_WORKSPACE_ID)
+        self.project_id = _scope(project_id, DEFAULT_PROJECT_ID)
+        self.sample_mode = _truthy(os.environ.get("SAMPLE_MODE", "false")) if sample_mode is None else bool(sample_mode)
 
     def status(self) -> Dict[str, Any]:
         return {
@@ -208,6 +240,7 @@ class LocalLearningMemory:
             "durable": False,
             "path": str(self.path.relative_to(ROOT)),
             "seedPath": str(SAMPLE_MEMORY_PATH.relative_to(ROOT)),
+            "sampleArtifactsEnabled": self.sample_mode,
             "advisoryOnly": True,
             "browserEmbeddingsRetained": False,
         }
@@ -229,12 +262,18 @@ class LocalLearningMemory:
 
     def artifacts(self) -> List[LearningArtifact]:
         deduped: Dict[str, LearningArtifact] = {}
-        for artifact in load_seed_artifacts() + self._load_jsonl():
+        for artifact in load_seed_artifacts(self.sample_mode) + self._load_jsonl():
+            if artifact.workspace_id != self.workspace_id or artifact.project_id != self.project_id:
+                continue
             deduped[artifact.memory_id] = artifact
         return list(deduped.values())
 
     def seed_synthetic_learning_memory(self) -> Dict[str, Any]:
-        artifacts = load_seed_artifacts()
+        artifacts = [
+            artifact
+            for artifact in load_seed_artifacts(self.sample_mode)
+            if artifact.workspace_id == self.workspace_id and artifact.project_id == self.project_id
+        ]
         return {
             "provider": self.provider,
             "seeded": len(artifacts),
@@ -243,7 +282,14 @@ class LocalLearningMemory:
         }
 
     def store_feedback(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        artifact = LearningArtifact.from_dict({**payload, "type": payload.get("type") or "reviewer_feedback"})
+        artifact = LearningArtifact.from_dict(
+            {
+                **payload,
+                "type": payload.get("type") or "reviewer_feedback",
+                "workspaceId": self.workspace_id,
+                "projectId": self.project_id,
+            }
+        )
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(artifact.payload(), sort_keys=True) + "\n")
@@ -302,13 +348,29 @@ class QdrantLearningMemory:
     provider = "qdrant"
     durable = True
 
-    def __init__(self, *, compass_client: Optional[CompassClient] = None, client: Any = None, collection: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        *,
+        compass_client: Optional[CompassClient] = None,
+        client: Any = None,
+        collection: Optional[str] = None,
+        workspace_id: str = DEFAULT_WORKSPACE_ID,
+        project_id: str = DEFAULT_PROJECT_ID,
+        sample_mode: Optional[bool] = None,
+    ) -> None:
         self.compass = compass_client or CompassClient()
         self.collection = collection or os.environ.get("QDRANT_COLLECTION") or DEFAULT_COLLECTION
         self.vector_size = _int_env("QDRANT_VECTOR_SIZE", DEFAULT_VECTOR_SIZE)
         self._client = client
         self.configured = qdrant_provider_requested() and qdrant_env_present()
-        self.local = LocalLearningMemory()
+        self.workspace_id = _scope(workspace_id, DEFAULT_WORKSPACE_ID)
+        self.project_id = _scope(project_id, DEFAULT_PROJECT_ID)
+        self.sample_mode = _truthy(os.environ.get("SAMPLE_MODE", "false")) if sample_mode is None else bool(sample_mode)
+        self.local = LocalLearningMemory(
+            workspace_id=self.workspace_id,
+            project_id=self.project_id,
+            sample_mode=self.sample_mode,
+        )
 
     def status(self) -> Dict[str, Any]:
         return {
@@ -317,6 +379,7 @@ class QdrantLearningMemory:
             "collection": self.collection,
             "durable": True,
             "embeddingsModel": embedding_model_from_env(),
+            "sampleArtifactsEnabled": self.sample_mode,
             "advisoryOnly": True,
             "browserEmbeddingsRetained": False,
         }
@@ -341,18 +404,24 @@ class QdrantLearningMemory:
             must=[
                 imports["FieldCondition"](key="memoryType", match=imports["MatchValue"](value="learning_artifact")),
                 imports["FieldCondition"](key="advisoryOnly", match=imports["MatchValue"](value=True)),
+                imports["FieldCondition"](key="workspaceId", match=imports["MatchValue"](value=self.workspace_id)),
+                imports["FieldCondition"](key="projectId", match=imports["MatchValue"](value=self.project_id)),
             ]
         )
 
     def seed_synthetic_learning_memory(self) -> Dict[str, Any]:
-        artifacts = load_seed_artifacts()
+        artifacts = [
+            artifact
+            for artifact in load_seed_artifacts(self.sample_mode)
+            if artifact.workspace_id == self.workspace_id and artifact.project_id == self.project_id
+        ]
         if not self.configured:
             return {**self.local.seed_synthetic_learning_memory(), "fallbackFrom": "qdrant_not_configured"}
-        if not artifacts:
-            return {"provider": self.provider, "seeded": 0, "advisoryOnly": True, "browserEmbeddingsRetained": False}
         collection_result = self._qdrant().ensure_collection()
         if not collection_result.get("ok"):
             return {**self.local.seed_synthetic_learning_memory(), "fallbackFrom": collection_result.get("error_type", "qdrant_collection_error")}
+        if not artifacts:
+            return {"provider": self.provider, "seeded": 0, "advisoryOnly": True, "browserEmbeddingsRetained": False}
         embeddings = self.compass.embed_texts([artifact.searchable_text() for artifact in artifacts])
         if not embeddings.get("ok"):
             return {**self.local.seed_synthetic_learning_memory(), "fallbackFrom": embeddings.get("error_type", "embedding_unavailable")}
@@ -361,7 +430,7 @@ class QdrantLearningMemory:
         points = []
         for artifact, vector in zip(artifacts, embeddings.get("embeddings") or []):
             payload = artifact.payload()
-            point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"learning:{payload['memoryId']}"))
+            point_id = _learning_point_id(payload)
             if PointStruct:
                 points.append(PointStruct(id=point_id, vector=vector, payload=payload))
             else:
@@ -378,26 +447,32 @@ class QdrantLearningMemory:
             return {**self.local.seed_synthetic_learning_memory(), "fallbackFrom": exc.__class__.__name__}
 
     def store_feedback(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        artifact = LearningArtifact.from_dict({**payload, "type": payload.get("type") or "reviewer_feedback"})
+        scoped_payload = {
+            **payload,
+            "type": payload.get("type") or "reviewer_feedback",
+            "workspaceId": self.workspace_id,
+            "projectId": self.project_id,
+        }
+        artifact = LearningArtifact.from_dict(scoped_payload)
         if not self.configured:
-            return {**self.local.store_feedback(payload), "fallbackFrom": "qdrant_not_configured"}
+            return {**self.local.store_feedback(scoped_payload), "fallbackFrom": "qdrant_not_configured"}
         seeded = self.seed_synthetic_learning_memory()
         if seeded.get("provider") != self.provider:
-            return {**self.local.store_feedback(payload), "fallbackFrom": seeded.get("fallbackFrom", "qdrant_unavailable")}
+            return {**self.local.store_feedback(scoped_payload), "fallbackFrom": seeded.get("fallbackFrom", "qdrant_unavailable")}
         embedding = self.compass.embed_texts([artifact.searchable_text()])
         if not embedding.get("ok"):
-            return {**self.local.store_feedback(payload), "fallbackFrom": embedding.get("error_type", "embedding_unavailable")}
+            return {**self.local.store_feedback(scoped_payload), "fallbackFrom": embedding.get("error_type", "embedding_unavailable")}
         imports = self._imports()
         PointStruct = imports.get("PointStruct")
         payload_data = artifact.payload()
-        point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"learning:{payload_data['memoryId']}"))
+        point_id = _learning_point_id(payload_data)
         vector = (embedding.get("embeddings") or [[]])[0]
         point = PointStruct(id=point_id, vector=vector, payload=payload_data) if PointStruct else {"id": point_id, "vector": vector, "payload": payload_data}
         try:
             self._client_instance().upsert(collection_name=self.collection, points=[point])
             return {"provider": self.provider, "stored": True, "artifact": sanitize_artifact(artifact), "advisoryOnly": True}
         except Exception as exc:
-            return {**self.local.store_feedback(payload), "fallbackFrom": exc.__class__.__name__}
+            return {**self.local.store_feedback(scoped_payload), "fallbackFrom": exc.__class__.__name__}
 
     def find_similar_cases(
         self,
@@ -427,6 +502,11 @@ class QdrantLearningMemory:
             similar = []
             for hit in hits or []:
                 payload = getattr(hit, "payload", None) or (hit.get("payload") if isinstance(hit, dict) else {}) or {}
+                if (
+                    _clean(payload.get("workspaceId")) != self.workspace_id
+                    or _clean(payload.get("projectId")) != self.project_id
+                ):
+                    continue
                 score = getattr(hit, "score", None)
                 if score is None and isinstance(hit, dict):
                     score = hit.get("score", 0)
@@ -464,13 +544,28 @@ class QdrantLearningMemory:
         }
 
 
-def get_learning_memory_provider(compass_client: Optional[CompassClient] = None) -> Any:
+def get_learning_memory_provider(
+    compass_client: Optional[CompassClient] = None,
+    *,
+    workspace_id: str = DEFAULT_WORKSPACE_ID,
+    project_id: str = DEFAULT_PROJECT_ID,
+    sample_mode: Optional[bool] = None,
+) -> Any:
     if qdrant_provider_requested() and qdrant_env_present():
-        provider = QdrantLearningMemory(compass_client=compass_client)
+        provider = QdrantLearningMemory(
+            compass_client=compass_client,
+            workspace_id=workspace_id,
+            project_id=project_id,
+            sample_mode=sample_mode,
+        )
         imports = provider._imports()
         if not imports.get("error"):
             return provider
-    return LocalLearningMemory()
+    return LocalLearningMemory(
+        workspace_id=workspace_id,
+        project_id=project_id,
+        sample_mode=sample_mode,
+    )
 
 
 def learning_memory_status() -> Dict[str, Any]:
@@ -481,8 +576,25 @@ def seed_synthetic_learning_memory() -> Dict[str, Any]:
     return get_learning_memory_provider().seed_synthetic_learning_memory()
 
 
-def store_feedback(payload: Dict[str, Any]) -> Dict[str, Any]:
-    return get_learning_memory_provider().store_feedback(payload)
+def store_feedback(
+    payload: Dict[str, Any],
+    *,
+    workspace_id: str = DEFAULT_WORKSPACE_ID,
+    project_id: str = DEFAULT_PROJECT_ID,
+    actor: Optional[Dict[str, Any]] = None,
+    sample_mode: Optional[bool] = None,
+) -> Dict[str, Any]:
+    scoped_payload = {
+        **payload,
+        "workspaceId": _scope(workspace_id, DEFAULT_WORKSPACE_ID),
+        "projectId": _scope(project_id, DEFAULT_PROJECT_ID),
+        **({"actor": actor} if isinstance(actor, dict) else {}),
+    }
+    return get_learning_memory_provider(
+        workspace_id=workspace_id,
+        project_id=project_id,
+        sample_mode=sample_mode,
+    ).store_feedback(scoped_payload)
 
 
 def find_similar_cases(
@@ -491,8 +603,15 @@ def find_similar_cases(
     domains: Sequence[str],
     *,
     limit: int = 5,
+    workspace_id: str = DEFAULT_WORKSPACE_ID,
+    project_id: str = DEFAULT_PROJECT_ID,
+    sample_mode: Optional[bool] = None,
 ) -> Dict[str, Any]:
-    return get_learning_memory_provider().find_similar_cases(case_facts, missing_evidence, domains, limit=limit)
+    return get_learning_memory_provider(
+        workspace_id=workspace_id,
+        project_id=project_id,
+        sample_mode=sample_mode,
+    ).find_similar_cases(case_facts, missing_evidence, domains, limit=limit)
 
 
 def get_control_suggestions(
@@ -501,8 +620,15 @@ def get_control_suggestions(
     domains: Sequence[str],
     *,
     limit: int = 8,
+    workspace_id: str = DEFAULT_WORKSPACE_ID,
+    project_id: str = DEFAULT_PROJECT_ID,
+    sample_mode: Optional[bool] = None,
 ) -> Dict[str, Any]:
-    return get_learning_memory_provider().get_control_suggestions(case_facts, missing_evidence, domains, limit=limit)
+    return get_learning_memory_provider(
+        workspace_id=workspace_id,
+        project_id=project_id,
+        sample_mode=sample_mode,
+    ).get_control_suggestions(case_facts, missing_evidence, domains, limit=limit)
 
 
 def summarize_learning_signals(
@@ -511,8 +637,16 @@ def summarize_learning_signals(
     domains: Sequence[str],
     *,
     compass_client: Optional[CompassClient] = None,
+    workspace_id: str = DEFAULT_WORKSPACE_ID,
+    project_id: str = DEFAULT_PROJECT_ID,
+    sample_mode: Optional[bool] = None,
 ) -> Dict[str, Any]:
-    provider = get_learning_memory_provider(compass_client)
+    provider = get_learning_memory_provider(
+        compass_client,
+        workspace_id=workspace_id,
+        project_id=project_id,
+        sample_mode=sample_mode,
+    )
     similar = provider.find_similar_cases(case_facts, missing_evidence, domains, limit=5)
     controls = provider.get_control_suggestions(case_facts, missing_evidence, domains, limit=8)
     similar_cases = similar.get("similarCases", [])
@@ -530,4 +664,3 @@ def summarize_learning_signals(
         "browserEmbeddingsRetained": False,
         **({"fallbackFrom": controls.get("fallbackFrom") or similar.get("fallbackFrom")} if (controls.get("fallbackFrom") or similar.get("fallbackFrom")) else {}),
     }
-

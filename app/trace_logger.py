@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -27,7 +28,7 @@ def utc_now() -> str:
 
 def safe_run_id(value: Optional[str]) -> str:
     cleaned = RUN_ID_RE.sub("-", str(value or "").strip()).strip(".-")
-    return cleaned[:96] or f"eval-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+    return cleaned[:96] or f"eval-{uuid.uuid4().hex[:16]}"
 
 
 def _sensitive_env_values() -> List[str]:
@@ -70,10 +71,30 @@ class TraceLogger:
         requested_dir = Path(log_dir or os.environ.get("LOG_DIR", "./logs"))
         self.log_dir = requested_dir if requested_dir.is_absolute() else ROOT / requested_dir
         self.log_dir.mkdir(parents=True, exist_ok=True)
-        self.relative_log_file = f"logs/trace-{self.run_id}.jsonl"
-        self.path = self.log_dir / f"trace-{self.run_id}.jsonl"
+        self.path = self._create_exclusive_trace_file()
+        self.relative_log_file = f"logs/{self.path.name}"
         self.events: List[Dict[str, Any]] = []
-        self.path.write_text("", encoding="utf-8")
+
+    def _create_exclusive_trace_file(self) -> Path:
+        """Create a new run file without ever truncating an existing trace."""
+
+        base = self.log_dir / f"trace-{self.run_id}.jsonl"
+        suffix = safe_run_id(self.trace_id)[-20:]
+        candidates = [base, self.log_dir / f"trace-{self.run_id}-{suffix}.jsonl"]
+        for candidate in candidates:
+            try:
+                candidate.open("x", encoding="utf-8").close()
+                return candidate
+            except FileExistsError:
+                continue
+
+        while True:
+            candidate = self.log_dir / f"trace-{self.run_id}-{uuid.uuid4().hex[:12]}.jsonl"
+            try:
+                candidate.open("x", encoding="utf-8").close()
+                return candidate
+            except FileExistsError:  # pragma: no cover - UUID collision guard
+                continue
 
     def log(
         self,

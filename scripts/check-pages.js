@@ -21,6 +21,7 @@ const required = [
   'public/app.js',
   'public/config.js',
   'public/styles.css',
+  'public/styles/24-working-demo-qa.css',
   'public/.nojekyll'
 ];
 
@@ -31,7 +32,10 @@ for (const file of required) {
 }
 
 const html = fs.readFileSync(path.join(ROOT, 'public/index.html'), 'utf8');
-const css = fs.readFileSync(path.join(ROOT, 'public/styles.css'), 'utf8');
+const css = [
+  fs.readFileSync(path.join(ROOT, 'public/styles.css'), 'utf8'),
+  fs.readFileSync(path.join(ROOT, 'public/styles/24-working-demo-qa.css'), 'utf8')
+].join('\n');
 const app = fs.readFileSync(path.join(ROOT, 'public/app.js'), 'utf8');
 for (const asset of [
   'config.js',
@@ -48,7 +52,8 @@ for (const asset of [
   'modules/evidenceUploadUi.js',
   'appModules.js',
   'app.js',
-  'styles.css'
+  'styles.css',
+  'styles/24-working-demo-qa.css'
 ]) {
   if (!html.includes(asset)) {
     throw new Error(`public/index.html does not reference ${asset}`);

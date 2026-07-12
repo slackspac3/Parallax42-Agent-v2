@@ -6,19 +6,18 @@ Start with the online GitHub evidence rather than a local checkout:
 
 | Online item | Link | What to verify |
 | --- | --- | --- |
-| Repository | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone> | Root `run.py`, `Dockerfile`, `metadata.json`, examples, logs, and docs are present on `main`. |
-| GitHub Pages cockpit | <https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/> | Static product cockpit loads and uses hosted product routes from `public/config.js`. |
-| Public evaluator API | <https://agentathon-evaluator-api-production.up.railway.app> | Public FastAPI wrapper from this clone exposes `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run` as JSON endpoints. |
-| Vercel product API | <https://parallax42-compliance-intelligence.vercel.app/api/health> | Hosted runtime reports Compass gateway, Qdrant-backed evidence memory, parser relay, learning memory, and advisory runtime status without exposing secrets. |
-| Agentathon Preflight | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/actions/workflows/agentathon-preflight.yml> | Latest `main` run passes both `agentathon-preflight` and `docker-smoke`. This is the online Docker plus `/health` and `/run` proof. |
-| CI | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/actions/workflows/ci.yml> | Latest `main` run passes `npm run qa`. |
-| Architecture | <https://github.com/slackspac3/Parallax42-Agentathon-Online-Clone/blob/main/docs/AGENTATHON_SYSTEM_ARCHITECTURE.md> | Online-first evaluator path, product path, and runtime boundaries are documented. |
+| Repository | <https://github.com/slackspac3/Parallax42-Agent-v2> | Root `run.py`, `Dockerfile`, `metadata.json`, examples, logs, and docs are present on `main`. |
+| GitHub Pages cockpit | <https://slackspac3.github.io/Parallax42-Agent-v2/> | Static product cockpit loads and uses hosted product routes from `public/config.js`. |
+| Vercel product API | <https://parallax42-agent-v2.vercel.app/api/health> | Hosted runtime reports Compass gateway, Qdrant-backed evidence memory, parser relay, learning memory, and advisory runtime status without exposing secrets. |
+| Agentathon Preflight | <https://github.com/slackspac3/Parallax42-Agent-v2/actions/workflows/agentathon-preflight.yml> | Latest `main` run passes both `agentathon-preflight` and `docker-smoke`. This is the online Docker plus `/health` and `/run` proof. |
+| CI | <https://github.com/slackspac3/Parallax42-Agent-v2/actions/workflows/ci.yml> | Latest `main` run passes `npm run qa`. |
+| Architecture | <https://github.com/slackspac3/Parallax42-Agent-v2/blob/main/docs/AGENTATHON_SYSTEM_ARCHITECTURE.md> | Online-first evaluator path, product path, and runtime boundaries are documented. |
 
-GitHub Pages is a static cockpit and does not host the FastAPI evaluator API. The public evaluator API is the Railway deployment at `https://agentathon-evaluator-api-production.up.railway.app`. The separate `docker-smoke` job in the Agentathon Preflight workflow remains the reproducibility proof: it builds the Docker image, starts the container on port `8000`, calls `GET /health`, and posts `input_examples/example_1.json` to `/run`.
+GitHub Pages is a static cockpit and does not host the FastAPI evaluator API. v2 does not claim the legacy public Railway evaluator as a deployment from this clone. The `docker-smoke` job in the Agentathon Preflight workflow is the evaluator reproducibility proof: it builds the Docker image, starts the container on port `8000`, calls `GET /health`, and posts `input_examples/example_1.json` to `/run`.
 
-The online product demo uses Vercel for server-side product APIs and the Compass gateway, plus the DigitalOcean/Ocean droplet for backend services. Qdrant is running on the droplet behind Nginx at `https://api.parallax42.bhavukarora.com/qdrant/`; that endpoint requires an API key and returns `401 Unauthorized` without one. Vercel stores the Qdrant key as an encrypted environment variable and exposes only safe evidence index/search responses to the browser.
+The online product demo uses Vercel for server-side product APIs and a dedicated Railway v2 project for Postgres session/case state and Qdrant vector storage. The Qdrant endpoint is authenticated and Vercel stores its key as an encrypted environment variable; the browser receives neither the key nor raw embeddings. The credential-free demo uses explicitly labelled deterministic hash embeddings for real, repeatable indexing/search. A rotated Compass credential upgrades this to semantic embeddings and enables smart intake/advisory calls.
 
-Final submission positioning: the judge-facing product demo is online-first. The GitHub Pages cockpit calls Vercel product APIs, which keep Compass, Qdrant, and backend service credentials server-side. The public evaluator API is Railway; the local Docker/FastAPI path remains the evaluator reproduction path for `run.py`, `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run`. Compass and retrieval outputs are advisory; the Deterministic Decision Owner remains final authority.
+Final submission positioning: the judge-facing product demo is online-first. The GitHub Pages cockpit calls Vercel product APIs, which keep database, Qdrant, and optional Compass credentials server-side. The local Docker/FastAPI path remains the evaluator reproduction path for `run.py`, `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run`. Compass and retrieval outputs are advisory; the Deterministic Decision Owner remains final authority.
 
 The hosted chat also supports post-council continuation. If a user adds new material context after a council result, the app retains the uploaded fixture/evidence and prior result, records whether the new answer is an addition or replacement, and marks the old result pending rerun when needed. Ambiguous changes such as a terse new geography ask an add-or-replace clarification before the case is mutated. This is a product demo behavior; the Agentathon `/run` evaluator path remains a single non-interactive request/response contract.
 
@@ -32,27 +31,27 @@ The submitted repository includes the required FastAPI evaluator surface, but th
 | Does `run.py` expose the required evaluator API on port `8000`? | Yes; verified locally/preflight and by CI Docker smoke. |
 | Is the FastAPI wrapper publicly hosted at the GitHub Pages URL? | No. GitHub Pages is static. |
 | Is the FastAPI wrapper publicly hosted at the Vercel product API URL? | No. Vercel hosts the Node/CommonJS product APIs. |
-| Is the public Railway URL the Agentathon FastAPI wrapper? | Yes. `https://agentathon-evaluator-api-production.up.railway.app` exposes this repo's `/health`, `/metadata`, `/logs`, `/compass/probe`, and `/run` JSON schema. |
-| Is the Ocean/droplet backend the Agentathon FastAPI wrapper? | No. Treat Ocean/droplet URLs as product/backend services unless they expose this repo's evaluator schema. |
-| What is the online proof for FastAPI today? | Railway public API plus the GitHub Actions `agentathon-preflight.yml` Docker smoke job on `main`. |
+| Is a v2 FastAPI evaluator publicly hosted? | No. The wrapper is verified through local tests and the CI Docker smoke; the isolated Railway v2 services are Postgres and Qdrant only. |
+| Are the Railway Postgres/Qdrant services the Agentathon FastAPI wrapper? | No. They are product persistence only. |
+| What is the online proof for FastAPI today? | The GitHub Actions `agentathon-preflight.yml` Docker smoke job on `main`. |
 
-Judging risk: low, provided the form uses the Railway evaluator API URL for the API field and the GitHub Pages URL only for the product demo field. Recheck Railway immediately before submitting.
+If a public FastAPI URL is required later, deploy this clone as a separate authenticated or tightly quota-bound service; do not reuse the legacy evaluator URL by assumption.
 
 Online Qdrant proof path:
 
 ```bash
-curl https://parallax42-compliance-intelligence.vercel.app/api/health
+curl https://parallax42-agent-v2.vercel.app/api/health
 
-curl -X POST https://parallax42-compliance-intelligence.vercel.app/api/evidence/index \
+curl -X POST https://parallax42-agent-v2.vercel.app/api/evidence/index \
   -H "Content-Type: application/json" \
   -d '{"caseId":"judge-online-qdrant-smoke","documents":[{"evidenceId":"judge-smoke-001","title":"Synthetic Qdrant Smoke Evidence","text":"The vendor is prohibited from using customer data for model training. The DPA lists subprocessors and a 30-day deletion SLA."}]}'
 
-curl -X POST https://parallax42-compliance-intelligence.vercel.app/api/evidence/search \
+curl -X POST https://parallax42-agent-v2.vercel.app/api/evidence/search \
   -H "Content-Type: application/json" \
   -d '{"caseId":"judge-online-qdrant-smoke","query":"model training exclusion subprocessors deletion SLA","topK":3}'
 ```
 
-Expected indicators are `provider=qdrant`, `storage=server_side_qdrant_vector_db`, `collection=p42_compliance_evidence`, `model=text-embedding-3-large`, `browserEmbeddingsRetained=false`, and at least one sanitized match.
+Expected public-demo indicators are `provider=qdrant`, `storage=server_side_qdrant_vector_db`, `collection=p42_compliance_evidence_v2`, `model=p42-demo-hash-embedding-v1`, `browserEmbeddingsRetained=false`, and at least one sanitized match. When a valid Compass embedding credential is configured, the model changes to the configured semantic embedding model. The two modes are never conflated.
 
 Online continuation smoke:
 
@@ -110,7 +109,7 @@ Why this split is used:
 - `gpt-5.1` is the reasoning/advisory model for deeper specialist council output, CrewAI live advisory analysis, and final advisory review.
 - `text-embedding-3-large` is the embedding model for evidence chunks, reference memory, governed learning memory, and Qdrant search.
 
-The deployed online product demo uses the project owner's own Compass credentials configured server-side in Vercel/gateway settings. It does not rely on a committed key and does not assume an Agentathon-provided key is available. If evaluators provide a Compass key, they can set `OPENAI_API_KEY` with the official template `OPENAI_BASE_URL=https://compass.core42.ai/v1`, or use `https://api.core42.ai/v1` if that base is confirmed for the issued key. Compass is the runtime provider for LLM/embedding calls, not the source of legal/compliance/security authority.
+The deployed public demo does not require or claim a live Compass credential: deterministic intake/decisioning and labelled hash embeddings keep the workflow testable. If a rotated project or evaluator key is provided, it can be set server-side with the official template `OPENAI_BASE_URL=https://compass.core42.ai/v1`, or `https://api.core42.ai/v1` if that base is confirmed for the issued key. Compass is an optional runtime provider for LLM/semantic-embedding calls, not the source of legal/compliance/security authority.
 
 Reference intelligence is separate from Compass. Compass is the server-side LLM and embedding runtime used to analyze, summarize, critique, and retrieve. It is not a legal, compliance, security, sanctions, export-control, procurement, HSE, or ESG source of truth. The current reference-source map is recorded in `reference_context/reference_memory_manifest.json` and includes expanded official/public anchors for NIST, EU, OECD, ISO, Singapore, UAE, OFAC, BIS, UN/EU sanctions, CourtListener, SEC EDGAR, procurement/debarment, and HSE/ESG references. UAE-specific anchors are included for AI strategy/ethics, data protection, DIFC/ADGM privacy, cybersecurity, export-control/non-proliferation, AML/CFT and targeted financial sanctions, procurement, environment, and workforce context.
 
@@ -124,12 +123,12 @@ The repository intentionally separates three runtime boundaries:
 |---|---|---|---|
 | Agentathon direct Compass | `OPENAI_API_KEY`, `OPENAI_BASE_URL=https://compass.core42.ai/v1` | FastAPI `/run`, `/compass/probe`, `scripts/compass_doctor.py`, optional Compass embeddings | Uses the official Agentathon template first. Runtime also accepts `https://api.core42.ai/v1` when confirmed for the issued key. |
 | Product Vercel gateway | `COMPASS_GATEWAY_BASE_URL`, `COMPASS_GATEWAY_TOKEN` | Existing Node/Vercel smart intake, embeddings, hosted demo support | Keeps server-side tokens out of the browser and preserves the product runtime. It is not the Agentathon direct Compass base URL unless it exposes OpenAI-compatible `/v1` routes. |
-| Product backend/droplet | `PARALLAX42_BACKEND_URL=https://api.parallax42.bhavukarora.com`, optional `P42_CREWAI_SERVICE_URL` | OCR/parser, backend relay, optional remote CrewAI/product services | Supports the richer product demo. It is not a Compass API and should not be used as `OPENAI_BASE_URL`. |
-| Product Qdrant memory | Vercel encrypted `P42_VECTOR_STORE_PROVIDER=qdrant`, `QDRANT_URL`, `QDRANT_API_KEY`, `QDRANT_COLLECTION` | Online product evidence indexing/search and governed memory surfaces | Qdrant runs on the droplet and is used by Vercel server-side product APIs. The browser never receives Qdrant keys or raw embeddings. |
+| Product backend | Optional `PARALLAX42_BACKEND_URL`, optional `P42_CREWAI_SERVICE_URL` | OCR/parser relay and optional remote CrewAI/product services | These services are not Compass APIs and must not be used as `OPENAI_BASE_URL`. |
+| Product persistence | Vercel encrypted `DATABASE_URL`, `QDRANT_URL`, `QDRANT_API_KEY`; `QDRANT_COLLECTION=p42_compliance_evidence_v2` | Postgres session/case state plus product evidence indexing/search and governed memory surfaces | Dedicated Railway v2 services are used by Vercel server-side APIs. The browser never receives database/vector credentials or raw embeddings. |
 
-The Agentathon wrapper uses direct Compass for live advisory when available because the judging API should not depend on browser clicks, uploaded files, Vercel routing, or the droplet backend. The Node/Vercel/droplet stack remains the product vision and can demonstrate richer functionality, but the submitted `/run` path provides equivalent judgeable evidence: multi-agent collaboration, deterministic final decision ownership, advisory live-LLM boundary, RAG/learning status, and JSONL traces.
+The Agentathon wrapper uses direct Compass for live advisory when available because the judging API should not depend on browser clicks, uploaded files, or Vercel routing. The Node/Vercel/Railway stack remains the product path, while the submitted `/run` path provides equivalent judgeable evidence: multi-agent collaboration, deterministic final decision ownership, advisory live-LLM boundary, RAG/learning status, and JSONL traces.
 
-Qdrant RAG evidence memory is verified active in the deployed online product path: Vercel product APIs index/search through the droplet-hosted Qdrant collection `p42_compliance_evidence` using Compass-compatible embeddings and return citation-safe snippets only. For the local FastAPI Agentathon wrapper, Qdrant remains env-dependent: when `P42_VECTOR_STORE_PROVIDER=qdrant`, `QDRANT_URL`, `QDRANT_API_KEY`, and embedding env vars are exported, `/run` chunks synthetic/input evidence, embeds it, stores case-scoped chunks in Qdrant, searches by `caseId`, and returns sanitized snippets. Without local Qdrant or embeddings, `/run` reports `rag_evidence_memory.provider=local-fallback`; this fallback is not durable production RAG.
+The isolated Qdrant v2 service and collection `p42_compliance_evidence_v2` have been provisioned and authenticated. The public product demo uses deterministic lexical hash vectors to store case-scoped chunks and return citation-safe snippets without an external model call. Full semantic indexing/search remains credential-dependent and uses the configured Compass-compatible model. Without local Qdrant configuration, `/run` reports `rag_evidence_memory.provider=local-fallback`.
 
 ```bash
 python scripts/qdrant_smoke.py
@@ -293,10 +292,10 @@ The generated snapshots are written under `evidence/`, including readiness, live
 ## Known Limitations
 
 - Compass gateway LLM and embedding calls require server-side environment configuration; the Agentathon non-sample path attempts a live advisory call when credentials are present.
-- Online product vector storage is Qdrant-backed through Vercel and the droplet; local/CI vector storage falls back unless Qdrant env vars are exported.
+- Online product vector storage is provisioned in isolated Railway Qdrant through Vercel. The public demo uses labelled deterministic hash retrieval; semantic embeddings require an approved Compass credential. Local/CI vector storage falls back unless Qdrant env vars are exported.
 - Governed learning memory is advisory precedent storage, not model retraining.
 - Optional live CrewAI advisory specialists for the Agentathon wrapper require `AGENT_RUNTIME=crewai_live`, `CREWAI_ENABLE_LIVE_LLM=1`, optional CrewAI dependencies, and server-side Compass credentials; final decisions remain deterministic.
 - Local OCR/document parsing is not implemented in this repository.
 - Audit is local append-only hash-chained JSONL, not managed durable storage.
-- Production Redis, Postgres, durable queues, and OpenClaw are not implemented or claimed; FastAPI and Docker are limited to the Agentathon evaluator wrapper.
+- Redis, durable queues, and OpenClaw are not implemented or claimed. Postgres is used for product demo session/case lifecycle state; the append-only audit log remains filesystem-based.
 - Human approval remains required; the agent does not auto-approve operational compliance decisions.

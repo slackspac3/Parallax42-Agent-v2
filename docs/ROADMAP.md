@@ -7,7 +7,7 @@ This roadmap starts from the submission end state and works backward into implem
 By submission time, the repo should support this story:
 
 ```text
-A reviewer opens the online GitHub Pages cockpit, uses Vercel product APIs backed by server-side Compass and droplet-hosted Qdrant, runs a high-risk compliance case or fixture PDF, sees evidence-backed gaps, inspects the agent trace, confirms human approval controls, exports the audit pack, and sees Agentathon Docker /run proof in GitHub Actions.
+A reviewer opens the online GitHub Pages cockpit, uses Vercel product APIs backed by isolated Railway Postgres/Qdrant and deterministic retrieval, runs a high-risk compliance case or fixture PDF, sees evidence-backed gaps, inspects the agent trace, confirms human approval controls, exports the audit pack, and sees Agentathon Docker `/run` proof in GitHub Actions.
 ```
 
 ## Milestone 0: Golden Demo Spine

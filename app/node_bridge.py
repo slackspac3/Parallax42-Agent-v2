@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import subprocess
 from pathlib import Path
@@ -13,20 +14,26 @@ from .trace_logger import redact
 
 ROOT = Path(__file__).resolve().parents[1]
 BRIDGE_SCRIPT = ROOT / "scripts" / "agentathon_run.js"
+DEFAULT_TIMEOUT_SECONDS = 120.0
+MAX_TIMEOUT_SECONDS = 300.0
 
 
 def _timeout_seconds(request_options: Optional[Dict[str, Any]] = None) -> float:
-    configured = os.environ.get("MAX_RUNTIME_SECONDS", "900")
+    configured = os.environ.get("MAX_RUNTIME_SECONDS", str(int(DEFAULT_TIMEOUT_SECONDS)))
     try:
         value = float(configured)
-    except ValueError:
-        value = 900.0
+    except (TypeError, ValueError):
+        value = DEFAULT_TIMEOUT_SECONDS
+    if not math.isfinite(value):
+        value = DEFAULT_TIMEOUT_SECONDS
     if request_options and request_options.get("timeout_seconds"):
         try:
-            value = min(value, float(request_options["timeout_seconds"]))
+            requested = float(request_options["timeout_seconds"])
+            if math.isfinite(requested):
+                value = min(value, requested)
         except (TypeError, ValueError):
             pass
-    return max(1.0, min(value, 900.0))
+    return max(1.0, min(value, MAX_TIMEOUT_SECONDS))
 
 
 def run_node_bridge(payload: Dict[str, Any]) -> Dict[str, Any]:

@@ -122,3 +122,100 @@ test('async runtime can attach Compass advisory output without changing determin
     global.fetch = originalFetch;
   }
 });
+
+test('remote CrewAI refuses unauthenticated service calls and degrades safely', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: `/tmp/p42-runtime-features-${process.pid}-${Date.now()}.json`,
+      P42_FEATURE_LIVE_CREWAI: '1',
+      P42_FEATURE_COMPASS_LLM_CALLS: '1',
+      P42_CREWAI_SERVICE_URL: 'https://crewai.example',
+      CREWAI_SERVICE_URL: '',
+      P42_CREWAI_SERVICE_TOKEN: '',
+      CREWAI_SERVICE_TOKEN: '',
+      COMPASS_GATEWAY_TOKEN: '',
+      PARALLAX42_GATEWAY_TOKEN: '',
+      CREWAI_LLM_API_KEY: '',
+      OPENAI_API_KEY: '',
+      ANTHROPIC_API_KEY: '',
+      GEMINI_API_KEY: '',
+      GOOGLE_API_KEY: '',
+      AZURE_API_KEY: ''
+    }, async () => {
+      global.fetch = async () => {
+        throw new Error('remote fetch must not run without a CrewAI service token');
+      };
+
+      const result = await runAgentWithRuntimeAsync({
+        businessUnit: 'Procurement',
+        geography: 'UAE',
+        brief: 'Review a low-risk consulting supplier.',
+        documents: [{ summary: 'Signed contract and security assurance are attached.' }]
+      }, { runtime: 'crewai_llm' });
+
+      assert.equal(result.ok, true);
+      assert.equal(result.runtime.degraded, true);
+      assert.match(result.runtime.fallbackReason, /service token is required/i);
+      assert.equal(result.runtime.llm.outputAvailable, false);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('successful remote CrewAI output is the single live advisory path', async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: `/tmp/p42-runtime-features-${process.pid}-${Date.now()}-remote.json`,
+      P42_FEATURE_LIVE_CREWAI: '1',
+      P42_FEATURE_COMPASS_LLM_CALLS: '1',
+      P42_FEATURE_LIVE_ADVISORY_SPECIALISTS: '1',
+      P42_CREWAI_SERVICE_URL: 'https://crewai.example',
+      P42_CREWAI_SERVICE_TOKEN: 'service-token',
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'gateway-token',
+      CREWAI_ENABLE_LIVE_LLM: '1'
+    }, async () => {
+      global.fetch = async (url, options) => {
+        calls.push(url);
+        assert.equal(url, 'https://crewai.example/run');
+        assert.equal(options.headers.authorization, 'Bearer service-token');
+        assert.ok(options.signal instanceof AbortSignal);
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            ok: true,
+            result: {
+              mode: 'crewai_llm_live',
+              framework: 'CrewAI Flow',
+              crewOutput: {
+                advisoryOnly: true,
+                summary: 'Remote CrewAI advisory completed.'
+              }
+            }
+          })
+        };
+      };
+
+      const result = await runAgentWithRuntimeAsync({
+        businessUnit: 'Procurement',
+        geography: 'UAE',
+        brief: 'Review a low-risk consulting supplier.',
+        documents: [{ summary: 'Signed contract and security assurance are attached.' }]
+      }, { runtime: 'crewai_llm' });
+
+      assert.equal(result.ok, true);
+      assert.equal(result.runtime.degraded, false);
+      assert.equal(result.runtime.llm.outputAvailable, true);
+      assert.equal(result.orchestration.crewaiOutput.summary, 'Remote CrewAI advisory completed.');
+      assert.equal(result.orchestration.llmOutput.summary, 'Remote CrewAI advisory completed.');
+      assert.deepEqual(calls, ['https://crewai.example/run']);
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});

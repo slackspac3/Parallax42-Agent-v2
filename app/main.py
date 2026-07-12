@@ -9,11 +9,13 @@ from pathlib import Path
 from typing import Any, Dict
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from .agentathon_orchestrator import AgentathonOrchestrator, USE_CASE_ID
+from .auth import AuthContext, request_auth_context, require_learning_reviewer
 from .compass_client import CompassClient
 from .crewai_runtime import crewai_runtime_status
 from .evidence_memory import evidence_memory_status
@@ -32,6 +34,10 @@ app = FastAPI(
 )
 orchestrator = AgentathonOrchestrator()
 compass = CompassClient()
+
+
+def _sample_mode_enabled() -> bool:
+    return os.environ.get("SAMPLE_MODE", "false").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _log_dir() -> Path:
@@ -123,27 +129,58 @@ async def learning_memory_status_endpoint() -> Dict[str, Any]:
 
 
 @app.post("/learning/feedback")
-async def learning_feedback(payload: Dict[str, Any]) -> Dict[str, Any]:
-    result = store_feedback(payload)
-    return redact({"ok": bool(result.get("stored")), "auth": {"mode": os.environ.get("P42_AUTH_MODE", "audit")}, "result": result})
+async def learning_feedback(
+    payload: Dict[str, Any],
+    context: AuthContext = Depends(require_learning_reviewer),
+) -> Dict[str, Any]:
+    result = store_feedback(
+        payload,
+        workspace_id=context.workspace_id,
+        project_id=context.project_id,
+        actor=context.actor(),
+        sample_mode=_sample_mode_enabled(),
+    )
+    return redact({"ok": bool(result.get("stored")), "auth": {"mode": context.mode}, "result": result})
 
 
 @app.post("/learning/similar-cases")
-async def learning_similar_cases(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def learning_similar_cases(
+    payload: Dict[str, Any],
+    context: AuthContext = Depends(request_auth_context),
+) -> Dict[str, Any]:
     case_facts = payload.get("caseFacts") if isinstance(payload.get("caseFacts"), dict) else payload.get("case") if isinstance(payload.get("case"), dict) else {}
     missing = payload.get("missingEvidence") if isinstance(payload.get("missingEvidence"), list) else []
     domains = payload.get("domains") if isinstance(payload.get("domains"), list) else []
-    result = find_similar_cases(case_facts, missing, domains, limit=int(payload.get("limit") or 5))
-    return redact({"ok": True, "auth": {"mode": os.environ.get("P42_AUTH_MODE", "audit")}, "result": result})
+    result = find_similar_cases(
+        case_facts,
+        missing,
+        domains,
+        limit=max(1, min(int(payload.get("limit") or 5), 25)),
+        workspace_id=context.workspace_id,
+        project_id=context.project_id,
+        sample_mode=_sample_mode_enabled(),
+    )
+    return redact({"ok": True, "auth": {"mode": context.mode}, "result": result})
 
 
 @app.post("/learning/control-suggestions")
-async def learning_control_suggestions(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def learning_control_suggestions(
+    payload: Dict[str, Any],
+    context: AuthContext = Depends(request_auth_context),
+) -> Dict[str, Any]:
     case_facts = payload.get("caseFacts") if isinstance(payload.get("caseFacts"), dict) else payload.get("case") if isinstance(payload.get("case"), dict) else {}
     missing = payload.get("missingEvidence") if isinstance(payload.get("missingEvidence"), list) else []
     domains = payload.get("domains") if isinstance(payload.get("domains"), list) else []
-    result = get_control_suggestions(case_facts, missing, domains, limit=int(payload.get("limit") or 8))
-    return redact({"ok": True, "auth": {"mode": os.environ.get("P42_AUTH_MODE", "audit")}, "result": result})
+    result = get_control_suggestions(
+        case_facts,
+        missing,
+        domains,
+        limit=max(1, min(int(payload.get("limit") or 8), 25)),
+        workspace_id=context.workspace_id,
+        project_id=context.project_id,
+        sample_mode=_sample_mode_enabled(),
+    )
+    return redact({"ok": True, "auth": {"mode": context.mode}, "result": result})
 
 
 @app.get("/logs")
@@ -166,8 +203,11 @@ async def compass_probe() -> Dict[str, Any]:
 
 
 @app.post("/run", response_model=AgentathonRunResponse)
-async def run(request: AgentathonRunRequest):
-    response = orchestrator.run(request)
+async def run(
+    request: AgentathonRunRequest,
+    context: AuthContext = Depends(request_auth_context),
+):
+    response = await run_in_threadpool(orchestrator.run, request, context.scope())
     if response.get("status") == "error":
         return JSONResponse(status_code=502, content=redact(response))
     return redact(response)

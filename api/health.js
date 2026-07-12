@@ -7,6 +7,7 @@ const { gatewayHealth } = require('../lib/compassGatewayClient');
 const { evidenceVectorStoreHealth } = require('../lib/evidenceVectorStore');
 const { governanceReferenceHealth } = require('../lib/governanceReferenceStore');
 const { learningMemoryHealth } = require('../lib/learningMemory');
+const { storeHealth } = require('../lib/recordStore');
 const { authHealth, authorizeRequest } = require('../lib/rbac');
 const { methodGuard, rateLimitGuard, sendJson } = require('./_http');
 
@@ -34,6 +35,7 @@ module.exports = async function handler(req, res) {
     evidenceVectorStore: evidenceVectorStoreHealth(),
     governanceReference: governanceReferenceHealth(),
     learningMemory: learningMemoryHealth(),
+    sessionStore: storeHealth(),
     linkedBackend: process.env.PARALLAX42_BACKEND_URL || 'https://api.parallax42.bhavukarora.com',
     pagesOrigin: process.env.P42_PAGES_ORIGIN || 'https://slackspac3.github.io'
   });

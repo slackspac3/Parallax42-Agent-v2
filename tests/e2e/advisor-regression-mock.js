@@ -7,6 +7,7 @@ const {
   ROOT,
   assertFirstViewportLayout,
   assertNonBlankWorkbench,
+  assertResponsiveWorkspace,
   assertVisibleText,
   attachBrowserDiagnostics,
   screenshotOnFailure,
@@ -62,6 +63,7 @@ function mockRunResult(caseContext = {}) {
   return {
     ok: true,
     runId: `run_e2e_${String(mockRunCounter).padStart(3, '0')}`,
+    caseVersion: 2,
     mode: 'crewai_flow',
     case: {
       caseId: caseContext.caseId || `case-e2e-${slug}`,
@@ -250,6 +252,62 @@ function conversationResponse(body = {}) {
 }
 
 async function installMocks(page, records) {
+  await page.route('**/api/demo/session', async (route) => {
+    records.demoSession.push({ method: route.request().method() });
+    const sequence = records.demoSession.length;
+    await route.fulfill(jsonResponse({
+      ok: true,
+      token: `p42d_mock_browser_session_${sequence}`,
+      sessionId: `demo-session-e2e-${sequence}`,
+      workspaceId: `demo:session-e2e-${sequence}`,
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString()
+    }, 201));
+  });
+
+  await page.route('**/api/demo/case', async (route) => {
+    const body = route.request().postDataJSON();
+    records.demoCase.push(body);
+    const integration = /04_managed_platform/.test(body.filename || '');
+    const saas = /01_enterprise_saas/.test(body.filename || '');
+    const supplierName = integration ? 'OmniBridge Services LLC' : saas ? 'VectorCloud Systems Inc.' : 'HelioChip Logistics';
+    await route.fulfill(jsonResponse({
+      ok: true,
+      case: {
+        caseId: `demo-case-${records.demoCase.length}`,
+        version: 1,
+        supplierName,
+        brief: 'Generated fixture review case.',
+        businessUnit: integration ? 'Enterprise Platforms' : 'Compliance',
+        geography: 'United Arab Emirates',
+        evidence: [{ evidenceId: 'FIXTURE-E2E-01', title: body.filename, extractionStatus: 'fixture' }],
+        knownGaps: []
+      }
+    }, 201));
+  });
+
+  await page.route('**/api/case/approve', async (route) => {
+    const body = route.request().postDataJSON();
+    records.approval.push(body);
+    await route.fulfill(jsonResponse({
+      ok: true,
+      status: /remediation/i.test(body.reviewerDecision || '') ? 'rejected' : 'approved',
+      caseId: body.caseId,
+      caseVersion: Number(body.caseVersion || 0) + 1,
+      reviewerDecision: body.reviewerDecision,
+      autoApproval: false,
+      humanApprovalRequired: true
+    }));
+  });
+
+  await page.route('**/api/case/narrative', async (route) => {
+    await route.fulfill(jsonResponse({
+      ok: true,
+      source: 'deterministic',
+      summary: 'The deterministic decision remains authoritative and the listed reviewer actions must be completed.',
+      gapRemediations: []
+    }));
+  });
+
   await page.route('**/api/conversation', async (route) => {
     const body = route.request().postDataJSON();
     records.conversation.push(body);
@@ -264,6 +322,7 @@ async function installMocks(page, records) {
 
   await page.route('**/api/evidence/index', async (route) => {
     records.evidenceIndex.push(route.request().postDataJSON());
+    await new Promise((resolve) => setTimeout(resolve, 150));
     await route.fulfill(jsonResponse({
       ok: true,
       provider: 'qdrant',
@@ -467,20 +526,58 @@ async function main() {
   });
   const browser = await chromium.launch({ headless: process.env.PLAYWRIGHT_HEADLESS !== '0' });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-  const records = { agentRun: [], conversation: [], evidenceIndex: [], backend: [] };
+  const records = { agentRun: [], approval: [], backend: [], conversation: [], demoCase: [], demoSession: [], evidenceIndex: [] };
   const diagnostics = attachBrowserDiagnostics(page, { baseUrl: BASE_URL });
 
   try {
     await installMocks(page, records);
+    await page.addInitScript(() => {
+      if (window.sessionStorage.getItem('p42:test-legacy-history-seeded')) return;
+      window.sessionStorage.setItem('p42:test-legacy-history-seeded', 'true');
+      window.localStorage.setItem('p42:run-history', JSON.stringify([{
+        runId: 'run_legacy_cross_session',
+        result: {
+          ok: true,
+          case: { supplierName: 'Prior private tenant' },
+          citations: [{ text: 'prior-session-confidential-evidence' }]
+        }
+      }]));
+    });
     await screenshotOnFailure(page, 'advisor-regression-mock', async () => {
       await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
       await page.waitForSelector('#chatInput');
+      assert.equal(await page.evaluate(() => window.localStorage.getItem('p42:run-history')), null, 'legacy full run history must be purged from localStorage');
+      assert.doesNotMatch(await page.locator('#runHistorySelect').textContent(), /Prior private tenant/i, 'legacy cross-session results must not be restored');
       await assertNonBlankWorkbench(page);
       await assertFirstViewportLayout(page);
 
+      const primaryNav = page.getByRole('navigation', { name: 'Primary' });
+      await page.locator('#chatModeTab').focus();
+      await page.keyboard.press('End');
+      assert.equal(await page.locator('#councilOutputTab').getAttribute('aria-selected'), 'true');
+      assert.equal(await page.locator('#workflow').isVisible(), true, 'End should move the workspace tab to Council Output');
+      await page.keyboard.press('Home');
+      assert.equal(await page.locator('#chatModeTab').getAttribute('aria-selected'), 'true');
+      assert.equal(await page.locator('#caseWorkspacePanel').isVisible(), true, 'Home should return the workspace tab to Advisor');
+
+      await page.locator('#caseIntelTab').focus();
+      await page.keyboard.press('ArrowRight');
+      assert.equal(await page.locator('#councilIntelTab').getAttribute('aria-selected'), 'true');
+      assert.equal(await page.locator('#agentActivity').isVisible(), true, 'ArrowRight should reveal the council trace tabpanel');
+      await page.keyboard.press('ArrowLeft');
+      assert.equal(await page.locator('#caseIntelTab').getAttribute('aria-selected'), 'true');
+      assert.equal(await page.locator('#caseIntelligencePanel').isVisible(), true, 'ArrowLeft should restore case intelligence');
+
+      await assertResponsiveWorkspace(page, { width: 390, height: 844 });
+      await primaryNav.getByRole('link', { name: 'Evidence' }).click();
+      await assertMainSectionVisible(page, 'evidence', '#evidence', /Evidence graph/i);
+      await assertResponsiveWorkspace(page, { width: 390, height: 844 });
+      await primaryNav.getByRole('link', { name: 'Agent' }).click();
+      await assertMainSectionVisible(page, 'agent', '#run', /Compliance advisor/i);
+      await assertResponsiveWorkspace(page, { width: 768, height: 900 });
+
       await page.setViewportSize({ width: 1440, height: 900 });
       await assertCouncilOutputEmptyState(page);
-      const primaryNav = page.getByRole('navigation', { name: 'Primary' });
       await primaryNav.getByRole('link', { name: 'Admin' }).click();
       await assertMainSectionVisible(page, 'admin', '#admin', /Admin Console/i);
       await primaryNav.getByRole('link', { name: 'Audit Pack' }).click();
@@ -537,21 +634,49 @@ async function main() {
       await sendMessage(page, 'I have an agreement that I need reviewed');
       await assertVisibleText(page, '#chatMessages', /upload the agreement/i);
 
+      const conversationCountBeforeUpload = records.conversation.length;
       await page.locator('#chatEvidenceInput').setInputFiles(FIXTURE);
+      await page.locator('#chatInput').press('Control+Enter');
       await assertVisibleText(page, '#chatMessages', /Run council to produce|service agreement first|ready when you are|indexed citation-ready evidence/i, { timeout: 20_000 });
-      assert.equal(records.conversation.at(-1).eventType, 'evidence_uploaded');
-      assert.equal(records.conversation.at(-1).activeQuestion, '');
+      await page.waitForFunction(() => document.body.dataset.workspaceView === 'output', null, { timeout: 12_000 });
+      const uploadConversationIndex = records.conversation.findIndex((item, index) => index >= conversationCountBeforeUpload && item.eventType === 'evidence_uploaded');
+      const runConversationIndex = records.conversation.findIndex((item, index) => index >= conversationCountBeforeUpload && item.forceRun === true);
+      assert.ok(uploadConversationIndex >= conversationCountBeforeUpload, 'upload completion should trigger evidence intake');
+      assert.ok(runConversationIndex > uploadConversationIndex, 'queued Run council should wait until evidence ingestion and intake complete');
+      assert.equal(records.conversation[uploadConversationIndex].activeQuestion, '');
       assert.ok(records.evidenceIndex.length >= 1, 'evidence indexing API should be called after upload');
       await assertVisibleText(page, '#chatAttachmentStatus', /Evidence ready for council|citation-ready/i);
       await assertVisibleText(page, '#caseIntelDetails', /4 citation-ready|4 server-side|4 indexed/i);
 
-      await page.locator('#chatRunNow').click();
-      await page.waitForFunction(() => document.body.dataset.workspaceView === 'output', null, { timeout: 12_000 });
       await assertVisibleText(page, '#specialistList', /Human approval|Required Reviewer Actions|Evidence Quality|Specialist Collaboration/i);
       await assertVisibleText(page, '#workflow', /Executive decision room|Export review pack PDF|Deterministic compliance engine/i);
       await page.locator('#councilOutputTab').click();
       await assertCouncilOutputVisible(page);
       await assertVisibleText(page, '#specialistList', /Managed platform integration services/i);
+
+      await assertResponsiveWorkspace(page, { width: 390, height: 844 });
+      assert.equal(await page.locator('#workflow').isVisible(), true, 'completed decision room should remain visible at 390px');
+      const mobileWorkflow = await page.locator('#workflow').evaluate((node) => ({
+        width: node.getBoundingClientRect().width,
+        clientWidth: node.clientWidth,
+        scrollWidth: node.scrollWidth,
+        parentColumns: getComputedStyle(node.parentElement).gridTemplateColumns
+      }));
+      assert.ok(mobileWorkflow.width >= 340, `completed decision room should use the mobile viewport, got ${mobileWorkflow.width}px`);
+      assert.ok(mobileWorkflow.scrollWidth <= mobileWorkflow.clientWidth + 1, 'completed decision room should not overflow horizontally');
+      assert.equal(mobileWorkflow.parentColumns.split(' ').length, 1, 'mobile output workspace should use one explicit grid column');
+      await assertResponsiveWorkspace(page, { width: 768, height: 900 });
+      assert.equal(await page.locator('#workflow').isVisible(), true, 'completed decision room should remain visible at 768px');
+      await page.setViewportSize({ width: 1440, height: 1000 });
+
+      assert.equal(await page.locator('#approvalButton').isEnabled(), true, 'conditional approval should unlock after a completed run');
+      assert.equal(await page.locator('#remediationButton').isEnabled(), true, 'remediation request should unlock after a completed run');
+      page.once('dialog', (dialog) => dialog.accept());
+      await page.locator('#approvalButton').click();
+      await assertVisibleText(page, '#approvalActionStatus', /Conditional human approval recorded/i);
+      assert.equal(records.approval.at(-1).reviewerDecision, 'Conditional approval');
+      assert.equal(records.approval.at(-1).caseVersion, 2);
+      assert.equal(records.approval.at(-1).decision.status, 'conditional');
 
       await primaryNav.getByRole('link', { name: 'Admin' }).click();
       await assertMainSectionVisible(page, 'admin', '#admin', /Admin Console/i);
@@ -565,13 +690,27 @@ async function main() {
 
       const demoRunCountBefore = records.agentRun.length;
       await page.locator('#demoModeTab').click();
-      await page.locator('[data-scenario="financeVendor"]').click();
+      await page.locator('[data-scenario="integrationVendor"]').click();
       await page.waitForFunction(() => document.body.dataset.runComplete === 'true', null, { timeout: 12_000 });
       await page.locator('#councilOutputTab').click();
       await assertCouncilOutputVisible(page);
-      await assertVisibleText(page, '#specialistList', /Treasury Ops Platform/i);
+      await assertVisibleText(page, '#specialistList', /OmniBridge Services LLC/i);
       assert.ok(records.agentRun.length > demoRunCountBefore, 'demo council run should call the agent run API');
+      assert.match(records.demoCase.at(-1).filename, /^04_managed_platform_integration_services_agreement\.pdf$/);
+      assert.match(records.agentRun.at(-1).caseId, /^demo-case-/);
+      assert.equal(records.agentRun.at(-1).caseVersion, 1);
       assert.ok(await page.locator('#runHistorySelect option').count() >= 2, 'recent run history should keep previous completed runs');
+      const persistedHistory = await page.evaluate(() => ({
+        legacyLocalHistory: window.localStorage.getItem('p42:run-history'),
+        browserSession: JSON.parse(window.sessionStorage.getItem('p42:browser-session') || 'null'),
+        history: JSON.parse(window.sessionStorage.getItem('p42:run-history') || 'null')
+      }));
+      assert.equal(persistedHistory.legacyLocalHistory, null, 'full run results must never remain in browser-wide localStorage');
+      assert.equal(persistedHistory.browserSession.sessionId, 'demo-session-e2e-1');
+      assert.equal(persistedHistory.browserSession.workspaceId, 'demo:session-e2e-1');
+      assert.equal(persistedHistory.history.version, 2);
+      assert.match(persistedHistory.history.scopeId, /^demo:demo:session-e2e-1:demo-session-e2e-1$/);
+      assert.ok(persistedHistory.history.records.every((record) => record.scopeId === persistedHistory.history.scopeId), 'each persisted history record must carry the active scope');
       const chatRunId = await page.locator('#runHistorySelect option')
         .filter({ hasText: 'Managed platform integration services agreement' })
         .first()
@@ -580,6 +719,28 @@ async function main() {
       await page.locator('#runHistorySelect').selectOption(chatRunId);
       await assertCouncilOutputVisible(page);
       await assertVisibleText(page, '#specialistList', /Managed platform integration services agreement/i);
+
+      await page.waitForLoadState('networkidle');
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('#councilOutputTab');
+      assert.equal(records.demoSession.length, 1, 'same-tab refresh must reuse the same demo session');
+      await page.locator('#councilOutputTab').click();
+      await assertCouncilOutputVisible(page);
+      await assertVisibleText(page, '#specialistList', /Managed platform integration services agreement/i);
+      assert.equal(await page.locator('#approvalButton').isDisabled(), true, 'restored history must not mutate a prior ephemeral session');
+      assert.equal(await page.locator('#remediationButton').isDisabled(), true, 'restored history remediation must stay read-only');
+
+      await page.waitForLoadState('networkidle');
+      await page.evaluate(() => window.sessionStorage.removeItem('p42:browser-session'));
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('#councilOutputTab');
+      await page.waitForFunction(() => document.querySelector('#runHistorySelect')?.disabled === true);
+      assert.equal(records.demoSession.length, 2, 'missing session context must rotate to a fresh demo workspace');
+      assert.equal(await page.evaluate(() => window.sessionStorage.getItem('p42:run-history')), null, 'scope rotation must purge the prior full history envelope');
+      assert.equal(await page.evaluate(() => window.localStorage.getItem('p42:run-history')), null, 'scope rotation must not recreate legacy local history');
+      await page.locator('#councilOutputTab').click();
+      await assertCouncilOutputEmptyState(page);
+      assert.doesNotMatch(await page.locator('#specialistList').textContent(), /Managed platform integration services agreement/i, 'prior session output must not remain visible after rotation');
 
       diagnostics.assertClean();
     });

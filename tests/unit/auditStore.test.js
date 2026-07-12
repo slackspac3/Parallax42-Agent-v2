@@ -35,6 +35,23 @@ test('audit redaction removes diagnostic stack details and local paths', () => {
   assert.equal(result.note, 'See [local-path] for local debug output.');
 });
 
+test('audit redaction removes credentials embedded in ordinary text', () => {
+  const bearerPrefix = ['Author', 'ization: Bea', 'rer '].join('');
+  const openAiLike = ['s', 'k-proj-', 'abcdefghijklmnop'].join('');
+  const githubLike = ['gh', 'p_', 'abcdefghijklmnopqrstuvwxyz'].join('');
+  const result = redact({
+    authorization: 'This key name is safe because the whole field is redacted',
+    note: `${bearerPrefix}eyJhbGciOiJIUzI1NiJ9.payload.signature`,
+    providerKeys: `OpenAI ${openAiLike} GitHub ${githubLike}`,
+    certificateText: '-----BEGIN PRIVATE KEY-----\nsecret-material\n-----END PRIVATE KEY-----'
+  });
+
+  assert.equal(result.authorization, '[redacted]');
+  assert.equal(result.note, `${bearerPrefix}[redacted]`);
+  assert.equal(result.providerKeys, 'OpenAI [redacted] GitHub [redacted]');
+  assert.equal(result.certificateText, '[private key redacted]');
+});
+
 test('audit records are append-only and hash chained', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p42-audit-test-'));
   const auditPath = path.join(dir, 'agent_audit.jsonl');

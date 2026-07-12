@@ -55,3 +55,32 @@ test('admin feature updates can switch advanced components off without changing 
     assert.equal(refreshed.features.find((feature) => feature.id === 'externalParserRelay').enabled, false);
   });
 });
+
+test('explicit deterministic demo embeddings make configured Qdrant capabilities active without Compass', async () => {
+  await withFeatureConfig(async () => {
+    const snapshot = {
+      P42_DEMO_EMBEDDINGS: process.env.P42_DEMO_EMBEDDINGS,
+      QDRANT_URL: process.env.QDRANT_URL,
+      COMPASS_GATEWAY_TOKEN: process.env.COMPASS_GATEWAY_TOKEN,
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY
+    };
+    process.env.P42_DEMO_EMBEDDINGS = 'true';
+    process.env.QDRANT_URL = 'https://qdrant.example';
+    delete process.env.COMPASS_GATEWAY_TOKEN;
+    delete process.env.OPENAI_API_KEY;
+    try {
+      const status = buildFeatureStatus();
+      const qdrant = status.features.find((feature) => feature.id === 'qdrantRag');
+      const learning = status.features.find((feature) => feature.id === 'qdrantLearningMemory');
+      assert.equal(qdrant.active, true);
+      assert.equal(qdrant.configured, true);
+      assert.match(qdrant.note, /deterministic demo hash/i);
+      assert.equal(learning.active, true);
+    } finally {
+      for (const [key, value] of Object.entries(snapshot)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+  });
+});

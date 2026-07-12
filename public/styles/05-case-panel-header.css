@@ -195,11 +195,11 @@
 }
 
 .scenario-button[data-scenario="exportControl"] { border-left-color: rgba(248,113,113,0.5); }
-.scenario-button[data-scenario="financeVendor"] { border-left-color: rgba(251,191,36,0.5); }
-.scenario-button[data-scenario="lowRisk"] { border-left-color: rgba(34,227,180,0.5); }
+.scenario-button[data-scenario="integrationVendor"] { border-left-color: rgba(251,191,36,0.5); }
+.scenario-button[data-scenario="saasVendor"] { border-left-color: rgba(34,227,180,0.5); }
 
 .scenario-button[data-scenario="exportControl"] b { border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.08); color: #f87171; }
-.scenario-button[data-scenario="financeVendor"] b { border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.08); color: #fbbf24; }
+.scenario-button[data-scenario="integrationVendor"] b { border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.08); color: #fbbf24; }
 
 .scenario-button.is-active {
   border-color: rgba(34, 227, 180, 0.5);
@@ -209,5 +209,4 @@
 }
 
 .scenario-button[data-scenario="exportControl"].is-active { border-color: rgba(248,113,113,0.5); background: linear-gradient(135deg, rgba(248,113,113,0.08), rgba(4,8,16,0.6)); }
-.scenario-button[data-scenario="financeVendor"].is-active { border-color: rgba(251,191,36,0.5); background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(4,8,16,0.6)); }
-
+.scenario-button[data-scenario="integrationVendor"].is-active { border-color: rgba(251,191,36,0.5); background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(4,8,16,0.6)); }

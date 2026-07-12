@@ -101,3 +101,82 @@ test('governed learning returns similar cases and control suggestions without ch
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('qdrant learning search uses query points API and parses result.points', async () => {
+  const originalFetch = global.fetch;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p42-learning-qdrant-query-'));
+  try {
+    await withEnv({
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      P42_VECTOR_STORE_PROVIDER: 'qdrant',
+      QDRANT_URL: 'https://qdrant.example',
+      QDRANT_COLLECTION: 'p42_test_collection',
+      P42_WORKSPACE_ID: 'workspace-a',
+      P42_PROJECT_ID: 'project-a',
+      P42_FEATURE_COMPASS_EMBEDDINGS: '1',
+      P42_FEATURE_QDRANT_LEARNING_MEMORY: '1',
+      P42_ADMIN_FEATURE_CONFIG_DIR: dir
+    }, async () => {
+      global.fetch = async (url, options = {}) => {
+        if (url === 'https://gateway.example/api/embeddings') {
+          const body = JSON.parse(options.body);
+          assert.equal(body.purpose, 'learning_memory_search');
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              model: 'text-embedding-3-large',
+              data: [{ embedding: [0.3, 0.2, 0.1] }]
+            })
+          };
+        }
+        if (url === 'https://qdrant.example/collections/p42_test_collection/points/query') {
+          const body = JSON.parse(options.body);
+          assert.deepEqual(body.query, [0.3, 0.2, 0.1]);
+          assert.equal(body.vector, undefined);
+          assert.equal(body.with_vector, false);
+          assert.ok(body.filter.must.some((item) => item.key === 'workspaceId' && item.match.value === 'workspace-a'));
+          assert.ok(body.filter.must.some((item) => item.key === 'projectId' && item.match.value === 'project-a'));
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              result: {
+                points: [{
+                  score: 0.91,
+                  payload: {
+                    memoryId: 'memory-1',
+                    type: 'governed_learning_artifact',
+                    artifactType: 'reviewer_feedback',
+                    caseId: 'prior-case',
+                    workspaceId: 'workspace-a',
+                    projectId: 'project-a',
+                    reviewerNotes: 'Signed DPA and retention evidence were required.',
+                    addedControls: ['Named retention owner'],
+                    missingEvidence: ['Signed DPA'],
+                    advisoryOnly: true
+                  }
+                }]
+              }
+            })
+          };
+        }
+        throw new Error(`Unexpected fetch ${url}`);
+      };
+
+      const result = await findSimilarCases({
+        caseId: 'new-case',
+        brief: 'Review DPA and retention evidence.'
+      });
+
+      assert.equal(result.provider, 'qdrant');
+      assert.equal(result.similarCases.length, 1);
+      assert.equal(result.similarCases[0].memoryId, 'memory-1');
+      assert.equal(result.similarCases[0].reviewerNotes, 'Signed DPA and retention evidence were required.');
+    });
+  } finally {
+    global.fetch = originalFetch;
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

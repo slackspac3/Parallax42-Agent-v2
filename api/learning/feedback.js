@@ -10,7 +10,7 @@ module.exports = async function handler(req, res) {
   if (!methodGuard(req, res, ['POST'])) return;
   if (!rateLimitGuard(req, res, 'standardRun')) return;
   try {
-    const auth = await authorizeRequest(req, 'agent:run');
+    const auth = await authorizeRequest(req, 'learning:write');
     if (!auth.ok) {
       sendJson(req, res, auth.statusCode, auth.body);
       return;

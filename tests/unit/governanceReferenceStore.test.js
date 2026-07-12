@@ -178,32 +178,35 @@ test('qdrant governance reference search returns safe snippets and no vectors', 
             })
           };
         }
-        if (url === 'https://qdrant.example/collections/p42_test_collection/points/search') {
+        if (url === 'https://qdrant.example/collections/p42_test_collection/points/query') {
           const body = JSON.parse(options.body);
-          assert.deepEqual(body.vector, [0.3, 0.2, 0.1]);
+          assert.deepEqual(body.query, [0.3, 0.2, 0.1]);
+          assert.equal(body.vector, undefined);
           assert.equal(body.with_vector, false);
           assert.ok(body.filter.must.some((item) => item.key === 'type' && item.match.value === 'governance_reference'));
           return {
             ok: true,
             status: 200,
             text: async () => JSON.stringify({
-              result: [{
-                score: 0.88,
-                payload: {
-                  type: 'governance_reference',
-                  sourceId: 'sanitised_enterprise_ai_governance_context',
-                  title: 'Sanitised Enterprise AI Governance Context',
-                  section: '8.1',
-                  heading: 'Export Controls and Trade Compliance',
-                  snippet: 'Classification, end-use certificate, and sanctions screening are expected.',
-                  text: 'Classification, end-use certificate, and sanctions screening are expected.',
-                  frameworks: ['SAA'],
-                  domains: ['trade_compliance'],
-                  tags: ['export controls'],
-                  authority: 'context_reference_not_policy',
-                  requiresHumanReview: true
-                }
-              }]
+              result: {
+                points: [{
+                  score: 0.88,
+                  payload: {
+                    type: 'governance_reference',
+                    sourceId: 'sanitised_enterprise_ai_governance_context',
+                    title: 'Sanitised Enterprise AI Governance Context',
+                    section: '8.1',
+                    heading: 'Export Controls and Trade Compliance',
+                    snippet: 'Classification, end-use certificate, and sanctions screening are expected.',
+                    text: 'Classification, end-use certificate, and sanctions screening are expected.',
+                    frameworks: ['SAA'],
+                    domains: ['trade_compliance'],
+                    tags: ['export controls'],
+                    authority: 'context_reference_not_policy',
+                    requiresHumanReview: true
+                  }
+                }]
+              }
             })
           };
         }

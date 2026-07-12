@@ -3,6 +3,9 @@
 
   const registry = window.P42ModuleRegistry || {};
   const text = registry.text || {};
+  const componentAttributes = registry.appState?.componentAttributes || function fallbackComponentAttributes(slot, state) {
+    return `data-slot="${slot}" data-state="${state}"`;
+  };
   const cleanText = text.cleanText || function fallbackClean(value) {
     return String(value || '').replace(/\s+/g, ' ').trim();
   };
@@ -29,7 +32,7 @@
     const limit = Number(maxLength) || 220;
     const clean = cleanText(value);
     if (!clean) return 'Evidence attached without extracted text.';
-    return clean.length > limit ? `${clean.slice(0, limit).trim()}...` : clean;
+    return clean.length > limit ? `${clean.slice(0, Math.max(0, limit - 1)).trim()}…` : clean;
   }
 
   function evidenceDocuments(result) {
@@ -125,7 +128,7 @@
     const readiness = result?.decisionReadiness || {};
     const evidenceQuality = result?.evidenceQuality || {};
     const controls = Array.isArray(readiness.requiredControls) ? readiness.requiredControls.filter(Boolean) : [];
-    if (controls.length) return controls.slice(0, 5);
+    if (controls.length) return controls.slice(0, 12);
     if (evidenceQuality.status === 'weak' || evidenceQuality.status === 'missing') {
       return [
         'Attach stronger source evidence before approval, such as signed contract schedules, DPA, SOC report, and continuity plan.',
@@ -166,7 +169,7 @@
   function riskSummaryItems(result) {
     const gaps = Array.isArray(result?.gaps) ? result.gaps : [];
     if (gaps.length) {
-      return gaps.slice(0, 5).map(function mapGap(gap) {
+      return gaps.slice(0, 12).map(function mapGap(gap) {
         return {
           label: gap.gap || 'Blocking risk',
           severity: gap.severity || 'review',
@@ -485,17 +488,12 @@
             <div class="business-hero">
               <h2>${escapeHtml(businessDecisionHeadline(result))}</h2>
               <p>${escapeHtml(businessDecisionSummary(result))}</p>
-              <div class="decision-room-actions">
-                <button type="button" data-report-action="export-review-pack">Export review pack PDF</button>
-                <button type="button" class="secondary-action decision-room-rerun" data-report-action="run-council">Re-run council</button>
-                <button type="button" data-report-action="continue-conversation">Continue conversation</button>
-                <span>Reviewer artifact only; no operational approval is granted.</span>
-              </div>
+              <p class="decision-room-action-note" ${componentAttributes('decision-action-note', 'ready')}>Use the command bar above to export the review pack, continue the case, or rerun the council. No operational approval is granted.</p>
             </div>
             <aside class="decision-owner-card">
-              <span>Final decision owner</span>
+              <span>Recommendation owner</span>
               <strong>Deterministic compliance engine</strong>
-              <p>Advisory specialists, retrieval memory, and reviewer learning can inform the pack, but cannot override the deterministic recommendation.</p>
+              <p>The accountable human reviewer remains the approval owner. Advisory specialists, retrieval memory, and reviewer learning cannot override the deterministic recommendation.</p>
             </aside>
           </div>
           <div class="human-boundary">
@@ -543,11 +541,6 @@
             <div>
               <span class="eyebrow">Required Reviewer Actions</span>
               <p>What the accountable human reviewer must confirm before this can move toward operational approval.</p>
-            </div>
-            <div class="decision-room-actions compact">
-              <button type="button" data-report-action="export-review-pack">Export review pack PDF</button>
-              <button type="button" class="secondary-action decision-room-rerun" data-report-action="run-council">Re-run council</button>
-              <button type="button" data-report-action="continue-conversation">Continue conversation</button>
             </div>
           </div>
           <div class="reviewer-action-table" role="table" aria-label="Required reviewer actions">
@@ -642,14 +635,14 @@
           </div>
           <form class="learning-feedback-form" data-learning-feedback-form>
             <label><span>Reviewer outcome</span><select name="reviewerDecision"><option value="Request remediation">Request remediation</option><option value="Conditional approval">Conditional approval</option><option value="Reject">Reject</option><option value="Approve after controls">Approve after controls</option></select></label>
-            <label><span>Reviewer notes</span><textarea name="reviewerNotes" rows="3" placeholder="Example: require signed DPA, India transfer basis, payroll access approval, and exit support before approval."></textarea></label>
+            <label><span>Reviewer notes</span><textarea name="reviewerNotes" rows="3" autocomplete="off" placeholder="Example: require signed DPA, transfer basis, access approval, and exit support…"></textarea></label>
             <div class="learning-feedback-grid">
-              <label><span>Controls added</span><input name="addedControls" placeholder="Comma-separated controls"></label>
-              <label><span>Missing evidence</span><input name="missingEvidence" placeholder="Comma-separated evidence gaps"></label>
+              <label><span>Controls added</span><input name="addedControls" autocomplete="off" placeholder="Example: signed DPA, transfer assessment…"></label>
+              <label><span>Missing evidence</span><input name="missingEvidence" autocomplete="off" placeholder="Example: import permit, end-use certificate…"></label>
             </div>
             <div class="learning-feedback-actions">
               <button type="submit">Save governed memory</button>
-              <small data-learning-feedback-status>Stored as reviewer memory only.</small>
+              <small data-learning-feedback-status role="status" aria-live="polite">Stored as reviewer memory only.</small>
             </div>
           </form>
         </article>
@@ -731,7 +724,7 @@
           </article>
           <article class="report-section advisory-specialists-panel">
             <span class="eyebrow">Advisory Specialists</span>
-            <p class="timeline-disclosure">Live LLM specialists are advisory only when configured. The deterministic compliance engine remains the final decision owner.</p>
+            <p class="timeline-disclosure">Live LLM specialists are advisory only when configured. The deterministic compliance engine owns the recommendation; the accountable human owns approval.</p>
             <div class="advisory-card-grid">
               ${advisorySpecialists.length ? advisorySpecialists.map((specialist) => `
                 <div class="${specialist.advisoryUnavailable ? 'is-unavailable' : ''}">

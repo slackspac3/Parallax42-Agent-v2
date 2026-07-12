@@ -20,8 +20,8 @@ Linked online product evidence:
 GitHub Pages cockpit
   -> Vercel product APIs
   -> server-side Compass gateway/API boundary
-  -> Ocean/DigitalOcean backend services
-  -> droplet-hosted Qdrant collection p42_compliance_evidence
+  -> isolated Railway Postgres
+  -> authenticated Qdrant collection p42_compliance_evidence_v2
 ```
 
 Agentathon evaluator reproduction:
@@ -110,8 +110,8 @@ The production target should be extracted from Parallax42 rather than rewritten:
 - Model access stays behind server-side gateway controls.
 - Embedding calls are token-protected server-to-server calls; the browser never receives Compass, Vercel AI Gateway, or embedding provider credentials.
 - Chunk embeddings are stored behind `/api/evidence/index` and retrieved behind `/api/evidence/search`; browser responses strip vectors and raw chunk payloads.
-- Qdrant is the full RAG/learning demo provider when `P42_VECTOR_STORE_PROVIDER=qdrant`, `QDRANT_URL`, and the Compass embedding gateway are configured; local-file storage is a demo fallback only.
-- In the current deployed product path, Qdrant is configured server-side through Vercel and the Ocean/DigitalOcean droplet. In local/FastAPI reproduction, Qdrant remains env-dependent and falls back when Qdrant or embeddings are missing.
+- Qdrant is the full demo provider when `P42_VECTOR_STORE_PROVIDER=qdrant` and its credentials are configured. It can use labelled deterministic hash vectors for the public demo or Compass semantic embeddings when a rotated credential is available; local-file storage is a development fallback.
+- In the current deployed product path, Qdrant and Postgres are isolated Railway services configured server-side through Vercel. The public demo uses labelled deterministic hash vectors; local/FastAPI reproduction remains env-dependent and falls back when vector settings are missing.
 - Governed learning memory returns similar cases and control suggestions as advisory reviewer context only. It never rewrites the deterministic run output.
 - Output is never automatic approval; it is a human-review decision brief.
 - Live LLM specialist output is advisory only; deterministic guardrails own decision status, approval eligibility, and blocker naming.

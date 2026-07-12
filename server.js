@@ -38,9 +38,14 @@ const {
 const { findSimilarCases, getControlSuggestions, learningMemoryHealth, recordReviewerFeedback } = require('./lib/learningMemory');
 const { authHealth, authorizeAdminMutation, authorizeRequest } = require('./lib/rbac');
 const { checkRateLimit } = require('./lib/rateLimiter');
+const { storeHealth } = require('./lib/recordStore');
 const { backendRelayHandler } = require('./api/_backendRelay');
 const logsApiHandler = require('./api/logs');
 const compassProbeApiHandler = require('./api/compass/probe');
+const demoSessionApiHandler = require('./api/demo/session');
+const demoCaseApiHandler = require('./api/demo/case');
+const accessCodeApiHandler = require('./api/auth/access-code');
+const logoutApiHandler = require('./api/auth/logout');
 
 const PORT = Number(process.env.PORT || 3020);
 const PUBLIC_ROOT = path.join(__dirname, 'public');
@@ -159,6 +164,7 @@ const server = http.createServer(async (req, res) => {
         evidenceVectorStore: evidenceVectorStoreHealth(),
         governanceReference: governanceReferenceHealth(),
         learningMemory: learningMemoryHealth(),
+        sessionStore: storeHealth(),
         linkedBackend: process.env.PARALLAX42_BACKEND_URL || 'https://api.parallax42.bhavukarora.com'
       });
       return;
@@ -184,6 +190,26 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && (url.pathname === '/compass/probe' || url.pathname === '/api/compass/probe')) {
       await handleLocalApiHandler(compassProbeApiHandler, req, res, url);
+      return;
+    }
+
+    if (url.pathname === '/api/demo/session') {
+      await handleLocalApiHandler(demoSessionApiHandler, req, res, url);
+      return;
+    }
+
+    if (url.pathname === '/api/demo/case') {
+      await handleLocalApiHandler(demoCaseApiHandler, req, res, url);
+      return;
+    }
+
+    if (url.pathname === '/api/auth/access-code') {
+      await handleLocalApiHandler(accessCodeApiHandler, req, res, url);
+      return;
+    }
+
+    if (url.pathname === '/api/auth/logout') {
+      await handleLocalApiHandler(logoutApiHandler, req, res, url);
       return;
     }
 
@@ -397,13 +423,17 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/reference/index') {
       if (!localRateLimitGuard(req, res, 'evidenceIndex')) return;
-      const auth = await authorizeRequest(req, 'agent:run');
+      const auth = await authorizeRequest(req, 'knowledge:write');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
         return;
       }
       const body = await readJsonBody(req, { limitBytes: EVIDENCE_INDEX_BODY_LIMIT_BYTES });
-      const result = await indexGovernanceReference(body);
+      const result = await indexGovernanceReference({
+        ...body,
+        workspaceId: auth.actor.workspaceId || process.env.P42_WORKSPACE_ID || 'parallax42',
+        projectId: auth.actor.projectId || process.env.P42_PROJECT_ID || 'compliance-intelligence-agent'
+      });
       appendAuditRecord({
         actor: auth.actor,
         caseId: body.caseId || result.context?.sourceId || 'governance-reference-index',
@@ -425,13 +455,17 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/reference/search') {
       if (!localRateLimitGuard(req, res, 'evidenceSearch')) return;
-      const auth = await authorizeRequest(req, 'agent:run');
+      const auth = await authorizeRequest(req, 'learning:read');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
         return;
       }
       const body = await readJsonBody(req, { limitBytes: 1_000_000 });
-      const result = await searchGovernanceReferences(body);
+      const result = await searchGovernanceReferences({
+        ...body,
+        workspaceId: auth.actor.workspaceId || process.env.P42_WORKSPACE_ID || 'parallax42',
+        projectId: auth.actor.projectId || process.env.P42_PROJECT_ID || 'compliance-intelligence-agent'
+      });
       appendAuditRecord({
         actor: auth.actor,
         caseId: body.caseId || body.sourceId || 'governance-reference-search',
@@ -452,7 +486,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/learning/feedback') {
       if (!localRateLimitGuard(req, res, 'standardRun')) return;
-      const auth = await authorizeRequest(req, 'agent:run');
+      const auth = await authorizeRequest(req, 'learning:write');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
         return;
@@ -478,25 +512,33 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/learning/similar-cases') {
       if (!localRateLimitGuard(req, res, 'evidenceSearch')) return;
-      const auth = await authorizeRequest(req, 'agent:run');
+      const auth = await authorizeRequest(req, 'learning:read');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
         return;
       }
       const body = await readJsonBody(req, { limitBytes: 1_000_000 });
-      writeJson(res, 200, await findSimilarCases(body));
+      writeJson(res, 200, await findSimilarCases({
+        ...body,
+        workspaceId: auth.actor.workspaceId || process.env.P42_WORKSPACE_ID || 'parallax42',
+        projectId: auth.actor.projectId || process.env.P42_PROJECT_ID || 'compliance-intelligence-agent'
+      }));
       return;
     }
 
     if ((req.method === 'GET' || req.method === 'POST') && url.pathname === '/api/learning/control-suggestions') {
       if (!localRateLimitGuard(req, res, 'evidenceSearch')) return;
-      const auth = await authorizeRequest(req, 'agent:run');
+      const auth = await authorizeRequest(req, 'learning:read');
       if (!auth.ok) {
         writeJson(res, auth.statusCode, auth.body);
         return;
       }
       const body = req.method === 'POST' ? await readJsonBody(req, { limitBytes: 1_000_000 }) : {};
-      writeJson(res, 200, await getControlSuggestions(body));
+      writeJson(res, 200, await getControlSuggestions({
+        ...body,
+        workspaceId: auth.actor.workspaceId || process.env.P42_WORKSPACE_ID || 'parallax42',
+        projectId: auth.actor.projectId || process.env.P42_PROJECT_ID || 'compliance-intelligence-agent'
+      }));
       return;
     }
 

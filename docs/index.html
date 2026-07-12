@@ -3,11 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#03110d" />
     <title>Parallax42 Compliance Intelligence Agent</title>
     <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="%2306110d"/><text x="5" y="22" fill="%2312d6a1" font-family="Arial" font-size="13" font-weight="700">P42</text></svg>' />
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles/24-working-demo-qa.css" />
   </head>
   <body data-run-mode="chat" data-workspace-view="chat" data-main-section="agent">
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
     <canvas id="networkCanvas" aria-hidden="true"></canvas>
     <header class="topbar">
       <div class="brand">
@@ -29,9 +32,9 @@
       </div>
     </header>
 
-    <main class="workbench">
+    <main id="mainContent" class="workbench" tabindex="-1">
       <section class="command-center" id="run">
-        <div class="mode-tabs" role="tablist" aria-label="Workspace navigation">
+        <div class="mode-tabs" role="tablist" aria-label="Workspace navigation" aria-orientation="horizontal">
           <div class="workspace-identity" role="presentation">
             <span class="workspace-mark">CI</span>
             <div>
@@ -39,33 +42,29 @@
               <small><i></i>Active session</small>
             </div>
           </div>
-          <button id="chatModeTab" type="button" class="mode-tab is-active" role="tab" aria-selected="true" aria-controls="run" data-run-mode="chat" data-nav-icon="◌">
+          <button id="chatModeTab" type="button" class="mode-tab is-active" role="tab" aria-selected="true" aria-controls="caseWorkspacePanel" tabindex="0" data-slot="tab" data-state="active" data-run-mode="chat" data-nav-icon="◌">
             <span>Advisor</span>
             <small>Primary workspace</small>
           </button>
-          <button id="demoModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="run" data-run-mode="demo" data-nav-icon="↺">
+          <button id="demoModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="caseWorkspacePanel" tabindex="-1" data-slot="tab" data-state="inactive" data-run-mode="demo" data-nav-icon="↺">
             <span>Replay</span>
             <small>Packaged cases</small>
           </button>
-          <button id="liveModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="run" data-run-mode="live" data-nav-icon="▤">
+          <button id="liveModeTab" type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="caseWorkspacePanel" tabindex="-1" data-slot="tab" data-state="inactive" data-run-mode="live" data-nav-icon="▤">
             <span>Evidence</span>
             <small>Upload and run</small>
           </button>
-          <button id="councilOutputTab" type="button" class="mode-tab council-tab" aria-controls="workflow" data-nav-icon="⌁">
+          <button id="councilOutputTab" type="button" class="mode-tab council-tab" role="tab" aria-selected="false" aria-controls="workflow" tabindex="-1" data-slot="tab" data-state="inactive" data-nav-icon="⌁">
             <span>Council Output</span>
             <small>Decision and pack</small>
           </button>
-          <div class="workspace-utilities" role="presentation">
-            <span>Support</span>
-            <span>Documentation</span>
-          </div>
         </div>
 
-        <aside class="case-panel pane">
+        <aside id="caseWorkspacePanel" class="case-panel pane" role="tabpanel" aria-labelledby="chatModeTab" tabindex="0">
           <div class="pane-header">
             <div>
               <span id="casePanelEyebrow" class="eyebrow">Conversation</span>
-              <strong id="casePanelTitle">Compliance advisor</strong>
+              <h1 id="casePanelTitle">Compliance advisor</h1>
             </div>
             <button id="startNewCase" type="button" class="new-case-button mode-chat-only">Start New Case</button>
           </div>
@@ -99,15 +98,15 @@
               <small>Restricted hardware, firmware support, end-use proof</small>
               <b>High scrutiny</b>
             </button>
-            <button type="button" class="scenario-button" data-scenario="financeVendor">
-              <span>Finance vendor</span>
-              <small>Payment approvals, tenant access, missing exit support</small>
+            <button type="button" class="scenario-button" data-scenario="integrationVendor">
+              <span>Platform integrator</span>
+              <small>Privileged access across ERP, HRIS, ITSM, and data platforms</small>
               <b>Control gaps</b>
             </button>
-            <button type="button" class="scenario-button" data-scenario="lowRisk">
-              <span>Low risk</span>
-              <small>SSO-only asset library with documented safeguards</small>
-              <b>Clean path</b>
+            <button type="button" class="scenario-button" data-scenario="saasVendor">
+              <span>AI SaaS vendor</span>
+              <small>Workflow automation, AI summaries, incomplete control pack</small>
+              <b>Control gaps</b>
             </button>
           </div>
 
@@ -130,25 +129,25 @@
           <form id="agentForm" class="case-form mode-form-only">
             <label class="field-card brief-card">
               Compliance brief
-              <textarea name="brief" rows="7">Import restricted AI accelerator hardware for an internal research compute cluster, with firmware support, freight forwarding, and remote diagnostic access.</textarea>
+              <textarea name="brief" rows="7" autocomplete="off">Import restricted AI accelerator hardware for an internal research compute cluster, with firmware support, freight forwarding, and remote diagnostic access.</textarea>
             </label>
             <div class="field-grid">
               <label class="field-card">
                 Business unit
-                <input name="businessUnit" value="Research Compute Operations" />
+                <input name="businessUnit" value="Research Compute Operations" autocomplete="off" />
               </label>
               <label class="field-card">
                 Geography
-                <input name="geography" value="UAE and Singapore" />
+                <input name="geography" value="UAE and Singapore" autocomplete="off" />
               </label>
             </div>
             <label class="field-card evidence-summary-card">
               Evidence summary
-              <textarea name="documentSummary" rows="4">Manufacturer classification is pending. Freight forwarder screened clean. No final end-use certificate, import permit, or firmware remote-access runbook attached.</textarea>
+              <textarea name="documentSummary" rows="4" autocomplete="off">Manufacturer classification is pending. Freight forwarder screened clean. No final end-use certificate, import permit, or firmware remote-access runbook attached.</textarea>
             </label>
             <section class="live-upload-cockpit mode-live-only">
               <label class="upload-zone" id="evidenceDropzone">
-                <input id="evidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.doc,.docx,text/*,application/json,text/csv,application/pdf" />
+                <input id="evidenceInput" name="evidenceFiles" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.doc,.docx,text/*,application/json,text/csv,application/pdf" />
                 <span>Drop or select evidence files</span>
                 <small>Up to 30 MB per file. Large files are chunked through the parser relay; embeddings stay server-side.</small>
                 <div class="upload-limit-strip" aria-label="Upload limits">
@@ -157,7 +156,7 @@
                   <b>Full text stays server-side</b>
                 </div>
               </label>
-              <div id="evidenceIngestionStatus" class="ingestion-status">No uploaded evidence yet.</div>
+              <div id="evidenceIngestionStatus" class="ingestion-status" role="status" aria-live="polite">No uploaded evidence yet.</div>
             </section>
             <section class="evidence-docket">
               <div>
@@ -200,12 +199,12 @@
                 <form id="chatForm" class="chat-form">
                   <label>
                     Message
-                    <textarea id="chatInput" rows="5" maxlength="64000" aria-describedby="chatInputCounter" title="Press Enter to send · Shift+Enter for a new line · Cmd/Ctrl+Enter to run council" placeholder="Example: assess a healthcare analytics vendor using patient data, Microsoft 365, and cross-border processing."></textarea>
+                    <textarea id="chatInput" name="message" rows="5" maxlength="64000" autocomplete="off" aria-describedby="chatInputCounter" title="Press Enter to send · Shift+Enter for a new line · Cmd/Ctrl+Enter to run council" placeholder="Example: assess a healthcare analytics vendor using patient data, Microsoft 365, and cross-border processing…"></textarea>
                     <small id="chatInputCounter" class="chat-input-counter" aria-live="polite">0 / 64,000 chars</small>
                   </label>
                   <label class="chat-evidence-picker">
                     Evidence files
-                    <input id="chatEvidenceInput" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.docx,text/*,application/json,text/csv,application/pdf" />
+                    <input id="chatEvidenceInput" name="chatEvidenceFiles" type="file" multiple accept=".txt,.md,.markdown,.json,.csv,.log,.pdf,.docx,text/*,application/json,text/csv,application/pdf" />
                     <small>Up to 30 MB per file. Large files are chunked through the parser relay; embeddings stay server-side.</small>
                     <div class="upload-limit-strip" aria-label="Upload limits">
                       <b>Files up to 30 MB</b>
@@ -225,23 +224,24 @@
           </section>
         </aside>
 
-        <section class="runway pane" id="workflow">
+        <section class="runway pane" id="workflow" role="tabpanel" aria-labelledby="councilOutputTab" tabindex="0" hidden>
           <div class="runway-top">
             <div>
               <span class="eyebrow">Council command</span>
               <h1 id="runwayTitle">Agent workflow</h1>
-              <p id="runwayDescription">The case builder promotes ready context into a traced CrewAI run.</p>
+              <p id="runwayDescription">The case builder promotes ready context into a traced governed council run.</p>
             </div>
             <div class="run-actions">
-              <button id="sampleRun" type="button" class="primary-action">Run council</button>
-              <button id="execReviewPack" type="button" class="secondary-button">Exec review pack</button>
-              <button id="exportRun" type="button" class="secondary-button">Export pack</button>
+              <button id="sampleRun" type="button" class="primary-action" data-slot="decision-action" data-state="ready">Run council</button>
+              <button id="execReviewPack" type="button" class="secondary-button" data-slot="decision-action" data-state="disabled" disabled>Export review pack</button>
+              <button id="exportRun" type="button" class="secondary-button" data-slot="decision-action" data-state="disabled" disabled>Export audit JSON</button>
               <label class="run-history-control" for="runHistorySelect">
                 <span>Run trace</span>
                 <select id="runHistorySelect" aria-label="Review a previous council run">
                   <option value="">No completed runs</option>
                 </select>
               </label>
+              <p id="exportActionStatus" class="action-status" role="status" aria-live="polite"></p>
             </div>
           </div>
 
@@ -278,21 +278,21 @@
             <span class="eyebrow">Intelligence Panel</span>
             <strong>Fixed analyst view</strong>
           </div>
-          <div class="intel-rail-tabs" role="tablist" aria-label="Analyst panel sections">
-            <button type="button" class="is-active" role="tab" aria-selected="true" aria-controls="caseIntelligencePanel" data-intel-rail-tab="case">
+          <div class="intel-rail-tabs" role="tablist" aria-label="Analyst panel sections" aria-orientation="horizontal">
+            <button id="caseIntelTab" type="button" class="is-active" role="tab" aria-selected="true" aria-controls="caseIntelligencePanel" tabindex="0" data-slot="tab" data-state="active" data-intel-rail-tab="case">
               Live case intelligence
             </button>
-            <button type="button" role="tab" aria-selected="false" aria-controls="agentActivity" data-intel-rail-tab="council">
+            <button id="councilIntelTab" type="button" role="tab" aria-selected="false" aria-controls="agentActivity" tabindex="-1" data-slot="tab" data-state="inactive" data-intel-rail-tab="council">
               Council trace
             </button>
           </div>
-          <div class="agent-activity" id="agentActivity" aria-live="polite"></div>
-          <section id="caseIntelligencePanel" class="case-intelligence-panel" aria-live="polite">
+          <div class="agent-activity" id="agentActivity" role="tabpanel" aria-labelledby="councilIntelTab" tabindex="0" hidden></div>
+          <section id="caseIntelligencePanel" class="case-intelligence-panel" role="tabpanel" aria-labelledby="caseIntelTab" tabindex="0">
             <div class="intel-heading">
               <span class="eyebrow">Live Case Intelligence</span>
               <strong id="caseIntelReadiness">0%</strong>
             </div>
-            <div id="caseDraftPanel" class="case-draft-panel" aria-live="polite"></div>
+            <div id="caseDraftPanel" class="case-draft-panel"></div>
             <div id="caseIntelDetails" class="case-intel-details"></div>
           </section>
           <div class="decision-card">
@@ -321,7 +321,11 @@
           </div>
 
           <div class="approval-actions">
-            <button id="approvalButton" type="button" class="secondary-button" disabled>Approval locked</button>
+            <div class="approval-button-group" aria-label="Human decision controls">
+              <button id="approvalButton" type="button" class="secondary-button" disabled>Approve with conditions</button>
+              <button id="remediationButton" type="button" class="secondary-button" disabled>Request remediation</button>
+            </div>
+            <p id="approvalActionStatus" class="approval-action-status" role="status" aria-live="polite"></p>
           </div>
 
           <details class="decision-technical-links">
@@ -417,6 +421,26 @@
                   <button type="button" id="resetConfig" class="secondary-button">Reset</button>
                 </div>
               </form>
+            </section>
+
+            <section class="admin-console-panel pilot-access-panel">
+              <div class="admin-panel-heading">
+                <span class="eyebrow">Pilot access</span>
+                <strong>Private workspace session</strong>
+                <p>Exchange an approved pilot code for a secure HttpOnly session cookie. Codes and session cookies are never stored by this page.</p>
+              </div>
+              <form id="pilotAccessForm" class="pilot-access-form">
+                <label>
+                  Pilot access code
+                  <input id="pilotAccessCode" name="code" type="password" autocomplete="one-time-code" spellcheck="false" required minlength="12" placeholder="Example: approved-pilot-code…" />
+                </label>
+                <div class="form-actions">
+                  <button id="pilotAccessSubmit" type="submit">Start pilot session</button>
+                  <button id="pilotLogout" type="button" class="secondary-button" hidden>Sign out</button>
+                </div>
+              </form>
+              <p id="pilotAccessStatus" class="pilot-access-status" role="status" aria-live="polite"></p>
+              <a id="pilotAppLink" class="pilot-app-link" href="https://parallax42-agent-v2.vercel.app/#admin" rel="noreferrer">Open the Vercel pilot app</a>
             </section>
 
             <section class="admin-console-panel">

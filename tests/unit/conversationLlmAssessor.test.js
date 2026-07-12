@@ -15,6 +15,7 @@ const {
   assessConversationWithLlm,
   buildRollingConversationSummary,
   extractChatContent,
+  mergeAssessmentIntoDraft,
   normalizeAssessment,
   retryDelayMs
 } = require('../../lib/conversationLlmAssessor');
@@ -398,7 +399,7 @@ test('conversation LLM fast fail stops long retry loops', async () => {
   }
 });
 
-test('conversation LLM assessor calls Compass even if legacy compassLlmCalls feature flag is off', async () => {
+test('conversation LLM assessor honors the Compass LLM admin kill switch', async () => {
   const originalFetch = global.fetch;
   try {
     await withEnv({
@@ -444,12 +445,10 @@ test('conversation LLM assessor calls Compass even if legacy compassLlmCalls fea
         message: 'I have an agreement to review'
       });
 
-      assert.equal(called, true);
-      assert.equal(result.llmAssessment.used, true);
-      assert.equal(result.llmAssessment.requestType, 'saas_agreement_review');
-      assert.equal(result.llmAssessment.workflowType, 'saas_vendor_review');
-      assert.deepEqual(result.llmAssessment.documentTypes, ['saas_agreement']);
-      assert.equal(result.caseDraft.llmIntake.workflowType, 'saas_vendor_review');
+      assert.equal(called, false);
+      assert.equal(result.llmAssessment.used, false);
+      assert.equal(result.llmAssessment.smartIntakeUnavailable, true);
+      assert.match(result.llmAssessment.detail, /disabled by admin feature controls/i);
     });
   } finally {
     global.fetch = originalFetch;
@@ -595,6 +594,38 @@ test('conversation LLM assessor does not accept invented owner or geography upda
   } finally {
     global.fetch = originalFetch;
   }
+});
+
+test('LLM merge preserves established owner and geography unless the user grounds a correction', () => {
+  const draft = {
+    businessUnit: 'HR',
+    geography: 'UAE'
+  };
+  const hallucinated = mergeAssessmentIntoDraft(draft, {
+    used: true,
+    confidence: 0.9,
+    intent: 'evidence_answer',
+    caseUpdate: {
+      businessUnit: 'Finance',
+      geography: 'KSA'
+    }
+  }, { message: 'Yes, the evidence is attached.' });
+
+  assert.equal(hallucinated.businessUnit, 'HR');
+  assert.equal(hallucinated.geography, 'UAE');
+
+  const corrected = mergeAssessmentIntoDraft({
+    ...draft,
+    activeQuestion: 'Who is the accountable business owner?'
+  }, {
+    used: true,
+    confidence: 0.9,
+    intent: 'owner_answer',
+    caseUpdate: { businessUnit: 'Finance' }
+  }, { message: 'Finance owns this now.' });
+
+  assert.equal(corrected.businessUnit, 'Finance');
+  assert.equal(corrected.geography, 'UAE');
 });
 
 test('conversation LLM assessor sends full chat context for terse answer interpretation', async () => {

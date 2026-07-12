@@ -7,6 +7,7 @@ payload fields to callers.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import uuid
@@ -212,6 +213,24 @@ def _sanitize_match(payload: Dict[str, Any], score: float) -> Dict[str, Any]:
     }
 
 
+def _valid_scope(case_id: str, workspace_id: str, project_id: str) -> bool:
+    return all(_clean(value) for value in (case_id, workspace_id, project_id))
+
+
+def _evidence_point_id(payload: Dict[str, Any]) -> str:
+    """Return a stable ID that cannot collide across tenant namespaces."""
+
+    identity = [
+        _clean(payload.get("workspaceId")),
+        _clean(payload.get("projectId")),
+        _clean(payload.get("caseId")),
+        _clean(payload.get("documentId")),
+        _clean(payload.get("evidenceId")),
+        int(payload.get("chunkIndex") or 0),
+    ]
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"evidence:{json.dumps(identity, separators=(',', ':'))}"))
+
+
 class LocalEvidenceMemory:
     provider = "local-fallback"
     durable = False
@@ -232,6 +251,16 @@ class LocalEvidenceMemory:
         }
 
     def index(self, chunks: Sequence[EvidenceChunk]) -> Dict[str, Any]:
+        if any(not _valid_scope(chunk.case_id, chunk.workspace_id, chunk.project_id) for chunk in chunks):
+            return {
+                "provider": self.provider,
+                "configured": False,
+                "durable": False,
+                "collection": self.collection,
+                "indexedChunkCount": 0,
+                "error_type": "invalid_scope",
+                "browserEmbeddingsRetained": False,
+            }
         self.chunks = list(chunks)
         return {
             "provider": self.provider,
@@ -252,10 +281,25 @@ class LocalEvidenceMemory:
         limit: int = 8,
         allow_workspace_fallback: bool = False,
     ) -> Dict[str, Any]:
-        del workspace_id, project_id, allow_workspace_fallback
+        del allow_workspace_fallback
+        if not _valid_scope(case_id, workspace_id, project_id):
+            return {
+                "provider": self.provider,
+                "configured": False,
+                "durable": False,
+                "collection": self.collection,
+                "indexedChunkCount": len(self.chunks),
+                "matches": [],
+                "error_type": "invalid_scope",
+                "browserEmbeddingsRetained": False,
+            }
         scored: List[Tuple[float, EvidenceChunk]] = []
         for chunk in self.chunks:
-            if chunk.case_id != case_id:
+            if (
+                chunk.case_id != case_id
+                or chunk.workspace_id != workspace_id
+                or chunk.project_id != project_id
+            ):
                 continue
             text = f"{chunk.title} {chunk.snippet} {' '.join(chunk.domains)} {' '.join(chunk.tags)}"
             score = _score_terms(query, text)
@@ -356,13 +400,15 @@ class QdrantEvidenceMemory:
         except Exception as exc:
             return {"ok": False, "error_type": "qdrant_collection_error", "message": exc.__class__.__name__}
 
-    def _filter(self, *, case_id: str) -> Any:
+    def _filter(self, *, case_id: str, workspace_id: str, project_id: str) -> Any:
         imports = self._qdrant_imports()
         if imports.get("error"):
             return None
         return imports["Filter"](
             must=[
                 imports["FieldCondition"](key="type", match=imports["MatchValue"](value="evidence_chunk")),
+                imports["FieldCondition"](key="workspaceId", match=imports["MatchValue"](value=workspace_id)),
+                imports["FieldCondition"](key="projectId", match=imports["MatchValue"](value=project_id)),
                 imports["FieldCondition"](key="caseId", match=imports["MatchValue"](value=case_id)),
             ]
         )
@@ -385,6 +431,16 @@ class QdrantEvidenceMemory:
                 "durable": True,
                 "collection": self.collection,
                 "indexedChunkCount": 0,
+                "browserEmbeddingsRetained": False,
+            }
+        if any(not _valid_scope(chunk.case_id, chunk.workspace_id, chunk.project_id) for chunk in chunks):
+            return {
+                "provider": self.provider,
+                "configured": True,
+                "durable": True,
+                "collection": self.collection,
+                "indexedChunkCount": 0,
+                "error_type": "invalid_scope",
                 "browserEmbeddingsRetained": False,
             }
         collection_result = self.ensure_collection()
@@ -418,12 +474,7 @@ class QdrantEvidenceMemory:
         points = []
         for chunk, vector in zip(chunks, embeddings):
             payload = chunk.payload()
-            point_id = str(
-                uuid.uuid5(
-                    uuid.NAMESPACE_URL,
-                    f"{payload['caseId']}:{payload['documentId']}:{payload['evidenceId']}:{payload['chunkIndex']}",
-                )
-            )
+            point_id = _evidence_point_id(payload)
             if PointStruct:
                 points.append(PointStruct(id=point_id, vector=vector, payload=payload))
             else:
@@ -460,7 +511,18 @@ class QdrantEvidenceMemory:
         limit: int = 8,
         allow_workspace_fallback: bool = False,
     ) -> Dict[str, Any]:
-        del workspace_id, project_id, allow_workspace_fallback
+        del allow_workspace_fallback
+        if not _valid_scope(case_id, workspace_id, project_id):
+            return {
+                "provider": self.provider,
+                "configured": bool(self.configured),
+                "durable": True,
+                "collection": self.collection,
+                "indexedChunkCount": 0,
+                "matches": [],
+                "error_type": "invalid_scope",
+                "browserEmbeddingsRetained": False,
+            }
         if not self.configured:
             return {
                 "provider": self.provider,
@@ -488,7 +550,11 @@ class QdrantEvidenceMemory:
         query_vector = (embedding_result.get("embeddings") or [[]])[0]
         try:
             client = self._get_client()
-            query_filter = self._filter(case_id=case_id)
+            query_filter = self._filter(
+                case_id=case_id,
+                workspace_id=workspace_id,
+                project_id=project_id,
+            )
             if hasattr(client, "search"):
                 raw_hits = client.search(
                     collection_name=self.collection,
@@ -509,6 +575,12 @@ class QdrantEvidenceMemory:
             matches = []
             for hit in raw_hits or []:
                 payload = getattr(hit, "payload", None) or (hit.get("payload") if isinstance(hit, dict) else {}) or {}
+                if (
+                    _clean(payload.get("caseId")) != case_id
+                    or _clean(payload.get("workspaceId")) != workspace_id
+                    or _clean(payload.get("projectId")) != project_id
+                ):
+                    continue
                 score = getattr(hit, "score", None)
                 if score is None and isinstance(hit, dict):
                     score = hit.get("score", 0)
@@ -559,6 +631,11 @@ def chunks_from_evidence_items(
     chunk_size: Optional[int] = None,
     overlap: Optional[int] = None,
 ) -> List[EvidenceChunk]:
+    case_id = _clean(case_id)
+    workspace_id = _clean(workspace_id)
+    project_id = _clean(project_id)
+    if not _valid_scope(case_id, workspace_id, project_id):
+        return []
     chunks: List[EvidenceChunk] = []
     for item_index, item in enumerate(evidence_items):
         text = _first_present(item, "text", "content", "body", "snippet", "description")

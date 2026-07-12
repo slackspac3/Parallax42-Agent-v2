@@ -21,6 +21,7 @@ const assets = [
   'appModules.js',
   'app.js',
   'styles.css',
+  'styles/24-working-demo-qa.css',
   'config.js'
 ];
 const mirrors = [ROOT, path.join(ROOT, 'docs')];

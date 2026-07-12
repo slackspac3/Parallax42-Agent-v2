@@ -201,8 +201,16 @@ class FakeQdrantClient:
         self.last_filter = query_filter
         filters = {condition.key: condition.match.value for condition in query_filter.must}
         assert filters["type"] == "evidence_chunk"
+        assert filters["workspaceId"] == "agentathon"
+        assert filters["projectId"] == "unit"
         assert filters["caseId"] == "case-123"
-        return [FakeQdrantHit(point.payload) for point in self.points if point.payload["caseId"] == "case-123"][:limit]
+        return [
+            FakeQdrantHit(point.payload)
+            for point in self.points
+            if point.payload["caseId"] == "case-123"
+            and point.payload["workspaceId"] == "agentathon"
+            and point.payload["projectId"] == "unit"
+        ][:limit]
 
 
 class FakeQdrantMemory(QdrantEvidenceMemory):
@@ -332,7 +340,8 @@ def check_no_static_output_loading() -> None:
         response = run_payload(payload)
     saved = json.loads((ROOT / "output_examples" / "example_1_output.json").read_text(encoding="utf-8"))
     assert response["run_id"] == "unit-static-output-check"
-    assert response["log_file"] == "logs/trace-unit-static-output-check.jsonl"
+    assert response["log_file"].startswith("logs/trace-unit-static-output-check")
+    assert response["log_file"].endswith(".jsonl")
     assert response["trace_id"] != saved.get("trace_id")
     assert response.get("output") != saved.get("output")
 
@@ -560,7 +569,12 @@ def check_evidence_memory_components() -> None:
         project_id="unit",
     )
     local.index(evidence_chunks)
-    search = local.search("model training exclusion subprocessors", case_id="case-123")
+    search = local.search(
+        "model training exclusion subprocessors",
+        case_id="case-123",
+        workspace_id="agentathon",
+        project_id="unit",
+    )
     assert search["provider"] == "local-fallback"
     assert search["matches"], "local fallback should return relevant snippets"
     assert search["matches"][0]["snippet"]
@@ -576,19 +590,30 @@ def check_evidence_memory_components() -> None:
         assert index_result["indexedChunkCount"] == len(evidence_chunks)
         assert fake_client.points, "fake Qdrant upsert should receive points"
         assert all("embedding" not in point.payload for point in fake_client.points)
-        result = provider.search("DPA model training", case_id="case-123", limit=2)
+        result = provider.search(
+            "DPA model training",
+            case_id="case-123",
+            workspace_id="agentathon",
+            project_id="unit",
+            limit=2,
+        )
         assert result["matches"], "fake Qdrant search should return matches"
         filters = {condition.key: condition.match.value for condition in fake_client.last_filter.must}
-        assert filters == {"type": "evidence_chunk", "caseId": "case-123"}
+        assert filters == {
+            "type": "evidence_chunk",
+            "workspaceId": "agentathon",
+            "projectId": "unit",
+            "caseId": "case-123",
+        }
 
 
 def check_learning_memory_components() -> None:
-    with patched_env(P42_VECTOR_STORE_PROVIDER="local", QDRANT_URL=None, OPENAI_API_KEY=None, OPENAI_BASE_URL=None):
-        seeds = load_seed_artifacts()
+    with patched_env(P42_VECTOR_STORE_PROVIDER="local", QDRANT_URL=None, OPENAI_API_KEY=None, OPENAI_BASE_URL=None, SAMPLE_MODE="true"):
+        seeds = load_seed_artifacts(sample_mode=True)
         assert len(seeds) >= 5, "synthetic learning memory seed should load"
         assert all(seed.advisory_only is True for seed in seeds)
 
-        memory = LocalLearningMemory()
+        memory = LocalLearningMemory(sample_mode=True)
         seed_result = memory.seed_synthetic_learning_memory()
         assert seed_result["seeded"] >= 5
         healthcare = memory.find_similar_cases(
@@ -614,6 +639,7 @@ def check_learning_memory_components() -> None:
             },
             ["model-training exclusion", "signed DPA"],
             ["ai-governance", "privacy"],
+            sample_mode=True,
         )
         text = json.dumps(ai_summary).lower()
         assert "model-training" in text or "customer-data training" in text

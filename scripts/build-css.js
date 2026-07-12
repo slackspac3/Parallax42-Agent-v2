@@ -4,36 +4,28 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
-const SOURCE_DIR = path.join(ROOT, 'public', 'styles');
-const MANIFEST_PATH = path.join(SOURCE_DIR, 'manifest.json');
 const OUTPUT_PATH = path.join(ROOT, 'public', 'styles.css');
-
-function readManifest() {
-  const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
-  if (!Array.isArray(manifest.files) || !manifest.files.length) {
-    throw new Error('public/styles/manifest.json must include a non-empty files array.');
-  }
-  return manifest.files;
-}
+const OVERRIDE_PATH = path.join(ROOT, 'public', 'styles', '24-working-demo-qa.css');
 
 function buildCss() {
-  const files = readManifest();
-  const chunks = files.map((file) => {
-    const filePath = path.join(SOURCE_DIR, file);
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`CSS source is missing: public/styles/${file}`);
+  // public/styles.css predates the optional fragments and contains selectors
+  // the legacy concatenator never captured. Treat it as canonical so running
+  // the build command cannot silently remove production UI rules.
+  const files = [OUTPUT_PATH, OVERRIDE_PATH];
+  files.forEach((filePath) => {
+    if (!fs.existsSync(filePath) || !fs.readFileSync(filePath, 'utf8').trim()) {
+      throw new Error(`CSS source is missing or empty: ${path.relative(ROOT, filePath)}`);
     }
-    return fs.readFileSync(filePath, 'utf8');
   });
-  const css = chunks.join('');
-  fs.writeFileSync(OUTPUT_PATH, css);
-  return { files, bytes: Buffer.byteLength(css) };
+  return {
+    files: files.map((filePath) => path.relative(ROOT, filePath)),
+    bytes: files.reduce((total, filePath) => total + fs.statSync(filePath).size, 0)
+  };
 }
 
 if (require.main === module) {
   const result = buildCss();
-  process.stdout.write(`Built public/styles.css from ${result.files.length} CSS source files (${result.bytes} bytes).\n`);
+  process.stdout.write(`Validated ${result.files.join(' + ')} (${result.bytes} bytes); no CSS was overwritten.\n`);
 }
 
 module.exports = { buildCss };
-

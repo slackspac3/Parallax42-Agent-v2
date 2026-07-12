@@ -1,0 +1,280 @@
+/* Working-demo QA overrides.
+   Keep this final in the manifest so accessibility, lifecycle, and responsive
+   fixes remain reproducible when `npm run build:css` rebuilds styles.css. */
+
+:root { --subtle: #6f8fa8; }
+
+[hidden] { display: none !important; }
+
+h1, h2 { text-wrap: balance; }
+p { text-wrap: pretty; }
+[id] { scroll-margin-top: 88px; }
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(34, 227, 180, 0.16);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 800;
+  transform: translateY(-160%);
+  transition: transform var(--t);
+}
+
+.skip-link:focus {
+  color: var(--bg);
+  transform: translateY(0);
+}
+
+.pane-header h1,
+.section-heading h2 {
+  display: block;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.mission-workspace { grid-template-columns: minmax(0, 1fr); }
+
+.approval-actions { gap: 8px; }
+.approval-button-group { display: grid; grid-template-columns: 1fr; gap: 8px; }
+
+.approval-action-status,
+.action-status,
+.pilot-access-status {
+  min-height: 18px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.approval-action-status[data-state="ready"],
+.action-status[data-state="ready"],
+.pilot-access-status[data-state="ready"] { color: var(--accent); }
+
+.approval-action-status[data-state="warning"],
+.action-status[data-state="warning"],
+.pilot-access-status[data-state="warning"] { color: var(--warning); }
+
+.approval-action-status[data-state="danger"],
+.action-status[data-state="danger"],
+.pilot-access-status[data-state="danger"] { color: var(--danger); }
+
+.approval-action-status[data-state="working"],
+.action-status[data-state="working"],
+.pilot-access-status[data-state="working"] { color: var(--info); }
+
+.status-info,
+.status-checking { color: var(--info); }
+
+.admin-status-card.is-info {
+  border-color: rgba(96, 165, 250, 0.26);
+  background:
+    linear-gradient(145deg, rgba(96, 165, 250, 0.07), rgba(255,255,255,0.012)),
+    color-mix(in srgb, var(--bg) 86%, transparent);
+}
+
+[data-slot="decision-action"][data-state="loading"],
+[data-slot="primary-action"][data-state="loading"],
+[data-slot="review-action"][data-state="loading"] { cursor: progress; }
+
+.upload-zone:focus-within,
+.chat-evidence-picker:focus-within {
+  outline: 2px solid var(--info);
+  outline-offset: 3px;
+  border-color: rgba(96, 165, 250, 0.52);
+}
+
+.artifact-action-note {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: rgba(96, 165, 250, 0.05);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.pilot-access-form { display: grid; gap: 12px; }
+.pilot-access-form input { width: 100%; }
+.pilot-app-link { color: var(--info); font-size: 12px; font-weight: 750; }
+
+body[data-main-section] .command-center,
+body[data-main-section] .evidence-board,
+body[data-main-section] .audit-section,
+body[data-main-section] .admin-section,
+body[data-main-section] .hardening-section { display: none; }
+
+body[data-main-section="agent"] .command-center,
+body[data-main-section="agent"][data-run-mode="chat"] .command-center { display: grid; }
+body[data-main-section="evidence"] .evidence-board { display: grid; }
+body[data-main-section="audit"] .audit-section,
+body[data-main-section="admin"] .admin-section,
+body[data-main-section="hardening"] .hardening-section { display: block; }
+
+.command-center > *,
+.artifact-preview,
+.artifact-header > *,
+.reviewer-action-table,
+.reviewer-action-table > div > *,
+.admin-console-layout > *,
+.admin-main-stack { min-width: 0; }
+
+.scenario-button[data-scenario="integrationVendor"] { border-left-color: rgba(251,191,36,0.5); }
+.scenario-button[data-scenario="saasVendor"] { border-left-color: rgba(34,227,180,0.5); }
+.scenario-button[data-scenario="integrationVendor"] b {
+  border-color: rgba(251,191,36,0.3);
+  background: rgba(251,191,36,0.08);
+  color: #fbbf24;
+}
+.scenario-button[data-scenario="integrationVendor"].is-active {
+  border-color: rgba(251,191,36,0.5);
+  background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(4,8,16,0.6));
+}
+
+@media (max-width: 1200px) {
+  body[data-workspace-view="output"] .command-center,
+  body[data-run-mode="chat"][data-workspace-view="output"] .command-center {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "tabs"
+      "runway"
+      "decision";
+  }
+}
+
+@media (min-width: 1181px) {
+  .pane-header h1 {
+    color: var(--text);
+    font-size: 34px;
+    line-height: 1.06;
+    letter-spacing: 0;
+  }
+
+  body[data-workspace-view="chat"] .pane-header h1 { font-size: 31px; }
+}
+
+@media (max-width: 820px) {
+  .topbar {
+    position: static;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .topbar nav { width: 100%; flex-wrap: wrap; gap: 6px; }
+  .topbar nav a { min-height: 42px; flex: 1 1 auto; padding-inline: 10px; }
+  .workbench { width: calc(100% - 20px); padding-top: 12px; }
+  .mode-tabs { flex-wrap: wrap; }
+  .mode-tabs::before { width: 100%; }
+  .workspace-identity {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 12px;
+  }
+  .workspace-mark {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line-accent);
+    border-radius: var(--r-sm);
+    background: var(--accent-dim);
+    color: var(--accent);
+    font-weight: 900;
+  }
+  .workspace-identity strong,
+  .workspace-identity small { display: block; }
+  .workspace-identity small { margin-top: 3px; color: var(--muted); }
+  .mode-tab { flex: 1 1 min(100%, 145px); min-width: 0; }
+  .council-tab { margin-left: 0; }
+  .chat-messages { min-height: 180px; }
+
+  .artifact-header { min-width: 0; flex-wrap: wrap; overflow-wrap: anywhere; }
+  .artifact-grid,
+  .artifact-grid.compact { grid-template-columns: minmax(0, 1fr); }
+  .artifact-grid span,
+  .artifact-grid b { min-width: 0; overflow-wrap: anywhere; }
+
+  .reviewer-action-table { overflow: visible; }
+  .reviewer-action-table .reviewer-action-head { display: none; }
+  .reviewer-action-table > div { grid-template-columns: minmax(0, 1fr); }
+  .reviewer-action-table > div > * { overflow-wrap: anywhere; }
+
+  .constellation-stage,
+  .decision-rail .constellation-stage {
+    height: auto;
+    min-height: 0;
+    aspect-ratio: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 12px;
+    overflow: visible;
+  }
+
+  .constellation-svg,
+  .decision-core { display: none; }
+
+  .council-agent,
+  .decision-rail .council-agent {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    min-height: 58px;
+    transform: none;
+    align-items: flex-start;
+    padding: 10px 12px;
+    text-align: left;
+  }
+
+  .council-agent:hover:not(:disabled),
+  .decision-rail .council-agent:hover:not(:disabled) { transform: none; }
+  .council-agent span,
+  .council-agent strong,
+  .council-agent small { text-align: left; }
+
+  .run-actions > button { flex: 1 1 180px; }
+  .action-status { flex: 1 1 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+  #networkCanvas,
+  .council-packet { display: none !important; }
+}

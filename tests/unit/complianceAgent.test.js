@@ -4,6 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { runComplianceAgent } = require('../../lib/complianceAgent');
+const { fixtureDocumentSummary } = require('../../lib/fixtureDocuments');
 
 test('blocks empty cases before domain work', () => {
   const result = runComplianceAgent({});
@@ -166,5 +167,115 @@ test('hardware import does not trigger AI model governance by the word AI alone'
   assert.ok(!result.domains.some((domain) => domain.id === 'ai_model_governance'));
   assert.ok(!result.gaps.some((gap) => /training-data handling/i.test(gap.gap)));
   assert.ok(!result.gaps.some((gap) => /Physical Security And International Growth applicability/i.test(gap.gap)));
+  assert.ok(!result.gaps.some((gap) => /classification|licen[cs]e|end-use|import permit|delivery-site|remote-support/i.test(gap.gap)));
   assert.equal(result.evidenceQuality.status, 'usable');
+});
+
+test('export-control fixture known gaps block readiness with explicit proof actions', () => {
+  const fixture = fixtureDocumentSummary('03_ai_accelerator_chip_import_export_control_agreement.pdf');
+  const profile = fixture.expectedProfile;
+  const result = runComplianceAgent({
+    businessUnit: 'Trade Compliance And Export Controls',
+    geography: 'UAE and Singapore',
+    supplierName: profile.supplier,
+    brief: profile.serviceSummary,
+    riskSignals: ['export control', 'remote support access'],
+    integrations: ['Firmware support channel', 'Freight forwarder portal'],
+    knownGaps: profile.expectedMissingEvidence,
+    documents: [fixture.evidence]
+  });
+
+  assert.equal(result.ok, true);
+  assert.notEqual(result.decision.status, 'ready');
+  const blockers = result.gaps.map((gap) => `${gap.gap} ${gap.action}`).join(' ');
+  for (const keyword of profile.expectedRequiredActionKeywords) {
+    assert.match(blockers, new RegExp(keyword.replace(/[-\s]+/g, '[- ]'), 'i'));
+  }
+  assert.ok(result.gaps.some((gap) => /final export classification/i.test(gap.gap)));
+  assert.ok(result.gaps.some((gap) => /export-license analysis/i.test(gap.gap)));
+  assert.ok(result.gaps.some((gap) => /final end-use certificate/i.test(gap.gap)));
+  assert.ok(result.gaps.some((gap) => /import permit/i.test(gap.gap)));
+  assert.ok(result.gaps.some((gap) => /delivery-site approval/i.test(gap.gap)));
+  assert.ok(result.gaps.some((gap) => /remote-support controls and runbook/i.test(gap.gap)));
+});
+
+test('explicitly pending export evidence is never treated as satisfied', () => {
+  const result = runComplianceAgent({
+    businessUnit: 'Trade Compliance',
+    geography: 'UAE',
+    supplierName: 'Pending Export Supplier',
+    brief: 'Review a restricted accelerator import with firmware support.',
+    documents: [{
+      title: 'Draft export pack',
+      summary: 'Export classification is pending. The end-use certificate is not final. The import permit is not attached.'
+    }]
+  });
+
+  assert.notEqual(result.decision.status, 'ready');
+  assert.ok(result.gaps.some((gap) => /classification evidence remains unresolved/i.test(gap.gap)));
+  assert.ok(result.gaps.some((gap) => /end-use certificate remains unresolved/i.test(gap.gap)));
+  assert.ok(result.gaps.some((gap) => /import permit evidence remains unresolved/i.test(gap.gap)));
+});
+
+test('title-only evidence cannot produce a ready recommendation or satisfy a DPA control', () => {
+  const result = runComplianceAgent({
+    businessUnit: 'Procurement',
+    geography: 'UAE',
+    supplierName: 'Metadata Only SaaS',
+    brief: 'Review a SaaS supplier that processes personal data.',
+    documents: [{ title: 'DPA' }]
+  });
+
+  assert.equal(result.ok, true);
+  assert.notEqual(result.decision.status, 'ready');
+  assert.equal(result.evidenceQuality.status, 'weak');
+  assert.equal(result.decisionReadiness.approvalEligible, false);
+  assert.ok(result.gaps.some((gap) => /usable supporting evidence/i.test(gap.gap)));
+  assert.ok(result.gaps.some((gap) => /DPA evidence/i.test(gap.gap)));
+  assert.equal(result.citations.every((citation) => !citation.text), true);
+});
+
+test('normalization preserves structured risk context and blocks unsupported high-risk AI use', () => {
+  const aiUsageScope = {
+    audience: 'external_users_possible',
+    taskBoundary: 'people_impacting_decisions',
+    hostingModel: 'multi_tenant_saas',
+    externalUsers: true,
+    thirdPartyContractors: true,
+    highRiskWorkflowMentioned: true,
+    retrievalOnly: false,
+    excludedWorkflows: ['legal determinations']
+  };
+  const result = runComplianceAgent({
+    businessUnit: 'People Operations',
+    geography: 'UAE',
+    supplierName: 'Talent AI',
+    brief: 'Review an AI service used for employee eligibility decisions with personal data.',
+    exportOriginJurisdiction: 'United States',
+    exportEndUse: 'Internal workforce eligibility decisions',
+    aiUsageScope,
+    reviewFocus: 'Responsible AI and privacy controls',
+    dataCategories: ['employee health data'],
+    riskSignals: ['personal data', 'AI/model use'],
+    evidenceSignals: ['signed DPA'],
+    knownGaps: ['human_oversight'],
+    sanctionsSensitiveGeographies: ['Iran'],
+    documents: [{
+      title: 'Supplier compliance pack',
+      summary: 'Signed DPA, retention schedule, security assurance, and model training exclusion are documented.'
+    }]
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.case.exportOriginJurisdiction, 'United States');
+  assert.equal(result.case.exportEndUse, 'Internal workforce eligibility decisions');
+  assert.deepEqual(result.case.aiUsageScope, aiUsageScope);
+  assert.equal(result.case.reviewFocus, 'Responsible AI and privacy controls');
+  assert.deepEqual(result.case.dataCategories, ['employee health data']);
+  assert.deepEqual(result.case.riskSignals, ['personal data', 'AI/model use']);
+  assert.deepEqual(result.case.evidenceSignals, ['signed DPA']);
+  assert.deepEqual(result.case.knownGaps, ['human_oversight']);
+  assert.deepEqual(result.case.sanctionsSensitiveGeographies, ['Iran']);
+  assert.notEqual(result.decision.status, 'ready');
+  assert.ok(result.gaps.some((gap) => /High-risk AI use/i.test(gap.gap)));
 });

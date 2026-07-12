@@ -2,7 +2,7 @@
 
 The golden demo is the canonical path for the G42 submission. It is intentionally high-risk enough to prove the agent can say no, name gaps, require evidence, and preserve human approval.
 
-The judge-facing walkthrough is online-first: GitHub Pages cockpit -> Vercel product APIs -> server-side Compass gateway/API boundary -> Ocean/DigitalOcean backend services -> Qdrant evidence memory. The root FastAPI/Docker path remains the evaluator reproduction surface for `run.py` and `POST /run`.
+The judge-facing walkthrough is online-first: GitHub Pages cockpit -> Vercel product APIs -> isolated Railway Postgres/Qdrant, with optional Compass server-side capabilities. The root FastAPI/Docker path remains the evaluator reproduction surface for `run.py` and `POST /run`.
 
 ## Replay Endpoint
 

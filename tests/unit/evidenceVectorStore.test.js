@@ -259,9 +259,12 @@ test('client request cannot trigger qdrant workspace fallback search', async () 
             })
           };
         }
-        if (url === 'https://qdrant.example/collections/p42_test_collection/points/search') {
+        if (url === 'https://qdrant.example/collections/p42_test_collection/points/query') {
           const body = JSON.parse(options.body);
           qdrantSearchBodies.push(body);
+          assert.ok(options.signal instanceof AbortSignal);
+          assert.deepEqual(body.query, [0.3, 0.2, 0.1]);
+          assert.equal(body.vector, undefined);
           assert.ok(body.filter.must.some((item) => item.key === 'caseId' && item.match.value === 'case-qdrant'));
           return {
             ok: true,
@@ -352,13 +355,36 @@ test('conversation force-run enrichment performs retrieval server-side by case i
           businessUnit: 'Head of IT',
           geography: 'UAE',
           brief: 'Review employee data platform evidence.',
-          indexedEvidence: index.index
+          indexedEvidence: index.index,
+          documents: [{
+            evidenceId: 'RET-OLD',
+            title: 'Stale retrieved evidence',
+            extractionStatus: 'retrieved_chunk',
+            chunkId: 'chk_stale_1',
+            text: 'An older agreement version.'
+          }],
+          retrievalContext: {
+            query: 'older agreement version',
+            indexVersion: 'stale-index-version',
+            matchCount: 1,
+            matches: [{
+              chunkId: 'chk_stale_1',
+              evidenceId: 'DOC-OLD',
+              text: 'An older agreement version.'
+            }]
+          }
         }
       });
 
       assert.equal(enriched.caseDraft.retrievalContext.matchCount, 1);
+      assert.equal(enriched.caseDraft.retrievalContext.serverAuthoritative, true);
+      assert.equal(enriched.caseDraft.retrievalContext.indexVersion, index.index.updatedAt);
+      assert.notEqual(enriched.caseDraft.retrievalContext.query, 'older agreement version');
+      assert.ok(enriched.caseDraft.retrievalContext.retrievedAt);
       assert.equal(enriched.caseDraft.documents[0].extractionStatus, 'retrieved_chunk');
       assert.equal(enriched.caseDraft.documents[0].chunkId, 'chk_dpa_1');
+      assert.equal(enriched.caseDraft.documents.some((doc) => doc.chunkId === 'chk_stale_1'), false);
+      assert.equal(enriched.caseDraft.retrievalContext.matches.some((match) => match.chunkId === 'chk_stale_1'), false);
     });
   } finally {
     global.fetch = originalFetch;
@@ -466,27 +492,30 @@ test('qdrant search embeds the query and returns sanitized citations only', asyn
             })
           };
         }
-        if (url === 'https://qdrant.example/collections/p42_test_collection/points/search') {
+        if (url === 'https://qdrant.example/collections/p42_test_collection/points/query') {
           const body = JSON.parse(options.body);
-          assert.deepEqual(body.vector, [0.3, 0.2, 0.1]);
+          assert.deepEqual(body.query, [0.3, 0.2, 0.1]);
+          assert.equal(body.vector, undefined);
           assert.equal(body.with_vector, false);
           assert.ok(body.filter.must.some((item) => item.key === 'caseId' && item.match.value === 'case-qdrant'));
           return {
             ok: true,
             status: 200,
             text: async () => JSON.stringify({
-              result: [{
-                score: 0.93,
-                payload: {
-                  type: 'evidence_chunk',
-                  caseId: 'case-qdrant',
-                  evidenceId: 'DOC-DPA',
-                  chunkId: 'chk_dpa_1',
-                  title: 'DPA Clause',
-                  text: 'Signed DPA, retention, and deletion assistance are present.',
-                  metadata: { sourceType: 'backend_parsed' }
-                }
-              }]
+              result: {
+                points: [{
+                  score: 0.93,
+                  payload: {
+                    type: 'evidence_chunk',
+                    caseId: 'case-qdrant',
+                    evidenceId: 'DOC-DPA',
+                    chunkId: 'chk_dpa_1',
+                    title: 'DPA Clause',
+                    text: 'Signed DPA, retention, and deletion assistance are present.',
+                    metadata: { sourceType: 'backend_parsed' }
+                  }
+                }]
+              }
             })
           };
         }

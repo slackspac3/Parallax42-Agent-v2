@@ -16,7 +16,7 @@
 
 ### Final Submission Status
 
-- Online judge demo is primary: GitHub Pages cockpit -> Vercel product APIs -> server-side Compass gateway/API boundary -> Ocean/DigitalOcean backend services -> Qdrant evidence memory.
+- Online judge demo is primary: GitHub Pages cockpit -> Vercel product APIs -> isolated Railway Postgres/Qdrant, with optional Compass server-side capabilities.
 - Evaluator reproduction path is present: root `run.py`, Dockerfile, FastAPI `/run` on port `8000`, metadata, examples, output examples, and logs.
 - Multi-agent collaboration is visible in JSONL traces and the architecture docs.
 - Compass is used server-side; browser clients do not receive Compass keys. Direct `OPENAI_API_KEY` / `OPENAI_BASE_URL` diagnostics remain available for evaluator-style runs.

@@ -42,7 +42,7 @@
     const clean = cleanEvidenceText(textValue);
     const limit = Number(maxLength) || 720;
     if (!clean) return 'No extractable text was detected.';
-    return clean.length > limit ? `${clean.slice(0, limit).trim()}...` : clean;
+    return clean.length > limit ? `${clean.slice(0, Math.max(0, limit - 1)).trim()}…` : clean;
   }
 
   function detectEvidenceSignals(textValue, patterns) {
@@ -183,11 +183,6 @@
               <span>Document analysis summary</span>
               <b>${escapeHtml(analysisItems.length === 1 ? '1 file analysed' : `${analysisItems.length} files analysed`)}</b>
             </summary>
-            <div class="evidence-analysis-tabs" aria-hidden="true">
-              <span class="is-active">Summary</span>
-              <span>Signals</span>
-              <span>What to answer</span>
-            </div>
             <div class="evidence-analysis-list">
               ${analysisItems.map(function renderAnalysis(item) {
                 return `

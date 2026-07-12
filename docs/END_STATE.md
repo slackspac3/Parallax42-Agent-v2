@@ -6,7 +6,7 @@ The target is not a compliance chatbot. The target is an enterprise-grade compli
 
 The final Agentathon submission is an online-first product demo plus a reproducible evaluator wrapper:
 
-- Online product demo: GitHub Pages cockpit -> Vercel product APIs -> server-side Compass gateway/API boundary -> Ocean/DigitalOcean backend services -> droplet-hosted Qdrant evidence memory.
+- Online product demo: GitHub Pages cockpit -> Vercel product APIs -> isolated Railway Postgres/Qdrant, with optional Compass server-side capabilities.
 - Evaluator reproduction: root `run.py` / FastAPI / Docker / `POST /run` on port `8000`.
 - Compass is used server-side. Browser clients never receive Compass keys, Qdrant keys, service tokens, or raw embeddings.
 - Deterministic policy remains final authority; Compass, Qdrant retrieval, governed learning memory, and optional CrewAI are advisory.

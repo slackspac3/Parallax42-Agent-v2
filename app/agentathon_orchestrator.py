@@ -265,13 +265,14 @@ class AgentathonOrchestrator:
     def __init__(self, compass_client: Optional[CompassClient] = None) -> None:
         self.compass = compass_client or CompassClient()
 
-    def run(self, request: AgentathonRunRequest) -> Dict[str, Any]:
+    def run(self, request: AgentathonRunRequest, scope: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         started = time.monotonic()
         run_id = safe_run_id(request.run_id)
         trace_id = f"trace-{run_id}-{uuid.uuid4().hex[:8]}"
         logger = TraceLogger(run_id=run_id, trace_id=trace_id)
         payload, fixture_analysis = enrich_payload_with_fixture_documents(request.dict())
         sample_mode = _sample_mode(request)
+        identifiers = self._case_identifiers(payload, run_id, scope=scope)
         query = _extract_query(payload)
 
         shared_context: Dict[str, Any] = {
@@ -372,7 +373,13 @@ class AgentathonOrchestrator:
                 payload=fixture_analysis,
             )
 
-        evidence_context = self._evidence_context(payload, node_result, case_facts, run_id=run_id)
+        evidence_context = self._evidence_context(
+            payload,
+            node_result,
+            case_facts,
+            identifiers=identifiers,
+            sample_mode=sample_mode,
+        )
         shared_context["evidenceMatches"] = evidence_context["matches"]
         shared_context["missingEvidence"] = evidence_context["missing"]
         shared_context["retrievalContext"] = evidence_context["retrieval_context"]
@@ -437,6 +444,9 @@ class AgentathonOrchestrator:
             evidence_context["missing"],
             self._risk_domains(case_facts, evidence_context["missing"]),
             compass_client=self.compass,
+            workspace_id=identifiers["workspaceId"],
+            project_id=identifiers["projectId"],
+            sample_mode=sample_mode,
         )
         shared_context["precedents"].append(precedent)
         shared_context["learningContext"] = learning_context
@@ -785,7 +795,15 @@ class AgentathonOrchestrator:
                 parts.append(_clean(citation.get("text"))[:600])
         return " ".join(parts).lower()
 
-    def _evidence_context(self, payload: Dict[str, Any], node_result: Dict[str, Any], case_facts: Dict[str, Any], *, run_id: str) -> Dict[str, Any]:
+    def _evidence_context(
+        self,
+        payload: Dict[str, Any],
+        node_result: Dict[str, Any],
+        case_facts: Dict[str, Any],
+        *,
+        identifiers: Dict[str, str],
+        sample_mode: bool,
+    ) -> Dict[str, Any]:
         citations = [item for item in _as_list(node_result.get("citations")) if isinstance(item, dict)]
         citation_matches = [
             {
@@ -836,10 +854,8 @@ class AgentathonOrchestrator:
         risk_domains = self._risk_domains(case_facts, missing)
         fixture_domains = _as_list(fixture_analysis.get("matched_risk_domains"))
         risk_domains = _limited_list(fixture_domains + risk_domains, 16)
-        identifiers = self._case_identifiers(payload, run_id)
         evidence_items = self._evidence_items(payload, node_result, case_facts)
-        if not evidence_items:
-            evidence_items = self._sample_evidence_items(case_facts, missing)
+        sample_references = self._sample_reference_items(case_facts, missing) if sample_mode and not evidence_items else []
         chunks = chunks_from_evidence_items(
             evidence_items,
             case_id=identifiers["caseId"],
@@ -897,6 +913,7 @@ class AgentathonOrchestrator:
             "evidenceMatches": rag_matches[:8],
             "missingEvidenceSignals": missing,
             "browserEmbeddingsRetained": False,
+            **({"sampleReferences": sample_references} if sample_references else {}),
             **({"fixtureDocumentsUsed": fixture_analysis.get("documents_used")} if fixture_analysis.get("documents_used") else {}),
             **({"fallbackFrom": fallback_from} if fallback_from else {}),
             **(
@@ -921,13 +938,34 @@ class AgentathonOrchestrator:
             "retrieval_context": retrieval_context,
         }
 
-    def _case_identifiers(self, payload: Dict[str, Any], run_id: str) -> Dict[str, str]:
+    def _case_identifiers(
+        self,
+        payload: Dict[str, Any],
+        run_id: str,
+        *,
+        scope: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, str]:
         input_payload = payload.get("input") if isinstance(payload.get("input"), dict) else {}
         case_payload = input_payload.get("case") if isinstance(input_payload.get("case"), dict) else {}
+        trusted_scope = scope if isinstance(scope, dict) else {}
         return {
             "caseId": _first_text(case_payload.get("case_id"), case_payload.get("caseId"), input_payload.get("case_id"), run_id),
-            "workspaceId": _first_text(case_payload.get("workspace_id"), case_payload.get("workspaceId"), input_payload.get("workspace_id"), "agentathon"),
-            "projectId": _first_text(case_payload.get("project_id"), case_payload.get("projectId"), input_payload.get("project_id"), "use-case-21"),
+            "workspaceId": _first_text(
+                trusted_scope.get("workspaceId"),
+                trusted_scope.get("workspace_id"),
+                case_payload.get("workspace_id"),
+                case_payload.get("workspaceId"),
+                input_payload.get("workspace_id"),
+                "agentathon",
+            ),
+            "projectId": _first_text(
+                trusted_scope.get("projectId"),
+                trusted_scope.get("project_id"),
+                case_payload.get("project_id"),
+                case_payload.get("projectId"),
+                input_payload.get("project_id"),
+                "use-case-21",
+            ),
         }
 
     def _evidence_items(self, payload: Dict[str, Any], node_result: Dict[str, Any], case_facts: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -977,28 +1015,31 @@ class AgentathonOrchestrator:
             deduped.append(item)
         return deduped
 
-    def _sample_evidence_items(self, case_facts: Dict[str, Any], missing: List[str]) -> List[Dict[str, Any]]:
+    def _sample_reference_items(self, case_facts: Dict[str, Any], missing: List[str]) -> List[Dict[str, Any]]:
         text = json.dumps({"caseFacts": case_facts, "missingEvidence": missing}, ensure_ascii=False).lower()
         if not text.strip():
             return []
         samples = [
             {
                 "id": "sample-privacy-baseline",
-                "title": "Synthetic privacy baseline",
-                "text": "Sample evidence requirement: signed DPA, subprocessor register, retention schedule, deletion assistance, and cross-border transfer mechanism must be reviewed before approval.",
-                "source": "sample",
+                "title": "Synthetic privacy reference",
+                "text": "Sample reference only: signed DPA, subprocessor register, retention schedule, deletion assistance, and cross-border transfer mechanism should be reviewed before approval.",
+                "source": "sample-reference",
+                "referenceType": "sample_reference",
             },
             {
                 "id": "sample-security-baseline",
-                "title": "Synthetic security baseline",
-                "text": "Sample evidence requirement: SOC 2, ISO 27001, access control, MFA, SSO, encryption, audit logging, vulnerability management, BCP, and exit assistance evidence support reviewer validation.",
-                "source": "sample",
+                "title": "Synthetic security reference",
+                "text": "Sample reference only: SOC 2, ISO 27001, access control, MFA, SSO, encryption, audit logging, vulnerability management, BCP, and exit assistance can guide reviewer validation.",
+                "source": "sample-reference",
+                "referenceType": "sample_reference",
             },
             {
                 "id": "sample-ai-baseline",
-                "title": "Synthetic AI governance baseline",
-                "text": "Sample evidence requirement: AI vendors using customer, patient, or confidential data need model-training exclusion, human oversight, transparency, and no autonomous approval.",
-                "source": "sample",
+                "title": "Synthetic AI governance reference",
+                "text": "Sample reference only: AI vendors using customer, patient, or confidential data need model-training exclusion, human oversight, transparency, and no autonomous approval.",
+                "source": "sample-reference",
+                "referenceType": "sample_reference",
             },
         ]
         if "ai" not in text and "model" not in text:
@@ -1052,8 +1093,11 @@ class AgentathonOrchestrator:
             raw_artifacts = index.get("artifacts") if isinstance(index, dict) else []
             text = json.dumps(case_facts, ensure_ascii=False).lower()
             for artifact in raw_artifacts if isinstance(raw_artifacts, list) else []:
+                name = _clean(artifact)
+                if any(marker in name.lower() for marker in ("sample", "golden", "benchmark", "readiness", "health")):
+                    continue
                 if any(token in text for token in ("health", "ai", "saas", "finance", "compliance")):
-                    artifacts.append(_clean(artifact))
+                    artifacts.append(name)
             return _limited_list(artifacts, 4)
         except Exception:
             return []

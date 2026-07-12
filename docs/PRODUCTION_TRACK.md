@@ -8,15 +8,15 @@ This repo is designed to exceed the G42 brief by packaging a runnable agent, an 
 | --- | --- |
 | Runnable compliance agent | `POST /api/agent/run`, local server, and Vercel function handler. |
 | Agentathon evaluator wrapper | Root `run.py`, FastAPI `/run`, Dockerfile, metadata, examples, and JSONL traces. |
-| Online product demo | GitHub Pages cockpit backed by Vercel product APIs and Ocean/DigitalOcean backend services. |
+| Online product demo | GitHub Pages cockpit backed by Vercel product APIs and isolated Railway Postgres/Qdrant. |
 | Server-side Compass boundary | Product smart intake/advisory/embedding calls are kept behind Vercel/gateway routes; browser receives no keys. |
-| Qdrant-backed evidence memory | Deployed Vercel product APIs index/search the droplet-hosted Qdrant collection and return sanitized snippets only. |
+| Qdrant-backed evidence memory | Deployed Vercel product APIs index/search the isolated v2 collection and return sanitized snippets only. |
 | CrewAI orchestration shape | `crewai_adapter/` with specialized agents and CI dry-run validation; live CrewAI is optional and not default. |
 | Human approval posture | Decisions are recommendations with explicit gaps and no auto-approval path. |
 | Evidence discipline | Evidence IDs, domain scan, gap list, trace events, and audit records. |
 | Deployment cockpit | GitHub Pages-ready UI with local/relay/live runtime controls. |
 | Serverless API | Vercel handlers for health, readiness, benchmarks, audit, agent run, and relay. |
-| Production proof link | Live GitHub Pages cockpit, Vercel health/status, Compass gateway boundary, and droplet-hosted Qdrant proof path. |
+| Production proof link | Live GitHub Pages cockpit, Vercel health/status, and isolated Railway Qdrant proof path. |
 | Benchmarking | Local benchmark runner plus generated evidence artifacts. |
 | Golden demo replay | `GET /api/demo/golden` plus `evidence/golden-demo-run.json`. |
 
@@ -37,7 +37,7 @@ This repo is designed to exceed the G42 brief by packaging a runnable agent, an 
 Position the agent as a production-track compliance intelligence worker:
 
 - It already runs, audits, benchmarks, and explains decisions.
-- It is connected to existing online Parallax42/Vercel/droplet assets.
+- It is connected to isolated v2 Vercel/Railway assets.
 - It includes CrewAI design without making optional dependencies block execution or final decisions.
 - It uses Qdrant in the deployed product evidence API while keeping local/FastAPI fallback honest.
 - It is explicit about what remains before enterprise authorization.

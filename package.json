@@ -1,5 +1,5 @@
 {
-  "name": "parallax42-compliance-intelligence-agent",
+  "name": "parallax42-agent-v2",
   "version": "0.1.0",
   "private": true,
   "type": "commonjs",
@@ -38,5 +38,8 @@
   },
   "devDependencies": {
     "playwright": "^1.60.0"
+  },
+  "dependencies": {
+    "pg": "^8.22.0"
   }
 }

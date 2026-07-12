@@ -6,7 +6,8 @@
 | --- | --- | --- |
 | GitHub Pages | `public/` | Static "Watch the Agent Work" cockpit. |
 | Vercel Functions | `api/` | Health, readiness, benchmark, agent run, audit, and backend relay APIs. |
-| Parallax42 backend / Ocean droplet | `PARALLAX42_BACKEND_URL` | Parser/backend relay, optional remote services, and droplet-hosted Qdrant proxy. |
+| Railway Postgres and Qdrant | `DATABASE_URL`, `QDRANT_URL`, `QDRANT_API_KEY` | Isolated v2 session/case persistence and authenticated vector storage. |
+| Optional Parallax42 backend | `PARALLAX42_BACKEND_URL` | Parser/backend relay and optional remote services. |
 | Compass gateway/API boundary | `COMPASS_GATEWAY_BASE_URL`, `COMPASS_GATEWAY_TOKEN` | Server-side smart intake, advisory LLM, and embedding calls. |
 | Agentathon evaluator wrapper | `run.py`, Dockerfile, `.github/workflows/agentathon-preflight.yml` | Reproducible `/run` API on port `8000` for technical screening. |
 
@@ -23,7 +24,7 @@ Settings -> Pages -> Source -> GitHub Actions
 Smoke check after deployment:
 
 ```text
-https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/
+https://slackspac3.github.io/Parallax42-Agent-v2/
 ```
 
 The cockpit reads `public/config.js` and defaults to the Vercel relay outside localhost.
@@ -31,7 +32,7 @@ The cockpit reads `public/config.js` and defaults to the Vercel relay outside lo
 Current API relay:
 
 ```text
-https://parallax42-compliance-intelligence.vercel.app
+https://parallax42-agent-v2.vercel.app
 ```
 
 ## Vercel API
@@ -51,15 +52,18 @@ COMPASS_GATEWAY_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
 COMPASS_GATEWAY_TOKEN=<server-side gateway token>
 EMBEDDINGS_MODEL=text-embedding-3-large
 P42_REQUIRE_DURABLE_STORAGE=0
+DATABASE_URL=<encrypted-railway-postgres-url>
 P42_VECTOR_STORE_PROVIDER=qdrant
-QDRANT_URL=<server-side-qdrant-url-or-droplet-proxy>
+P42_DEMO_EMBEDDINGS=true
+QDRANT_URL=<authenticated-railway-qdrant-url>
 QDRANT_API_KEY=<server-side-vector-db-key>
-QDRANT_COLLECTION=p42_compliance_evidence
+QDRANT_COLLECTION=p42_compliance_evidence_v2
+P42_AUTH_MODE=enforced
 P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020,http://localhost:3020
 AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
 ```
 
-The deployed online product path is configured through encrypted Vercel environment variables and uses Qdrant-backed evidence memory through the Ocean/DigitalOcean droplet. A local or separate Agentathon runtime falls back unless equivalent Qdrant and embedding variables are exported.
+The deployed online product path is configured through encrypted Vercel environment variables and uses isolated Railway Postgres and Qdrant services. `P42_DEMO_EMBEDDINGS=true` enables explicitly labelled deterministic hash vectors for real credential-free indexing/retrieval; a valid Compass-compatible credential upgrades this to semantic embeddings. A local or separate Agentathon runtime falls back unless equivalent Qdrant and embedding variables are exported.
 
 Set `CREWAI_ENABLE_LIVE_LLM=1` only after approved provider credentials are configured in Vercel. Live LLM specialist output is advisory and remains behind deterministic decision guardrails. On Vercel, `AGENT_RUNTIME=crewai_llm` uses the Node-side Compass advisory adapter when the Python CrewAI live adapter is unavailable.
 

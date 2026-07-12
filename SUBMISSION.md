@@ -4,9 +4,9 @@
 
 Primary demo surfaces:
 
-- Static cockpit: `https://slackspac3.github.io/Parallax42-Agentathon-Online-Clone/`
-- Compliance Intelligence Agent API: `https://parallax42-compliance-intelligence.vercel.app`
-- API health: `https://parallax42-compliance-intelligence.vercel.app/api/health`
+- Static cockpit: `https://slackspac3.github.io/Parallax42-Agent-v2/`
+- Compliance Intelligence Agent API: `https://parallax42-agent-v2.vercel.app`
+- API health: `https://parallax42-agent-v2.vercel.app/api/health`
 - Compass gateway health: `https://parallax42-compass-gateway.vercel.app/api/health`
 
 The Compass gateway is required for smart chat intake and shared embeddings/advisory model calls. The deterministic compliance engine remains the authority for final decision status.
@@ -97,18 +97,19 @@ Implemented:
 - Optional Compass gateway client for LLM and embeddings.
 - Root FastAPI Agentathon wrapper plus Dockerfile and GitHub Actions Docker smoke for `/health` and `/run`.
 - CourtListener, CUAD-compatible, NIST, and legacy CAP import/index paths for advisory Reference Intelligence memory.
-- Local vector store fallback with optional Qdrant REST provider when configured; deployed product path uses server-side Qdrant through Vercel/droplet services.
+- Postgres-backed demo session/case lifecycle state with an in-process development fallback.
+- Local vector store fallback with an isolated Railway Qdrant REST provider configured server-side through Vercel; the public demo uses labelled deterministic hash vectors and semantic indexing requires an approved Compass credential.
 - Local append-only hash-chained JSONL audit.
 
 Not implemented or not claimed:
 
 - React, Vite, or `ui/src`.
-- Redis, Postgres, Celery, or durable queues.
+- Redis, Celery, or durable queues.
 - OpenClaw.
 - Arbitrary scanned-PDF OCR without external parser/OCR configuration.
-- Production durable audit or vector persistence unless separately configured.
+- Production durable audit persistence; session/case Postgres and vector storage are configured separately, while the append-only audit log remains filesystem-based.
 - Public hosted FastAPI URL unless this repo Dockerfile is deployed to a public container host and `/metadata`, `/logs`, `/compass/probe`, and `/run` are verified.
-- Enforced RBAC unless production identity env vars are configured and tested.
+- Enterprise SSO; the demo/pilot boundary uses enforced session/pilot RBAC and remains separate from a production identity provider.
 
 ## Supporting Docs
 

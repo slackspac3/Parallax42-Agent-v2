@@ -134,7 +134,7 @@
     const limit = Number(maxLength) || 48;
     const label = cleanEvidenceText(value);
     if (label.length <= limit) return label;
-    return `${label.slice(0, Math.max(0, limit - 3)).trim()}...`;
+    return `${label.slice(0, Math.max(0, limit - 1)).trim()}…`;
   }
 
   window.P42ModuleRegistry = window.P42ModuleRegistry || {};

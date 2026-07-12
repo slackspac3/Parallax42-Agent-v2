@@ -8,6 +8,7 @@ const storageKeys = {
   backendUrl: 'p42:backend-url',
   adminBearerToken: 'p42:admin-bearer-token',
   evidenceIndexMeta: 'p42:evidence-index-meta',
+  browserSession: 'p42:browser-session',
   runHistory: 'p42:run-history',
   chatSession: 'p42:chat-session'
 };
@@ -41,35 +42,41 @@ const scenarios = {
     integrations: ['Azure AD', 'ServiceNow', 'Finance reporting'],
     evidenceQueue: ['SOC 2 summary', 'Azure AD integration note', 'Finance reporting scope']
   },
-  financeVendor: {
-    businessUnit: 'Group Finance Transformation',
-    geography: 'UAE and KSA',
-    supplierName: 'Treasury Ops Platform',
-    brief: 'Onboard a finance workflow vendor that handles payment approvals, exports ledger data, and requires Microsoft 365 tenant access for automated approvals.',
-    documents: [
-      {
-        title: 'Finance controls summary',
-        summary: 'Payment-control ownership is documented. Missing DPA, exit support, licensing review, and privileged access approval.'
-      }
-    ],
-    integrations: ['Microsoft 365', 'ERP export', 'Payment approval workflow'],
-    evidenceQueue: ['Payment approval matrix', 'ERP export scope', 'Tenant access request']
-  },
-  lowRisk: {
-    businessUnit: 'Corporate Communications',
+  integrationVendor: {
+    businessUnit: 'Enterprise Platforms',
     geography: 'UAE',
-    supplierName: 'Brand Asset Library',
-    brief: 'Approve a low-risk brand asset library used by the communications team with no customer data, no production integration, and standard SSO access.',
+    supplierName: 'OmniBridge Services LLC',
+    brief: 'Review a managed integration partner connecting ERP, HRIS, CRM, ITSM, collaboration, warehouse, and reporting platforms with privileged implementation access.',
     documents: [
       {
-        title: 'Low-risk supplier summary',
-        summary: 'DPA attached, no AI training on customer data, continuity statement attached, SSO documented, and no finance integration.'
+        title: 'Managed integration assurance summary',
+        summary: 'Privileged access approval, the DPA, continuity evidence, release-control signoff, and the secrets rotation plan are incomplete.'
       }
     ],
-    integrations: ['SSO'],
-    evidenceQueue: ['DPA', 'Continuity statement', 'SSO setup note']
+    integrations: ['ERP', 'HRIS', 'ServiceNow', 'SharePoint', 'Data warehouse'],
+    evidenceQueue: ['Managed services agreement', 'Integration scope', 'Privileged access matrix']
+  },
+  saasVendor: {
+    businessUnit: 'Group Technology Risk',
+    geography: 'UAE',
+    supplierName: 'VectorCloud Systems Inc.',
+    brief: 'Review an enterprise SaaS platform for workflow automation, supplier analytics, CRM reporting, case management, and AI-assisted summaries.',
+    documents: [
+      {
+        title: 'Enterprise SaaS assurance summary',
+        summary: 'SOC 2 summary is available, but the signed DPA, model-training exclusion, continuity plan, subprocessor schedule, and production access approval are incomplete.'
+      }
+    ],
+    integrations: ['CRM', 'Case management', 'SSO'],
+    evidenceQueue: ['Master services agreement', 'SOC 2 summary', 'AI summaries clause']
   }
 };
+
+const demoFixtureFilenames = Object.freeze({
+  exportControl: '03_ai_accelerator_chip_import_export_control_agreement.pdf',
+  integrationVendor: '04_managed_platform_integration_services_agreement.pdf',
+  saasVendor: '01_enterprise_saas_master_services_agreement.pdf'
+});
 
 const form = document.querySelector('#agentForm');
 const runtimeConfig = document.querySelector('#runtimeConfig');
@@ -83,8 +90,17 @@ const apiMode = document.querySelector('#apiMode');
 const relayUrl = document.querySelector('#relayUrl');
 const backendUrl = document.querySelector('#backendUrl');
 const adminBearerToken = document.querySelector('#adminBearerToken');
+const pilotAccessForm = document.querySelector('#pilotAccessForm');
+const pilotAccessCode = document.querySelector('#pilotAccessCode');
+const pilotAccessSubmit = document.querySelector('#pilotAccessSubmit');
+const pilotLogout = document.querySelector('#pilotLogout');
+const pilotAccessStatus = document.querySelector('#pilotAccessStatus');
+const pilotAppLink = document.querySelector('#pilotAppLink');
 const topbarSectionLinks = document.querySelectorAll('.topbar nav a[data-main-section]');
 const runModeButtons = document.querySelectorAll('.mode-tab[data-run-mode]');
+const workspaceTabButtons = document.querySelectorAll('.mode-tab[role="tab"]');
+const caseWorkspacePanel = document.querySelector('#caseWorkspacePanel');
+const workflowPanel = document.querySelector('#workflow');
 const casePanelEyebrow = document.querySelector('#casePanelEyebrow');
 const casePanelTitle = document.querySelector('#casePanelTitle');
 const startNewCase = document.querySelector('#startNewCase');
@@ -93,6 +109,9 @@ const runwayDescription = document.querySelector('#runwayDescription');
 const decisionText = document.querySelector('#decisionText');
 const approvalStatus = document.querySelector('#approvalStatus');
 const approvalButton = document.querySelector('#approvalButton');
+const remediationButton = document.querySelector('#remediationButton');
+const approvalActionStatus = document.querySelector('#approvalActionStatus');
+const exportActionStatus = document.querySelector('#exportActionStatus');
 const runtimeText = document.querySelector('#runtimeText');
 const readinessScore = document.querySelector('#readinessScore');
 const evidenceCount = document.querySelector('#evidenceCount');
@@ -131,6 +150,7 @@ const councilOutputTab = document.querySelector('#councilOutputTab');
 const decisionRail = document.querySelector('.decision-rail');
 const intelRailTabs = document.querySelectorAll('[data-intel-rail-tab]');
 const missionWelcome = document.querySelector('#missionWelcome');
+const caseIntelligencePanel = document.querySelector('#caseIntelligencePanel');
 const caseDraftPanel = document.querySelector('#caseDraftPanel');
 const caseIntelReadiness = document.querySelector('#caseIntelReadiness');
 const caseIntelDetails = document.querySelector('#caseIntelDetails');
@@ -138,6 +158,7 @@ const chatMessagesEl = document.querySelector('#chatMessages');
 const chatForm = document.querySelector('#chatForm');
 const chatInput = document.querySelector('#chatInput');
 const chatInputCounter = document.querySelector('#chatInputCounter');
+const chatSubmit = document.querySelector('#chatSubmit');
 const chatRunNow = document.querySelector('#chatRunNow');
 const chatEvidenceInput = document.querySelector('#chatEvidenceInput');
 const chatEvidencePicker = document.querySelector('.chat-evidence-picker');
@@ -157,11 +178,21 @@ const lastRuns = {
 let latestCompletedRunMode = null;
 let latestCompletedRun = null;
 let completedRunHistory = [];
+const currentSessionRunIds = new Set();
 let activeRunMode = 'chat';
 let currentScenarioKey = 'exportControl';
+let demoSessionToken = '';
+let demoSessionPromise = null;
+let pilotSessionActive = false;
+let activeBrowserSession = null;
 let playbackTimers = [];
 let uploadedEvidence = [];
 let evidenceIndexMeta = {};
+let evidenceUploadPromise = null;
+let evidenceUploadActive = false;
+let conversationRequestActive = false;
+let agentRunActive = false;
+let decisionActionMode = 'idle';
 let evidenceIndexValidation = {
   status: 'not_checked',
   detail: 'No restored evidence index metadata has been checked.'
@@ -208,7 +239,7 @@ const runModeCopy = {
     caseEyebrow: 'Live workspace',
     caseTitle: 'Compliance intake',
     runwayTitle: 'Run a live case',
-    runwayDescription: 'Submit the edited intake and uploaded evidence to the configured CrewAI runtime.',
+    runwayDescription: 'Submit the edited intake and uploaded evidence to the configured governed agent runtime.',
     runButton: 'Run live case',
     actionButton: 'Run live',
     waitingDecision: 'Live run not started',
@@ -451,8 +482,15 @@ function readAdminBearerToken() {
 }
 
 function writeAdminBearerToken(value = '') {
+  const previous = readSessionStorage(storageKeys.adminBearerToken).trim();
+  const next = String(value || '').trim();
   writeStorage(storageKeys.adminBearerToken, '');
-  writeSessionStorage(storageKeys.adminBearerToken, String(value || '').trim());
+  writeSessionStorage(storageKeys.adminBearerToken, next);
+  if (previous !== next) purgeBrowserSessionArtifacts({ resetView: true });
+}
+
+function privilegedDiagnosticsRequested() {
+  return Boolean(readAdminBearerToken().trim() || pilotSessionActive);
 }
 
 function authorizationHeaderPresent(headers = {}) {
@@ -461,7 +499,7 @@ function authorizationHeaderPresent(headers = {}) {
 }
 
 function sessionAuthHeaders(headers = {}) {
-  const token = readAdminBearerToken().trim();
+  const token = readAdminBearerToken().trim() || (pilotSessionActive ? '' : demoSessionToken);
   if (!token) return headers;
   if (headers instanceof Headers) {
     const next = new Headers(headers);
@@ -478,6 +516,95 @@ function withSessionAuth(options = {}) {
     ...options,
     headers: sessionAuthHeaders(options.headers || {})
   };
+}
+
+async function ensureDemoSession() {
+  if (readAdminBearerToken().trim()) return '';
+  if (pilotSessionActive && activeBrowserSession?.sessionType === 'pilot') return '';
+  if (demoSessionToken && activeBrowserSession?.sessionType === 'demo') return demoSessionToken;
+  if (demoSessionPromise) return demoSessionPromise;
+  demoSessionPromise = fetchJson(apiUrl('/api/demo/session'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}'
+  }).then((session) => {
+    const token = cleanText(session?.token);
+    if (!token) throw new Error('Demo session did not return an access token.');
+    activateBrowserSession(session, { sessionType: 'demo', token });
+    return token;
+  }).finally(() => {
+    demoSessionPromise = null;
+  });
+  return demoSessionPromise;
+}
+
+function isPilotCookieOrigin() {
+  try {
+    const configuredOrigin = new URL(runtimeDefaults.defaultRelayUrl || '').origin;
+    return window.location.origin === configuredOrigin || /\.vercel\.app$/i.test(window.location.hostname);
+  } catch {
+    return /\.vercel\.app$/i.test(window.location.hostname);
+  }
+}
+
+function renderPilotAccessState(message = '', state = 'idle') {
+  if (!pilotAccessForm || !pilotAccessStatus) return;
+  const available = isPilotCookieOrigin();
+  const working = state === 'working';
+  pilotAccessCode.disabled = !available || pilotSessionActive || working;
+  pilotAccessSubmit.disabled = !available || pilotSessionActive || working;
+  pilotLogout.hidden = !available || !pilotSessionActive;
+  pilotAppLink.hidden = available;
+  pilotAccessStatus.dataset.state = state;
+  pilotAccessStatus.textContent = message || (available
+    ? pilotSessionActive
+      ? 'Pilot session active. Requests use the secure same-origin cookie.'
+      : 'Public demo session active. Enter an approved code to use a private pilot workspace.'
+    : 'Access-code pilot sessions require the same-origin Vercel app. Open the Vercel pilot to continue.');
+}
+
+async function startPilotSession(code = '') {
+  if (!isPilotCookieOrigin()) {
+    renderPilotAccessState('', 'warning');
+    return null;
+  }
+  pilotAccessSubmit.disabled = true;
+  renderPilotAccessState('Starting the private pilot session…', 'working');
+  try {
+    const session = await fetchJson('/api/auth/access-code', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: cleanText(code) })
+    });
+    activateBrowserSession(session, { sessionType: 'pilot' });
+    if (pilotAccessCode) pilotAccessCode.value = '';
+    renderPilotAccessState(`Pilot workspace active until ${new Date(session.expiresAt).toLocaleString()}.`, 'ready');
+    await Promise.all([loadDeploymentStatus(), loadAdminStatus(), loadAuditLog()]);
+    return session;
+  } catch (error) {
+    renderPilotAccessState(error instanceof Error ? error.message : 'The access code could not be exchanged.', 'danger');
+    return null;
+  } finally {
+    if (!pilotSessionActive && pilotAccessSubmit) pilotAccessSubmit.disabled = false;
+  }
+}
+
+async function endPilotSession() {
+  if (!isPilotCookieOrigin()) return;
+  pilotLogout.disabled = true;
+  renderPilotAccessState('Signing out of the pilot workspace…', 'working');
+  try {
+    await fetchJson('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    deactivateBrowserSession({ resetView: true });
+    await ensureDemoSession();
+    renderPilotAccessState('Pilot session ended. Public demo access is active.', 'ready');
+    await Promise.all([loadDeploymentStatus(), loadAdminStatus(), loadAuditLog()]);
+  } catch (error) {
+    renderPilotAccessState(error instanceof Error ? error.message : 'The pilot session could not be ended.', 'danger');
+  } finally {
+    pilotLogout.disabled = false;
+  }
 }
 
 function stripTrailingSlash(value, fallback = '') {
@@ -530,6 +657,7 @@ function backendStatusCheck(config) {
       url: config.backendUrl,
       skipFetch: true,
       status: 'captured',
+      tone: 'warning',
       detail: 'Live health is captured in evidence/live-health.json; switch to relay mode for browser relay checks.'
     };
   }
@@ -550,7 +678,8 @@ async function fetchJson(url, options = {}) {
   return response.json();
 }
 
-function apiFetch(path, options = {}) {
+async function apiFetch(path, options = {}) {
+  await ensureDemoSession();
   return fetchJson(apiUrl(path), withSessionAuth(options));
 }
 
@@ -563,7 +692,8 @@ function backendApiUrl(path) {
   return `${config.relayUrl}/api/backend?path=${encodeURIComponent(value)}`;
 }
 
-function backendApiFetch(path, options = {}) {
+async function backendApiFetch(path, options = {}) {
+  await ensureDemoSession();
   return fetchJson(backendApiUrl(path), withSessionAuth(options));
 }
 
@@ -586,10 +716,63 @@ function authorizationRecoveryMessage(target = 'API') {
   return `${label} authorization is required. Add the private demo/JWT bearer token in Admin > Runtime settings, save runtime, and retry.`;
 }
 
-function statusClass(value = '') {
-  if (/ready|passed|applicable|healthy|ok|configured|captured|complete/i.test(value)) return 'status-ready';
-  if (/conditional|confirmation|review|partial|pending|queued/i.test(value)) return 'status-warning';
-  return 'status-danger';
+const statusTones = Object.freeze({
+  active: 'info',
+  applicable: 'ready',
+  captured: 'warning',
+  checking: 'checking',
+  complete: 'ready',
+  conditional: 'warning',
+  conditionally_ready: 'warning',
+  configured: 'ready',
+  error: 'danger',
+  escalated: 'warning',
+  fallback_used: 'warning',
+  healthy: 'ready',
+  human_review_recorded: 'ready',
+  missing: 'danger',
+  needs_confirmation: 'warning',
+  needs_review: 'warning',
+  needs_revision: 'warning',
+  not_applicable: 'info',
+  not_checked: 'warning',
+  not_ready: 'danger',
+  ok: 'ready',
+  partial: 'warning',
+  passed: 'ready',
+  pending: 'warning',
+  queued: 'warning',
+  ready: 'ready',
+  retry: 'warning',
+  satisfied: 'ready',
+  success: 'ready',
+  unavailable: 'danger',
+  validated: 'ready',
+  weak: 'warning'
+});
+
+function normalizedStatusKey(value = '') {
+  return cleanText(value).toLowerCase().replace(/[\s-]+/g, '_');
+}
+
+function statusTone(value = '', fallback = 'danger') {
+  return statusTones[normalizedStatusKey(value)] || fallback;
+}
+
+function statusClass(tone = 'danger') {
+  return `status-${['ready', 'warning', 'danger', 'info', 'checking'].includes(tone) ? tone : 'danger'}`;
+}
+
+function uiComponentAttributes(slot, state) {
+  return window.P42AppModules.appState.componentAttributes(slot, state);
+}
+
+function setUiComponentState(node, slot, state) {
+  window.P42AppModules.appState.setComponentState(node, slot, state);
+}
+
+function setTabSelection(button, selected) {
+  window.P42AppModules.appState.setTabSelection(button, selected);
 }
 
 function humanize(value = '') {
@@ -803,6 +986,89 @@ function setAttachmentStatus(message = '', state = 'idle') {
   chatAttachmentStatus.dataset.state = state;
 }
 
+function syncPrimaryActionState() {
+  const busy = evidenceUploadActive || conversationRequestActive || agentRunActive;
+  if (evidenceInput) evidenceInput.disabled = busy;
+  if (chatEvidenceInput) chatEvidenceInput.disabled = busy;
+  if (chatSubmit) chatSubmit.disabled = busy;
+  if (formRunButton) formRunButton.disabled = busy;
+  if (sampleRun) sampleRun.disabled = busy || decisionActionMode === 'running' || decisionActionMode === 'exporting';
+  if (chatRunNow) chatRunNow.disabled = busy || Boolean(chatRunReadiness && !chatRunReadiness.runnable);
+  [chatSubmit, formRunButton, sampleRun, chatRunNow].filter(Boolean).forEach((button) => {
+    setUiComponentState(button, button.dataset.slot || 'primary-action', busy ? 'loading' : button.disabled ? 'disabled' : 'ready');
+    button.setAttribute('aria-busy', String(busy));
+  });
+  document.body.dataset.evidenceState = evidenceUploadActive ? 'loading' : 'idle';
+  if (execReviewPack) {
+    execReviewPack.disabled = busy || decisionActionMode !== 'ready';
+    setUiComponentState(execReviewPack, 'decision-action', busy ? 'loading' : execReviewPack.disabled ? 'disabled' : 'ready');
+  }
+  if (exportRun) {
+    exportRun.disabled = busy || decisionActionMode !== 'ready';
+    setUiComponentState(exportRun, 'decision-action', busy ? 'loading' : exportRun.disabled ? 'disabled' : 'ready');
+  }
+}
+
+function updateDecisionActionBar(mode = 'idle') {
+  decisionActionMode = ['idle', 'running', 'ready', 'exporting'].includes(mode) ? mode : 'idle';
+  const ready = decisionActionMode === 'ready' || decisionActionMode === 'exporting';
+  sampleRun.classList.toggle('primary-action', !ready);
+  sampleRun.classList.toggle('secondary-button', ready);
+  execReviewPack.classList.toggle('primary-action', ready);
+  execReviewPack.classList.toggle('secondary-button', !ready);
+  sampleRun.textContent = decisionActionMode === 'running'
+    ? 'Running council…'
+    : ready ? 'Rerun council' : runModeCopy[activeRunMode].actionButton;
+  execReviewPack.textContent = decisionActionMode === 'exporting' ? 'Packaging review pack…' : 'Export review pack';
+  exportRun.textContent = 'Export audit JSON';
+  setUiComponentState(sampleRun, 'decision-action', decisionActionMode === 'running' ? 'loading' : 'ready');
+  setUiComponentState(execReviewPack, 'decision-action', decisionActionMode === 'exporting' ? 'loading' : ready ? 'ready' : 'disabled');
+  setUiComponentState(exportRun, 'decision-action', ready ? 'ready' : 'disabled');
+  syncPrimaryActionState();
+}
+
+function setApprovalActionStatus(message = '', state = 'idle') {
+  if (!approvalActionStatus) return;
+  approvalActionStatus.textContent = message;
+  approvalActionStatus.dataset.state = state;
+}
+
+function setApprovalActions({ enabled = false, recorded = null, busyAction = '', allowApproval = true } = {}) {
+  const approved = Boolean(recorded && /approve|conditional/i.test(recorded.reviewerDecision || recorded.status || ''));
+  const rejected = Boolean(recorded && /reject|remediation/i.test(recorded.reviewerDecision || recorded.status || ''));
+  const busy = Boolean(busyAction);
+  approvalButton.textContent = busyAction === 'approve'
+    ? 'Recording approval…'
+    : approved ? 'Approved with conditions' : 'Approve with conditions';
+  remediationButton.textContent = busyAction === 'remediation'
+    ? 'Recording remediation…'
+    : rejected ? 'Remediation requested' : 'Request remediation';
+  [approvalButton, remediationButton].forEach((button) => {
+    button.disabled = !enabled || Boolean(recorded) || busy || (button === approvalButton && !allowApproval);
+    setUiComponentState(button, 'review-action', busy ? 'loading' : button.disabled ? 'disabled' : 'ready');
+    button.setAttribute('aria-busy', String(busy));
+  });
+  if (enabled && !recorded && !busy) {
+    if (allowApproval) approvalButton.dataset.reviewAction = 'conditional-approval';
+    else approvalButton.removeAttribute('data-review-action');
+    remediationButton.dataset.reviewAction = 'request-remediation';
+  } else {
+    approvalButton.removeAttribute('data-review-action');
+    remediationButton.removeAttribute('data-review-action');
+  }
+}
+
+function setEvidenceUploadBusy(active) {
+  evidenceUploadActive = Boolean(active);
+  syncPrimaryActionState();
+}
+
+async function waitForEvidenceUpload() {
+  const pending = evidenceUploadPromise;
+  if (!pending) return;
+  await pending;
+}
+
 function pipelineStepStatus(stepId, phase) {
   return window.P42AppModules.evidenceUploadUi.pipelineStepStatus(stepId, phase, evidencePipelineSteps);
 }
@@ -929,6 +1195,112 @@ function removeSessionStorage(key) {
   } catch {
     // Ignore storage failures in privacy modes.
   }
+}
+
+function normalizeBrowserSession(session = {}, { sessionType = '', token = '' } = {}) {
+  const normalizedType = cleanText(sessionType || session.sessionType).toLowerCase();
+  const sessionId = cleanText(session.sessionId);
+  const workspaceId = cleanText(session.workspaceId);
+  const expiresAt = cleanText(session.expiresAt);
+  const expiresAtMs = Date.parse(expiresAt);
+  const normalizedToken = cleanText(token || session.token);
+  if (!['demo', 'pilot'].includes(normalizedType) || !sessionId || !workspaceId) return null;
+  if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now()) return null;
+  if (normalizedType === 'demo' && !normalizedToken) return null;
+  return {
+    sessionType: normalizedType,
+    sessionId,
+    workspaceId,
+    expiresAt,
+    token: normalizedType === 'demo' ? normalizedToken : ''
+  };
+}
+
+function browserSessionScopeId(session = activeBrowserSession) {
+  if (!session) return '';
+  const sessionType = cleanText(session.sessionType);
+  const sessionId = cleanText(session.sessionId);
+  const workspaceId = cleanText(session.workspaceId);
+  return sessionType && sessionId && workspaceId
+    ? `${sessionType}:${workspaceId}:${sessionId}`
+    : '';
+}
+
+function restoreBrowserSession() {
+  const stored = readSessionJsonStorage(storageKeys.browserSession, null);
+  if (!stored) return null;
+  const restored = normalizeBrowserSession(stored, stored);
+  if (restored) return restored;
+  removeSessionStorage(storageKeys.browserSession);
+  return null;
+}
+
+function persistBrowserSession(session = activeBrowserSession) {
+  if (!session) {
+    removeSessionStorage(storageKeys.browserSession);
+    return;
+  }
+  writeSessionJsonStorage(storageKeys.browserSession, session);
+}
+
+function runHistoryScope() {
+  if (readAdminBearerToken().trim()) return null;
+  const scopeId = browserSessionScopeId();
+  if (!scopeId) return null;
+  return {
+    id: scopeId,
+    sessionType: activeBrowserSession.sessionType,
+    sessionId: activeBrowserSession.sessionId,
+    workspaceId: activeBrowserSession.workspaceId
+  };
+}
+
+function purgeBrowserSessionArtifacts({ resetView = false } = {}) {
+  // `p42:run-history` used to contain full results in localStorage. Always remove
+  // that legacy copy, even when sessionStorage is unavailable.
+  removeStorage(storageKeys.runHistory);
+  removeSessionStorage(storageKeys.runHistory);
+  completedRunHistory = [];
+  currentSessionRunIds.clear();
+  lastRun = null;
+  lastRuns.chat = null;
+  lastRuns.demo = null;
+  lastRuns.live = null;
+  latestCompletedRunMode = null;
+  latestCompletedRun = null;
+  if (resetView) {
+    resetChatCaseSession({ skipConfirm: true });
+  } else {
+    clearChatSessionStorage();
+    removeStorage(storageKeys.evidenceIndexMeta);
+  }
+  renderRunHistorySelect();
+}
+
+function activateBrowserSession(session = {}, options = {}) {
+  const next = normalizeBrowserSession(session, options);
+  if (!next) throw new Error('Session did not return a valid browser scope.');
+  const previousScopeId = browserSessionScopeId();
+  const nextScopeId = browserSessionScopeId(next);
+  if (previousScopeId && previousScopeId !== nextScopeId) {
+    purgeBrowserSessionArtifacts({ resetView: true });
+  }
+  activeBrowserSession = next;
+  demoSessionToken = next.sessionType === 'demo' ? next.token : '';
+  pilotSessionActive = next.sessionType === 'pilot';
+  persistBrowserSession(next);
+  completedRunHistory = loadCompletedRunHistory();
+  hydrateLatestCompletedRunFromHistory();
+  renderRunHistorySelect();
+  return next;
+}
+
+function deactivateBrowserSession({ resetView = false } = {}) {
+  activeBrowserSession = null;
+  demoSessionToken = '';
+  pilotSessionActive = false;
+  removeSessionStorage(storageKeys.browserSession);
+  purgeBrowserSessionArtifacts({ resetView });
 }
 
 function chatSessionPayload() {
@@ -1802,6 +2174,22 @@ async function lookupFixtureEvidenceFile(file, index) {
 }
 
 async function ingestEvidenceFiles(files = []) {
+  if (evidenceUploadPromise) {
+    setAttachmentStatus('Evidence processing is already in progress. This file selection was not added.', 'warning');
+    return evidenceUploadPromise;
+  }
+  setEvidenceUploadBusy(true);
+  const upload = ingestEvidenceFilesUnlocked(files);
+  evidenceUploadPromise = upload;
+  try {
+    return await upload;
+  } finally {
+    if (evidenceUploadPromise === upload) evidenceUploadPromise = null;
+    setEvidenceUploadBusy(false);
+  }
+}
+
+async function ingestEvidenceFilesUnlocked(files = []) {
   const validation = validateEvidenceFiles(files);
   if (!validation.ok) {
     const message = validation.message || 'Evidence upload rejected.';
@@ -1824,7 +2212,7 @@ async function ingestEvidenceFiles(files = []) {
   const selected = Array.from(files).slice(0, 8);
   if (!selected.length) return;
   const fileLabel = `${selected.length} evidence file${selected.length === 1 ? '' : 's'}`;
-  evidenceIngestionStatus.textContent = `Preparing ${fileLabel}... ${formatBytes(uploadTargetLimitsForClient().maxFileBytes)} per file max.`;
+  evidenceIngestionStatus.textContent = `Preparing ${fileLabel}… ${formatBytes(uploadTargetLimitsForClient().maxFileBytes)} per file max.`;
   if (activeRunMode === 'chat') {
     renderEvidencePipelineStatus({
       phase: 'queue',
@@ -1870,7 +2258,7 @@ async function ingestEvidenceFiles(files = []) {
     const browserFiles = nonFixtureFiles.filter((file) => !backendParsedEvidenceExtensions.has(fileExtension(file.name)));
 
     if (backendFiles.length) {
-      evidenceIngestionStatus.textContent = `Uploading ${backendFiles.length} document${backendFiles.length === 1 ? '' : 's'} to backend parser...`;
+      evidenceIngestionStatus.textContent = `Uploading ${backendFiles.length} document${backendFiles.length === 1 ? '' : 's'} to backend parser…`;
       if (activeRunMode === 'chat') {
         renderEvidencePipelineStatus({
           phase: 'upload',
@@ -1942,7 +2330,7 @@ async function ingestEvidenceFiles(files = []) {
     let indexResult = null;
     const indexableCount = buildEvidenceIndexDocuments(extracted).length;
     if (indexableCount) {
-      evidenceIngestionStatus.textContent = `Embedding ${indexableCount} parsed evidence document${indexableCount === 1 ? '' : 's'} for retrieval...`;
+      evidenceIngestionStatus.textContent = `Embedding ${indexableCount} parsed evidence document${indexableCount === 1 ? '' : 's'} for retrieval…`;
       if (activeRunMode === 'chat') {
         renderEvidencePipelineStatus({
           phase: 'embed',
@@ -2028,7 +2416,8 @@ async function ingestEvidenceFiles(files = []) {
       await submitChatMessage(eventSummary, {
         eventType: 'evidence_uploaded',
         silentUser: true,
-        activeQuestion: ''
+        activeQuestion: '',
+        skipEvidenceWait: true
       });
       renderAgentActivity([
         { label: 'Intake Agent', detail: 'ready', status: 'complete' },
@@ -2043,7 +2432,7 @@ async function ingestEvidenceFiles(files = []) {
     }
     renderEvidenceQueue();
     if (activeRunMode === 'live') {
-      runAgent(currentFormPayload(), { playback: true, mode: 'live' });
+      runAgent(currentFormPayload(), { playback: true, mode: 'live', skipEvidenceWait: true });
     }
   } catch (error) {
     evidenceIngestionStatus.textContent = error instanceof Error ? error.message : 'Evidence extraction failed.';
@@ -2076,6 +2465,7 @@ function isCompletedRun(run) {
 }
 
 const RUN_HISTORY_LIMIT = 12;
+const RUN_HISTORY_STORAGE_VERSION = 2;
 
 function makeClientRunId(result = {}, mode = activeRunMode) {
   const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
@@ -2109,6 +2499,7 @@ function buildRunHistoryRecord(mode = activeRunMode, result = null) {
   const caseId = cleanText(run.case?.caseId || '');
   const decision = cleanText(run.decision?.recommendation || run.decision?.status || '');
   return {
+    scopeId: runHistoryScope()?.id || '',
     runId: cleanText(run.runId),
     mode: normalizedMode,
     caseId,
@@ -2123,16 +2514,62 @@ function buildRunHistoryRecord(mode = activeRunMode, result = null) {
 }
 
 function loadCompletedRunHistory() {
-  const records = readJsonStorage(storageKeys.runHistory, []);
-  if (!Array.isArray(records)) return [];
-  return records
-    .filter((record) => record && cleanText(record.runId) && isCompletedRun(record.result))
+  removeStorage(storageKeys.runHistory);
+  const scope = runHistoryScope();
+  if (!scope) {
+    removeSessionStorage(storageKeys.runHistory);
+    return [];
+  }
+  const envelope = readSessionJsonStorage(storageKeys.runHistory, null);
+  if (!envelope
+    || Number(envelope.version) !== RUN_HISTORY_STORAGE_VERSION
+    || cleanText(envelope.scopeId) !== scope.id
+    || !Array.isArray(envelope.records)) {
+    removeSessionStorage(storageKeys.runHistory);
+    return [];
+  }
+  return envelope.records
+    .filter((record) => (
+      record
+      && cleanText(record.scopeId) === scope.id
+      && cleanText(record.runId)
+      && isCompletedRun(record.result)
+    ))
     .slice(0, RUN_HISTORY_LIMIT);
 }
 
+function hydrateLatestCompletedRunFromHistory() {
+  const record = completedRunHistory[0];
+  if (!record?.result) return null;
+  const mode = normalizeHistoryMode(record.mode);
+  const result = ensureRunId(record.result, mode);
+  lastRuns[mode] = result;
+  lastRun = result;
+  latestCompletedRunMode = mode;
+  latestCompletedRun = result;
+  return result;
+}
+
 function saveCompletedRunHistory() {
-  const records = completedRunHistory.slice(0, RUN_HISTORY_LIMIT);
-  writeJsonStorage(storageKeys.runHistory, records);
+  removeStorage(storageKeys.runHistory);
+  const scope = runHistoryScope();
+  if (!scope) {
+    removeSessionStorage(storageKeys.runHistory);
+    return;
+  }
+  const records = completedRunHistory
+    .filter((record) => cleanText(record?.scopeId) === scope.id)
+    .slice(0, RUN_HISTORY_LIMIT);
+  writeSessionJsonStorage(storageKeys.runHistory, {
+    version: RUN_HISTORY_STORAGE_VERSION,
+    scopeId: scope.id,
+    scope: {
+      sessionType: scope.sessionType,
+      sessionId: scope.sessionId,
+      workspaceId: scope.workspaceId
+    },
+    records
+  });
 }
 
 function formatRunHistoryTime(value = '') {
@@ -2222,10 +2659,11 @@ function runSummaryForChatDraft(result = {}) {
   };
 }
 
-function registerCompletedRun(runMode = activeRunMode, result = null) {
+function registerCompletedRun(runMode = activeRunMode, result = null, { currentSession = false } = {}) {
   if (!isCompletedRun(result)) return result;
   const mode = ['demo', 'live', 'chat'].includes(runMode) ? runMode : activeRunMode;
   const completed = rememberCompletedRun(mode, result);
+  if (currentSession && completed?.runId) currentSessionRunIds.add(completed.runId);
   lastRuns[mode] = completed;
   lastRun = completed;
   latestCompletedRunMode = mode;
@@ -2348,10 +2786,24 @@ function councilOutputIntegrity(run = {}, options = {}) {
   return { ok: true };
 }
 
+function syncWorkspaceTabState() {
+  workspaceTabButtons.forEach((button) => {
+    const selected = workspaceView === 'output'
+      ? button === councilOutputTab
+      : button.dataset.runMode === activeRunMode;
+    setTabSelection(button, selected);
+  });
+  if (caseWorkspacePanel) {
+    caseWorkspacePanel.hidden = workspaceView === 'output';
+    caseWorkspacePanel.setAttribute('aria-labelledby', `${activeRunMode}ModeTab`);
+  }
+  if (workflowPanel) workflowPanel.hidden = workspaceView !== 'output';
+}
+
 function setWorkspaceView(view = 'chat', options = {}) {
   workspaceView = view === 'output' ? 'output' : 'chat';
   document.body.dataset.workspaceView = workspaceView;
-  councilOutputTab?.classList.toggle('is-active', workspaceView === 'output');
+  syncWorkspaceTabState();
   if (workspaceView !== 'output' && !options.preserveRunComplete && !getLatestCompletedRun(activeRunMode)) {
     document.body.dataset.runComplete = 'false';
   }
@@ -2370,9 +2822,10 @@ function setIntelRailTab(tab = 'case') {
   }
   intelRailTabs.forEach((button) => {
     const selected = button.dataset.intelRailTab === activeIntelRailTab;
-    button.classList.toggle('is-active', selected);
-    button.setAttribute('aria-selected', selected ? 'true' : 'false');
+    setTabSelection(button, selected);
   });
+  if (caseIntelligencePanel) caseIntelligencePanel.hidden = activeIntelRailTab !== 'case';
+  if (agentActivity) agentActivity.hidden = activeIntelRailTab !== 'council';
 }
 
 function ensureDecisionRoomVisible(options = {}) {
@@ -2572,7 +3025,7 @@ function renderContextStrength(draft = chatCaseDraft) {
   contextStrengthText.textContent = text;
   contextStrengthBar.style.width = `${score}%`;
   contextStrengthBar.setAttribute('aria-valuenow', String(Math.max(0, Math.min(100, Math.round(score)))));
-  chatRunNow.disabled = readiness ? !readiness.runnable : false;
+  syncPrimaryActionState();
   renderCaseIntelligence(draft, lastRuns.chat);
 }
 
@@ -3526,9 +3979,9 @@ function renderModeIdle(mode = activeRunMode) {
   document.body.dataset.runComplete = 'false';
   decisionText.textContent = copy.waitingDecision;
   approvalStatus.textContent = copy.waitingApproval;
-  approvalButton.textContent = 'Approval locked';
-  approvalButton.disabled = true;
-  approvalButton.removeAttribute('data-review-action');
+  setApprovalActions();
+  setApprovalActionStatus('Human decision controls unlock after a completed council run.', 'idle');
+  updateDecisionActionBar('idle');
   runtimeText.textContent = '--';
   readinessScore.textContent = '--';
   evidenceCount.textContent = mode === 'live' && uploadedEvidence.length ? String(uploadedEvidence.length) : '--';
@@ -3648,10 +4101,10 @@ function setRunMode(mode = 'demo', options = {}) {
     document.body.dataset.runComplete = 'false';
   }
   runModeButtons.forEach((button) => {
-    const selected = button.dataset.runMode === activeRunMode;
-    button.classList.toggle('is-active', selected);
-    button.setAttribute('aria-selected', String(selected));
+    setTabSelection(button, workspaceView !== 'output' && button.dataset.runMode === activeRunMode);
   });
+  setTabSelection(councilOutputTab, workspaceView === 'output');
+  if (caseWorkspacePanel) caseWorkspacePanel.setAttribute('aria-labelledby', `${activeRunMode}ModeTab`);
   casePanelEyebrow.textContent = copy.caseEyebrow;
   casePanelTitle.textContent = copy.caseTitle;
   runwayTitle.textContent = copy.runwayTitle;
@@ -3690,6 +4143,33 @@ function currentFormPayload() {
     geography: data.get('geography'),
     documents: activeRunMode === 'live' ? [manualDocument, ...uploadedEvidenceForConversation()] : [manualDocument],
     integrations: scenario.integrations
+  };
+}
+
+async function prepareDemoRunPayload(payload = {}) {
+  if (readAdminBearerToken().trim()) return payload;
+  await ensureDemoSession();
+  const filename = demoFixtureFilenames[currentScenarioKey] || demoFixtureFilenames.exportControl;
+  const prepared = await fetchJson(apiUrl('/api/demo/case'), withSessionAuth({
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename })
+  }));
+  const storedCase = prepared?.case || {};
+  const fixtureEvidence = storedCase.evidence?.length
+    ? storedCase.evidence
+    : prepared?.fixture?.evidence ? [prepared.fixture.evidence] : payload.documents;
+  return {
+    ...payload,
+    caseId: storedCase.caseId,
+    caseVersion: Number(storedCase.version || 1),
+    supplierName: storedCase.supplierName || payload.supplierName,
+    brief: storedCase.brief || payload.brief,
+    businessUnit: storedCase.businessUnit || payload.businessUnit,
+    geography: storedCase.geography || payload.geography,
+    reviewFocus: storedCase.reviewFocus || payload.reviewFocus || [],
+    knownGaps: storedCase.knownGaps || payload.knownGaps || [],
+    documents: Array.isArray(fixtureEvidence) ? fixtureEvidence : []
   };
 }
 
@@ -3809,6 +4289,7 @@ function chatMessageSignature(message = {}, index = -1, latestAssistantIndex = -
     text: message.text || '',
     pending: Boolean(message.pending),
     thinkingStepIndex: Number(message.thinkingStepIndex || 0),
+    elapsedSeconds: Number(message.elapsedSeconds || 0),
     retryNote: message.retryNote || '',
     displayedQuestion: message.displayedQuestion || '',
     displayedQuestionId: message.displayedQuestionId || '',
@@ -3987,9 +4468,9 @@ function renderConversationState(result = {}) {
   approvalStatus.textContent = runReadiness.runnable
     ? 'The council can execute now; unresolved evidence gaps will stay visible in the decision.'
     : 'The agent is collecting required context before producing a decision.';
-  approvalButton.textContent = 'Approval locked';
-  approvalButton.disabled = true;
-  approvalButton.removeAttribute('data-review-action');
+  setApprovalActions();
+  setApprovalActionStatus('Human decision controls unlock after a completed council run.', 'idle');
+  updateDecisionActionBar(getLatestCompletedRun(activeRunMode)?.ok ? 'ready' : 'idle');
   runtimeText.textContent = 'NLP case builder';
   readinessScore.textContent = runReadiness.runnable ? 'runnable' : 'draft';
   evidenceCount.textContent = String((draft.documents || []).length || evidenceSignals.length || 0);
@@ -4234,9 +4715,9 @@ function renderDecisionRoomEmptyState(message = 'Run the council from the chat w
   runwayDescription.textContent = 'Executive recommendation, risk rationale, evidence, specialist trace, and review pack will appear here after a run.';
   decisionText.textContent = 'No council output yet';
   approvalStatus.textContent = 'Run the council before recording human review.';
-  approvalButton.textContent = 'Approval locked';
-  approvalButton.disabled = true;
-  approvalButton.removeAttribute('data-review-action');
+  setApprovalActions();
+  setApprovalActionStatus('Human decision controls unlock after a completed council run.', 'idle');
+  updateDecisionActionBar('idle');
   runtimeText.textContent = '--';
   readinessScore.textContent = '--';
   evidenceCount.textContent = '--';
@@ -4251,7 +4732,6 @@ function renderDecisionRoomEmptyState(message = 'Run the council from the chat w
       <strong>Run the council to generate the executive output.</strong>
       <p>${escapeHtml(message)}</p>
       <div class="decision-room-empty-actions">
-        <button type="button" class="primary-action" data-report-action="run-council">Run council</button>
         <button type="button" class="secondary-button" data-report-action="continue-conversation">Back to case builder</button>
       </div>
     </article>
@@ -4279,8 +4759,9 @@ function renderOutputRenderError(error, result = {}) {
   runwayDescription.textContent = 'The council completed, but the decision room could not render safely.';
   decisionText.textContent = 'Output render issue';
   approvalStatus.textContent = 'The raw audit pack is still available below for diagnosis.';
-  approvalButton.textContent = 'Approval locked';
-  approvalButton.disabled = true;
+  setApprovalActions();
+  setApprovalActionStatus('Decision controls remain locked until the output renders successfully.', 'danger');
+  updateDecisionActionBar('idle');
   flowProgress.style.width = '100%';
   stageKicker.textContent = 'Render guard';
   stageStatus.textContent = 'Decision output needs review';
@@ -4317,9 +4798,9 @@ function renderRunResult(result, options = {}) {
     lastRuns[activeRunMode] = result;
     decisionText.textContent = result.message || 'Run blocked';
     approvalStatus.textContent = 'Case could not be evaluated.';
-    approvalButton.textContent = 'Approval locked';
-    approvalButton.disabled = true;
-    approvalButton.removeAttribute('data-review-action');
+    setApprovalActions();
+    setApprovalActionStatus('Resolve the run error before recording a human decision.', 'danger');
+    updateDecisionActionBar('idle');
     runtimeText.textContent = '--';
     readinessScore.textContent = '--';
     evidenceCount.textContent = '--';
@@ -4353,20 +4834,33 @@ function renderRunResult(result, options = {}) {
   const progress = Math.max(0, Math.min(100, Math.round(((stageIndex + 1) / stages.length) * 100)));
   const currentStage = stages[Math.max(0, Math.min(stages.length - 1, activeIndex ?? stageIndex))];
 
-  decisionText.textContent = finalVisible ? businessDecisionHeadline(result) : 'CrewAI review in progress';
+  decisionText.textContent = finalVisible ? businessDecisionHeadline(result) : 'Governed council review in progress';
   approvalStatus.textContent = finalVisible
     ? businessDecisionSummary(result)
     : 'Specialists are building the audit pack.';
-  const recordedReview = result.humanReviewRecorded || humanReviewRecord;
-  approvalButton.textContent = finalVisible
-    ? recordedReview ? 'Human review recorded' : 'Record human review'
-    : 'Review in progress';
-  approvalButton.disabled = !finalVisible || Boolean(recordedReview);
-  if (finalVisible && !recordedReview) {
-    approvalButton.dataset.reviewAction = 'record-human-review';
+  const recordedReview = result.humanReviewRecorded
+    || (humanReviewRecord?._runId === result.runId ? humanReviewRecord : null);
+  const canRecordCurrentSessionDecision = Boolean(finalVisible && currentSessionRunIds.has(result.runId));
+  const approvalAllowed = result.decision?.status !== 'not_ready';
+  setApprovalActions({ enabled: canRecordCurrentSessionDecision, recorded: recordedReview, allowApproval: approvalAllowed });
+  if (finalVisible && recordedReview) {
+    setApprovalActionStatus(
+      recordedReview.status === 'rejected' ? 'Human reviewer requested remediation.' : 'Conditional human approval recorded.',
+      recordedReview.status === 'rejected' ? 'warning' : 'ready'
+    );
+  } else if (finalVisible && canRecordCurrentSessionDecision) {
+    setApprovalActionStatus(
+      approvalAllowed
+        ? 'Choose a human decision. The recommendation does not auto-approve this case.'
+        : 'This case is not approval-eligible. Request remediation, close the blockers, then rerun the council.',
+      approvalAllowed ? 'idle' : 'warning'
+    );
+  } else if (finalVisible) {
+    setApprovalActionStatus('Historical result loaded read-only. Rerun the council in this session before recording a human decision.', 'warning');
   } else {
-    approvalButton.removeAttribute('data-review-action');
+    setApprovalActionStatus('Council review is still in progress.', 'idle');
   }
+  updateDecisionActionBar(finalVisible ? 'ready' : 'running');
   runtimeText.textContent = formatRuntime(result.runtime?.actualRuntime || result.mode || 'unknown');
   readinessScore.textContent = finalVisible
     ? `${Math.round(result.decision.readinessScore * 100)}%`
@@ -4436,7 +4930,7 @@ function renderEvidence(result, options = {}) {
           <strong>${escapeHtml(domain.label)}</strong>
           <p>${escapeHtml(domain.obligations?.[0] || 'Mapped obligation pending evidence review.')}</p>
         </div>
-        <span class="${statusClass(domain.status)}">${escapeHtml(humanize(domain.status))} · ${escapeHtml(domain.score)}</span>
+        <span class="${statusClass(statusTone(domain.status, 'warning'))}">${escapeHtml(humanize(domain.status))} · ${escapeHtml(domain.score)}</span>
       </article>
     `).join('')
     : '<article class="empty-row">Obligation map appears after the regulatory mapper completes.</article>';
@@ -4548,10 +5042,7 @@ function renderArtifactPreview(result, options = {}) {
         <strong>${escapeHtml(result.case?.caseId || 'case pending')}</strong>
         ${runId ? `<small class="run-trace-id">Run ${escapeHtml(runId)}</small>` : ''}
       </div>
-      <div class="artifact-primary-action">
-        <button type="button" data-report-action="export-review-pack">Download review pack (PDF)</button>
-        <small>Business memo, evidence citations, specialist trace, and human approval boundary.</small>
-      </div>
+      <p class="artifact-action-note">Use the command bar above to export the PDF review pack or audit JSON. The pack includes the business memo, evidence citations, specialist trace, and human approval boundary.</p>
       <div class="review-package">
         <article>
           <span>Executive PDF</span>
@@ -4940,25 +5431,28 @@ function playResult(result, options = {}) {
 }
 
 async function runAgent(payload, options = {}) {
+  if (agentRunActive || conversationRequestActive) return null;
+  if (!options.skipEvidenceWait) await waitForEvidenceUpload();
   const runMode = options.mode || activeRunMode;
+  agentRunActive = true;
   clearPlaybackTimers();
   startCouncilRunAnimation({ source: 'run_button' });
-  sampleRun.disabled = true;
+  updateDecisionActionBar('running');
   document.body.dataset.runComplete = 'false';
-  sampleRun.textContent = 'Running';
-  decisionText.textContent = 'CrewAI review in progress';
+  decisionText.textContent = 'Governed council review in progress';
   approvalStatus.textContent = 'Submitting case to the agent runtime.';
   stageKicker.textContent = 'Dispatching';
   stageStatus.textContent = 'Runtime Router';
   stageOutput.textContent = 'Selecting the configured orchestration path.';
   flowProgress.style.width = '4%';
   try {
+    const submittedPayload = runMode === 'demo' ? await prepareDemoRunPayload(payload) : payload;
     const result = await apiFetch('/api/agent/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(submittedPayload)
     });
-    if (result?.ok) registerCompletedRun(runMode, result);
+    if (result?.ok) registerCompletedRun(runMode, result, { currentSession: true });
     if (runMode !== activeRunMode) {
       stopCouncilRunAnimation();
       lastRuns[runMode] = result;
@@ -4987,8 +5481,8 @@ async function runAgent(payload, options = {}) {
     loadAuditLog();
     return failure;
   } finally {
-    sampleRun.disabled = false;
-    sampleRun.textContent = runModeCopy[activeRunMode].actionButton;
+    agentRunActive = false;
+    syncPrimaryActionState();
   }
 }
 
@@ -5016,12 +5510,12 @@ function startChatThinkingProgress(message = {}, options = {}) {
     message.phaseTitle = step.title;
     message.phaseDetail = step.detail;
     message.attemptLabel = step.attempt;
-    renderChatMessages();
+    patchChatMessageDom(latestAssistantMessageIndex());
   }, step.delay));
   const elapsedTimer = window.setInterval(() => {
     if (!message.pending) return;
     message.elapsedSeconds = Math.max(0, Math.round((Date.now() - message.startedAt) / 1000));
-    renderChatMessages();
+    patchChatMessageDom(latestAssistantMessageIndex());
   }, 1000);
   return function stopChatThinkingProgress() {
     timers.forEach((timer) => window.clearTimeout(timer));
@@ -5030,6 +5524,7 @@ function startChatThinkingProgress(message = {}, options = {}) {
 }
 
 async function submitChatMessage(rawMessage = '', options = {}) {
+  if (conversationRequestActive || agentRunActive) return null;
   const message = cleanEvidenceText(rawMessage || (options.forceRun ? 'run it' : ''));
   if (!message) {
     promptForChatContext();
@@ -5039,6 +5534,9 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     promptForChatContext();
     return null;
   }
+  if (!options.skipEvidenceWait) await waitForEvidenceUpload();
+  conversationRequestActive = true;
+  syncPrimaryActionState();
   if (liveCasePreviewTimer) {
     window.clearTimeout(liveCasePreviewTimer);
     liveCasePreviewTimer = null;
@@ -5048,6 +5546,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   clearPlaybackTimers();
   if (options.forceRun) {
     startCouncilRunAnimation({ source: 'chat_run' });
+    updateDecisionActionBar('running');
   }
   if (!options.silentUser && !options.forceRun && hasSubstantiveReviewRequestText(message)) {
     mergeChatCaseDraft({ caseRequestStarted: true });
@@ -5075,8 +5574,8 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   const pendingMessage = {
     role: 'assistant',
     text: options.forceRun
-      ? 'Checking the case draft and executing the workflow if the required context is present...'
-      : 'Reading the request, updating the case draft, and planning the next agent step...',
+      ? 'Checking the case draft and executing the workflow if the required context is present…'
+      : 'Reading the request, updating the case draft, and planning the next agent step…',
     pending: true,
     thinkingStepIndex: 0,
     phaseTitle: options.forceRun ? 'Checking readiness' : options.retrySmartIntake ? 'Checking smart intake' : 'Working',
@@ -5092,9 +5591,6 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   const stopThinkingProgress = startChatThinkingProgress(pendingMessage, options);
   chatInput.value = '';
   updateChatInputCounter();
-  sampleRun.disabled = true;
-  chatRunNow.disabled = true;
-  chatForm.querySelector('button[type="submit"]').disabled = true;
   flowProgress.style.width = '12%';
   stageKicker.textContent = 'NLP intake';
   stageStatus.textContent = 'Parsing message';
@@ -5113,7 +5609,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   try {
     const serverChunkCount = indexedChunkCountForRetrieval();
     if (options.forceRun && serverChunkCount) {
-      pendingMessage.text = 'Preparing server-side evidence retrieval before council execution...';
+      pendingMessage.text = 'Preparing server-side evidence retrieval before council execution…';
       flowProgress.style.width = '24%';
       stageKicker.textContent = 'Semantic retrieval';
       stageStatus.textContent = 'Server retrieval queued';
@@ -5239,7 +5735,7 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     }
     renderChatMessages();
     if (result.run?.ok) {
-      registerCompletedRun('chat', result.run);
+      registerCompletedRun('chat', result.run, { currentSession: true });
       playResult(result.run, { runMode: 'chat' });
       loadAuditLog();
     } else {
@@ -5268,10 +5764,8 @@ async function submitChatMessage(rawMessage = '', options = {}) {
     return null;
   } finally {
     stopThinkingProgress();
-    sampleRun.disabled = false;
-    chatRunNow.disabled = chatRunReadiness ? !chatRunReadiness.runnable : false;
-    chatForm.querySelector('button[type="submit"]').disabled = false;
-    sampleRun.textContent = runModeCopy.chat.actionButton;
+    conversationRequestActive = false;
+    syncPrimaryActionState();
   }
 }
 
@@ -5316,7 +5810,7 @@ async function submitLearningFeedback(form) {
   };
   const submit = form.querySelector('button[type="submit"]');
   if (submit) submit.disabled = true;
-  if (status) status.textContent = 'Saving governed learning artifact...';
+  if (status) status.textContent = 'Saving governed learning artifact…';
   try {
     const saved = await apiFetch('/api/learning/feedback', {
       method: 'POST',
@@ -5334,47 +5828,71 @@ async function submitLearningFeedback(form) {
   }
 }
 
-async function recordHumanReview() {
+async function recordHumanReview(action = 'conditional-approval') {
   const result = lastRun?.ok ? lastRun : lastRuns[activeRunMode]?.ok ? lastRuns[activeRunMode] : null;
-  if (!result || humanReviewRecord) return;
-  const confirmed = window.confirm('Record that a human reviewer inspected this decision room? This writes an audit event; it does not auto-approve operational use.');
+  if (!result || result.humanReviewRecorded || humanReviewRecord?._runId === result.runId) return;
+  if (!currentSessionRunIds.has(result.runId)) {
+    setApprovalActions();
+    setApprovalActionStatus('Historical result loaded read-only. Rerun the council in this session before recording a human decision.', 'warning');
+    return;
+  }
+  const requestsRemediation = action === 'request-remediation';
+  const reviewerDecision = requestsRemediation ? 'Request remediation' : 'Conditional approval';
+  const confirmed = window.confirm(requestsRemediation
+    ? 'Request remediation for this case? This records a final human rejection and writes an audit event.'
+    : 'Approve this case with conditions? This records the accountable human decision and writes an audit event.');
   if (!confirmed) return;
-  approvalButton.disabled = true;
-  approvalButton.textContent = 'Recording review';
+  const approvalAllowed = result.decision?.status !== 'not_ready';
+  setApprovalActions({ enabled: true, busyAction: requestsRemediation ? 'remediation' : 'approve', allowApproval: approvalAllowed });
+  setApprovalActionStatus(`Recording ${reviewerDecision.toLowerCase()}…`, 'working');
   try {
     const recorded = await apiFetch('/api/case/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         caseId: result.case?.caseId || chatCaseDraft.caseId || 'conversation-case',
+        caseVersion: Number(result.caseVersion || result.case?.version || chatCaseDraft.caseVersion || 1),
         decision: result.decision || {},
-        reviewerDecision: 'Human review recorded',
-        reviewerNotes: 'Reviewer inspected the decision room and evidence pack from the cockpit.',
+        reviewerDecision,
+        reviewerNotes: requestsRemediation
+          ? 'Accountable human reviewer inspected the decision room and requested remediation before approval.'
+          : 'Accountable human reviewer inspected the decision room and granted conditional approval.',
         evidenceIds: Array.isArray(result.evidenceIds) ? result.evidenceIds : []
       })
     });
-    humanReviewRecord = recorded;
-    result.humanReviewRecorded = recorded;
-    registerCompletedRun(latestCompletedRunMode || activeRunMode, result);
-    approvalButton.textContent = 'Human review recorded';
-    approvalButton.disabled = true;
-    approvalButton.removeAttribute('data-review-action');
+    humanReviewRecord = { ...recorded, _runId: result.runId || '' };
+    result.humanReviewRecorded = humanReviewRecord;
+    registerCompletedRun(latestCompletedRunMode || activeRunMode, result, { currentSession: true });
+    setApprovalActions({ recorded: humanReviewRecord });
+    setApprovalActionStatus(
+      requestsRemediation ? 'Remediation request recorded in the audit trail.' : 'Conditional human approval recorded in the audit trail.',
+      requestsRemediation ? 'warning' : 'ready'
+    );
     loadAuditLog();
   } catch (error) {
-    approvalButton.textContent = 'Review not recorded';
-    window.setTimeout(() => {
-      renderRun(result);
-    }, 1600);
+    setApprovalActions({ enabled: true, allowApproval: approvalAllowed });
+    const detail = error instanceof Error ? error.message : 'The human decision could not be recorded.';
+    setApprovalActionStatus(`${detail} Review the case version or authorization, then retry.`, 'danger');
   }
 }
 
 async function loadReadiness() {
+  if (!privilegedDiagnosticsRequested()) {
+    readinessList.innerHTML = `
+      <article class="hardening-item">
+        <span class="status-info">restricted</span>
+        <strong>Operational readiness</strong>
+        <p>Sign in with an authorized pilot or admin role to inspect deployment readiness details.</p>
+      </article>
+    `;
+    return null;
+  }
   try {
     const readiness = await apiFetch('/api/readiness');
     const inventory = readiness.submissionReadiness || {};
     readinessList.innerHTML = Object.entries(inventory).map(([key, value]) => `
       <article class="hardening-item">
-        <span class="${statusClass(value)}">${escapeHtml(humanize(value))}</span>
+        <span class="${statusClass(statusTone(value, 'warning'))}">${escapeHtml(humanize(value))}</span>
         <strong>${escapeHtml(readinessCopy[key]?.label || titleCase(key.replace(/([A-Z])/g, ' $1')))}</strong>
         <p>${escapeHtml(readinessCopy[key]?.proof || 'Current proof recorded in the readiness endpoint.')}</p>
         <small>${escapeHtml(readinessCopy[key]?.next || 'Track in the production hardening plan.')}</small>
@@ -5392,6 +5910,16 @@ async function loadReadiness() {
 }
 
 async function loadBenchmarks() {
+  if (!privilegedDiagnosticsRequested()) {
+    benchmarkSummary.innerHTML = `
+      <article>
+        <span class="status-info">restricted</span>
+        <strong>Evaluation report</strong>
+        <p>Authorized pilot or admin access is required to load runtime benchmarks.</p>
+      </article>
+    `;
+    return null;
+  }
   try {
     const report = await apiFetch('/api/benchmarks');
     benchmarkSummary.innerHTML = `
@@ -5425,7 +5953,7 @@ function formatAuditTimestamp(value = '') {
 
 function shortAuditHash(value = '') {
   const hash = cleanText(value);
-  return hash ? `${hash.slice(0, 10)}...` : '';
+  return hash ? `${hash.slice(0, 10)}…` : '';
 }
 
 function renderAuditIntegrity(integrity = {}) {
@@ -5494,10 +6022,19 @@ function renderAuditLog(payload = {}) {
 
 async function loadAuditLog() {
   if (!adminAuditLog) return null;
+  if (!privilegedDiagnosticsRequested()) {
+    adminAuditLog.innerHTML = `
+      <article class="admin-log-row is-auth">
+        <strong>Admin auth required</strong>
+        <p>Sign in with an authorized pilot or admin role to view recent audit records.</p>
+      </article>
+    `;
+    return null;
+  }
   adminAuditLog.innerHTML = `
     <article class="admin-log-row is-empty">
       <strong>Loading audit log</strong>
-      <p>Checking the latest hash-chained audit records...</p>
+      <p>Checking the latest hash-chained audit records…</p>
     </article>
   `;
   try {
@@ -5518,19 +6055,22 @@ async function loadAuditLog() {
 }
 
 function renderStatusCards(results) {
-  deploymentStatus.innerHTML = results.map((result) => `
-    <article class="status-card">
+  deploymentStatus.innerHTML = results.map((result) => {
+    const tone = result.tone || statusTone(result.status, 'danger');
+    return `
+    <article class="status-card" ${uiComponentAttributes('deployment-status', tone)}>
       <strong>
         ${escapeHtml(result.label)}
-        <span class="${statusClass(result.status)}">${escapeHtml(result.status)}</span>
+        <span class="${statusClass(tone)}">${escapeHtml(result.status)}</span>
       </strong>
       <code>${escapeHtml(result.url)}</code>
       <p>${escapeHtml(result.detail)}</p>
-    </article>
-  `).join('');
-  const unhealthy = results.some((result) => result.status === 'unavailable');
-  topHealth.textContent = unhealthy ? 'degraded' : 'live';
-  topHealth.className = unhealthy ? 'status-warning' : 'status-ready';
+    </article>`;
+  }).join('');
+  const tones = results.map((result) => result.tone || statusTone(result.status, 'danger'));
+  const healthTone = tones.includes('danger') ? 'danger' : tones.includes('checking') ? 'checking' : tones.includes('warning') ? 'warning' : 'ready';
+  topHealth.textContent = healthTone === 'danger' ? 'degraded' : healthTone === 'checking' ? 'checking' : healthTone === 'warning' ? 'limited' : 'live';
+  topHealth.className = statusClass(healthTone);
 }
 
 function renderCapabilityFallbacks(results = []) {
@@ -5607,12 +6147,11 @@ function renderCapabilityFallbacks(results = []) {
   `).join('');
 }
 
-function adminStatusCard(label, status, detail) {
-  const healthy = /ready|configured|active|enforced|qdrant|hash|ok|available|enabled|per file|conversation|request|attempts|history turns|chars|server-side retained/i.test(`${status} ${detail}`);
-  const warning = /audit|local|fallback|disabled|missing|not checked|not configured|not active|not enforced/i.test(`${status} ${detail}`) && !healthy;
-  const className = healthy ? 'is-ready' : warning ? 'is-warning' : 'is-danger';
+function adminStatusCard(label, status, detail, tone = 'danger') {
+  const safeTone = ['ready', 'warning', 'danger', 'info', 'checking'].includes(tone) ? tone : 'danger';
+  const className = safeTone === 'checking' ? 'is-loading' : `is-${safeTone}`;
   return `
-    <article class="admin-status-card ${className}">
+    <article class="admin-status-card ${className}" ${uiComponentAttributes('admin-status', safeTone)}>
       <span>${escapeHtml(label)}</span>
       <strong>${escapeHtml(status)}</strong>
       <p>${escapeHtml(detail)}</p>
@@ -5639,24 +6178,24 @@ function renderAdminStatus(status = {}) {
   const evidenceProvider = evidenceIndexMeta.provider || vector.provider || 'local-file fallback';
   const cards = [
     ...(safeStatus.statusError
-      ? [adminStatusCard('Runtime status', 'fallback values', safeStatus.statusError)]
+      ? [adminStatusCard('Runtime status', 'fallback values', safeStatus.statusError, 'danger')]
       : []),
-    adminStatusCard('Auth mode', auth.enforced ? 'enforced' : auth.mode || 'audit', auth.enforced ? 'RBAC policy blocks unauthorized actions.' : 'Audit-mode records actor context without blocking the demo.'),
-    adminStatusCard('Audit chain', audit.hashChained ? 'hash-chained' : 'not verified', audit.provider || 'local-jsonl'),
-    adminStatusCard('Request limits', `conversation ${formatBytes(requestLimits.conversation)}`, `Standard run ${formatBytes(requestLimits.standardRun)} · admin ${formatBytes(requestLimits.admin)}.`),
-    adminStatusCard('Evidence request limits', `index ${formatBytes(requestLimits.evidenceIndex)}`, `Search ${formatBytes(requestLimits.evidenceSearch)} · review pack ${formatBytes(requestLimits.reviewPack)}.`),
-    adminStatusCard('Vector memory', vector.provider || 'local-file', vector.qdrantConfigured ? `Qdrant collection ${vector.collection || 'configured'}` : 'Local-file fallback is demo-grade.'),
-    adminStatusCard('Evidence index', indexStatus, evidenceIndexValidation.detail || 'Restored evidence index metadata has not been checked.'),
-    adminStatusCard('Upload targets', `${formatBytes(uploadTargetLimits.maxFileBytes)} per file`, `Batch ${formatBytes(uploadTargetLimits.maxBatchBytes)} · chunk size ${formatBytes(uploadTargetLimits.chunkSizeBytes)}.`),
-    adminStatusCard('LLM retry policy', `${formatInteger(llmRetry.maxAttempts)} attempts`, `Fast fail ${formatInteger(llmRetry.fastFailMs)} ms · retry cap ${formatInteger(llmRetry.maxRetryDelayMs)} ms · rate-limit cap ${formatInteger(llmRetry.rateLimitMaxRetryDelayMs)} ms · jitter ${formatInteger(llmRetry.retryJitterMs)} ms.`),
-    adminStatusCard('LLM prose budget', `${formatInteger(llmTokens.naturalResponseMaxTokens)} response tokens`, `Structured ${formatInteger(llmTokens.structuredMaxTokens)} tokens · retry structured ${formatInteger(llmTokens.retryStructuredMaxTokens)} tokens · prose clamp ${formatInteger(llmTokens.naturalResponseMaxChars)} chars.`),
-    adminStatusCard('Context caps', `${formatInteger(context.historyTurns)} history turns`, `Prompt uses ${formatInteger(context.recentTurnsForPrompt)} recent turns · ${formatInteger(context.turnMaxChars)} chars per turn.`),
-    adminStatusCard('Context summaries', `brief ${formatInteger(context.briefMaxChars)} chars`, `Document ${formatInteger(context.documentSummaryMaxChars)} chars · memory ${formatInteger(context.memorySummaryMaxChars)} chars · rolling summary ${rollingSummaryStatus(chatCaseDraft)}.`),
-    adminStatusCard('Evidence index provider', evidenceProvider, `${indexedChunkCount()} indexed chunk${indexedChunkCount() === 1 ? '' : 's'} currently referenced by the browser.`),
-    adminStatusCard('Evidence boundary', 'server-side retained', 'Full evidence text and embeddings stay server-side after parser/indexing. Conversation calls send IDs, statuses, summaries, snippets, and retrieval matches only.'),
-    adminStatusCard('Compass gateway', gateway.configured ? 'required / configured' : 'required / missing', gateway.configured ? 'Required smart intake, advisory LLM, and embeddings boundary is configured.' : 'Compass gateway is not configured — smart intake is unavailable. Contact your administrator.'),
-    adminStatusCard('Parser relay', parserRelay.configured ? 'configured' : 'default relay', parserRelay.featureEnabled === false ? 'Disabled by admin switch.' : 'External parser/OCR boundary is requested when available.'),
-    adminStatusCard('CrewAI runtime', runtime.liveCrewAIEnabled ? 'requested' : runtime.default || 'crewai_llm', runtime.liveLlmAdvisoryEnabled ? 'Live advisory specialists enabled.' : 'Deterministic decision owner remains active.')
+    adminStatusCard('Auth mode', auth.enforced ? 'enforced' : auth.mode || 'audit', auth.enforced ? 'RBAC policy blocks unauthorized actions.' : 'Audit-mode records actor context without blocking the demo.', auth.enforced ? 'ready' : 'warning'),
+    adminStatusCard('Audit chain', audit.hashChained ? 'hash-chained' : 'not verified', audit.provider || 'local-jsonl', audit.hashChained ? 'ready' : 'warning'),
+    adminStatusCard('Request limits', `conversation ${formatBytes(requestLimits.conversation)}`, `Standard run ${formatBytes(requestLimits.standardRun)} · admin ${formatBytes(requestLimits.admin)}.`, 'ready'),
+    adminStatusCard('Evidence request limits', `index ${formatBytes(requestLimits.evidenceIndex)}`, `Search ${formatBytes(requestLimits.evidenceSearch)} · review pack ${formatBytes(requestLimits.reviewPack)}.`, 'ready'),
+    adminStatusCard('Vector memory', vector.provider || 'local-file', vector.qdrantConfigured ? `Qdrant collection ${vector.collection || 'configured'}` : 'Local-file fallback is demo-grade.', vector.qdrantConfigured ? 'ready' : 'warning'),
+    adminStatusCard('Evidence index', indexStatus, evidenceIndexValidation.detail || 'Restored evidence index metadata has not been checked.', statusTone(indexStatus, 'warning')),
+    adminStatusCard('Upload targets', `${formatBytes(uploadTargetLimits.maxFileBytes)} per file`, `Batch ${formatBytes(uploadTargetLimits.maxBatchBytes)} · chunk size ${formatBytes(uploadTargetLimits.chunkSizeBytes)}.`, 'ready'),
+    adminStatusCard('LLM retry policy', `${formatInteger(llmRetry.maxAttempts)} attempts`, `Fast fail ${formatInteger(llmRetry.fastFailMs)} ms · retry cap ${formatInteger(llmRetry.maxRetryDelayMs)} ms · rate-limit cap ${formatInteger(llmRetry.rateLimitMaxRetryDelayMs)} ms · jitter ${formatInteger(llmRetry.retryJitterMs)} ms.`, 'info'),
+    adminStatusCard('LLM prose budget', `${formatInteger(llmTokens.naturalResponseMaxTokens)} response tokens`, `Structured ${formatInteger(llmTokens.structuredMaxTokens)} tokens · retry structured ${formatInteger(llmTokens.retryStructuredMaxTokens)} tokens · prose clamp ${formatInteger(llmTokens.naturalResponseMaxChars)} chars.`, 'info'),
+    adminStatusCard('Context caps', `${formatInteger(context.historyTurns)} history turns`, `Prompt uses ${formatInteger(context.recentTurnsForPrompt)} recent turns · ${formatInteger(context.turnMaxChars)} chars per turn.`, 'info'),
+    adminStatusCard('Context summaries', `brief ${formatInteger(context.briefMaxChars)} chars`, `Document ${formatInteger(context.documentSummaryMaxChars)} chars · memory ${formatInteger(context.memorySummaryMaxChars)} chars · rolling summary ${rollingSummaryStatus(chatCaseDraft)}.`, 'info'),
+    adminStatusCard('Evidence index provider', evidenceProvider, `${indexedChunkCount()} indexed chunk${indexedChunkCount() === 1 ? '' : 's'} currently referenced by the browser.`, vector.qdrantConfigured ? 'ready' : 'warning'),
+    adminStatusCard('Evidence boundary', 'server-side retained', 'Full evidence text and embeddings stay server-side after parser/indexing. Conversation calls send IDs, statuses, summaries, snippets, and retrieval matches only.', 'ready'),
+    adminStatusCard('Compass gateway', gateway.configured ? 'required / configured' : 'required / missing', gateway.configured ? 'Required smart intake, advisory LLM, and embeddings boundary is configured.' : 'Compass gateway is not configured — smart intake is unavailable. Contact your administrator.', gateway.configured ? 'ready' : 'danger'),
+    adminStatusCard('Parser relay', parserRelay.configured ? 'configured' : 'default relay', parserRelay.featureEnabled === false ? 'Disabled by admin switch.' : 'External parser/OCR boundary is requested when available.', parserRelay.featureEnabled === false ? 'danger' : parserRelay.configured ? 'ready' : 'warning'),
+    adminStatusCard('Council runtime policy', runtime.liveCrewAIEnabled ? 'live runtime requested' : runtime.default || 'crewai_llm', runtime.liveLlmAdvisoryEnabled ? 'Live advisory specialists are enabled; each run reports its actual runtime.' : 'The deterministic engine owns recommendations; each run reports its actual runtime.', runtime.liveCrewAIEnabled ? 'warning' : 'info')
   ];
   adminStatusDashboard.innerHTML = cards.join('');
 }
@@ -5711,7 +6250,7 @@ async function copyAdminDiagnosticJson() {
 
 async function loadAdminStatus() {
   if (!adminStatusDashboard) return null;
-  adminStatusDashboard.innerHTML = '<article class="admin-status-card is-loading"><span>Runtime status</span><strong>Checking</strong><p>Loading safe admin readiness signals...</p></article>';
+  adminStatusDashboard.innerHTML = '<article class="admin-status-card is-loading"><span>Runtime status</span><strong>Checking</strong><p>Loading safe admin readiness signals…</p></article>';
   try {
     const status = await apiFetch('/api/admin/status');
     adminStatusState = status;
@@ -5837,9 +6376,9 @@ async function loadDeploymentStatus() {
   const backendCheck = backendStatusCheck(config);
   updateJsonLinks();
   renderStatusCards([
-    { label: 'Compliance API', status: 'checking', url: apiUrl('/api/health'), detail: 'Checking runnable agent API.' },
-    { label: 'Parallax42 backend', status: backendCheck.skipFetch ? backendCheck.status : 'checking', url: backendCheck.url, detail: backendCheck.skipFetch ? backendCheck.detail : 'Checking live backend proof.' },
-    { label: 'Compass gateway', status: 'checking', url: config.gatewayHealthUrl, detail: 'Checking model gateway boundary.' }
+    { label: 'Compliance API', status: 'checking', tone: 'checking', url: apiUrl('/api/health'), detail: 'Checking runnable agent API.' },
+    { label: 'Parallax42 backend', status: backendCheck.skipFetch ? backendCheck.status : 'checking', tone: backendCheck.skipFetch ? backendCheck.tone : 'checking', url: backendCheck.url, detail: backendCheck.skipFetch ? backendCheck.detail : 'Checking live backend proof.' },
+    { label: 'Compass gateway', status: 'checking', tone: 'checking', url: config.gatewayHealthUrl, detail: 'Checking model gateway boundary.' }
   ]);
 
   const checks = [
@@ -5865,6 +6404,7 @@ async function loadDeploymentStatus() {
         label: check.label,
         url: check.url,
         status: check.status,
+        tone: check.tone || statusTone(check.status, 'warning'),
         detail: check.detail
       };
     }
@@ -5874,6 +6414,7 @@ async function loadDeploymentStatus() {
         label: check.label,
         url: check.url,
         status: 'healthy',
+        tone: 'ready',
         detail: check.detail(body),
         body
       };
@@ -5882,6 +6423,7 @@ async function loadDeploymentStatus() {
         label: check.label,
         url: check.url,
         status: 'unavailable',
+        tone: 'danger',
         detail: error instanceof Error ? error.message : 'Request failed'
       };
     }
@@ -5920,6 +6462,12 @@ runModeButtons.forEach((button) => {
 
 councilOutputTab?.addEventListener('click', () => {
   showCouncilOutput();
+});
+
+workspaceTabButtons.forEach((button) => {
+  button.addEventListener('keydown', (event) => {
+    window.P42AppModules.appState.handleRovingTabKey(event, workspaceTabButtons, (next) => next.click());
+  });
 });
 
 runHistorySelect?.addEventListener('change', () => {
@@ -5961,8 +6509,14 @@ specialistList?.addEventListener('submit', (event) => {
 });
 
 approvalButton?.addEventListener('click', () => {
-  if (approvalButton.dataset.reviewAction === 'record-human-review') {
-    recordHumanReview();
+  if (approvalButton.dataset.reviewAction === 'conditional-approval') {
+    recordHumanReview('conditional-approval');
+  }
+});
+
+remediationButton?.addEventListener('click', () => {
+  if (remediationButton.dataset.reviewAction === 'request-remediation') {
+    recordHumanReview('request-remediation');
   }
 });
 
@@ -5976,6 +6530,9 @@ agentActivity?.addEventListener('click', (event) => {
 intelRailTabs.forEach((button) => {
   button.addEventListener('click', () => {
     setIntelRailTab(button.dataset.intelRailTab);
+  });
+  button.addEventListener('keydown', (event) => {
+    window.P42AppModules.appState.handleRovingTabKey(event, intelRailTabs, (next) => setIntelRailTab(next.dataset.intelRailTab));
   });
 });
 
@@ -6122,6 +6679,15 @@ runtimeConfig.addEventListener('submit', (event) => {
   loadAuditLog();
 });
 
+pilotAccessForm?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  startPilotSession(pilotAccessCode?.value || '');
+});
+
+pilotLogout?.addEventListener('click', () => {
+  endPilotSession();
+});
+
 resetConfig.addEventListener('click', () => {
   writeStorage(storageKeys.mode, '');
   writeStorage(storageKeys.relayUrl, '');
@@ -6164,10 +6730,10 @@ sampleRun.addEventListener('click', () => {
 });
 exportRun.addEventListener('click', () => {
   if (!lastRun?.ok) {
-    exportRun.textContent = activeRunMode === 'chat' ? 'Run workflow first' : activeRunMode === 'live' ? 'Run live first' : 'Run demo first';
-    window.setTimeout(() => {
-      exportRun.textContent = 'Export pack';
-    }, 1400);
+    if (exportActionStatus) {
+      exportActionStatus.textContent = activeRunMode === 'chat' ? 'Run the council before exporting audit JSON.' : `Run ${activeRunMode} before exporting audit JSON.`;
+      exportActionStatus.dataset.state = 'danger';
+    }
     return;
   }
   downloadJson(`p42-audit-pack-${lastRun.runId || lastRun.case?.caseId || 'demo'}.json`, {
@@ -6176,19 +6742,26 @@ exportRun.addEventListener('click', () => {
     evidenceManifest: evidenceDocuments(lastRun),
     run: lastRun
   });
+  if (exportActionStatus) {
+    exportActionStatus.textContent = 'Audit JSON downloaded.';
+    exportActionStatus.dataset.state = 'ready';
+  }
 });
 
 execReviewPack?.addEventListener('click', async () => {
   const exportRunResult = getReviewPackExportRun();
   if (!exportRunResult?.ok) {
-    execReviewPack.textContent = 'Run council first';
-    window.setTimeout(() => {
-      execReviewPack.textContent = 'Exec review pack';
-    }, 1400);
+    if (exportActionStatus) {
+      exportActionStatus.textContent = 'Run the council before exporting a review pack.';
+      exportActionStatus.dataset.state = 'danger';
+    }
     return;
   }
-  execReviewPack.disabled = true;
-  execReviewPack.textContent = 'Packaging';
+  updateDecisionActionBar('exporting');
+  if (exportActionStatus) {
+    exportActionStatus.textContent = 'Packaging the review pack…';
+    exportActionStatus.dataset.state = 'working';
+  }
   try {
     const response = await apiFetch('/api/export/review-pack', {
       method: 'POST',
@@ -6201,20 +6774,41 @@ execReviewPack?.addEventListener('click', async () => {
         response.pdfBase64,
         response.contentType || 'application/pdf'
       );
+      if (exportActionStatus) {
+        exportActionStatus.textContent = 'PDF review pack downloaded.';
+        exportActionStatus.dataset.state = 'ready';
+      }
     } else {
       downloadText(`p42-exec-review-${exportRunResult.runId || exportRunResult.case?.caseId || 'case'}.html`, buildExecReviewHtml(exportRunResult), 'text/html');
+      if (exportActionStatus) {
+        exportActionStatus.textContent = 'The PDF service returned no PDF. An HTML fallback was downloaded instead.';
+        exportActionStatus.dataset.state = 'warning';
+      }
     }
-  } catch {
+  } catch (error) {
     downloadText(`p42-exec-review-${exportRunResult.runId || exportRunResult.case?.caseId || 'case'}.html`, buildExecReviewHtml(exportRunResult), 'text/html');
+    if (exportActionStatus) {
+      const detail = error instanceof Error ? error.message : 'PDF generation failed';
+      exportActionStatus.textContent = `PDF unavailable (${detail}). An HTML fallback was downloaded instead.`;
+      exportActionStatus.dataset.state = 'warning';
+    }
   } finally {
-    execReviewPack.disabled = false;
-    execReviewPack.textContent = 'Exec review pack';
+    updateDecisionActionBar('ready');
   }
 });
 
 function animateNetwork() {
   const canvas = document.querySelector('#networkCanvas');
+  if (!canvas) return;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if (reducedMotion.matches) {
+    canvas.hidden = true;
+    return;
+  }
   const context = canvas.getContext('2d');
+  if (!context) return;
+  let animationFrame = null;
+  let pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
   const nodes = Array.from({ length: 46 }, (_, index) => ({
     x: Math.random(),
     y: Math.random(),
@@ -6223,8 +6817,9 @@ function animateNetwork() {
   }));
 
   function resize() {
-    canvas.width = window.innerWidth * window.devicePixelRatio;
-    canvas.height = window.innerHeight * window.devicePixelRatio;
+    pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = window.innerWidth * pixelRatio;
+    canvas.height = window.innerHeight * pixelRatio;
   }
 
   function draw(time = 0) {
@@ -6236,15 +6831,15 @@ function animateNetwork() {
     const points = nodes.map((node) => ({
       x: (node.x + Math.sin(time / 9000 + node.phase) * 0.014) * width,
       y: (node.y + Math.cos(time / 11000 + node.phase) * 0.014) * height,
-      r: node.r * window.devicePixelRatio
+      r: node.r * pixelRatio
     }));
     for (let index = 0; index < points.length; index += 1) {
       for (let next = index + 1; next < points.length; next += 1) {
         const left = points[index];
         const right = points[next];
         const distance = Math.hypot(left.x - right.x, left.y - right.y);
-        if (distance < 170 * window.devicePixelRatio) {
-          context.globalAlpha = 1 - distance / (170 * window.devicePixelRatio);
+        if (distance < 170 * pixelRatio) {
+          context.globalAlpha = 1 - distance / (170 * pixelRatio);
           context.beginPath();
           context.moveTo(left.x, left.y);
           context.lineTo(right.x, right.y);
@@ -6258,15 +6853,30 @@ function animateNetwork() {
       context.arc(point.x, point.y, point.r, 0, Math.PI * 2);
       context.fill();
     }
-    requestAnimationFrame(draw);
+    animationFrame = requestAnimationFrame(draw);
   }
 
-  window.addEventListener('resize', resize);
+  function handleVisibilityChange() {
+    if (document.hidden) {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = null;
+      return;
+    }
+    if (!animationFrame) animationFrame = requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize, { passive: true });
+  document.addEventListener('visibilitychange', handleVisibilityChange);
   resize();
-  draw();
+  animationFrame = requestAnimationFrame(draw);
 }
 
+activeBrowserSession = restoreBrowserSession();
+demoSessionToken = activeBrowserSession?.sessionType === 'demo' ? activeBrowserSession.token : '';
+pilotSessionActive = activeBrowserSession?.sessionType === 'pilot';
+if (!runHistoryScope()) purgeBrowserSessionArtifacts();
 completedRunHistory = loadCompletedRunHistory();
+hydrateLatestCompletedRunFromHistory();
 restoreChatSession();
 renderRunHistorySelect();
 updateChatInputCounter();
@@ -6274,14 +6884,17 @@ setIntelRailTab('case');
 setRunMode('chat');
 applyScenario(currentScenarioKey);
 hydrateConfigForm();
+renderPilotAccessState();
 setMainSection(mainSectionFromHash(), { updateHash: false, scroll: true, refresh: false, behavior: 'auto' });
 restoreEvidenceIndexFromStorage().then(() => {
   renderChatMessages();
   renderContextStrength();
   renderChatAttachments();
 });
-loadDeploymentStatus();
-loadReadiness();
-loadBenchmarks();
-loadAuditLog();
+ensureDemoSession().catch(() => null).finally(() => {
+  loadDeploymentStatus();
+  loadReadiness();
+  loadBenchmarks();
+  loadAuditLog();
+});
 animateNetwork();
