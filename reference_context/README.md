@@ -20,7 +20,7 @@ reference_context/reference_memory_manifest.json
 - Reference context is not legal advice, a sanctions result, an export-license decision, a control certification, or autonomous approval.
 - Uploaded case evidence remains separate from reference context.
 - Governed learning memory remains separate from reference context and is not model training.
-- Deterministic Node policy and verified current evidence are intended to remain authoritative; current grounding and authority-parity defects are tracked in the [deep review](../docs/DEEP_CODE_REVIEW.md).
+- Deterministic Node policy and usable current evidence are authoritative. Python preserves Node policy fields unchanged; reference and learning memory remain advisory and actor-scoped. Claim-level grounding hardening remains in the [deep review](../docs/DEEP_CODE_REVIEW.md).
 - Browser/API callers do not receive raw embeddings, provider keys, or secret tokens.
 - Compass is a server-side LLM and embedding runtime provider. It is not treated as a legal, compliance, security, sanctions, export-control, procurement, HSE, or ESG reference authority.
 

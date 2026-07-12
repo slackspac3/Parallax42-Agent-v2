@@ -32,9 +32,10 @@
     "test:e2e:smoke": "node tests/e2e/advisor-smoke.js",
     "test:e2e:mock": "P42_SKIP_LOCAL_ENV=1 node tests/e2e/advisor-regression-mock.js",
     "test:e2e:deployed": "node tests/e2e/deployed-smoke.js",
+    "test:python-security": "python3 -m unittest discover -s tests/python -p 'test_*.py'",
     "qa:live": "npm run check:live && npm run qdrant:smoke",
     "check:crewai": "python3 crewai_adapter/compliance_crew.py --dry-run && python3 crewai_adapter/compliance_flow.py --dry-run",
-    "qa": "npm run check:syntax && npm run check:css && npm run check:pages && npm run check:mirrors && npm run check:submission && npm test && npm run test:e2e:mock && npm run benchmark && npm run check:crewai"
+    "qa": "npm run check:syntax && npm run check:css && npm run check:pages && npm run check:mirrors && npm run check:submission && npm test && npm run test:python-security && npm run test:e2e:mock && npm run benchmark && npm run check:crewai"
   },
   "devDependencies": {
     "playwright": "^1.60.0"

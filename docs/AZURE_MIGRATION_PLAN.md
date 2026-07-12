@@ -48,12 +48,12 @@ Keep the shared Compass gateway and external parser initially. Azure hosting alo
 | Vector retrieval | Railway Qdrant REST | Stale generations/model mixing and score thresholds must be fixed before migration |
 | Canonical evidence | Upload text/chunks are processed and indexed; no complete durable original-document store | A search index cannot be the system of record |
 | Model access | Shared Vercel Compass gateway, named client token | Provider key remains at gateway; traffic leaves Azure after migration |
-| Audit | Hash-chained JSONL on filesystem; Vercel uses `/tmp` | Nondurable, per-instance, not tenant-queryable |
+| Audit | Actor-derived workspace/project PostgreSQL hash chains with chain-head row locking; JSONL only for explicit local/test fallback | Durable/scoped foundation is implemented, but no immutable/WORM export, restore proof, versioned migration, or atomic coupling to critical business writes |
 | Auth | Demo sessions/pilot tokens and route roles | Entra SSO, memberships, app roles, and Conditional Access are absent |
 | Configuration | Vercel/Railway environment variables; some `/tmp` flags | Replica-local feature controls and rate limits will diverge |
 | Delivery | GitHub Actions for QA/Pages; Vercel deployment outside workflow | No Azure IaC, registry, OIDC deployment, or promotion workflow exists |
 
-A no-traffic, synthetic-data compute shadow may begin while durable-audit work is being built, but every P0 in [DEEP_CODE_REVIEW.md](DEEP_CODE_REVIEW.md) must be closed before any user or pilot traffic reaches Azure. Moving a faulty decision path to Azure does not reduce its risk.
+The seven deep-review P0 findings in [DEEP_CODE_REVIEW.md](DEEP_CODE_REVIEW.md) are remediated and full local QA is green. Security finding P42-SEC-002 and the residual enterprise gates remain open. A no-traffic, synthetic-data compute shadow may begin after CI and deployment verification. User or pilot traffic still requires the Phase 0 and Phase 2 exit gates, including identity/membership/RLS, immutable audit export/business-write coupling, retention, admission control, and restore proof; moving code to Azure does not satisfy them.
 
 ## Target profiles
 
@@ -74,7 +74,7 @@ Container Apps -> OpenTelemetry -> Application Insights
 
 This profile is deliberately small. One container origin avoids CORS and static-host coordination while validating Node runtime, environment, health probes, outbound connectivity, revisions, and rollback. Container Apps supports immutable revisions, traffic splitting, and health probes, making it a suitable parity target without AKS. [Container Apps revisions](https://learn.microsoft.com/en-us/azure/container-apps/revisions), [traffic splitting](https://learn.microsoft.com/en-us/azure/container-apps/traffic-splitting), [health probes](https://learn.microsoft.com/en-us/azure/container-apps/health-probes)
 
-Use it initially only as a no-traffic or synthetic-data parity environment. It can support a noncritical pilot only after every P0 release gate—including durable tenant-scoped audit—is closed. External state remains outside Azure, and it is not an enterprise network architecture.
+Use it initially only as a no-traffic or synthetic-data parity environment. It can support a noncritical pilot only after the Phase 0 and Phase 2 release gates are satisfied, including P42-SEC-002, deployed workflow proof, identity/membership scope, immutable audit export/business coupling, retention, admission control, and restore evidence. External state remains outside Azure, and it is not an enterprise network architecture.
 
 ### Profile B — selected production target
 
@@ -121,7 +121,7 @@ APIM is a production governance layer, not a day-one demo dependency. The select
 | Railway PostgreSQL | Keep during compute shadow | PostgreSQL Flexible Server | Add versioned migrations and restore tests before copy |
 | Railway Qdrant | Keep during compute/data cutover | Azure AI Search derived index | Dual-index and shadow-query; never perform a blind endpoint swap |
 | Upload processing | Keep parser boundary | Blob canonical object + async parser job where required | Store original/hash/manifest before indexing |
-| Vercel `/tmp` audit | Fix in current app first | PostgreSQL ledger + immutable Blob export | Operational telemetry is not the compliance ledger |
+| PostgreSQL audit chains | Preserve during compute shadow | Versioned PostgreSQL ledger + immutable Blob export | Keep tenant chain ordering/hashes; add WORM sealing and critical business-write coupling rather than replacing the current foundation |
 | Vercel secrets | Environment values in parity | Key Vault references + managed identity | Product keeps only the Compass client token, never provider key |
 | Demo auth | Preserve for public demo | Entra SPA/API registrations + app roles + memberships | Separate public demo and enterprise tenant modes |
 | In-memory rate limit | Keep only as defense in depth | APIM/edge distributed quotas + app budgets | Key by authenticated tenant/actor/operation, not spoofable IP alone |
@@ -166,11 +166,13 @@ For each upload store:
 
 The browser should upload through a short-lived, object-specific mechanism or the authenticated API; it should never receive a storage account key. Parser jobs read the object and write a versioned derived manifest. Search stores only derived content and identifiers.
 
-### 4. Move audit from files to a ledger
+### 4. Productionize the current audit ledger
 
-Partition audit chains by immutable `workspaceId`; use a separate platform chain for cross-workspace administration. Maintain one `audit_chain_heads` row per chain. An append transaction must lock that row with `SELECT ... FOR UPDATE`, allocate the next chain-local sequence, hash the canonical event with the locked prior hash, insert under a unique `(chainId, sequence)` constraint, update the head, and commit. A rollback must roll back the event and head together. A database sequence alone is insufficient because concurrent transactions could otherwise fork the same prior hash or commit out of order.
+The current implementation already establishes the minimum ledger primitive: workspace/project-scoped PostgreSQL chain heads/events, `SELECT ... FOR UPDATE` serialization, parameterized inserts, scoped verification/reads, and fail-closed hosted writes. Treat the schema created at runtime as a migration input, not the final Azure migration mechanism.
 
-Append the audit event in the same database transaction as the critical case/review change when both live in PostgreSQL. For operations spanning Blob/Search/external services, use a transactional outbox plus an idempotency key and record requested/completed/failed events; do not claim atomicity across services. Verification must start from a known genesis/seal and reject gaps, duplicate sequence numbers, hash mismatches, or events assigned to the wrong chain.
+Preserve the implemented immutable `(workspaceId, projectId)` chain key; use a separate platform chain for cross-workspace administration. Maintain one `audit_chain_heads` row per workspace/project chain. An append transaction must lock that row with `SELECT ... FOR UPDATE`, allocate the next chain-local sequence, hash the canonical event with the locked prior hash, insert under a unique `(chainId, sequence)` constraint, update the head, and commit. A rollback must roll back the event and head together. A database sequence alone is insufficient because concurrent transactions could otherwise fork the same prior hash or commit out of order.
+
+Residual work: append the audit event in the same database transaction as the critical case/review change when both live in PostgreSQL. Today the audit event/head transaction is internally atomic but separate from the business mutation. For operations spanning Blob/Search/external services, use a transactional outbox plus an idempotency key and record requested/completed/failed events; do not claim atomicity across services. Verification must start from a known genesis/seal and reject gaps, duplicate sequence numbers, hash mismatches, or events assigned to the wrong chain.
 
 A scheduled job exports only committed contiguous ranges as hash-chained JSONL to a Blob container with an immutable WORM retention policy. Each export manifest records chain ID, start/end sequence, prior/start/end hashes, event count, schema version, Blob content hash, and seal time. A platform manifest can seal the set of workspace heads without serializing every tenant through one global append lock. Application Insights remains operational telemetry and must not be presented as the authoritative compliance audit.
 
@@ -329,9 +331,9 @@ Container Apps has GitHub deployment guidance, but keep the workflow explicit en
 
 | Phase | Work | Exit criteria | Rollback |
 |---|---|---|---|
-| 0. Containment and decisions | Close decision-integrity, tenant-escape, public-log/probe, runtime-bypass, and workflow-version P0s; approve durable-audit design; choose region/data classes/SLO/RTO/RPO; inventory dependencies; back up PostgreSQL/Qdrant | Adversarial/parity/tenant E2E green; no anonymous sensitive/cost route; architecture decision record approved. Nondurable audit remains an explicit blocker to user traffic. | No production change |
+| 0. Containment and decisions | Validate the implemented decision-integrity, actor-scope, public-log, workflow-version, and Node-authority fixes; separately close the still-open FastAPI auth/probe/sample-mode and other security findings; choose region/data classes/SLO/RTO/RPO; inventory dependencies; back up PostgreSQL/Qdrant | Full adversarial/parity/tenant E2E and CI green; deployment verified; no anonymous sensitive/cost route; architecture decision record approved. Immutable audit export/business-write coupling remain explicit blockers to user traffic. | No production change |
 | 1. Azure compute shadow | Add Node container, ACR, Key Vault, Monitor, staging Container Apps, OIDC deploy, probes; use Railway/Qdrant/Compass; synthetic data and zero user traffic only | Vercel/container API contract and deployed workflow parity; load/cost baseline; revision rollback exercised | Keep traffic on Vercel; deactivate revision |
-| 2. Durable Azure state/audit | Add migrations, PostgreSQL Flexible Server, Blob canonical objects, serialized tenant audit chains and immutable export | Backup/restore drill; counts/hashes; hostile-tenant tests; concurrent append/rollback/export verification; audit chain survives restore. All P0s are closed before pilot/user traffic. | Retain Railway snapshot; restore old connection config after bounded write pause |
+| 2. Durable Azure state/audit | Convert runtime schema creation to migrations, move PostgreSQL, preserve serialized tenant audit chains, add Blob canonical objects, business/audit coupling or outbox, and immutable export | Backup/restore drill; counts/hashes; hostile-tenant tests; concurrent append/business rollback/export verification; audit chain survives restore; WORM policy proven before pilot/user traffic. | Retain Railway snapshot; restore old connection config after bounded write pause |
 | 3. Edge and identity | Add Storage static site, Front Door/WAF, APIM, Entra apps/roles/membership resolution, private network | Token/role/CORS/WAF tests; custom domains; public demo isolated; DNS rollback tested | Low TTL; restore old DNS/API base and retain Vercel/Pages endpoints |
 | 4. Vector shadow/cutover | Add Search provider/index/alias, backfill, dual-index, shadow-read and canary | Grounded citation and retrieval corpus meets thresholds; tenant/delete/model tests pass | Switch provider/alias back to Qdrant; keep collection through acceptance window |
 | 5. Optional service migration | Move parser and/or Compass gateway only for approved residency/vendor/reliability need | Data-flow assessment, provider parity, budget and failure drills | Keep current services and configuration ready |
@@ -376,7 +378,7 @@ These are planning objectives, not Azure guarantees. Measure them through restor
 
 | Tier | Topology | Planning objective | Suitable for |
 |---|---|---|---|
-| Demo/baseline | Single region, one or more Container App revisions, PostgreSQL without HA, one Search replica, protected Blob | RTO ≤8h; RPO ≤24h | Synthetic demo/noncritical pilot |
+| Demo/baseline | Single region, one or more Container App revisions, PostgreSQL without HA, one Search replica, protected Blob | RTO ≤8h; RPO ≤24h | Synthetic demo; noncritical pilot only after Phase 0 and Phase 2 release gates |
 | Regional production | Multiple app replicas, zone-redundant PostgreSQL HA, a billable Search tier with at least three replicas for query + indexing SLA, ZRS/GZRS Blob, Front Door/APIM | RTO ≤1h; target zero committed PostgreSQL data loss for zonal HA failover | Approved regional production |
 | Critical multi-region | Two regional app/API/Search deployments, Front Door health routing, cross-region PostgreSQL replica, geo-redundant Blob, application-managed dual index | Provisional RTO 30–60m; database RPO depends on measured replica lag | Only when business impact justifies cost/operations |
 | Backup-only regional recovery | Geo-redundant PostgreSQL backup and IaC redeploy | RTO minutes to hours; use Microsoft's documented backup RPO for the selected configuration and verify in drills | Lower-cost regional disaster recovery |
@@ -391,7 +393,7 @@ Choose Blob ZRS/GZRS/RA-GZRS according to the approved tier and understand that 
 
 ### Go/no-go inputs
 
-- [ ] P0 correctness, tenant, and audit gates closed.
+- [ ] P0 remediation suite and live workflow verified on the release revision; residual production security gates separately accepted/closed.
 - [ ] Region, residency, service availability, quotas, and cost ceiling approved.
 - [ ] IaC plan reviewed; drift check clean.
 - [ ] Artifact digest/SBOM/scans approved.
@@ -444,7 +446,7 @@ Pricing changes by region and tier, so calculate current estimates in the Azure 
 | Risk | Mitigation |
 |---|---|
 | Vercel handlers and `server.js` diverge | One contract/E2E suite targets both; make the container route map authoritative after parity |
-| Current audit append is unsafe across replicas | Serialize each immutable workspace/platform chain by locking its head row; enforce unique chain-local sequence; atomically update event + head; verify concurrent rollback and sealed exports before scale-out |
+| PostgreSQL audit is durable but not enterprise-complete | Preserve locked workspace/project chain heads and unique sequences; add versioned migrations, business-write coupling/outbox, WORM exports, and restore/seal verification before enterprise scale-out |
 | Feature flags/rate limits differ per replica | External durable config and APIM/transactional budgets |
 | Search semantics differ from Qdrant | Versioned adapter, canonical backfill, shadow metrics, canary, alias rollback |
 | No durable original upload store | Blob becomes source of record before search migration |

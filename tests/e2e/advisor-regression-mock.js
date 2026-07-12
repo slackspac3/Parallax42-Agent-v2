@@ -19,6 +19,8 @@ const PORT = Number(process.env.PLAYWRIGHT_PORT || 3141);
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${PORT}`;
 const FIXTURE = path.join(ROOT, 'test-fixtures', 'compliance-documents', '04_managed_platform_integration_services_agreement.pdf');
 let mockRunCounter = 0;
+let mockConversationCaseId = '';
+let mockConversationCaseVersion = 0;
 
 function jsonResponse(body, status = 200) {
   return {
@@ -59,6 +61,7 @@ function mockRunResult(caseContext = {}) {
     : [{ evidenceId: 'UP-MOCK-01', title: 'Managed platform integration services agreement' }];
   const primaryEvidenceId = documents[0]?.evidenceId || 'UP-MOCK-01';
   const slug = supplierName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 42) || 'mock';
+  const approvalEligible = mockRunCounter >= 2;
 
   return {
     ok: true,
@@ -74,9 +77,10 @@ function mockRunResult(caseContext = {}) {
       documents
     },
     decision: {
-      status: 'conditional',
-      recommendation: 'Ready for human approval with required controls',
-      readinessScore: 0.88,
+      status: approvalEligible ? 'ready' : 'conditionally_ready',
+      recommendation: approvalEligible ? 'Ready for human approval' : 'Continue review with named controls',
+      readinessScore: approvalEligible ? 0.88 : 0.72,
+      approvalEligible,
       humanApprovalRequired: true
     },
     domains: [
@@ -93,13 +97,20 @@ function mockRunResult(caseContext = {}) {
         obligations: ['Review privileged implementation access and integration controls.']
       }
     ],
-    gaps: [
+    gaps: approvalEligible ? [] : [
       {
         gap: 'Confirm privileged implementation access owner',
         severity: 'medium',
         action: 'Reviewer must confirm named access owner and approval evidence.'
       }
     ],
+    decisionReadiness: {
+      status: approvalEligible ? 'ready' : 'conditionally_ready',
+      approvalEligible,
+      humanApprovalRequired: true,
+      blockingGaps: approvalEligible ? 0 : 1,
+      mediumSeverityGaps: approvalEligible ? 0 : 1
+    },
     evidenceIds: [primaryEvidenceId, 'DOC-CITE-01'],
     citations: [
       {
@@ -143,24 +154,30 @@ function conversationResponse(body = {}) {
   const eventType = String(body.eventType || '');
 
   if (body.forceRun) {
+    const caseVersion = Number(body.caseDraft?.caseVersion || 0) + 3;
+    const caseId = body.caseDraft?.caseId || mockConversationCaseId || 'case-e2e-managed-platform';
+    const caseDraft = baseDraft({
+      ...body.caseDraft,
+      caseId,
+      caseVersion,
+      businessUnit: body.caseDraft?.businessUnit || 'Finance',
+      geography: body.caseDraft?.geography || 'UAE'
+    });
+    const run = mockRunResult(caseDraft);
+    run.case.caseId = caseId;
+    run.caseVersion = caseVersion;
+    mockConversationCaseId = caseId;
+    mockConversationCaseVersion = caseVersion;
     return {
       reply: 'Council run complete. I kept the decision review-bound.',
       questions: [],
       runReadiness: { runnable: true, score: 0.88, missingFields: [] },
-      caseDraft: baseDraft({
-        ...body.caseDraft,
-        businessUnit: body.caseDraft?.businessUnit || 'Finance',
-        geography: body.caseDraft?.geography || 'UAE'
-      }),
+      caseVersion,
+      caseDraft,
+      completedCase: { ...caseDraft, version: caseVersion, state: 'review_ready' },
       conversationPlan: { usedLlm: true, nextBestAction: 'run_council' },
       nlp: { llmAssessment: { used: true, model: 'gpt-5.1', requestType: 'supplier_risk' } },
-      run: mockRunResult({
-        supplierName: body.caseDraft?.supplierName || 'Managed Platform Integration Partner',
-        businessUnit: body.caseDraft?.businessUnit || 'Finance',
-        geography: body.caseDraft?.geography || 'UAE',
-        integrations: body.caseDraft?.integrations,
-        documents: body.caseDraft?.documents
-      })
+      run
     };
   }
 
@@ -241,12 +258,17 @@ function conversationResponse(body = {}) {
     };
   }
 
+  const postCouncilFollowUp = Boolean(mockConversationCaseVersion);
+  const caseVersion = postCouncilFollowUp ? mockConversationCaseVersion + 1 : Number(body.caseDraft?.caseVersion || 0);
+  if (postCouncilFollowUp) mockConversationCaseVersion = caseVersion;
   return {
     reply: 'I captured the useful facts and identified the next decision point.',
-    questions: ['What do you need reviewed?'],
-    runReadiness: { runnable: false, score: 0.1, missingFields: ['scope'] },
-    caseDraft: baseDraft(body.caseDraft || {}),
-    conversationPlan: { usedLlm: true, nextBestAction: 'ask_scope' },
+    questions: postCouncilFollowUp ? [] : ['What do you need reviewed?'],
+    runReadiness: postCouncilFollowUp
+      ? { runnable: true, score: 0.88, missingFields: [] }
+      : { runnable: false, score: 0.1, missingFields: ['scope'] },
+    caseDraft: baseDraft({ ...body.caseDraft, caseVersion }),
+    conversationPlan: { usedLlm: true, nextBestAction: postCouncilFollowUp ? 'run_council' : 'ask_scope' },
     nlp: { llmAssessment: { used: true, model: 'gpt-5.1' } }
   };
 }
@@ -311,6 +333,13 @@ async function installMocks(page, records) {
   await page.route('**/api/conversation', async (route) => {
     const body = route.request().postDataJSON();
     records.conversation.push(body);
+    if (mockConversationCaseVersion && Number(body.caseDraft?.caseVersion || 0) !== mockConversationCaseVersion) {
+      await route.fulfill(jsonResponse({
+        error: 'stale_case_version',
+        detail: 'Case changed since it was loaded. Refresh and retry.'
+      }, 409));
+      return;
+    }
     await route.fulfill(jsonResponse(conversationResponse(body)));
   });
 
@@ -664,6 +693,21 @@ async function main() {
       await page.locator('#councilOutputTab').click();
       await assertCouncilOutputVisible(page);
       await assertVisibleText(page, '#specialistList', /Managed platform integration services/i);
+      assert.equal(await page.locator('#approvalButton').isDisabled(), true, 'one medium gap must keep terminal approval disabled');
+      assert.equal(await page.locator('#remediationButton').isEnabled(), true, 'conditional cases must still allow remediation');
+
+      const firstCompletedCaseVersion = mockConversationCaseVersion;
+      await page.locator('#chatModeTab').click();
+      await sendMessage(page, 'Add a reviewer note that implementation access remains time-bound.');
+      await assertVisibleText(page, '#chatMessages', /captured the useful facts/i);
+      assert.equal(records.conversation.at(-1).caseDraft.caseVersion, firstCompletedCaseVersion, 'follow-up must submit the completed council version');
+      const followUpCaseVersion = mockConversationCaseVersion;
+      await page.locator('#chatRunNow').click();
+      await assertCouncilOutputVisible(page);
+      const councilRequests = records.conversation.filter((request) => request.forceRun === true);
+      assert.equal(councilRequests.length, 2, 'two council interactions should complete without reload');
+      assert.equal(councilRequests.at(-1).caseDraft.caseVersion, followUpCaseVersion, 'second council must submit the follow-up version');
+      assert.ok(mockConversationCaseVersion > followUpCaseVersion, 'second council must return a newer authoritative version');
 
       await assertResponsiveWorkspace(page, { width: 390, height: 844 });
       assert.equal(await page.locator('#workflow').isVisible(), true, 'completed decision room should remain visible at 390px');
@@ -680,14 +724,14 @@ async function main() {
       assert.equal(await page.locator('#workflow').isVisible(), true, 'completed decision room should remain visible at 768px');
       await page.setViewportSize({ width: 1440, height: 1000 });
 
-      assert.equal(await page.locator('#approvalButton').isEnabled(), true, 'conditional approval should unlock after a completed run');
+      assert.equal(await page.locator('#approvalButton').isEnabled(), true, 'explicit approval eligibility should unlock after a completed run');
       assert.equal(await page.locator('#remediationButton').isEnabled(), true, 'remediation request should unlock after a completed run');
       page.once('dialog', (dialog) => dialog.accept());
       await page.locator('#approvalButton').click();
-      await assertVisibleText(page, '#approvalActionStatus', /Conditional human approval recorded/i);
-      assert.equal(records.approval.at(-1).reviewerDecision, 'Conditional approval');
-      assert.equal(records.approval.at(-1).caseVersion, 2);
-      assert.equal(records.approval.at(-1).decision.status, 'conditional');
+      await assertVisibleText(page, '#approvalActionStatus', /Human approval recorded/i);
+      assert.equal(records.approval.at(-1).reviewerDecision, 'Approve');
+      assert.equal(records.approval.at(-1).caseVersion, mockConversationCaseVersion);
+      assert.equal(records.approval.at(-1).decision.status, 'ready');
 
       await primaryNav.getByRole('link', { name: 'Admin' }).click();
       await assertMainSectionVisible(page, 'admin', '#admin', /Admin Console/i);

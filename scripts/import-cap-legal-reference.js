@@ -170,12 +170,12 @@ async function main() {
       publicSafe: true,
       requiresHumanReview: true,
       markdown: fs.readFileSync(markdownFile, 'utf8')
-    });
+    }, { trustedNamespace: true });
     searchSmoke = await searchGovernanceReferences({
       query: 'limitation of liability indemnification agreement legal risk',
       sourceId: 'caselaw_access_project_legal_intelligence',
       topK: 3
-    });
+    }, { trustedNamespace: true });
   }
 
   const manifest = {

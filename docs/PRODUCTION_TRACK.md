@@ -1,6 +1,6 @@
 # Production Track
 
-This is the current implementation and hardening ledger, reviewed 2026-07-12. The app is a working hosted demo, not an enterprise-authorized compliance decision system. See the [deep code review](DEEP_CODE_REVIEW.md) for release blockers and the [Azure migration plan](AZURE_MIGRATION_PLAN.md) for the future hosting path.
+This is the current implementation and hardening ledger, reviewed 2026-07-12. The app is a working demo, not an enterprise-authorized compliance decision system. The seven P0 review findings pass full local QA; CI, deployment, and authenticated live verification are pending. See the [deep code review](DEEP_CODE_REVIEW.md) and [Azure migration plan](AZURE_MIGRATION_PLAN.md).
 
 ## Already Implemented
 
@@ -12,8 +12,12 @@ This is the current implementation and hardening ledger, reviewed 2026-07-12. Th
 | Server-side Compass boundary | A named shared-gateway client provides smart intake, Node advisory specialist calls, and semantic `text-embedding-3-large` embeddings; browser receives no provider keys. |
 | Qdrant-backed evidence memory | Deployed Node APIs index/search an isolated v2 collection and return sanitized snippets; deterministic demo embeddings are disabled in the verified hosted configuration. |
 | Agent runtime shape | Hosted Node advisory specialists use Compass with deterministic fallback. `crewai_adapter/` provides optional Python CrewAI and CI dry-run validation; live Python CrewAI is inactive. |
-| Human approval posture | The interface presents recommendations and human-review gates, but critical evidence/readiness defects must be fixed before this is treated as a reliable approval control. |
-| Evidence discipline | Evidence IDs, domain scan, gap list, trace events, and audit records. |
+| Human approval posture | Conditional is nonterminal. The UI and server permit approval only when the authoritative Node result contains `approvalEligible: true`; human review is always required. |
+| Evidence discipline | Explicit assertion state/provenance prevents chat mentions, questions, placeholders, and policy references from satisfying controls; source-level contradictions create blocking gaps. |
+| Case continuity | Council responses return the completed authoritative case snapshot/version; the browser replaces local state, and a follow-up plus second council regression covers stale-version behavior. |
+| Tenant-scoped advisory memory | Learning and governance retrieval derive workspace/project from the authenticated actor and ignore caller-selected namespace fields. |
+| Cross-runtime authority | Node owns policy fields. FastAPI/Python preserves decision, risk, gaps, controls, readiness, and approval eligibility; Python and Compass remain advisory. |
+| Durable audit foundation | Hosted runtimes use tenant-scoped PostgreSQL hash chains serialized by a locked chain head; local JSONL is test/development-only, and hosted writes fail closed without PostgreSQL. |
 | Deployment cockpit | GitHub Pages-ready UI with local/relay/live runtime controls. |
 | Serverless API | Vercel handlers for health, readiness, benchmarks, audit, agent run, and relay. |
 | Deployment proof link | Live Vercel app/status plus isolated Railway PostgreSQL/Qdrant status. This proves connectivity, not decision correctness or enterprise authorization. |
@@ -24,10 +28,10 @@ This is the current implementation and hardening ledger, reviewed 2026-07-12. Th
 
 | Area | Implementation Target | Why It Matters |
 | --- | --- | --- |
-| Decision correctness | Fix evidence-question-as-proof, global negation suppression, one-medium-gap readiness, and Python/Node decision divergence; add adversarial gates. | Blocks unsafe approval recommendations at their shared decision boundaries. |
-| Tenant isolation and versioning | Derive tenant context from the authenticated actor for every retrieval path and return the final authoritative case version after council runs. | Prevents cross-workspace memory disclosure and broken second interactions. |
-| Durable audit | PostgreSQL/Qdrant persist product data and vectors, but Vercel audit JSONL currently lives in per-instance `/tmp`. Move tenant-scoped events to PostgreSQL plus immutable retention. | Makes traceability durable and query isolation enforceable. |
-| RBAC | Demo session/auth enforcement exists and Entra-compatible JWT code is present. Configure Entra issuer, audience, tenant, JWKS, and app roles; close public/unscoped log and audit routes. | Separates a demo boundary from enterprise identity and authorization proof. |
+| Decision correctness | Keep the new assertion, contradiction, readiness, two-council, and Node/Python parity fixtures in required CI; add policy-version hashes and a larger adversarial corpus. | Prevents regression at the shared decision boundaries. |
+| Tenant defense in depth | Add organizations/workspaces/memberships, composite keys and PostgreSQL RLS; extend hostile-scope coverage to cases, export, deletion, and every resource. | Actor-derived application scope is fixed for learning/governance/audit, but database policy and complete resource coverage remain. |
+| Audit assurance | Add immutable/WORM range exports, restore drills, schema migrations, and same-transaction audit coupling for critical PostgreSQL business writes (or an outbox across services). | Current Postgres hash chains are durable and scoped but are not immutable retention or atomic business/audit evidence. |
+| RBAC | Demo session/auth enforcement exists and Entra-compatible JWT code is present. Configure Entra issuer, audience, tenant, JWKS, memberships and app roles; keep detailed audit reads role-gated. | Separates a demo boundary from enterprise identity and authorization proof. |
 | Live workflow switch | Keep selected `/api/agent/run` cases aligned with the deployed product workflow. | Converts the demo agent into the deployed enterprise workflow path without weakening deterministic final authority. |
 | CrewAI Flow runtime | Keep CrewAI as optional advisory runtime until dependencies, credentials, and eval gates are stable. | Aligns with production-oriented CrewAI patterns without making optional dependencies a submission risk. |
 | Responsible AI evals | Adversarial cases, unsupported-claim detection, bias review, and refusal checks. | Moves RAI from control design to measurable assurance. |
@@ -42,4 +46,4 @@ Position the agent as a production-track compliance intelligence worker:
 - It runs a real Vercel demo with durable Railway PostgreSQL/Qdrant, named-Compass semantic retrieval, Node advisory specialists, and observable deterministic fallback.
 - Its FastAPI evaluator contract is reproduced locally and in CI; there is no claimed public Railway evaluator.
 - Python CrewAI remains an optional adapter rather than a hosted dependency.
-- Serverless audit retention, Entra SSO, tenant isolation, and decision correctness remain explicit blockers before enterprise authorization.
+- Immutable audit retention/business-write coupling, Entra SSO/memberships/RLS, retention/erasure, distributed admission controls, and final production verification remain blockers before enterprise authorization.

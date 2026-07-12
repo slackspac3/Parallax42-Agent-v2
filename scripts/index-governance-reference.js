@@ -20,11 +20,11 @@ async function main() {
     publicSafe: true,
     requiresHumanReview: true,
     markdown
-  });
+  }, { trustedNamespace: true });
   const smoke = await searchGovernanceReferences({
     query: 'export controls sanctions data protection responsible AI assurance',
     topK: 3
-  });
+  }, { trustedNamespace: true });
   console.log(JSON.stringify({
     ok: result.ok,
     provider: result.index.provider,

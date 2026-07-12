@@ -158,7 +158,7 @@ const server = http.createServer(async (req, res) => {
         adminFeatures: buildFeatureStatus(),
         audit: {
           store: auditStoreHealth(),
-          integrity: verifyAuditChain()
+          integrity: await verifyAuditChain({ actor: auth.actor })
         },
         evidenceGateway: gatewayHealth(),
         evidenceVectorStore: evidenceVectorStoreHealth(),
@@ -255,7 +255,7 @@ const server = http.createServer(async (req, res) => {
       }
       const body = await readJsonBody(req, { limitBytes: ADMIN_BODY_LIMIT_BYTES });
       const result = updateFeatureFlags(body.features && typeof body.features === 'object' ? body.features : body, auth.actor);
-      appendAuditRecord({
+      await appendAuditRecord({
         actor: auth.actor,
         caseId: 'admin-feature-controls',
         status: 'admin_features_updated',
@@ -282,7 +282,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       const result = await runQdrantSmokeTest();
-      appendAuditRecord({
+      await appendAuditRecord({
         actor: auth.actor,
         caseId: result.caseId || 'qdrant-smoke',
         status: result.ok ? 'qdrant_smoke_passed' : result.skipped ? 'qdrant_smoke_skipped' : 'qdrant_smoke_failed',
@@ -342,8 +342,8 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       writeJson(res, 200, {
-        integrity: verifyAuditChain(),
-        records: readRecentAuditRecords(Number(url.searchParams.get('limit') || 25))
+        integrity: await verifyAuditChain({ actor: auth.actor }),
+        records: await readRecentAuditRecords(Number(url.searchParams.get('limit') || 25), { actor: auth.actor })
       });
       return;
     }
@@ -429,12 +429,8 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       const body = await readJsonBody(req, { limitBytes: EVIDENCE_INDEX_BODY_LIMIT_BYTES });
-      const result = await indexGovernanceReference({
-        ...body,
-        workspaceId: auth.actor.workspaceId || process.env.P42_WORKSPACE_ID || 'parallax42',
-        projectId: auth.actor.projectId || process.env.P42_PROJECT_ID || 'compliance-intelligence-agent'
-      });
-      appendAuditRecord({
+      const result = await indexGovernanceReference(body, { actor: auth.actor });
+      await appendAuditRecord({
         actor: auth.actor,
         caseId: body.caseId || result.context?.sourceId || 'governance-reference-index',
         status: 'governance_reference_indexed',
@@ -461,12 +457,8 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       const body = await readJsonBody(req, { limitBytes: 1_000_000 });
-      const result = await searchGovernanceReferences({
-        ...body,
-        workspaceId: auth.actor.workspaceId || process.env.P42_WORKSPACE_ID || 'parallax42',
-        projectId: auth.actor.projectId || process.env.P42_PROJECT_ID || 'compliance-intelligence-agent'
-      });
-      appendAuditRecord({
+      const result = await searchGovernanceReferences(body, { actor: auth.actor });
+      await appendAuditRecord({
         actor: auth.actor,
         caseId: body.caseId || body.sourceId || 'governance-reference-search',
         status: 'governance_reference_searched',
@@ -493,7 +485,7 @@ const server = http.createServer(async (req, res) => {
       }
       const body = await readJsonBody(req, { limitBytes: 1_000_000 });
       const result = await recordReviewerFeedback(body, { actor: auth.actor });
-      appendAuditRecord({
+      await appendAuditRecord({
         actor: auth.actor,
         caseId: body.caseId || 'learning-feedback',
         status: 'learning_feedback_recorded',
@@ -518,11 +510,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       const body = await readJsonBody(req, { limitBytes: 1_000_000 });
-      writeJson(res, 200, await findSimilarCases({
-        ...body,
-        workspaceId: auth.actor.workspaceId || process.env.P42_WORKSPACE_ID || 'parallax42',
-        projectId: auth.actor.projectId || process.env.P42_PROJECT_ID || 'compliance-intelligence-agent'
-      }));
+      writeJson(res, 200, await findSimilarCases(body, { actor: auth.actor }));
       return;
     }
 
@@ -534,11 +522,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       const body = req.method === 'POST' ? await readJsonBody(req, { limitBytes: 1_000_000 }) : {};
-      writeJson(res, 200, await getControlSuggestions({
-        ...body,
-        workspaceId: auth.actor.workspaceId || process.env.P42_WORKSPACE_ID || 'parallax42',
-        projectId: auth.actor.projectId || process.env.P42_PROJECT_ID || 'compliance-intelligence-agent'
-      }));
+      writeJson(res, 200, await getControlSuggestions(body, { actor: auth.actor }));
       return;
     }
 

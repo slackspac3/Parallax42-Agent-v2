@@ -2,6 +2,8 @@
 
 > **Historical evidence snapshot.** This report preserves an earlier repository and deployment assessment; it is not current operational guidance. See the [current deep code review](docs/DEEP_CODE_REVIEW.md) and [Azure migration plan](docs/AZURE_MIGRATION_PLAN.md).
 
+> **2026-07-12 remediation addendum:** the current worktree uses actor-scoped PostgreSQL audit chains for hosted runtimes, removes public `/api/logs`, scopes detailed reads, and fails hosted writes closed without Postgres. Node is authoritative across Python, and evidence/readiness/state/tenant P0 regressions pass full local QA. CI/live verification, WORM audit export, business/audit transaction coupling, Entra/membership/RLS, and other residuals remain.
+
 ## 1. Executive Summary
 
 This repository is a Node/CommonJS Vercel/static demo application for a chat-first Compliance Intelligence Agent. It is not a Python FastAPI application. The browser UI is vanilla HTML/CSS/JS in `public/`, Vercel API handlers live in `api/`, the local development server mirror is `server.js`, and the core decision/runtime logic is in `lib/`.
@@ -29,7 +31,7 @@ The current repo is best positioned as: a working, auditable, deterministic comp
 | Local vector store | demo-grade working | `lib/evidenceVectorStore.js` | Stores vectors/chunks in a server-side local file, defaulting to OS temp unless configured. Not durable on Vercel. |
 | Qdrant vector store | wired but inactive | `lib/evidenceVectorStore.js` | Qdrant REST code exists and activates when `QDRANT_URL` or `P42_VECTOR_DB_URL` is configured. Not proven active in current app. |
 | Parser relay | partial | `api/_backendRelay.js`, `api/backend.js`, `api/backend/[...path].js`, `public/app.js` | Browser uploads can be relayed to an external backend. Local OCR/parser is not implemented in this repo. |
-| Audit logging | demo-grade working | `lib/auditStore.js`, `api/audit/recent.js`, `logs/agent_audit.jsonl` | Append-only hash-chained JSONL. Durable only if storage dir is configured to durable storage. |
+| Audit logging | durable/scoped foundation | `lib/auditStore.js`, `api/audit/recent.js`, `logs/agent_audit.jsonl` | Hosted PostgreSQL hash chains; JSONL is explicit local/test fallback. WORM retention remains open. |
 | RBAC/auth | partial | `lib/rbac.js`, `.env.example`, `tests/unit/rbac.test.js` | Audit/default demo mode allows anonymous demo actor. Enforced JWT/role mode exists but is not default and requires env configuration. |
 | PDF review pack | working | `lib/reviewPack.js`, `api/export/review-pack.js`, `tests/unit/reviewPack.test.js`, `output_examples/review_pack_sample.pdf` | Generates review-pack PDF from run output. Current UX around review pack can improve. |
 | Tests | working | `tests/unit/*.test.js` | Node test runner covers compliance, runtime, gateway client, backend relay, vector store, RBAC, audit, review pack, benchmark, golden workflow. |
@@ -55,11 +57,11 @@ The current repo is best positioned as: a working, auditable, deterministic comp
    - How to verify: run `npm test -- tests/unit/reviewPack.test.js` or POST a valid run object to `/api/export/review-pack`.
    - Do not claim yet: polished board-ready reporting. The PDF is functional, but design/content quality still needs improvement.
 
-3. Hash-chained local audit records
+3. Tenant-scoped hash-chained audit records
    - Files: `lib/auditStore.js`, `api/audit/recent.js`, `tests/unit/auditStore.test.js`.
-   - Evidence: `appendAuditRecord()` writes append-only JSONL entries with previous hash/current hash; `verifyAuditChain()` verifies integrity.
+   - Evidence: hosted `appendAuditRecord()` writes actor-scoped PostgreSQL chains with locked heads; explicit local/test mode can use JSONL. `verifyAuditChain()` verifies the selected tenant chain.
    - How to verify: run `npm test -- tests/unit/auditStore.test.js` or call `/api/audit/recent`.
-   - Do not claim yet: enterprise-durable audit or tamper-proof storage. Default Vercel/local storage is file/tmp-based.
+   - Do not claim yet: immutable/WORM retention, restore proof, or atomic coupling to every critical business write.
 
 ### B) demo-grade but working
 
@@ -164,14 +166,14 @@ The current repo is best positioned as: a working, auditable, deterministic comp
 | Compass chat/LLM advisory | `lib/advisoryCouncil.js`, `lib/agentRuntime.js` | optional/inactive by default | Enable `CREWAI_ENABLE_LIVE_LLM=1` and live runtime | Advisory does not drive agent collaboration or final decision | Add an "advisory only" panel with exact model/runtime metadata | Medium |
 | Parser relay / external parser backend | `api/_backendRelay.js`, `api/backend*.js`, `public/app.js` | partial | `/api/backend?path=/health`; upload through UI | External service has its own status and disabled persistence; not local | Show parser relay health and upload job stages in UI | Medium |
 | Review pack PDF generation | `lib/reviewPack.js`, `api/export/review-pack.js` | working | Export after council run | PDF content is functional but not executive-grade | Improve layout, memo sections, risk register, evidence appendix | Low |
-| Audit logging | `lib/auditStore.js`, `api/audit/recent.js` | working demo-grade | Run case then GET `/api/audit/recent` | Local/tmp storage; no user identity in audit mode | Make audit viewer clearer; document retention limits | Low |
-| Hash-chained audit | `lib/auditStore.js`, `tests/unit/auditStore.test.js` | working locally | Unit test or `verifyAuditChain()` via `/api/audit/recent` | Not backed by WORM/managed append-only storage | Add exportable audit verification report | Low |
+| Audit logging | `lib/auditStore.js`, `api/audit/recent.js` | durable/scoped foundation | Run case then authenticated GET `/api/audit/recent` as auditor | No WORM export or business-write coupling | Add range sealing/export and restore drills | Medium |
+| Hash-chained audit | `lib/auditStore.js`, `tests/unit/auditStore.test.js` | working in PostgreSQL and local fallback | Unit test or scoped verification via `/api/audit/recent` | Not backed by WORM/managed immutable storage | Add exportable audit verification report | Medium |
 | Admin status | `api/admin/status.js`, `lib/adminStatus.js`, `server.js` | implemented locally, not yet deployed until commit/deploy | Local GET `/api/admin/status`; live currently may be 404 until deployed | Not wired into UI admin panel yet | Add UI Admin/Readiness panel showing these booleans | Low |
 | Readiness endpoint | `api/readiness.js`, `server.js`, `lib/complianceAgent.js` | working | GET `/api/readiness` | Inventory is static-ish and not a full production readiness scanner | Separate demo readiness vs production hardening explicitly | Low |
 | Benchmarks | `lib/benchmarkSuite.js`, `scripts/benchmark.js`, `tests/unit/benchmarkSuite.test.js` | working | `npm run benchmark` | Only four deterministic cases; no latency under real uploads/LLM | Add browser + upload + gateway benchmark scenarios | Low |
 | CrewAI dry-run | `crewai_adapter/*`, `lib/agentRuntime.js` | working locally | `npm run check:crewai`; `/api/health` | Vercel fallback is JS static, not Python dry-run | Make UI label "CrewAI-shaped dry run" explicit | Low |
 | CrewAI live execution | `lib/agentRuntime.js`, `crewai_adapter/*` | wired but inactive | Set live env and dependencies locally | Not validated as stable live production flow | Defer or restrict to optional demo toggle with clear fallback | High |
-| RBAC/auth | `lib/rbac.js`, `tests/unit/rbac.test.js` | partial | Unit tests; set enforced auth and call routes | Default is audit/demo mode; no login UI | Add admin status and docs; do not force auth in public demo | Medium |
+| RBAC/auth | `lib/rbac.js`, `tests/unit/rbac.test.js` | strong demo / partial enterprise | Unit tests; call protected routes with/without roles | Production is enforced, audit reads are always role-gated; no Entra membership/RLS or login UI | Add Entra/membership/RLS and preserve scoped audit tests | Medium |
 | Vercel deployment behavior | `api/*`, `public/*`, `vercel.json` | working but deployment can lag local | `curl /api/health`; Vercel logs | Python CrewAI adapter unavailable; local tmp storage ephemeral | Add deployment checklist and live route verification script | Low |
 | Local server behavior | `server.js` | working | `npm run dev`; curl local routes | Local differs from Vercel for Python dry-run availability and filesystem persistence | Keep route parity tests between `server.js` and `api/` handlers | Medium |
 
@@ -184,7 +186,7 @@ The current repo is best positioned as: a working, auditable, deterministic comp
 | `/api/readiness` | GET | `server.js` | `api/readiness.js` | none | readiness inventory from `getReadinessInventory()` | auth env optional unless enforced | yes/readiness links | indirectly via syntax; no direct route test seen | yes | Same logic, but auth/env can differ. |
 | `/api/benchmarks` | GET | `server.js` | `api/benchmarks.js` | none | benchmark summary/cases | auth env optional unless enforced | yes | `tests/unit/benchmarkSuite.test.js` | yes | Same logic. |
 | `/api/demo/golden` | GET | `server.js` | `api/demo/golden.js` | none | golden workflow run and acceptance checks | auth env optional unless enforced | yes | `tests/unit/goldenWorkflow.test.js` | yes | Local mode label `local_golden_demo`; Vercel mode label `vercel_golden_demo`. |
-| `/api/audit/recent` | GET | `server.js` | `api/audit/recent.js` | optional `limit` query | `{ integrity, records }` | `AGENT_AUDIT_DIR` optional; auth optional unless enforced | partially/admin evidence area | `tests/unit/auditStore.test.js` | yes with caveat | Vercel audit uses tmp unless configured; records may disappear. |
+| `/api/audit/recent` | GET | `server.js` | `api/audit/recent.js` | optional `limit` query | `{ integrity, records }` | auditor/platform-admin bearer; hosted `DATABASE_URL` | protected admin evidence area | audit store/route/RBAC tests | yes for authorized synthetic demo | Tenant-scoped PostgreSQL chain; no WORM export yet. |
 | `/api/agent/run` | POST | `server.js` | `api/agent/run.js` | compliance case JSON; optional `runtime`; optional `x-agent-runtime` header | agent run result with decision, gaps, trace, runtime/orchestration | auth optional unless enforced; runtime/env optional | older/direct run paths | `tests/unit/agentRuntime.test.js`, `complianceAgent.test.js` | yes | Same logic; Python dry-run availability differs. |
 | `/api/conversation` | POST | `server.js` | `api/conversation.js` | `{ message, caseDraft, uploadedEvidence, retrievalQuery, forceRun, runtime? }` | conversation result with reply, nlp, caseDraft, missingFields, actions, optional run | auth optional; gateway optional for advisory only | yes, primary chat | `tests/unit/conversationAgent.test.js`; route not directly tested | yes | Same logic; optional advisory depends on env. |
 | `/api/evidence/index` | POST | `server.js` | `api/evidence/index.js`, alias `api/evidence/index/index.js` | `{ caseId, documents/chunks/text, workspaceId?, projectId? }` | sanitized index result with chunk/evidence IDs and no browser-retained embeddings | `COMPASS_GATEWAY_TOKEN` or `PARALLAX42_GATEWAY_TOKEN` required for real gateway call; Qdrant optional | yes after upload | `tests/unit/evidenceVectorStore.test.js`, `compassGatewayClient.test.js` | yes only when token/service configured | Vercel token may be configured while local may not be. |
@@ -360,7 +362,7 @@ What can fail during the demo:
 - Gateway token absent locally, causing evidence index/search to fail.
 - Live deployment lag: new local route `/api/admin/status` may not exist on deployed Vercel until committed/deployed.
 - Chat loop/repeated question behavior if the deterministic extractor does not recognize a terse answer.
-- Vercel filesystem volatility can make audit/vector state disappear between invocations.
+- Vercel filesystem volatility can still affect local-file vector fallback; hosted audit now requires PostgreSQL and does not fall back to the filesystem.
 
 Fallback demo path if external services fail:
 - Do not upload a file.
@@ -377,11 +379,11 @@ Fallback demo path if external services fail:
 | `/api/admin/status` | Implemented in `server.js` and `api/admin/status.js` locally | Live deployment returned `NOT_FOUND` before deploying latest local code | Route exists in repo but not live until commit/deploy. |
 | Backend relay catch-all | `server.js` does not implement the same catch-all `/api/backend/[...path]` as Vercel | Vercel has `api/backend.js` and `api/backend/[...path].js` | Some local UI upload paths may behave differently than deployed paths. |
 | Gateway token | Local may not have `COMPASS_GATEWAY_TOKEN`; health can report token false | Vercel has previously reported gateway token true | Evidence indexing may work deployed but fail locally. |
-| Audit filesystem | Local writes to repo/logs or configured audit dir | Vercel defaults to `/tmp` when no durable audit dir | Audit is not durable on Vercel by default. |
+| Audit provider | Local/test can write JSONL | Hosted runtime requires PostgreSQL and fails closed without it | PostgreSQL is durable/scoped but not immutable retention. |
 | Vector filesystem | Local-file vector store can persist for a local process/machine path | Vercel local-file provider is ephemeral unless durable storage is configured | Evidence retrieval may not persist across serverless invocations. |
 | Static assets | Local served by `server.js` | Vercel serves static `public/` and API functions | Usually okay; check `npm run check:pages`. |
 | External parser backend | Default points to `https://api.parallax42.bhavukarora.com` | Same default unless env overrides | External service status is independent of this repo. |
-| Auth mode | Defaults audit/demo | Defaults audit/demo unless Vercel env changes | Public demo is not enforced RBAC. |
+| Auth mode | Explicit local audit mode remains available | Production defaults/environments enforce auth; detailed audit always requires an audit role | Entra/membership/RLS are still absent. |
 | Live LLM advisory | Requires local env and runtime | Requires Vercel env and runtime | Disabled by default; do not claim active unless verified. |
 
 Routes implemented locally but missing or different on Vercel:
@@ -390,7 +392,7 @@ Routes implemented locally but missing or different on Vercel:
 
 Features that work locally but not necessarily after deploy:
 - Python CrewAI dry-run adapter.
-- Stable local audit/vector files.
+- Stable local vector files; local audit JSONL is development/test evidence only.
 - Any local-only file paths under `logs/`, temp, or generated outputs.
 
 Features that only work or are more likely to work on Vercel:

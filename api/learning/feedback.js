@@ -17,7 +17,7 @@ module.exports = async function handler(req, res) {
     }
     const body = await readJsonRequest(req, { limitBytes: STANDARD_RUN_BODY_LIMIT_BYTES });
     const result = await recordReviewerFeedback(body, { actor: auth.actor });
-    appendAuditRecord({
+    await appendAuditRecord({
       actor: auth.actor,
       caseId: body.caseId || 'learning-feedback',
       status: 'learning_feedback_recorded',

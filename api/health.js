@@ -12,6 +12,8 @@ const { authHealth, authorizeRequest } = require('../lib/rbac');
 const { methodGuard, rateLimitGuard, sendJson } = require('./_http');
 
 module.exports = async function handler(req, res) {
+  res.setHeader('cache-control', 'private, no-store');
+  res.setHeader('vary', 'Authorization');
   if (!methodGuard(req, res, ['GET'])) return;
   if (!rateLimitGuard(req, res, 'healthRead')) return;
   const auth = await authorizeRequest(req, 'health:read');
@@ -19,8 +21,22 @@ module.exports = async function handler(req, res) {
     sendJson(req, res, auth.statusCode, auth.body);
     return;
   }
-  sendJson(req, res, 200, {
-    ok: true,
+  const auditStore = auditStoreHealth();
+  let auditIntegrity;
+  try {
+    auditIntegrity = await verifyAuditChain({ actor: auth.actor });
+  } catch {
+    sendJson(req, res, 503, {
+      ok: false,
+      service: 'parallax42-compliance-intelligence-agent',
+      error: 'audit_storage_unavailable',
+      audit: { store: auditStore, integrity: { ok: false, reason: 'audit_storage_unavailable' } }
+    });
+    return;
+  }
+  const ready = !auditStore.durableRequired || (auditStore.durable && auditIntegrity.ok);
+  sendJson(req, res, ready ? 200 : 503, {
+    ok: ready,
     service: 'parallax42-compliance-intelligence-agent',
     runtime: 'vercel',
     mode: process.env.AGENT_MODE || 'crewai_llm',
@@ -28,8 +44,8 @@ module.exports = async function handler(req, res) {
     auth: authHealth(),
     adminFeatures: buildFeatureStatus(),
     audit: {
-      store: auditStoreHealth(),
-      integrity: verifyAuditChain()
+      store: auditStore,
+      integrity: auditIntegrity
     },
     evidenceGateway: gatewayHealth(),
     evidenceVectorStore: evidenceVectorStoreHealth(),

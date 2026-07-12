@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import os
 import shutil
-from pathlib import Path
 from typing import Any, Dict
 
 from dotenv import load_dotenv
@@ -15,7 +14,7 @@ from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
 from .agentathon_orchestrator import AgentathonOrchestrator, USE_CASE_ID
-from .auth import AuthContext, request_auth_context, require_learning_reviewer
+from .auth import AuthContext, request_auth_context, require_audit_reader, require_learning_reviewer
 from .compass_client import CompassClient
 from .crewai_runtime import crewai_runtime_status
 from .evidence_memory import evidence_memory_status
@@ -38,13 +37,6 @@ compass = CompassClient()
 
 def _sample_mode_enabled() -> bool:
     return os.environ.get("SAMPLE_MODE", "false").strip().lower() in {"1", "true", "yes", "on"}
-
-
-def _log_dir() -> Path:
-    requested = Path(os.environ.get("LOG_DIR", "./logs"))
-    path = requested if requested.is_absolute() else ROOT / requested
-    path.mkdir(parents=True, exist_ok=True)
-    return path
 
 
 def _metadata() -> Dict[str, Any]:
@@ -184,17 +176,13 @@ async def learning_control_suggestions(
 
 
 @app.get("/logs")
-async def logs() -> Dict[str, Any]:
-    entries = []
-    for path in sorted(_log_dir().glob("*.jsonl"), key=lambda item: item.stat().st_mtime, reverse=True)[:25]:
-        entries.append(
-            {
-                "file": f"logs/{path.name}",
-                "bytes": path.stat().st_size,
-                "modified_epoch_seconds": int(path.stat().st_mtime),
-            }
-        )
-    return {"ok": True, "log_dir": "logs", "entries": entries}
+async def logs(
+    _context: AuthContext = Depends(require_audit_reader),
+) -> JSONResponse:
+    return JSONResponse(
+        content={"ok": True, "entries": [], "detail": "Detailed trace records are not exposed over HTTP."},
+        headers={"Cache-Control": "private, no-store"},
+    )
 
 
 @app.get("/compass/probe")

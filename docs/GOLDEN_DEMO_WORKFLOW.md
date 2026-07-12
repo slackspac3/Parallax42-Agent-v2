@@ -73,14 +73,14 @@ The agent must:
 
 ## What This Proves
 
-- This fixture is expected not to rubber-stamp the high-risk request; it does not cover the adversarial evidence and negation defects recorded in the deep review.
+- This fixture is expected not to rubber-stamp the high-risk request. Dedicated regressions—not this single fixture—cover hostile evidence questions/mentions, forged documents, contradiction and negation variants, approval eligibility, tenant scope, and version recovery.
 - The agent ties decisions to evidence and named gaps.
 - The agent can be evaluated repeatedly.
 - The same path can power the video, benchmark, evidence pack, and regression suite.
-- The hosted path uses Node specialist calls through Compass and semantic Qdrant retrieval; deterministic policy/fallback remains the intended decision boundary.
+- The hosted path uses Node specialist calls through Compass and semantic Qdrant retrieval; deterministic Node policy is the implemented final decision authority.
 - Python CrewAI is optional and inactive in the hosted demo.
 - The browser does not receive Compass keys, Qdrant keys, service tokens, or raw embeddings.
 
 ## Next Upgrade
 
-First close the critical evidence/readiness, tenant-isolation, and post-council version defects in the deep review and keep this workflow green as an end-to-end gate. Add adversarial and two-turn cases before expanding live evaluation. Python CrewAI may be enabled only after dependency, credential, parity, and eval gates pass; it remains advisory and must preserve the same API response contract.
+Keep the implemented adversarial, tenant-isolation, failure-recovery, bridge-parity, and two-council regressions green. Next verify the authenticated deployed two-council flow and close the residual P1 gates, including immutable review-pack input, identity/membership/RLS, WORM audit export/business coupling, and admission controls. Python CrewAI may be enabled only after dependency, credential, parity, and eval gates pass; it remains advisory and must preserve the same API response contract.

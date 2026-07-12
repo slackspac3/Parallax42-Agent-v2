@@ -318,8 +318,8 @@ const readinessCopy = {
   },
   auditTraceability: {
     label: 'Audit traceability',
-    proof: 'Hash-chained append-only audit records with integrity verification',
-    next: 'Back the audit path with managed durable storage for production retention.'
+    proof: 'Tenant-scoped PostgreSQL hash chains use transactional sequencing and integrity verification',
+    next: 'Add immutable/WORM exports before claiming enterprise retention.'
   },
   rbac: {
     label: 'RBAC and authentication',
@@ -1066,12 +1066,13 @@ function setApprovalActionStatus(message = '', state = 'idle') {
 }
 
 function setApprovalActions({ enabled = false, recorded = null, busyAction = '', allowApproval = true } = {}) {
-  const approved = Boolean(recorded && /approve|conditional/i.test(recorded.reviewerDecision || recorded.status || ''));
+  const recordedDecision = cleanEvidenceText(recorded?.reviewerDecision || recorded?.status || '').toLowerCase();
+  const approved = Boolean(recorded && /^(?:approve(?:d)?|accept(?:ed)?)$/.test(recordedDecision));
   const rejected = Boolean(recorded && /reject|remediation/i.test(recorded.reviewerDecision || recorded.status || ''));
   const busy = Boolean(busyAction);
   approvalButton.textContent = busyAction === 'approve'
     ? 'Recording approval…'
-    : approved ? 'Approved with conditions' : 'Approve with conditions';
+    : approved ? 'Approval recorded' : 'Record approval';
   remediationButton.textContent = busyAction === 'remediation'
     ? 'Recording remediation…'
     : rejected ? 'Remediation requested' : 'Request remediation';
@@ -1081,7 +1082,7 @@ function setApprovalActions({ enabled = false, recorded = null, busyAction = '',
     button.setAttribute('aria-busy', String(busy));
   });
   if (enabled && !recorded && !busy) {
-    if (allowApproval) approvalButton.dataset.reviewAction = 'conditional-approval';
+    if (allowApproval) approvalButton.dataset.reviewAction = 'approval';
     else approvalButton.removeAttribute('data-review-action');
     remediationButton.dataset.reviewAction = 'request-remediation';
   } else {
@@ -2678,7 +2679,7 @@ function restoreRunFromHistory(runId = '') {
 
 function runSummaryForChatDraft(result = {}) {
   if (!result || typeof result !== 'object') return null;
-  const existingVersion = Number(chatCaseDraft.lastCouncilRun?.caseVersion || chatCaseDraft.caseVersion || 0);
+  const existingVersion = Number(result.caseVersion || chatCaseDraft.lastCouncilRun?.caseVersion || chatCaseDraft.caseVersion || 0);
   return {
     ok: Boolean(result.ok),
     runId: cleanEvidenceText(result.runId || result.id || ''),
@@ -3078,7 +3079,7 @@ function councilAgentNarrative(agent, item = {}) {
   const draft = chatCaseDraft || {};
   const result = lastRuns[activeRunMode] || lastRun || {};
   const missing = missingProofItems(draft, result);
-  const riskSignals = unique([...(draft.riskSignals || []), ...(draft.evidenceSignals || [])]);
+  const riskSignals = unique(draft.riskSignals || []);
   const evidenceMatches = evidenceMatchesFor(result, draft);
   const chunks = indexedChunkCount();
   const gaps = Array.isArray(result.gaps) ? result.gaps : [];
@@ -3600,7 +3601,7 @@ function renderCaseIntelligence(draft = chatCaseDraft, result = lastRuns.chat) {
   }
   const risks = useRunResult
     ? (result.domains || []).filter((domain) => /applicable|needs|confirmation/i.test(domain.status || '')).map((domain) => domain.label)
-    : unique([...(draft.riskSignals || []), ...(draft.evidenceSignals || [])]).map((item) => compactUiLabel(item, 42));
+    : unique(draft.riskSignals || []).map((item) => compactUiLabel(item, 42));
   const missing = missingProofItems(draft, panelResult);
   const supplier = useRunResult
     ? (draft.supplierName || result?.case?.supplierName || 'Completed review')
@@ -4490,11 +4491,16 @@ function renderConversationState(result = {}) {
   chatMissingFields = missing;
   const draft = result.caseDraft || chatCaseDraft || {};
   persistActiveQuestion(questions[0] || draft.activeQuestion || '', questionMetadata);
-  const evidenceSignals = Array.isArray(draft.evidenceSignals) ? draft.evidenceSignals : [];
   const riskSignals = Array.isArray(draft.riskSignals) ? draft.riskSignals : [];
   const retrievalMatches = Array.isArray(draft.retrievalContext?.evidenceMatches)
     ? draft.retrievalContext.evidenceMatches
     : Array.isArray(draft.retrievalContext?.matches) ? draft.retrievalContext.matches : [];
+  const usableDraftDocuments = (draft.documents || []).filter((document) => (
+    window.P42AppModules.caseIntelligencePanel.isUsableEvidenceDocument(document)
+  ));
+  const unverifiedDraftDocuments = (draft.documents || []).filter((document) => (
+    !window.P42AppModules.caseIntelligencePanel.isUsableEvidenceDocument(document)
+  ));
 
   decisionText.textContent = runReadiness.runnable ? 'Ready to execute' : 'Building case draft';
   approvalStatus.textContent = runReadiness.runnable
@@ -4505,7 +4511,7 @@ function renderConversationState(result = {}) {
   updateDecisionActionBar(getLatestCompletedRun(activeRunMode)?.ok ? 'ready' : 'idle');
   runtimeText.textContent = 'NLP case builder';
   readinessScore.textContent = runReadiness.runnable ? 'runnable' : 'draft';
-  evidenceCount.textContent = String((draft.documents || []).length || evidenceSignals.length || 0);
+  evidenceCount.textContent = String(window.P42AppModules.caseIntelligencePanel.usableEvidenceCount(draft));
   gapCount.textContent = String(missing.length);
   flowProgress.style.width = `${progress}%`;
   stageKicker.textContent = 'NLP intake';
@@ -4586,18 +4592,29 @@ function renderConversationState(result = {}) {
         <small>${escapeHtml(`score ${Number(match.score || 0).toFixed(2)}`)}</small>
       </article>
     `).join('')
-    : draft.documents?.length
-      ? draft.documents.map((doc) => `
-      <article class="citation-row">
+    : usableDraftDocuments.length
+      ? usableDraftDocuments.map((doc) => `
+      <article class="citation-row" data-state="${escapeHtml(doc.assertionState || 'provided')}">
         <div>
           <span>${escapeHtml(doc.evidenceId || 'CHAT')} · ${escapeHtml(doc.extractionStatus || 'nlp')}</span>
-          <strong>${escapeHtml(doc.title || 'Conversational evidence')}</strong>
-          <p>${escapeHtml(doc.excerpt || doc.summary || 'Evidence captured from chat.')}</p>
+          <strong>${escapeHtml(doc.title || 'Submitted evidence')}</strong>
+          <p>${escapeHtml(doc.excerpt || doc.summary || 'Evidence provided for review.')}</p>
         </div>
-        <small>${escapeHtml(doc.signals?.join(', ') || 'pending signal')}</small>
+        <small>${escapeHtml(doc.assertionState || doc.signals?.join(', ') || 'provided')}</small>
       </article>
     `).join('')
-      : '<article class="empty-row">Evidence citations appear as chat context is captured.</article>';
+      : unverifiedDraftDocuments.length
+        ? unverifiedDraftDocuments.map((doc) => `
+          <article class="citation-row is-unverified" data-state="${escapeHtml(doc.assertionState || 'mentioned')}">
+            <div>
+              <span>${escapeHtml(doc.evidenceId || 'CHAT')} · not evidence</span>
+              <strong>${escapeHtml(doc.assertionState === 'requested' ? 'Evidence requested' : 'Evidence mentioned')}</strong>
+              <p>${escapeHtml(doc.excerpt || doc.summary || 'This intake statement is not verified proof.')}</p>
+            </div>
+            <small>not used as proof</small>
+          </article>
+        `).join('')
+        : '<article class="empty-row">Verified evidence citations appear after a document is parsed or retrieved.</article>';
   artifactPreview.innerHTML = `
     <div class="artifact-header">
       <span class="eyebrow">conversation</span>
@@ -4873,11 +4890,11 @@ function renderRunResult(result, options = {}) {
   const recordedReview = result.humanReviewRecorded
     || (humanReviewRecord?._runId === result.runId ? humanReviewRecord : null);
   const canRecordCurrentSessionDecision = Boolean(finalVisible && currentSessionRunIds.has(result.runId));
-  const approvalAllowed = result.decision?.status !== 'not_ready';
+  const approvalAllowed = result.decisionReadiness?.approvalEligible === true;
   setApprovalActions({ enabled: canRecordCurrentSessionDecision, recorded: recordedReview, allowApproval: approvalAllowed });
   if (finalVisible && recordedReview) {
     setApprovalActionStatus(
-      recordedReview.status === 'rejected' ? 'Human reviewer requested remediation.' : 'Conditional human approval recorded.',
+      recordedReview.status === 'rejected' ? 'Human reviewer requested remediation.' : 'Human approval recorded.',
       recordedReview.status === 'rejected' ? 'warning' : 'ready'
     );
   } else if (finalVisible && canRecordCurrentSessionDecision) {
@@ -5686,7 +5703,10 @@ async function submitChatMessage(rawMessage = '', options = {}) {
       })
     });
     const returnedDraft = result.caseDraft || {};
-    if (eventType === 'evidence_uploaded' && !chatCaseDraft.caseRequestStarted) {
+    if (result.completedCase) {
+      chatCaseDraft = { ...returnedDraft };
+      scheduleChatSessionSave();
+    } else if (eventType === 'evidence_uploaded' && !chatCaseDraft.caseRequestStarted) {
       mergeChatCaseDraft({
         documents: returnedDraft.documents || chatCaseDraft.documents,
         evidenceSignals: unique([...(chatCaseDraft.evidenceSignals || []), ...(returnedDraft.evidenceSignals || [])]),
@@ -5778,10 +5798,15 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   } catch (error) {
     const messageText = error instanceof Error ? error.message : 'Conversation failed.';
     const authBlocked = isAuthorizationError(error);
+    const recoveredDraft = error?.body?.caseDraft;
+    if (recoveredDraft && typeof recoveredDraft === 'object' && recoveredDraft.caseId) {
+      chatCaseDraft = { ...recoveredDraft };
+      scheduleChatSessionSave();
+    }
     pendingMessage.pending = false;
     pendingMessage.text = authBlocked
       ? `${authorizationRecoveryMessage('Agent API')} Uploaded evidence metadata stays attached in this session; save the token and retry the last message.`
-      : `I could not process that turn: ${messageText}`;
+      : `I could not process that turn: ${messageText}${recoveredDraft ? ' The case was restored to its authoritative server version, so you can continue or rerun.' : ''}`;
     renderChatMessages();
     if (authBlocked) {
       renderConversationState({
@@ -5860,7 +5885,7 @@ async function submitLearningFeedback(form) {
   }
 }
 
-async function recordHumanReview(action = 'conditional-approval') {
+async function recordHumanReview(action = 'approval') {
   const result = lastRun?.ok ? lastRun : lastRuns[activeRunMode]?.ok ? lastRuns[activeRunMode] : null;
   if (!result || result.humanReviewRecorded || humanReviewRecord?._runId === result.runId) return;
   if (!currentSessionRunIds.has(result.runId)) {
@@ -5869,12 +5894,12 @@ async function recordHumanReview(action = 'conditional-approval') {
     return;
   }
   const requestsRemediation = action === 'request-remediation';
-  const reviewerDecision = requestsRemediation ? 'Request remediation' : 'Conditional approval';
+  const reviewerDecision = requestsRemediation ? 'Request remediation' : 'Approve';
   const confirmed = window.confirm(requestsRemediation
     ? 'Request remediation for this case? This records a final human rejection and writes an audit event.'
-    : 'Approve this case with conditions? This records the accountable human decision and writes an audit event.');
+    : 'Approve this case? This records the accountable human decision and writes an audit event.');
   if (!confirmed) return;
-  const approvalAllowed = result.decision?.status !== 'not_ready';
+  const approvalAllowed = result.decisionReadiness?.approvalEligible === true;
   setApprovalActions({ enabled: true, busyAction: requestsRemediation ? 'remediation' : 'approve', allowApproval: approvalAllowed });
   setApprovalActionStatus(`Recording ${reviewerDecision.toLowerCase()}…`, 'working');
   try {
@@ -5888,7 +5913,7 @@ async function recordHumanReview(action = 'conditional-approval') {
         reviewerDecision,
         reviewerNotes: requestsRemediation
           ? 'Accountable human reviewer inspected the decision room and requested remediation before approval.'
-          : 'Accountable human reviewer inspected the decision room and granted conditional approval.',
+          : 'Accountable human reviewer inspected the decision room and granted approval after the council marked the case approval-eligible.',
         evidenceIds: Array.isArray(result.evidenceIds) ? result.evidenceIds : []
       })
     });
@@ -5897,7 +5922,7 @@ async function recordHumanReview(action = 'conditional-approval') {
     registerCompletedRun(latestCompletedRunMode || activeRunMode, result, { currentSession: true });
     setApprovalActions({ recorded: humanReviewRecord });
     setApprovalActionStatus(
-      requestsRemediation ? 'Remediation request recorded in the audit trail.' : 'Conditional human approval recorded in the audit trail.',
+      requestsRemediation ? 'Remediation request recorded in the audit trail.' : 'Human approval recorded in the audit trail.',
       requestsRemediation ? 'warning' : 'ready'
     );
     loadAuditLog();
@@ -6538,8 +6563,8 @@ specialistList?.addEventListener('submit', (event) => {
 });
 
 approvalButton?.addEventListener('click', () => {
-  if (approvalButton.dataset.reviewAction === 'conditional-approval') {
-    recordHumanReview('conditional-approval');
+  if (approvalButton.dataset.reviewAction === 'approval') {
+    recordHumanReview('approval');
   }
 });
 

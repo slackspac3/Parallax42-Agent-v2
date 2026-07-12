@@ -37,9 +37,9 @@ Current hosted-state shorthand:
 - The shared Compass gateway uses a named client, GPT-5.1 chat, and `text-embedding-3-large`; deterministic behavior is a fallback.
 - Node advisory specialists are active in the reviewed deployment; Python CrewAI is optional/inactive there.
 - Demo/session authorization is enforced; enterprise Entra identity is not implemented.
-- Audit remains Vercel-local `/tmp` and is not enterprise durable.
+- Hosted audit uses actor-scoped PostgreSQL hash chains; it is durable but not immutable/WORM or atomically coupled to every business write.
 
-See the [deep review](DEEP_CODE_REVIEW.md) before relying on approval, evidence, tenant isolation, or review-pack output.
+Full local QA for the seven P0 remediations is green; CI/live verification is pending. See the [deep review](DEEP_CODE_REVIEW.md) before relying on approval, enterprise tenancy, immutable audit retention, or review-pack output.
 
 ## Demo and delivery
 

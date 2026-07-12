@@ -125,7 +125,14 @@ test('conversation does not repeat payroll owner question after terse HR answer'
 
 test('conversation does not repeat a generic owner question after a terse owner answer', () => {
   const first = processConversation({
-    message: 'Review a vendor that will process customer records and has SOC 2 evidence.'
+    message: 'Review a vendor that will process customer records and has SOC 2 evidence.',
+    caseDraft: {
+      documents: [{
+        evidenceId: 'SOC2-01',
+        extractionStatus: 'backend_parsed',
+        summary: 'The uploaded SOC 2 report describes the vendor security control environment.'
+      }]
+    }
   }, { runtime: 'deterministic' });
 
   assert.ok(first.questions.some((question) => /accountable business unit|workflow owner|who.*own/i.test(question)));
@@ -930,7 +937,13 @@ test('conversation run readiness allows council with core intake while preservin
   const result = processConversation({
     message: 'Review an AI accelerator import from the US for UAE. The accountable owner is Trade Compliance. Final end use is internal research compute. Attached export classification, end-use certificate, import permit, sanctions screening, MFA, session logging, and approved support window.',
     caseDraft: {
-      supplierName: 'Zenith Compute'
+      supplierName: 'Zenith Compute',
+      documents: [{
+        evidenceId: 'EXPORT-01',
+        extractionStatus: 'backend_parsed',
+        summary: 'The uploaded control pack includes export classification, end-use certificate, import permit, sanctions screening, MFA, session logging, and the approved support window.',
+        signals: ['export classification', 'end-use certificate', 'import permit', 'sanctions screening', 'remote support controls']
+      }]
     }
   }, { runtime: 'deterministic' });
 
@@ -945,7 +958,12 @@ test('conversation records unknown terse answers as known gaps without repeating
     message: 'Review a healthcare analytics workflow in UAE that processes patient data. SOC 2 is available.',
     caseDraft: {
       askedQuestions: ['Who is the accountable business unit or workflow owner?'],
-      questions: ['Who is the accountable business unit or workflow owner?']
+      questions: ['Who is the accountable business unit or workflow owner?'],
+      documents: [{
+        evidenceId: 'SOC2-01',
+        extractionStatus: 'backend_parsed',
+        summary: 'The uploaded SOC 2 report describes the healthcare analytics security controls.'
+      }]
     }
   }, { runtime: 'deterministic' });
   const second = processConversation({
@@ -1620,7 +1638,12 @@ test('post-council rerun keeps existing evidence and clears stale status when co
       businessUnit: 'IT',
       geography: 'UAE and US and Singapore',
       brief: 'Review a cloud AI model services SOW for internal policy search.',
-      documents: [{ evidenceId: 'SOW-01', title: 'Cloud AI SOW', extractionStatus: 'backend_parsed' }],
+      documents: [{
+        evidenceId: 'SOW-01',
+        title: 'Cloud AI SOW',
+        extractionStatus: 'backend_parsed',
+        summary: 'The uploaded SOW defines internal policy search, contract terms, and data-processing controls.'
+      }],
       evidenceSignals: ['contract document', 'DPA'],
       riskSignals: ['AI/model use'],
       aiUsageScope: { audience: 'internal_employees', excludedWorkflows: ['HR matters', 'legal determinations'] },
@@ -1793,4 +1816,21 @@ test('server-side conversation enrichment retrieves similar cases before council
   } finally {
     fs.rmSync(storeDir, { recursive: true, force: true });
   }
+});
+
+test('an evidence availability question stays requested and cannot make intake runnable', () => {
+  const result = processConversation({
+    message: 'Is SOC 2 evidence available?',
+    caseDraft: {
+      supplierName: 'Question Only Vendor',
+      businessUnit: 'Operations',
+      geography: 'UAE',
+      brief: 'Review a low criticality consulting vendor with no personal data.'
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.caseDraft.documents[0].assertionState, 'requested');
+  assert.equal(result.caseDraft.documents[0].provenance, 'chat_message');
+  assert.equal(result.readyToRun, false);
+  assert.ok(result.missingFields.includes('evidence'));
 });

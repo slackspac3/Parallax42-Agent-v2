@@ -15,9 +15,9 @@
       "run_id": "eval-001",
       "status": "success",
       "target_agent": "Intake Agent",
-      "timestamp": "2026-06-04T09:22:27.903851Z",
+      "timestamp": "2026-07-12T14:11:05.475528Z",
       "tool_used": "",
-      "trace_id": "trace-eval-001-e903fe99"
+      "trace_id": "trace-eval-001-5e00011b"
     },
     {
       "action": "extract_case_facts",
@@ -39,6 +39,7 @@
             "HC-SOC2-01",
             "HC-BCP-01"
           ],
+          "fixtureDomain": "",
           "geography": "UAE",
           "integrations": [
             "Microsoft 365",
@@ -60,9 +61,9 @@
       "run_id": "eval-001",
       "status": "success",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-04T09:22:27.967710Z",
+      "timestamp": "2026-07-12T14:11:05.557678Z",
       "tool_used": "",
-      "trace_id": "trace-eval-001-e903fe99"
+      "trace_id": "trace-eval-001-5e00011b"
     },
     {
       "action": "delegate_evidence_search",
@@ -76,24 +77,19 @@
       "run_id": "eval-001",
       "status": "success",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-04T09:22:27.970648Z",
+      "timestamp": "2026-07-12T14:11:05.559204Z",
       "tool_used": "",
-      "trace_id": "trace-eval-001-e903fe99"
+      "trace_id": "trace-eval-001-5e00011b"
     },
     {
       "action": "retrieve_evidence",
       "agent_name": "Evidence Retrieval Agent",
-      "confidence": 0.76,
+      "confidence": 0.88,
       "input_summary": "Supplied request evidence, Node citations, local sample snippets, and case-scoped evidence memory.",
       "memory_key": "evidenceMatches",
-      "output_summary": "Retrieved 3 evidence match(es); memory provider=local-fallback; sufficiency=usable.",
+      "output_summary": "Retrieved 3 evidence match(es); memory provider=local-fallback; sufficiency=strong.",
       "payload": {
-        "localEvidenceArtifacts": [
-          "live-health.json",
-          "benchmark-report.json",
-          "readiness.json",
-          "sample-agent-run.json"
-        ],
+        "localEvidenceArtifacts": [],
         "match_count": 3,
         "missingEvidence": [
           "model-training exclusion",
@@ -112,7 +108,7 @@
                 "security"
               ],
               "evidence_id": "HC-DPA-01",
-              "score": 0.3626,
+              "score": 0.3508,
               "snippet": "Signed DPA covers patient-data processing, subprocessors, breach notification, retention, deletion assistance, and UAE cross-border transfer review before production.",
               "source": "input",
               "title": "Executed data processing addendum"
@@ -124,7 +120,7 @@
                 "security"
               ],
               "evidence_id": "HC-SOC2-01",
-              "score": 0.1887,
+              "score": 0.1842,
               "snippet": "Vendor provided current SOC 2 Type II bridge letter, ISO 27001 certificate, MFA, SSO, encryption, audit logging, vulnerability management, and annual penetration testing summary.",
               "source": "input",
               "title": "SOC 2 and ISO 27001 evidence summary"
@@ -136,7 +132,7 @@
                 "continuity"
               ],
               "evidence_id": "HC-BCP-01",
-              "score": 0.1087,
+              "score": 0.1042,
               "snippet": "Business continuity plan lists recovery contacts, disaster recovery test date, backup procedures, and exit assistance for analytics configuration export.",
               "source": "input",
               "title": "Continuity evidence"
@@ -156,14 +152,14 @@
       "run_id": "eval-001",
       "status": "success",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-04T09:22:27.974989Z",
+      "timestamp": "2026-07-12T14:11:05.562520Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-eval-001-e903fe99"
+      "trace_id": "trace-eval-001-5e00011b"
     },
     {
       "action": "retry_evidence_search",
       "agent_name": "Evidence Retrieval Agent",
-      "confidence": 0.68,
+      "confidence": 0.8,
       "input_summary": "Initial evidence coverage was weak or missing key proof.",
       "memory_key": "missingEvidence",
       "output_summary": "Retried with privacy/security/AI/continuity keywords through local-fallback; retained only sanitized evidence metadata.",
@@ -185,7 +181,7 @@
                 "security"
               ],
               "evidence_id": "HC-DPA-01",
-              "score": 0.3626,
+              "score": 0.3508,
               "snippet": "Signed DPA covers patient-data processing, subprocessors, breach notification, retention, deletion assistance, and UAE cross-border transfer review before production.",
               "source": "input",
               "title": "Executed data processing addendum"
@@ -197,7 +193,7 @@
                 "security"
               ],
               "evidence_id": "HC-SOC2-01",
-              "score": 0.1887,
+              "score": 0.1842,
               "snippet": "Vendor provided current SOC 2 Type II bridge letter, ISO 27001 certificate, MFA, SSO, encryption, audit logging, vulnerability management, and annual penetration testing summary.",
               "source": "input",
               "title": "SOC 2 and ISO 27001 evidence summary"
@@ -209,7 +205,7 @@
                 "continuity"
               ],
               "evidence_id": "HC-BCP-01",
-              "score": 0.1087,
+              "score": 0.1042,
               "snippet": "Business continuity plan lists recovery contacts, disaster recovery test date, backup procedures, and exit assistance for analytics configuration export.",
               "source": "input",
               "title": "Continuity evidence"
@@ -229,9 +225,9 @@
       "run_id": "eval-001",
       "status": "retry",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-04T09:22:27.978226Z",
+      "timestamp": "2026-07-12T14:11:05.564118Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-eval-001-e903fe99"
+      "trace_id": "trace-eval-001-5e00011b"
     },
     {
       "action": "validate_evidence",
@@ -248,9 +244,9 @@
       "run_id": "eval-001",
       "status": "success",
       "target_agent": "Security Specialist",
-      "timestamp": "2026-06-04T09:22:27.981683Z",
+      "timestamp": "2026-07-12T14:11:05.565959Z",
       "tool_used": "",
-      "trace_id": "trace-eval-001-e903fe99"
+      "trace_id": "trace-eval-001-5e00011b"
     },
     {
       "action": "validate_evidence",
@@ -267,9 +263,9 @@
       "run_id": "eval-001",
       "status": "success",
       "target_agent": "Responsible AI Specialist",
-      "timestamp": "2026-06-04T09:22:27.983496Z",
+      "timestamp": "2026-07-12T14:11:05.566433Z",
       "tool_used": "",
-      "trace_id": "trace-eval-001-e903fe99"
+      "trace_id": "trace-eval-001-5e00011b"
     },
     {
       "action": "critique_ai_governance_gap",
@@ -288,9 +284,9 @@
       "run_id": "eval-001",
       "status": "needs_revision",
       "target_agent": "Learning & Precedent Specialist",
-      "timestamp": "2026-06-04T09:22:27.985338Z",
+      "timestamp": "2026-07-12T14:11:05.566882Z",
       "tool_used": "",
-      "trace_id": "trace-eval-001-e903fe99"
+      "trace_id": "trace-eval-001-5e00011b"
     },
     {
       "action": "retrieve_precedent",
@@ -298,7 +294,7 @@
       "confidence": 0.78,
       "input_summary": "Case facts, missing evidence, and specialist challenges.",
       "memory_key": "learningContext",
-      "output_summary": "Matched precedent pattern: healthcare analytics + missing DPA/model-training exclusion -> conditional approval/human review; similar learning cases=5, top pattern=Healthcare analytics vendor missing model-training exclusion.",
+      "output_summary": "Matched precedent pattern: healthcare analytics + missing DPA/model-training exclusion -> continue review; not approval eligible; similar learning cases=5, top pattern=Healthcare analytics vendor missing model-training exclusion.",
       "payload": {
         "learningContext": {
           "advisoryOnly": true,
@@ -340,15 +336,15 @@
                 "ai-governance",
                 "healthcare"
               ],
-              "finalOutcome": "conditional approval after DPA amendment",
+              "finalOutcome": "continued review pending DPA amendment and rerun",
               "memoryId": "learn-healthcare-training-001",
               "missingEvidence": [
                 "model-training exclusion",
                 "DPA amendment"
               ],
-              "originalDecision": "conditional_approval",
-              "reviewerDecision": "conditional_approval",
-              "score": 0.4967,
+              "originalDecision": "conditionally_ready",
+              "reviewerDecision": "continue_review",
+              "score": 0.4747,
               "title": "Healthcare analytics vendor missing model-training exclusion",
               "type": "case_outcome"
             },
@@ -372,9 +368,9 @@
                 "signed DPA",
                 "human oversight plan"
               ],
-              "originalDecision": "conditional_approval",
+              "originalDecision": "conditionally_ready",
               "reviewerDecision": "reject",
-              "score": 0.3578,
+              "score": 0.3432,
               "title": "AI vendor permitted customer-data training",
               "type": "decision_override"
             },
@@ -391,7 +387,7 @@
                 "saas",
                 "cross-border"
               ],
-              "finalOutcome": "conditional approval after retention schedule",
+              "finalOutcome": "continued review pending retention schedule and rerun",
               "memoryId": "learn-cross-border-retention-001",
               "missingEvidence": [
                 "retention and deletion evidence",
@@ -399,8 +395,8 @@
                 "support region confirmation"
               ],
               "originalDecision": "needs_more_information",
-              "reviewerDecision": "conditional_approval",
-              "score": 0.3022,
+              "reviewerDecision": "continue_review",
+              "score": 0.2905,
               "title": "Cross-border SaaS missing retention schedule",
               "type": "evidence_quality_note"
             },
@@ -417,15 +413,15 @@
                 "saas",
                 "third-party-risk"
               ],
-              "finalOutcome": "conditional approval with subprocessor disclosure",
+              "finalOutcome": "continued review pending subprocessor disclosure and rerun",
               "memoryId": "learn-saas-subprocessors-001",
               "missingEvidence": [
                 "subprocessor register",
                 "cross-border transfer mechanism"
               ],
               "originalDecision": "needs_more_information",
-              "reviewerDecision": "conditional_approval",
-              "score": 0.2744,
+              "reviewerDecision": "continue_review",
+              "score": 0.2642,
               "title": "SaaS vendor missing subprocessor list",
               "type": "control_pattern"
             },
@@ -447,7 +443,7 @@
               "missingEvidence": [],
               "originalDecision": "approve",
               "reviewerDecision": "approve",
-              "score": 0.2467,
+              "score": 0.2379,
               "title": "Complete vendor package approved with monitoring",
               "type": "case_outcome"
             }
@@ -458,17 +454,17 @@
         "precedent": {
           "advisoryOnly": true,
           "confidence": 0.78,
-          "pattern": "healthcare analytics + missing DPA/model-training exclusion -> conditional approval/human review",
-          "recommendation": "conditional_human_review"
+          "pattern": "healthcare analytics + missing DPA/model-training exclusion -> continue review; not approval eligible",
+          "recommendation": "continue_review"
         }
       },
       "retry_count": 0,
       "run_id": "eval-001",
       "status": "success",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-04T09:22:27.990200Z",
+      "timestamp": "2026-07-12T14:11:05.570374Z",
       "tool_used": "local-jsonl",
-      "trace_id": "trace-eval-001-e903fe99"
+      "trace_id": "trace-eval-001-5e00011b"
     },
     {
       "action": "compass_advisory_unavailable",
@@ -482,26 +478,21 @@
       "run_id": "eval-001",
       "status": "fallback_used",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-04T09:22:27.996317Z",
+      "timestamp": "2026-07-12T14:11:05.575386Z",
       "tool_used": "sample_mode",
-      "trace_id": "trace-eval-001-e903fe99"
+      "trace_id": "trace-eval-001-5e00011b"
     },
     {
-      "action": "revise_required_controls",
+      "action": "record_advisory_challenges",
       "agent_name": "Deterministic Decision Owner",
       "confidence": 0.92,
       "input_summary": "Specialist challenges, precedent pattern, and Compass advisory status.",
       "memory_key": "requiredActions",
-      "output_summary": "Required controls revised to 6 action(s); final risk=high.",
+      "output_summary": "Recorded advisory challenges without changing the Node-owned 1 required control(s).",
       "payload": {
         "llm_advisory_only": true,
         "required_actions": [
-          "Ask the domain owner whether regulatory compliance obligations apply.",
-          "Require signed model-training exclusion or approved customer-data-use terms before approval.",
-          "Resolve evidence gap: Regulatory Compliance applicability needs confirmation.",
-          "Require signed model-training exclusion for patient or customer data before production.",
-          "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
-          "Require signed model-training exclusion and human oversight plan before reconsideration."
+          "Ask the domain owner whether regulatory compliance obligations apply."
         ],
         "specialist_challenge_count": 1
       },
@@ -509,9 +500,9 @@
       "run_id": "eval-001",
       "status": "needs_revision",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-04T09:22:27.998317Z",
+      "timestamp": "2026-07-12T14:11:05.575887Z",
       "tool_used": "",
-      "trace_id": "trace-eval-001-e903fe99"
+      "trace_id": "trace-eval-001-5e00011b"
     },
     {
       "action": "escalate_human_review",
@@ -521,24 +512,24 @@
       "memory_key": "humanReviewRequired",
       "output_summary": "Escalated to accountable human reviewer; no autonomous approval permitted.",
       "payload": {
-        "decision": "conditional_approval",
+        "decision": "conditionally_ready",
         "risk_level": "high"
       },
       "retry_count": 1,
       "run_id": "eval-001",
       "status": "escalated",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-04T09:22:28.000523Z",
+      "timestamp": "2026-07-12T14:11:05.576383Z",
       "tool_used": "",
-      "trace_id": "trace-eval-001-e903fe99"
+      "trace_id": "trace-eval-001-5e00011b"
     },
     {
       "action": "apply_deterministic_policy",
       "agent_name": "Deterministic Decision Owner",
       "confidence": 0.95,
-      "input_summary": "Node deterministic result, specialist critiques, precedent, and advisory-only Compass output.",
+      "input_summary": "Authoritative Node decision plus advisory-only specialist, precedent, and Compass context.",
       "memory_key": "decisionDraft",
-      "output_summary": "Final decision sealed as conditional_approval by deterministic policy owner.",
+      "output_summary": "Preserved the Node-owned conditionally_ready decision unchanged.",
       "payload": {
         "compass_status": "skipped_sample_mode",
         "final_owner": "Deterministic Decision Owner",
@@ -549,9 +540,9 @@
       "run_id": "eval-001",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-04T09:22:28.002725Z",
-      "tool_used": "deterministic_rules_engine",
-      "trace_id": "trace-eval-001-e903fe99"
+      "timestamp": "2026-07-12T14:11:05.576984Z",
+      "tool_used": "deterministic_node_engine",
+      "trace_id": "trace-eval-001-5e00011b"
     },
     {
       "action": "package_audit_trace",
@@ -561,16 +552,16 @@
       "memory_key": "finalDecision",
       "output_summary": "Packaged judge-readable audit trace with evidence, specialist challenges, and final owner.",
       "payload": {
-        "log_file": "logs/trace-eval-001.jsonl",
+        "log_file": "logs/trace-eval-001-ce-eval-001-5e00011b.jsonl",
         "trace_events": 14
       },
       "retry_count": 0,
       "run_id": "eval-001",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-04T09:22:28.005043Z",
+      "timestamp": "2026-07-12T14:11:05.577579Z",
       "tool_used": "",
-      "trace_id": "trace-eval-001-e903fe99"
+      "trace_id": "trace-eval-001-5e00011b"
     },
     {
       "action": "finalize_response",
@@ -578,18 +569,18 @@
       "confidence": 0.94,
       "input_summary": "Final packaged decision and trace summary.",
       "memory_key": "finalDecision",
-      "output_summary": "Deterministic review supports conditional approval with named controls. Risk is high; 2 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+      "output_summary": "Deterministic review requires continued review with named controls and is not approval-eligible. Risk is high; 1 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
       "payload": {
-        "decision": "conditional_approval",
+        "decision": "conditionally_ready",
         "risk_level": "high"
       },
       "retry_count": 0,
       "run_id": "eval-001",
       "status": "success",
       "target_agent": "",
-      "timestamp": "2026-06-04T09:22:28.006787Z",
+      "timestamp": "2026-07-12T14:11:05.578070Z",
       "tool_used": "",
-      "trace_id": "trace-eval-001-e903fe99"
+      "trace_id": "trace-eval-001-5e00011b"
     }
   ],
   "agents": [
@@ -634,16 +625,17 @@
       "role": "Packages the decision, evidence, collaboration trace, and review artifacts."
     }
   ],
-  "execution_time_seconds": 0.105,
+  "execution_time_seconds": 0.104,
   "log_file": "logs/example_1_trace.jsonl",
   "output": {
+    "approval_eligible": false,
     "artifacts": [
       {
         "path": "logs/example_1_trace.jsonl",
         "type": "trace_log"
       },
       {
-        "source": "deterministic_node_bridge_plus_python_council",
+        "source": "deterministic_node_bridge_with_python_advisory",
         "type": "decision_payload"
       }
     ],
@@ -668,7 +660,7 @@
         "synthetic precedent added",
         "governed learning memory updated",
         "Compass advisory skipped in sample mode",
-        "required action added"
+        "advisory challenges recorded without changing policy"
       ],
       "specialist_challenges": [
         "AI/customer-data training proof incomplete: model-training exclusion."
@@ -678,10 +670,55 @@
         "Security evidence validates access, encryption, logging, and assurance signals for reviewer use."
       ]
     },
-    "decision": "conditional_approval",
+    "control_plan": [
+      "business continuity plan",
+      "disaster recovery evidence",
+      "exit assistance",
+      "signed dpa",
+      "subprocessor register",
+      "retention and deletion evidence",
+      "security assurance review",
+      "identity and access controls",
+      "integration risk assessment",
+      "license entitlement review",
+      "tenant access review",
+      "admin privilege review",
+      "obligation mapping",
+      "policy exception workflow"
+    ],
+    "decision": "conditionally_ready",
     "decision_authority": {
       "final_owner": "Deterministic Decision Owner",
       "llm_advisory_only": true
+    },
+    "decision_details": {
+      "approvalEligible": false,
+      "blockingGaps": 1,
+      "evidenceQuality": "strong",
+      "highSeverityGaps": 1,
+      "humanApprovalRequired": true,
+      "mediumSeverityGaps": 0,
+      "rationale": "The case can progress only if the listed controls and confirmations are completed.",
+      "readinessScore": 0.58,
+      "recommendation": "Continue review with named controls",
+      "requiredControls": [
+        "Ask the domain owner whether regulatory compliance obligations apply."
+      ],
+      "status": "conditionally_ready"
+    },
+    "decision_readiness": {
+      "approvalEligible": false,
+      "blockingGaps": 1,
+      "evidenceQuality": "strong",
+      "highSeverityGaps": 1,
+      "humanApprovalRequired": true,
+      "mediumSeverityGaps": 0,
+      "rationale": "The case can progress only if the listed controls and confirmations are completed.",
+      "requiredControls": [
+        "Ask the domain owner whether regulatory compliance obligations apply."
+      ],
+      "score": 0.58,
+      "status": "conditionally_ready"
     },
     "evidence_used": [
       {
@@ -692,7 +729,7 @@
           "security"
         ],
         "evidence_id": "HC-DPA-01",
-        "score": 0.3626,
+        "score": 0.3508,
         "snippet": "Signed DPA covers patient-data processing, subprocessors, breach notification, retention, deletion assistance, and UAE cross-border transfer review before production.",
         "source": "input",
         "title": "Executed data processing addendum"
@@ -704,7 +741,7 @@
           "security"
         ],
         "evidence_id": "HC-SOC2-01",
-        "score": 0.1887,
+        "score": 0.1842,
         "snippet": "Vendor provided current SOC 2 Type II bridge letter, ISO 27001 certificate, MFA, SSO, encryption, audit logging, vulnerability management, and annual penetration testing summary.",
         "source": "input",
         "title": "SOC 2 and ISO 27001 evidence summary"
@@ -716,13 +753,29 @@
           "continuity"
         ],
         "evidence_id": "HC-BCP-01",
-        "score": 0.1087,
+        "score": 0.1042,
         "snippet": "Business continuity plan lists recovery contacts, disaster recovery test date, backup procedures, and exit assistance for analytics configuration export.",
         "source": "input",
         "title": "Continuity evidence"
       }
     ],
-    "executive_summary": "Deterministic review supports conditional approval with named controls. Risk is high; 2 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "executive_summary": "Deterministic review requires continued review with named controls and is not approval-eligible. Risk is high; 1 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "fixture_document_analysis": {
+      "detected_domain": "",
+      "documents_used": [],
+      "expected_profile_match": false,
+      "extraction_status": "",
+      "matched_missing_evidence": [],
+      "matched_risk_domains": [],
+      "rejected": []
+    },
+    "gaps": [
+      {
+        "action": "Ask the domain owner whether regulatory compliance obligations apply.",
+        "gap": "Regulatory Compliance applicability needs confirmation.",
+        "severity": "high"
+      }
+    ],
     "human_review_required": true,
     "learning_memory": {
       "advisoryOnly": true,
@@ -769,7 +822,6 @@
       "status": "skipped_sample_mode"
     },
     "missing_evidence": [
-      "model-training exclusion",
       "Regulatory Compliance applicability needs confirmation."
     ],
     "rag_evidence_memory": {
@@ -785,7 +837,7 @@
             "security"
           ],
           "evidence_id": "HC-DPA-01",
-          "score": 0.3626,
+          "score": 0.3508,
           "snippet": "Signed DPA covers patient-data processing, subprocessors, breach notification, retention, deletion assistance, and UAE cross-border transfer review before production.",
           "source": "input",
           "title": "Executed data processing addendum"
@@ -797,7 +849,7 @@
             "security"
           ],
           "evidence_id": "HC-SOC2-01",
-          "score": 0.1887,
+          "score": 0.1842,
           "snippet": "Vendor provided current SOC 2 Type II bridge letter, ISO 27001 certificate, MFA, SSO, encryption, audit logging, vulnerability management, and annual penetration testing summary.",
           "source": "input",
           "title": "SOC 2 and ISO 27001 evidence summary"
@@ -809,7 +861,7 @@
             "continuity"
           ],
           "evidence_id": "HC-BCP-01",
-          "score": 0.1087,
+          "score": 0.1042,
           "snippet": "Business continuity plan lists recovery contacts, disaster recovery test date, backup procedures, and exit assistance for analytics configuration export.",
           "source": "input",
           "title": "Continuity evidence"
@@ -825,28 +877,24 @@
       "retrievedMatchCount": 3
     },
     "required_actions": [
-      "Ask the domain owner whether regulatory compliance obligations apply.",
-      "Require signed model-training exclusion or approved customer-data-use terms before approval.",
-      "Resolve evidence gap: Regulatory Compliance applicability needs confirmation.",
-      "Require signed model-training exclusion for patient or customer data before production.",
-      "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
-      "Require signed model-training exclusion and human oversight plan before reconsideration."
+      "Ask the domain owner whether regulatory compliance obligations apply."
     ],
     "reviewer_questions": [
       "Has any analytics data been used for model improvement or service training?",
       "Does the vendor use prompts, tickets, or submitted records for model improvement?"
     ],
     "risk_level": "high",
-    "summary": "Deterministic review supports conditional approval with named controls. Risk is high; 2 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
+    "summary": "Deterministic review requires continued review with named controls and is not approval-eligible. Risk is high; 1 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
   },
   "result": {
+    "approval_eligible": false,
     "artifacts": [
       {
         "path": "logs/example_1_trace.jsonl",
         "type": "trace_log"
       },
       {
-        "source": "deterministic_node_bridge_plus_python_council",
+        "source": "deterministic_node_bridge_with_python_advisory",
         "type": "decision_payload"
       }
     ],
@@ -871,7 +919,7 @@
         "synthetic precedent added",
         "governed learning memory updated",
         "Compass advisory skipped in sample mode",
-        "required action added"
+        "advisory challenges recorded without changing policy"
       ],
       "specialist_challenges": [
         "AI/customer-data training proof incomplete: model-training exclusion."
@@ -881,10 +929,55 @@
         "Security evidence validates access, encryption, logging, and assurance signals for reviewer use."
       ]
     },
-    "decision": "conditional_approval",
+    "control_plan": [
+      "business continuity plan",
+      "disaster recovery evidence",
+      "exit assistance",
+      "signed dpa",
+      "subprocessor register",
+      "retention and deletion evidence",
+      "security assurance review",
+      "identity and access controls",
+      "integration risk assessment",
+      "license entitlement review",
+      "tenant access review",
+      "admin privilege review",
+      "obligation mapping",
+      "policy exception workflow"
+    ],
+    "decision": "conditionally_ready",
     "decision_authority": {
       "final_owner": "Deterministic Decision Owner",
       "llm_advisory_only": true
+    },
+    "decision_details": {
+      "approvalEligible": false,
+      "blockingGaps": 1,
+      "evidenceQuality": "strong",
+      "highSeverityGaps": 1,
+      "humanApprovalRequired": true,
+      "mediumSeverityGaps": 0,
+      "rationale": "The case can progress only if the listed controls and confirmations are completed.",
+      "readinessScore": 0.58,
+      "recommendation": "Continue review with named controls",
+      "requiredControls": [
+        "Ask the domain owner whether regulatory compliance obligations apply."
+      ],
+      "status": "conditionally_ready"
+    },
+    "decision_readiness": {
+      "approvalEligible": false,
+      "blockingGaps": 1,
+      "evidenceQuality": "strong",
+      "highSeverityGaps": 1,
+      "humanApprovalRequired": true,
+      "mediumSeverityGaps": 0,
+      "rationale": "The case can progress only if the listed controls and confirmations are completed.",
+      "requiredControls": [
+        "Ask the domain owner whether regulatory compliance obligations apply."
+      ],
+      "score": 0.58,
+      "status": "conditionally_ready"
     },
     "evidence_used": [
       {
@@ -895,7 +988,7 @@
           "security"
         ],
         "evidence_id": "HC-DPA-01",
-        "score": 0.3626,
+        "score": 0.3508,
         "snippet": "Signed DPA covers patient-data processing, subprocessors, breach notification, retention, deletion assistance, and UAE cross-border transfer review before production.",
         "source": "input",
         "title": "Executed data processing addendum"
@@ -907,7 +1000,7 @@
           "security"
         ],
         "evidence_id": "HC-SOC2-01",
-        "score": 0.1887,
+        "score": 0.1842,
         "snippet": "Vendor provided current SOC 2 Type II bridge letter, ISO 27001 certificate, MFA, SSO, encryption, audit logging, vulnerability management, and annual penetration testing summary.",
         "source": "input",
         "title": "SOC 2 and ISO 27001 evidence summary"
@@ -919,13 +1012,29 @@
           "continuity"
         ],
         "evidence_id": "HC-BCP-01",
-        "score": 0.1087,
+        "score": 0.1042,
         "snippet": "Business continuity plan lists recovery contacts, disaster recovery test date, backup procedures, and exit assistance for analytics configuration export.",
         "source": "input",
         "title": "Continuity evidence"
       }
     ],
-    "executive_summary": "Deterministic review supports conditional approval with named controls. Risk is high; 2 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "executive_summary": "Deterministic review requires continued review with named controls and is not approval-eligible. Risk is high; 1 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "fixture_document_analysis": {
+      "detected_domain": "",
+      "documents_used": [],
+      "expected_profile_match": false,
+      "extraction_status": "",
+      "matched_missing_evidence": [],
+      "matched_risk_domains": [],
+      "rejected": []
+    },
+    "gaps": [
+      {
+        "action": "Ask the domain owner whether regulatory compliance obligations apply.",
+        "gap": "Regulatory Compliance applicability needs confirmation.",
+        "severity": "high"
+      }
+    ],
     "human_review_required": true,
     "learning_memory": {
       "advisoryOnly": true,
@@ -972,7 +1081,6 @@
       "status": "skipped_sample_mode"
     },
     "missing_evidence": [
-      "model-training exclusion",
       "Regulatory Compliance applicability needs confirmation."
     ],
     "rag_evidence_memory": {
@@ -988,7 +1096,7 @@
             "security"
           ],
           "evidence_id": "HC-DPA-01",
-          "score": 0.3626,
+          "score": 0.3508,
           "snippet": "Signed DPA covers patient-data processing, subprocessors, breach notification, retention, deletion assistance, and UAE cross-border transfer review before production.",
           "source": "input",
           "title": "Executed data processing addendum"
@@ -1000,7 +1108,7 @@
             "security"
           ],
           "evidence_id": "HC-SOC2-01",
-          "score": 0.1887,
+          "score": 0.1842,
           "snippet": "Vendor provided current SOC 2 Type II bridge letter, ISO 27001 certificate, MFA, SSO, encryption, audit logging, vulnerability management, and annual penetration testing summary.",
           "source": "input",
           "title": "SOC 2 and ISO 27001 evidence summary"
@@ -1012,7 +1120,7 @@
             "continuity"
           ],
           "evidence_id": "HC-BCP-01",
-          "score": 0.1087,
+          "score": 0.1042,
           "snippet": "Business continuity plan lists recovery contacts, disaster recovery test date, backup procedures, and exit assistance for analytics configuration export.",
           "source": "input",
           "title": "Continuity evidence"
@@ -1028,22 +1136,17 @@
       "retrievedMatchCount": 3
     },
     "required_actions": [
-      "Ask the domain owner whether regulatory compliance obligations apply.",
-      "Require signed model-training exclusion or approved customer-data-use terms before approval.",
-      "Resolve evidence gap: Regulatory Compliance applicability needs confirmation.",
-      "Require signed model-training exclusion for patient or customer data before production.",
-      "Reject or escalate when customer-data model training is permitted and no signed opt-out exists.",
-      "Require signed model-training exclusion and human oversight plan before reconsideration."
+      "Ask the domain owner whether regulatory compliance obligations apply."
     ],
     "reviewer_questions": [
       "Has any analytics data been used for model improvement or service training?",
       "Does the vendor use prompts, tickets, or submitted records for model improvement?"
     ],
     "risk_level": "high",
-    "summary": "Deterministic review supports conditional approval with named controls. Risk is high; 2 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
+    "summary": "Deterministic review requires continued review with named controls and is not approval-eligible. Risk is high; 1 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
   },
   "run_id": "eval-001",
   "status": "success",
-  "trace_id": "trace-eval-001-e903fe99",
+  "trace_id": "trace-eval-001-5e00011b",
   "use_case_id": "21"
 }

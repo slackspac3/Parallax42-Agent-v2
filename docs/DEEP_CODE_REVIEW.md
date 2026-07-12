@@ -2,28 +2,26 @@
 
 **Review date:** 2026-07-12
 
-**Reviewed revision:** `a98556c` (`main`)
+**Reviewed revision:** `a98556c` (`main`); remediation implementation reviewed in the 2026-07-12 local worktree.
 
 **Scope:** product architecture, agent behavior, policy logic, evidence handling, tenant isolation, security, reliability, performance, code quality, testing, accessibility, UI/UX, deployment, and operations.
-**Status:** current review and improvement backlog. This report records findings; it does not claim that the open findings have been remediated.
+**Status:** current review, P0 remediation record, and residual backlog. The seven P0 findings below are remediated and full local QA is green. CI, deployment, and authenticated live-workflow verification remain pending the release run.
 
 ## Executive verdict
 
-Parallax42 Agent v2 is a credible and unusually complete demo foundation. It has real server-side model access, semantic retrieval, durable case/session state, explicit human review, broad deterministic tests, and a polished workflow. It is not yet safe to describe as an evidence-grounded or tenant-safe compliance decision system.
+Parallax42 Agent v2 is a credible and unusually complete demo foundation. It has real server-side model access, semantic retrieval, durable case/session state, explicit human review, broad deterministic tests, and a polished workflow. The seven defects found in the original review have now been addressed at their shared boundaries:
 
-Seven release blockers affect the truthfulness or integrity of a real user test:
-
-1. A question or generic sentence mentioning evidence can become the evidence that makes a case approval-ready.
-2. One negated phrase can suppress an entire risk domain even when stronger text contradicts it.
-3. One medium gap can produce both `blockingGaps: 1` and a `ready`/approval-eligible decision.
-4. The conversation enrichment path can retrieve another authenticated workspace's learning memory.
-5. A council run returns a stale draft version, so the next interaction can fail with `409 stale_case_version`.
-6. The Python evaluator can override the supposedly authoritative Node policy decision.
-7. Audit reads are not tenant-scoped; `/api/logs` is public, and Vercel audit storage is instance-local `/tmp`.
+1. Evidence carries assertion state and provenance; questions, mentions, placeholders, and policy references cannot satisfy controls.
+2. Applicability is evaluated by source statement; positive/negative conflict becomes a blocking contradiction.
+3. The canonical Node decision makes any unresolved gap nonterminal; only `ready` yields `approvalEligible: true`.
+4. Learning and governance enrichment derive workspace/project from the authenticated actor and ignore caller-selected scope.
+5. Council completion returns an authoritative completed snapshot/version that replaces browser state.
+6. Python preserves Node decision, risk, gaps, controls, readiness, and approval eligibility unchanged.
+7. Hosted audit uses scoped PostgreSQL hash chains; detailed reads are role-gated/tenant-filtered, `/api/logs` is a private 404, and hosted writes fail closed without Postgres.
 
 The live Compass service is not the root cause of these defects. A production probe on the reviewed deployment reported an authenticated named client, GPT-5.1 chat, `text-embedding-3-large` embeddings, active semantic retrieval, durable PostgreSQL and Qdrant, and enforced demo authentication. The highest-risk failures occur after or around those integrations—in evidence classification, state authority, tenancy, and presentation.
 
-**Release recommendation:** keep the site available as a clearly labeled demo, but do not use approval status or exported review packs for a real compliance decision until P0 acceptance gates are met. Do not onboard multiple real customer workspaces until tenant isolation and audit scoping are fixed.
+**Release recommendation:** run the complete local QA suite, CI, production deployment, and the authenticated two-council browser workflow before presenting the remediation as live. Keep the site synthetic/demo-only until the remaining P1 security and artifact controls are closed: Entra/membership/RLS, immutable server-loaded runs/packs, WORM audit export and restore proof, atomic business/audit writes, retention/erasure, and distributed admission controls.
 
 ## Verified current state
 
@@ -31,17 +29,17 @@ The live Compass service is not the root cause of these defects. A production pr
 |---|---|
 | Product | Static vanilla JavaScript cockpit with Node/CommonJS product APIs on Vercel |
 | Live AI | Shared Compass gateway, named client token, GPT-5.1 chat, `text-embedding-3-large` |
-| Policy owner | Node deterministic engine in the main product path; Python can currently reinterpret it in the evaluator path |
+| Policy owner | Node deterministic engine; Python preserves the Node policy contract and contributes advisory output only |
 | Advisory runtime | Node gateway specialists active; Python CrewAI unavailable/optional in the probed deployment |
 | Business persistence | PostgreSQL active and durable for records such as sessions, cases, and quotas |
 | Retrieval | Qdrant active and durable; semantic embeddings active; deterministic embeddings are a fallback |
 | Authentication | Demo/session authorization enforced; enterprise Entra identity is not implemented |
 | Parser relay | Disabled in the probed production deployment; the code path still needs hardening before enablement |
-| Audit | Hash-chained local JSONL; Vercel provider reports `local_tmp`, `durable: false`, `enterpriseReady: false` |
-| GitHub | Latest CI, Pages, and preflight runs green; `main` has no branch protection |
-| Tests | 240/240 Node tests and 11/11 Python security tests pass; `npm audit` reports zero known vulnerabilities |
+| Audit | Local remediation uses tenant/project PostgreSQL hash chains for hosted runtimes; JSONL is local/test-only; immutable retention remains absent |
+| GitHub | At the original review, CI/Pages/preflight were green; remediation CI is pending. `main` has no branch protection. |
+| Tests | Final remediation worktree: 269/269 Node and 13/13 Python security tests; full local `npm run qa`, two-turn Playwright mock, and 4/4 benchmark pass. CI/live verification is pending. |
 
-This state is a point-in-time observation, not a permanent service guarantee. Environment-specific capability labels should always come from the server response for the current interaction.
+Hosted-service facts above are point-in-time observations. Local remediation claims are code/test observations, not proof that the production URL has been updated; environment-specific capability labels must come from the server response for the current interaction.
 
 ## Method
 
@@ -69,14 +67,20 @@ No destructive production mutations were made. The production probe used an ephe
 
 ### P42-REV-001 — Evidence questions and mentions become proof
 
-**Evidence**
+**Status:** Remediated locally.
+
+**Implementation:** `lib/evidenceAssertions.js` normalizes `assertionState` and `provenance`, treats question-mark assertions as requests regardless of source, and applies one usable-evidence predicate to documents and semantic matches. `lib/conversationState.js` retains chat assertions without promoting them to usable proof. `lib/caseLifecycle.js` treats every caller-supplied document as unverified chat provenance; only a real demo session may resolve its server-issued canonical fixture. `lib/complianceAgent.js` separates candidate retrieval matches from verified evidence matches before citations, evidence quality, or eligibility. Policy references stay separate from supplied evidence.
+
+**Regression:** `tests/unit/complianceAgent.test.js` covers chat mentions/placeholders, policy references, the direct Agentathon trailing-question payload, and semantic question matches (including source-aware negation). `tests/unit/conversationAgent.test.js` covers an evidence-availability question that remains `requested`. `tests/unit/sessionLifecycle.test.js` sends forged question/mention documents through authenticated handlers and proves a non-demo actor cannot claim a canonical fixture. The case-intelligence UI regressions reject trailing questions, retrieval questions, blank content, and metadata-only files as proof.
+
+**Original evidence**
 
 - `lib/conversationState.js:379-382`, `796-802`, and `1202-1214`
 - `lib/complianceAgent.js:115-117`, `267-273`, `423-486`, and `590-592`
 
 The intake pipeline recognizes evidence-flavored words without reliably distinguishing a question, denial, placeholder, request, policy reference, or uploaded/parsed proof. Static domain-library identifiers can also be returned as evidence IDs even when those references were never retrieved as case evidence.
 
-**Reproduced behavior**
+**Original reproduced behavior**
 
 > Review a UAE vendor. The owner is Operations. Is SOC 2 evidence available?
 
@@ -86,13 +90,19 @@ The question produced a `CHAT-01` evidence record, `evidenceQuality.usable: true
 
 **Required change:** model evidence assertions with explicit states such as `mentioned`, `requested`, `provided`, `parsed`, and `verified`; retain source spans and provenance; require control-level entailment before satisfying a requirement; keep policy references separate from customer evidence.
 
-**Acceptance gate:** interrogative, negative, speculative, unavailable-document, placeholder, and policy-reference-only fixtures never satisfy a control. Only a server-retrieved or uploaded passage with provenance can do so.
+**Acceptance result:** the focused adversarial fixtures are present and pass locally. Expand this into the versioned evaluation corpus before enterprise use.
 
 ### P42-REV-002 — Global negation suppresses contradictory risk
 
-**Evidence:** `lib/evidenceLibrary.js:126-143` and `158-205` flatten the case into one string and use broad phrase checks.
+**Status:** Remediated locally.
 
-**Reproduced behavior**
+**Implementation:** `lib/evidenceLibrary.js` splits case/document/retrieval text into source-tagged statements, uses predicate-specific non-applicability grammar, defaults ambiguous or control-absence negation to review, exposes positive/negative assertion sets, and marks a domain contradiction when they coexist. `lib/complianceAgent.js` converts that contradiction into a blocking gap.
+
+**Regression:** `tests/unit/complianceAgent.test.js` exercises AI, privacy, and business-continuity contradictions plus 13 adversarial negation variants for controls, safeguards, frameworks, validation, testing, and recovery objectives; none can become approval-eligible.
+
+**Original evidence:** `lib/evidenceLibrary.js:126-143` and `158-205` flattened the case into one string and used broad phrase checks.
+
+**Original reproduced behavior**
 
 - “Vendor says no AI, but terms permit model training and automated decisions using customer data” suppresses the AI domain.
 - “Vendor says no personal data, but the DPA states it processes PII” suppresses privacy.
@@ -102,21 +112,33 @@ The question produced a `CHAT-01` evidence record, `evidenceQuality.usable: true
 
 **Required change:** retain statement and source identity, assign source authority, represent contradictions explicitly, and make unresolved material contradictions blocking.
 
-**Acceptance gate:** the three adversarial examples above produce explicit contradictions and cannot return `ready` until a human resolves them.
+**Acceptance result:** the three adversarial examples produce explicit contradictions and cannot return `ready` in the focused local regression.
 
 ### P42-REV-003 — One medium gap produces inconsistent approval readiness
 
-**Evidence:** `lib/complianceAgent.js:379-411` treats one medium gap as ready, while `lib/complianceAgent.js:489-504` counts all gaps as blocking.
+**Status:** Remediated locally.
+
+**Implementation:** `lib/complianceAgent.js` derives status, rationale, counts, controls, and eligibility from one decision builder. Any unresolved high or medium gap returns `conditionally_ready` or `not_ready`; only `ready` yields `approvalEligible: true`. `lib/caseApproval.js` and the browser consume that explicit field and reject/hide approval otherwise.
+
+**Regression:** `tests/unit/complianceAgent.test.js` covers the one-medium-gap invariant; `tests/unit/sessionLifecycle.test.js` proves a conditionally-ready case cannot become terminal approval.
+
+**Original evidence:** `lib/complianceAgent.js:379-411` treated one medium gap as ready, while `lib/complianceAgent.js:489-504` counted all gaps as blocking.
 
 **Impact:** a response can simultaneously say `blockingGaps: 1`, `approvalEligible: true`, and “No blocking gaps.” Consumers cannot know which field is authoritative.
 
 **Required change:** define one canonical decision table and derive status, rationale, blocking count, approval eligibility, and UI actions from that single result.
 
-**Acceptance gate:** every gap combination passes a table-driven invariant test; an unresolved medium applicability gap is at least conditional, never unconditional ready.
+**Acceptance result:** the one-medium and conditional-approval boundary regressions pass locally. Extend the table when new severity/status combinations are added.
 
 ### P42-REV-004 — Authenticated cross-workspace learning-memory retrieval
 
-**Evidence**
+**Status:** Remediated locally for the confirmed learning/governance enrichment paths.
+
+**Implementation:** `lib/serverSideRetrieval.js`, `lib/learningMemory.js`, and `lib/governanceReferenceStore.js` derive workspace/project from the authenticated actor and ignore caller-selected namespace fields. Offline import scripts can write only explicitly public-safe material into a dedicated immutable-read public corpus that actor-scoped searches may include; tenant-private records never use that namespace.
+
+**Regression:** `tests/unit/learningMemory.test.js` seeds two workspaces and proves direct plus conversation enrichment cannot return the victim marker; `tests/unit/governanceReferenceStore.test.js` provides the same hostile-scope check and proves a demo actor can read the trusted public corpus without seeing another tenant's private reference.
+
+**Original evidence**
 
 - `lib/httpHandlers.js:181-190`
 - `lib/serverSideRetrieval.js:178-191`
@@ -124,34 +146,46 @@ The question produced a `CHAT-01` evidence record, `evidenceQuality.usable: true
 
 Evidence retrieval passes the authenticated actor, but conversation learning enrichment creates a namespace from request/draft workspace and project values and calls the learning layer without actor enforcement. Direct learning routes correctly override those values, showing the intended pattern. Governance enrichment at `lib/serverSideRetrieval.js:130-138` has the same trust-boundary smell.
 
-**Confirmed reproduction:** an authenticated actor supplied a victim workspace identifier and received a seeded confidential reviewer note, outcome, and missing-evidence information from that workspace.
+**Original confirmed reproduction:** an authenticated actor supplied a victim workspace identifier and received a seeded confidential reviewer note, outcome, and missing-evidence information from that workspace.
 
 **Impact:** cross-tenant disclosure of reviewer feedback and decision memory.
 
 **Required change:** derive organization/workspace/project exactly once from the authenticated actor in the retrieval layer. Never accept tenant scope from a draft or request body. Apply the same rule to evidence, governance, learning, audit, exports, and cases.
 
-**Acceptance gate:** malicious-workspace tests cover every read and write path; database policies or equivalent server-enforced membership checks prevent cross-tenant access independently of UI input.
+**Acceptance result:** the exploited learning path and sibling governance path pass hostile-scope tests. Complete resource-wide hostile A/B coverage, explicit memberships/composite keys, and PostgreSQL RLS remain P1 defense-in-depth work.
 
 ### P42-REV-005 — Council completion leaves the next interaction stale
 
-**Evidence**
+**Status:** Remediated locally.
+
+**Implementation:** `lib/httpHandlers.js` returns one completed case snapshot and assigns its final version to the run and case draft; runtime failure and post-completion audit failure responses also carry the authoritative recovered/persisted snapshot. `public/app.js` replaces local draft state on success and recovery.
+
+**Regression:** `tests/unit/sessionLifecycle.test.js` covers council -> follow-up -> second council with monotonically authoritative versions, runtime failure -> follow-up -> rerun, and successful council + failed audit append -> follow-up -> rerun. `tests/e2e/advisor-regression-mock.js` asserts the browser submits the completed version and successfully reruns.
+
+**Original evidence**
 
 - `lib/httpHandlers.js:191-205`
 - `public/app.js:2679-2712`
 
 The handler saves a pre-run draft version, council begin/complete increments it again, and only `result.run.caseVersion` receives the final value. The client ignores that field and merges the stale pre-run draft into local state.
 
-**Reproduction:** a case moved from v1 to draft v2 and stored council v4; the following chat turn used v2 and failed with `409 stale_case_version`.
+**Original reproduction:** a case moved from v1 to draft v2 and stored council v4; the following chat turn used v2 and failed with `409 stale_case_version`.
 
 **Impact:** the advertised “interact, run council, continue testing” demo path is not reliable.
 
 **Required change:** return one authoritative final case snapshot after council completion. The browser must replace, not reconstruct, server version state.
 
-**Acceptance gate:** a deployed E2E test completes intake → council → follow-up chat → second council without reload or version conflict.
+**Acceptance result:** unit and Playwright mock flows pass locally. The same sequence on the deployed authenticated URL is still a release-verification item.
 
 ### P42-REV-006 — Python can override the authoritative Node decision
 
-**Evidence**
+**Status:** Remediated locally.
+
+**Implementation:** `app/agentathon_orchestrator.py` no longer recomputes decision/risk/actions from precedent or specialist output. It returns Node `decision`, `risk_level`, `gaps`, `control_plan`, `decision_readiness`, and approval eligibility unchanged; advisory challenges are recorded separately.
+
+**Regression:** `scripts/check_agentathon_wrapper.py` compares FastAPI output with direct Node output for the immutable policy fields. `app/node_bridge.py` rejects incomplete/inconsistent success contracts atomically, and `tests/python/test_security_boundaries.py` covers schema drift plus the evaluator boundary.
+
+**Original evidence**
 
 - `app/node_bridge.py:39-118`
 - `app/agentathon_orchestrator.py:150-166`, `1219-1257`, and `1491-1504`
@@ -162,11 +196,17 @@ Python spawns Node for a result and then recomputes the decision. An advisory pr
 
 **Required change:** choose one decision owner. The simplest boundary is Node for policy/cases/evidence, with Python limited to specialist or evaluation output that cannot alter the decision.
 
-**Acceptance gate:** parity fixtures across Node, FastAPI, dry-run, fallback, and live modes have identical immutable policy fields and hashes.
+**Acceptance result:** the direct Node/FastAPI contract parity check passes locally. A signed policy hash and a real live-mode parity run remain hardening items.
 
 ### P42-REV-007 — Audit is global, partly public, and nondurable
 
-**Evidence**
+**Status:** Remediated locally for public access, tenant scope, and hosted durability; enterprise immutability remains residual.
+
+**Implementation:** `lib/auditStore.js` stores actor-derived workspace/project chains in PostgreSQL, locks each head with `SELECT ... FOR UPDATE`, commits event/head together, tenant-filters reads/verification, cross-checks duplicated SQL integrity columns and the persisted chain head, and enforces hosted/explicit durable-storage requirements on append/read/verify. `api/audit/recent.js` requires `audit:read`; health/audit/log responses set private no-store policy before guards; `api/logs.js` is a non-disclosing 404. FastAPI `/logs` requires auditor/platform-admin and returns no trace records or filenames.
+
+**Regression:** `tests/unit/auditStore.test.js` covers concurrent scoped chains, integrity, tenant isolation, tail truncation/column tampering, and hosted fail-closed behavior; `tests/unit/auditRoutes.test.js`, `tests/unit/rbac.test.js`, and `tests/python/test_security_boundaries.py` cover private caching and Node/FastAPI route boundaries.
+
+**Original evidence**
 
 - `lib/auditStore.js:81-95` and `112-136` omit tenant dimensions and expose a global tail.
 - `api/audit/recent.js:15-19` does not tenant-filter reads.
@@ -180,14 +220,14 @@ The production `/api/logs` endpoint returned HTTP 200 with public caching. At th
 
 **Required change:** store workspace/project/actor dimensions with every event, require `audit:read`, tenant-filter by default, reserve cross-tenant access for platform administrators, remove public caching, and move the ledger to transactional durable storage with immutable retention exports.
 
-**Acceptance gate:** public log routes expose only a deliberately minimal aggregate or return 401/403; tenant A cannot read tenant B; multi-replica append order and hash integrity survive redeploy and restore.
+**Acceptance result:** public/global disclosure, concurrent ordering, tenant filtering, and hosted `/tmp` fallback have focused local regressions. PostgreSQL is durable but not immutable/WORM; add range sealing/export, restore drills, versioned migrations, and atomic coupling between critical business changes and their audit event before enterprise retention claims.
 
 ## P1 findings
 
 | ID | Finding and evidence | Impact | Minimum practical remediation |
 |---|---|---|---|
 | P42-REV-008 | Model-derived fields alter policy at confidence as low as 0.35 (`lib/conversationLlmAssessor.js:1464-1516`; `lib/complianceAgent.js:231-240`). | Ungrounded model suggestions can satisfy deterministic requirements. | Require a trusted source span/document ID per accepted fact; keep ungrounded output advisory. |
-| P42-REV-009 | Conditional approval becomes terminal `APPROVED` (`public/app.js:4876-4877`, `5860-5901`; `lib/caseApproval.js:18-24`, `80-104`). | Conditions lose owners, due dates, expiry, and enforcement. | Block approval until resolved, or add a structured `APPROVED_WITH_CONDITIONS` state. |
+| P42-REV-009 | **Remediated with REV-003:** conditional status is nonterminal; UI approval is disabled and the server returns `case_not_approval_eligible` unless the Node result explicitly sets `approvalEligible: true` (`public/app.js`; `lib/caseApproval.js`). | Remaining need: model condition owner/due date and closure evidence before rerun. | Keep the lifecycle regression required; add structured remediation records rather than an `APPROVED_WITH_CONDITIONS` shortcut. |
 | P42-REV-010 | Review-pack export trusts an arbitrary client-supplied run (`lib/httpHandlers.js:289-307`; `lib/reviewPack.js:212-220`). | Authorized users can mint branded PDFs containing fabricated decisions and citations. | Accept only case/run/version identifiers; load and hash an immutable server run; watermark unverified/demo output. |
 | P42-REV-011 | Request `options.sample_mode` bypasses live dependencies and `REQUIRE_COMPASS` (`app/schemas.py:15-20`; orchestrator `121-123`, `479-493`, `1275-1390`). | A caller can make a supposedly live evaluation use fixtures. | Make sample mode server-environment-only or privileged and reject it in production. |
 | P42-REV-012 | Clients control runtime selection (`lib/httpHandlers.js:81-83`, `114-130`, `188-201`; `api/_http.js:20`). | Callers can choose expensive or misleading execution paths with long timeouts. | Pin runtime server-side; allow a small admin-only development override; add operation budgets. |
@@ -197,7 +237,7 @@ The production `/api/logs` endpoint returned HTTP 200 with public caching. At th
 | P42-REV-016 | A single chat/council/export flow can amplify into many sequential model calls (`lib/conversationLlmAssessor.js:821-891`, `1222-1380`; `lib/advisoryCouncil.js:48-65`, `137-170`). | Cost, latency, cascading retries, and denial-of-wallet risk. | Combine structured facts and prose, allow one repair, enforce true deadlines/circuit breakers, and track distributed token/cost budgets. |
 | P42-REV-017 | Only `lastRun` is persisted (`lib/caseLifecycle.js:285-304`); history lives in browser `sessionStorage` (`public/app.js:2499-2604`). | No immutable review history or reliable artifact provenance. | Add append-only case runs and reviewer decisions with versions, hashes, and supersession links. |
 | P42-REV-018 | Conversation facts are permanently unioned and the brief keeps the first 2,400 characters (`lib/conversationState.js:1263-1280`). | Corrections cannot reliably retract old facts; newer facts are eventually dropped. | Store sourced assertions/events with active, retracted, and superseded states; derive a bounded current summary. |
-| P42-REV-019 | Flags, rate limits, and audit are per-process or `/tmp`; health performs expensive checks (`lib/adminFeatureFlags.js:15-18`, `81-180`; `lib/rateLimiter.js:21`, `67-84`; `lib/auditStore.js:98-136`). | Replicas disagree and protection resets on cold start. | Use durable configuration/audit and distributed edge quotas; split cheap liveness from cached readiness. |
+| P42-REV-019 | Flags and rate limits remain per-process/`/tmp`, and health performs expensive checks (`lib/adminFeatureFlags.js`; `lib/rateLimiter.js`; health routes). Audit is now PostgreSQL-backed in hosted runtimes. | Feature/limit replicas can disagree and protection resets on cold start. | Use durable configuration and distributed edge quotas; split cheap liveness from cached readiness. |
 | P42-REV-020 | FastAPI has no meaningful body/concurrency admission control and spawns Node per request (`app/schemas.py:10-20`; `app/main.py:205-213`; `app/node_bridge.py:39-118`). | Resource exhaustion and very long request occupancy. | Enforce ingress/body/concurrency limits; use a queue for long work or call one persistent Node service. |
 | P42-REV-021 | PostgreSQL tenant isolation is application-only; generic records use `(kind,id)` and runtime DDL (`lib/recordStore.js:43-60`, `108-190`). | Weak team membership model and no database defense in depth. | Add organizations/workspaces/memberships and versioned migrations; enforce tenant policies/RLS where practical. |
 
@@ -248,7 +288,7 @@ The larger duplication is architectural:
 - Node evidence storage and Python evidence memory implement the same responsibility.
 - Node learning memory and Python learning memory overlap.
 - Product and evaluator have separate CrewAI adapters.
-- The Python orchestrator reinterprets the Node engine.
+- The Python orchestrator still duplicates orchestration/evaluator concerns, but no longer reinterprets Node policy fields.
 
 Keep Node as the product authority. Reduce Python to a CI evaluator or a narrow, non-authoritative specialist adapter. This removes drift and subprocess overhead without inventing a new shared framework.
 
@@ -258,10 +298,10 @@ Keep Node as the product authority. Reduce Python to a CI evaluator or a narrow,
 |---|---|---|---|
 | Goal decomposition | Intake, evidence, council, decision, review, and export are visible stages. | Runtime manifests can claim work that was simulated or fell back. | Trace only real operations and state why a step was skipped. |
 | Tool use | Retrieval, parser relay, Compass, persistence, and export are bounded server tools. | Client can influence runtime/sample mode; parser can forward identity/data externally. | Server-owned allowlisted tool plan with per-tool authorization and budget. |
-| Grounding | Server-side retrieval and citations exist. | Mentions/questions can become proof; model fields can satisfy policy without provenance. | Claim-level source span, retrieval ID, control mapping, and verification state. |
-| Memory | Case, governance, evidence, and learning layers exist. | Learning tenant leak, poisoning risk, permanent fact union, no immutable run history. | Tenant-enforced episodic memory plus sourced assertions and immutable runs. |
-| Determinism | A deterministic Node policy engine and fixtures provide repeatability. | Python and UI reinterpret its output; readiness invariants conflict. | One immutable decision object consumed unchanged by every channel. |
-| Human oversight | Human approval is explicit and no direct auto-approval was found. | Conditional approval collapses to terminal approval; exports can be forged. | Structured conditions, reviewer identity, reason, expiry, and artifact hash. |
+| Grounding | Server-side retrieval/citations plus assertion state/provenance exist; mentions/questions/policy references are non-proof. | Model-derived fields can still influence case facts without claim-level trusted spans. | Claim-level source span, retrieval ID, control mapping, and verification state. |
+| Memory | Actor-scoped governance/learning/evidence layers exist. | Poisoning risk, permanent fact union, incomplete resource-wide/RLS coverage, no immutable run history. | Tenant-enforced episodic memory plus sourced assertions and immutable runs. |
+| Determinism | Node policy fields are authoritative across the browser and Python evaluator; readiness derives from one decision builder. | Policy version/hash is not yet sealed into an immutable run. | One immutable, versioned decision object consumed unchanged by every channel. |
+| Human oversight | Human approval is explicit; conditional is nonterminal and cannot be approved. | Conditions lack structured owner/due date/closure evidence; exports can be forged. | Structured remediation, reviewer identity, reason, expiry, and artifact hash. |
 | Recovery | Fallbacks keep the demo usable. | Fallbacks are sometimes labeled as live success and can conceal dependency failure. | Honest degraded-state UX with retry, reason, and capability-level status. |
 | Evaluation | Broad deterministic tests and benchmarks exist. | Few adversarial semantic/tenancy/parity tests; historical benchmark docs are mixed with current guidance. | Versioned eval corpus, invariant tests, groundedness/recall metrics, and dated evidence snapshots. |
 
@@ -277,9 +317,9 @@ Keep Node as the product authority. Reduce Python to a CI evaluator or a narrow,
 
 ### Improvements
 
-1. **Truth before polish:** the right-side “Live Case Intelligence” panel confidently visualizes evidence/readiness produced by the P0 logic defects. Add `mentioned`, `unverified`, `contradicted`, and `verified` badges and never show approval readiness for unsupported proof.
+1. **Finish exposing the remediated truth model:** the UI now labels requested/mentioned items as unverified/non-proof, rejects blank and metadata-only files as usable proof, and gates approval copy on explicit eligibility. Full contradicted/verified badges and clickable claim-to-passage provenance remain open.
 2. **Make degraded AI explicit:** replace “Smart intake fallback” ambiguity with `Live model unavailable — deterministic intake used` plus timestamp, failed capability, and retry. Never imply Compass or CrewAI executed when it did not.
-3. **Preserve the next action:** after council completion, show a single server-confirmed case state and keep follow-up chat usable; this is blocked by P42-REV-005.
+3. **Preserve the next action:** the browser now replaces local state from the server-confirmed completed snapshot; keep the follow-up/rerun affordance prominent and show the current version only in diagnostics.
 4. **Do not clip missing proof:** `public/styles/22-desktop-app-shell-v7-stitch-inspired-operational-console.css:732-740` constrains the missing-proof list with hidden overflow. Provide expansion or scrolling and an accessible count.
 5. **Increase small type:** several council/draft labels are 8–10px (`public/styles/22-desktop-app-shell-v7-stitch-inspired-operational-console.css:796-815`; `public/styles/23-desktop-chat-ux-tightening.css:281-309`). Use at least the design-system small-text token and validate 200% zoom.
 6. **Reduce scroll competition:** the fixed `100svh` desktop shell creates multiple independently scrolling panes. Preserve context with one primary scroll owner at narrower/zoomed viewports.
@@ -292,25 +332,34 @@ Keep Node as the product authority. Reduce Python to a CI evaluator or a narrow,
 
 ### Results
 
-- Node: **240/240 passing**.
-- Python security: **11/11 passing**.
-- npm dependency audit: **0 known vulnerabilities**.
-- Experimental Node coverage: **89.13% lines, 68.44% branches, 91.92% functions**.
+- Final remediation worktree Node unit suite: **269/269 passing**.
+- Final remediation worktree Python security suite: **13/13 passing**.
+- Full local `npm run qa`: **passing**.
+- npm dependency audit at the original review: **0 known vulnerabilities**.
+- Experimental Node coverage at the original review: **89.13% lines, 68.44% branches, 91.92% functions**; refresh after merge.
+- CI and live deployment verification: **pending**.
 
 Important low-line-coverage modules include `councilNarrative` (12.57%), `evaluatorRun` (18.06%), `evidencePipeline` (22.58%), `recordStore` (57.55%), and `httpHandlers` (58.41%). API wrappers and the deployed browser/server integration are not fully represented by the unit aggregate.
 
-### Missing high-value tests
+### Regression coverage added with the P0 remediation
 
-1. Evidence interrogative/negation/speculation/unavailable-document table tests.
-2. Contradictory source-authority and retraction tests.
-3. Tenant A/B malicious scope tests for every store and audit/export route.
-4. Intake → council → follow-up → second council deployed E2E.
-5. Node/FastAPI/live/fallback decision parity fixtures.
-6. Immutable review-pack load/hash/tamper tests.
-7. Qdrant stale-delete, model/dimension mismatch, purpose isolation, and score-threshold tests.
-8. Model call-count, abort/deadline, retry, and budget tests.
-9. Multi-replica audit/flag/rate-limit behavior.
-10. Keyboard, 200% zoom, high contrast, reduced motion, and long-content browser tests.
+1. Evidence question/mention/placeholder/policy-reference fixtures, including direct evaluator and semantic-retrieval trailing questions, hostile authenticated document/fixture payloads, and UI parity for questions, blank content, and metadata-only files.
+2. Source-aware contradiction fixtures plus 13 adversarial negation variants covering controls, safeguards, frameworks, validation, and recovery objectives.
+3. One-medium-gap readiness, authoritative approval eligibility, and removal of conditional-approval UI vocabulary.
+4. Learning/governance and audit tenant A/B hostile-scope tests.
+5. Council -> follow-up -> second council unit and Playwright mock flow, including runtime-failure and post-completion audit-failure recovery.
+6. Direct Node/FastAPI policy-field parity and atomic bridge-schema validation.
+7. Concurrent PostgreSQL chain-head serialization, scoped reads, hosted fail-closed audit, chain-head/tail tamper detection, and Node/FastAPI log-route tests.
+
+### High-value coverage still missing
+
+1. Resource-wide tenant A/B tests for cases, review packs, exports, deletion, membership and RLS.
+2. Deployed authenticated intake -> upload -> council -> follow-up -> second council -> review/export E2E.
+3. Live Compass/CrewAI/fallback parity with a signed policy version/hash.
+4. Immutable review-pack load/hash/tamper and audit WORM export/restore tests.
+5. Qdrant stale-delete, model/dimension mismatch, purpose isolation, and score-threshold tests.
+6. Model call-count, abort/deadline, retry, budget, multi-replica flag/rate-limit tests.
+7. Keyboard, 200% zoom, high contrast, reduced motion, and long-content browser tests.
 
 Python security tests are not currently part of the JavaScript QA/CI entry point. Both CI workflows also repeat much of the same full suite on each push. Run one reusable QA workflow and invoke it from the required checks.
 
@@ -324,7 +373,7 @@ The fastest route to a safer demo includes deletion:
 | Remove unloaded generated/reference CSS fragments `01`–`23` | 5,622 lines / ~133 KB | Confirm no external design tooling consumes `public/styles/manifest.json`; retain `styles.css` and loaded override `24`. |
 | Remove the unused Python `openai` dependency | 1 dependency | Confirm no dynamic import in the evaluator image. |
 | Deduplicate CI jobs | ~20–30 YAML lines plus compute | Preserve one required reusable QA job. |
-| Reduce Python to a thin evaluator/specialist adapter | ~1,200–2,000 lines | First lock Node as the sole decision authority and add parity tests. |
+| Reduce Python to a thin evaluator/specialist adapter | ~1,200–2,000 lines | Node authority and field-parity checks are now in place; simplify when evaluator-contract compatibility permits. |
 | Keep one CrewAI adapter | ~300–500 lines | Retain only the runtime that is actually deployed/evaluated. |
 | Collapse structured/prose/retry machinery | ~400–700 lines and about half normal chat calls | Introduce one validated response schema and one repair. |
 
@@ -346,7 +395,8 @@ The fastest route to a safer demo includes deletion:
 ### Phase 0 — label and contain (1–2 days)
 
 - Mark approval and exported artifacts as demo/unverified.
-- Protect `/api/logs`, FastAPI logs/probes, and expensive diagnostics.
+- **Done for log surfaces:** `/api/logs` is a private 404; Node detailed audit is role-gated/scoped; FastAPI `/logs` is role-gated/non-disclosing.
+- **Open:** protect FastAPI active probe and other expensive diagnostics.
 - Disable client runtime/sample overrides in production.
 - Keep parser relay disabled.
 - Protect `main` and pin workflow actions.
@@ -355,19 +405,18 @@ The fastest route to a safer demo includes deletion:
 
 ### Phase 1 — restore decision integrity (3–7 days)
 
-- Implement evidence assertion states and contradiction handling.
-- Centralize the gap/decision table.
-- Fix final council case-version authority.
-- Make Node the sole decision owner.
-- Correct conditional approval semantics.
+- **Implemented locally:** evidence assertion states/provenance and source-aware contradictions.
+- **Implemented locally:** one Node gap/decision/eligibility contract; conditional is nonterminal.
+- **Implemented locally:** authoritative completed case snapshot/version and browser replacement.
+- **Implemented locally:** Node-only policy authority across Python.
 
-**Gate:** adversarial evidence tests and the two-council E2E pass; every channel produces the same policy hash.
+**Gate status:** focused adversarial, lifecycle, parity, and Playwright mock checks pass; deployed E2E and signed policy-hash verification remain.
 
 ### Phase 2 — tenant and artifact integrity (1–2 weeks)
 
-- Derive tenant scope from authenticated membership in every layer.
+- **Implemented for the exploited paths:** learning/governance/audit scope derives from the authenticated actor.
 - Add immutable runs/reviews and server-loaded review packs.
-- Move audit to a durable tenant-scoped ledger with immutable export.
+- **Implemented foundation:** hosted tenant-scoped PostgreSQL audit chains; **open:** WORM export, restore proof, and business-write transaction coupling.
 - Add migrations, retention, and tenant defense in depth.
 
 **Gate:** hostile A/B tests pass for every resource; forged/stale artifact attempts fail; restore preserves the audit chain.
@@ -400,9 +449,9 @@ The demo is ready for a true user test when all of the following are demonstrabl
 - a user can chat, upload, run council, continue chatting, rerun, approve/reject, and export without reload or stale conflict;
 - model/runtime/fallback labels describe what actually executed for that interaction;
 - tenant A cannot enumerate or retrieve tenant B through any identifier supplied by the browser;
-- approval conditions are structured and remain nonterminal until resolved;
+- approval conditions remain nonterminal until resolved; structured owner/due-date/closure records remain a UX hardening item;
 - the exported pack is loaded from an immutable server run and includes a verifiable hash/version;
-- audit events survive deployment/restart and are tenant-scoped;
+- audit events are tenant-scoped and persist in PostgreSQL; immutable export/restore evidence is required for enterprise retention claims;
 - keyboard, 200% zoom, long content, and common desktop/mobile layouts pass browser QA;
 - CI protects `main` with the adversarial, parity, security, and deployed-flow tests above.
 

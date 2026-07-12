@@ -1,6 +1,6 @@
 # CrewAI Architecture
 
-> **Current hosted state (2026-07-12):** Python CrewAI is optional and inactive. The live Vercel product uses Node specialists through the named Compass gateway client with GPT-5.1; `text-embedding-3-large` powers semantic retrieval. A configured/runtime label such as `crewai_llm` is not proof that the Python CrewAI adapter executed. The Node policy engine should be the sole decision authority; the [deep code review](DEEP_CODE_REVIEW.md) records a current Python authority-parity defect that must be fixed. CrewAI is not required for the selected [Azure migration path](AZURE_MIGRATION_PLAN.md).
+> **Current state (2026-07-12):** Python CrewAI is optional and inactive in the hosted product. The Vercel product uses Node specialists through the named Compass gateway client with GPT-5.1; `text-embedding-3-large` powers semantic retrieval. A configured/runtime label such as `crewai_llm` is not proof that Python CrewAI executed. Node is the sole decision authority; FastAPI/Python preserves its policy fields and adds advisory output only. Full local QA is green; CI/live verification is pending. CrewAI is not required for the selected [Azure migration path](AZURE_MIGRATION_PLAN.md).
 
 ## Why CrewAI
 
@@ -66,6 +66,6 @@ Official CrewAI documentation referenced:
 - CrewAI live mode is optional until an approved LLM provider configuration is available.
 - The deterministic decision engine remains the baseline for CI and local reproducibility.
 - Runtime metadata is included in API output and audit payloads.
-- Live LLM specialist output must remain advisory; immutable policy parity tests are required before claiming it cannot change decision status.
-- Compass, Qdrant retrieval, and learning memory may provide advisory context, but deterministic Node policy must remain the final decision owner. The current Python authority-parity defect must be removed and covered by parity tests before this is claimed as guaranteed.
+- Live LLM specialist output remains advisory; the wrapper parity check compares decision, risk, gaps, controls, readiness, and approval eligibility with direct Node output.
+- Compass, Qdrant retrieval, learning memory, and CrewAI provide advisory context; deterministic Node policy is the final decision owner.
 - Python orchestration or response normalization must not overwrite the Node policy result. Runtime metadata must distinguish requested, attempted, and actually executed adapters.

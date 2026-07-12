@@ -5,12 +5,15 @@
 - Human approval required for all decisions.
 - Output review checks that no automatic approval is implied.
 - Evidence IDs are attached to recommendations.
+- Evidence assertion state/provenance keeps questions, mentions, placeholders, and policy references from satisfying controls.
+- Positive/negative applicability conflicts remain explicit blocking contradictions.
 - Missing evidence becomes a named gap rather than invented certainty.
 - AI/model governance is a first-class domain, including model-training data-use checks.
 - Compass access is routed server-side through the product gateway/API boundary; the browser receives no Compass keys.
 - The Agentathon FastAPI wrapper preserves direct `OPENAI_API_KEY` / `OPENAI_BASE_URL` diagnostics for evaluator-style runs.
-- Qdrant retrieval and governed learning memory are advisory context only; they do not override deterministic policy.
-- Optional CrewAI output is advisory and not active by default.
+- Qdrant retrieval and governed learning memory are actor-scoped advisory context only; they do not override deterministic policy.
+- Optional CrewAI/Python output is advisory and not active by default; Python preserves Node policy fields unchanged.
+- Conditional status is nonterminal. Only explicit Node `approvalEligible: true` permits a human approval action.
 
 ## Controls To Implement Next
 

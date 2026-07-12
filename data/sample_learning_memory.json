@@ -8,9 +8,9 @@
       "workspaceId": "agentathon",
       "projectId": "use-case-21",
       "title": "Healthcare analytics vendor missing model-training exclusion",
-      "originalDecision": "conditional_approval",
-      "reviewerDecision": "conditional_approval",
-      "reviewerNotes": "Reviewer accepted conditional onboarding only after DPA amendment added explicit model-training exclusion and human review boundary.",
+      "originalDecision": "conditionally_ready",
+      "reviewerDecision": "continue_review",
+      "reviewerNotes": "Reviewer required a DPA amendment with an explicit model-training exclusion and human-review boundary before rerun and approval.",
       "addedControls": [
         "Require signed model-training exclusion for patient or customer data before production.",
         "Confirm DPA amendment covers analytics support, subprocessors, retention, deletion, and cross-border review.",
@@ -23,7 +23,7 @@
         "model-training exclusion",
         "DPA amendment"
       ],
-      "finalOutcome": "conditional approval after DPA amendment",
+      "finalOutcome": "continued review pending DPA amendment and rerun",
       "domains": [
         "privacy",
         "ai-governance",
@@ -44,8 +44,8 @@
       "projectId": "use-case-21",
       "title": "SaaS vendor missing subprocessor list",
       "originalDecision": "needs_more_information",
-      "reviewerDecision": "conditional_approval",
-      "reviewerNotes": "Reviewer allowed conditional approval after supplier supplied current subprocessor register and change-notification terms.",
+      "reviewerDecision": "continue_review",
+      "reviewerNotes": "Reviewer required the supplier's current subprocessor register and change-notification terms before rerun and approval.",
       "addedControls": [
         "Require current subprocessor register before approval.",
         "Require 30-day subprocessor change notification and right to object.",
@@ -58,7 +58,7 @@
         "subprocessor register",
         "cross-border transfer mechanism"
       ],
-      "finalOutcome": "conditional approval with subprocessor disclosure",
+      "finalOutcome": "continued review pending subprocessor disclosure and rerun",
       "domains": [
         "privacy",
         "saas",
@@ -78,7 +78,7 @@
       "workspaceId": "agentathon",
       "projectId": "use-case-21",
       "title": "AI vendor permitted customer-data training",
-      "originalDecision": "conditional_approval",
+      "originalDecision": "conditionally_ready",
       "reviewerDecision": "reject",
       "reviewerNotes": "Reviewer rejected onboarding because product terms permitted customer-data training and no enterprise opt-out was executed.",
       "addedControls": [
@@ -146,7 +146,7 @@
       "projectId": "use-case-21",
       "title": "Cross-border SaaS missing retention schedule",
       "originalDecision": "needs_more_information",
-      "reviewerDecision": "conditional_approval",
+      "reviewerDecision": "continue_review",
       "reviewerNotes": "Reviewer required retention schedule, deletion assistance, and hosting/support geography confirmation before production use.",
       "addedControls": [
         "Require retention schedule and deletion assistance evidence.",
@@ -161,7 +161,7 @@
         "cross-border transfer mechanism",
         "support region confirmation"
       ],
-      "finalOutcome": "conditional approval after retention schedule",
+      "finalOutcome": "continued review pending retention schedule and rerun",
       "domains": [
         "privacy",
         "saas",

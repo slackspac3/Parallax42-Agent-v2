@@ -1,6 +1,6 @@
 # Deployment Runbook
 
-> This runbook covers the current Vercel/Railway deployment, reviewed 2026-07-12. It does not deploy the future Azure architecture; use the separate [Azure migration plan](AZURE_MIGRATION_PLAN.md). Review [current release blockers](DEEP_CODE_REVIEW.md) before promoting beyond a demo.
+> This runbook covers the Vercel/Railway deployment, reviewed 2026-07-12. The seven deep-review P0 remediations pass final-worktree QA (269/269 Node and 13/13 Python security tests); CI, production deployment, and authenticated live-workflow verification are pending. It does not deploy the future Azure architecture; use the separate [Azure migration plan](AZURE_MIGRATION_PLAN.md).
 
 ## Surfaces
 
@@ -52,7 +52,7 @@ CREWAI_LLM_API_KEY=<same-value-as-COMPASS_GATEWAY_TOKEN>
 COMPASS_GATEWAY_BASE_URL=https://parallax42-compass-gateway.vercel.app/api
 COMPASS_GATEWAY_TOKEN=<server-side gateway token>
 EMBEDDINGS_MODEL=text-embedding-3-large
-P42_REQUIRE_DURABLE_STORAGE=0
+P42_REQUIRE_DURABLE_STORAGE=1
 DATABASE_URL=<encrypted-railway-postgres-url>
 P42_VECTOR_STORE_PROVIDER=qdrant
 P42_DEMO_EMBEDDINGS=false
@@ -61,14 +61,13 @@ QDRANT_API_KEY=<server-side-vector-db-key>
 QDRANT_COLLECTION=p42_compliance_evidence_v2
 P42_AUTH_MODE=enforced
 P42_ALLOWED_ORIGINS=https://slackspac3.github.io,http://127.0.0.1:3020,http://localhost:3020
-AGENT_AUDIT_DIR=/tmp/p42-compliance-intelligence-agent
 ```
 
 The deployed online product uses isolated Railway PostgreSQL and Qdrant. `P42_DEMO_EMBEDDINGS=false` selects semantic `text-embedding-3-large` embeddings through the named shared-gateway client; no provider key reaches the app or browser. A local or separate Agentathon runtime uses deterministic/local fallback unless equivalent Qdrant and gateway variables are exported.
 
 On Vercel, `AGENT_RUNTIME=crewai_llm` with approved gateway credentials enables Node-side Compass advisory specialists. It does not prove that Python CrewAI executed. Python CrewAI requires its separate runtime/service, dependencies, credentials, and eval gates; it is currently inactive. Runtime telemetry must be checked for requested, actual, and fallback modes.
 
-`DATABASE_URL` and Qdrant make configured product records and vectors durable. `AGENT_AUDIT_DIR=/tmp/...` remains per-instance and nondurable, so leave `P42_REQUIRE_DURABLE_STORAGE=0` for the demo and do not describe the audit trail as enterprise-retained. Move tenant-scoped audit events to PostgreSQL plus immutable retention before setting the durable-storage requirement. Demo auth is enforced, but Microsoft Entra tenant/app-role configuration is still pending.
+`DATABASE_URL` and Qdrant make configured product records and vectors durable. Audit chain heads/events use the same PostgreSQL service and are partitioned by actor-derived workspace/project; hosted writes return a service error rather than falling back to `/tmp` when PostgreSQL is absent. PostgreSQL is not immutable retention: add WORM range exports, restore drills, versioned migrations, and critical business-write/audit transaction coupling before describing the trail as enterprise-retained. Demo auth is enforced, but Microsoft Entra tenant/app-role/membership configuration is still pending.
 
 Expected endpoints:
 
@@ -85,7 +84,17 @@ POST /api/export/review-pack
 GET  /api/backend?path=/health
 ```
 
-Do not expose raw logs or a global audit tail as public health proof. The current `/api/logs` and audit-scoping findings are documented release blockers; require the right role and authenticated workspace on every detailed read. Public probes should return only coarse availability and must not trigger paid model work.
+Do not expose raw logs or a global audit tail as public health proof. `GET /api/logs` now returns a private non-cacheable 404. `GET /api/audit/recent` requires `audit:read`, derives workspace/project from the authenticated actor, tenant-filters both records and integrity verification, and returns `Cache-Control: private, no-store`. Public probes should return only coarse availability and must not trigger paid model work.
+
+After deployment, verify without printing credentials:
+
+```bash
+curl -i https://parallax42-agent-v2.vercel.app/api/logs
+curl -i https://parallax42-agent-v2.vercel.app/api/audit/recent
+curl -i -H "Authorization: Bearer $P42_AUDITOR_TOKEN" https://parallax42-agent-v2.vercel.app/api/audit/recent
+```
+
+Expected: `/api/logs` is `404` with `private, no-store`; anonymous detailed audit is `401`; an auditor receives only their workspace/project chain. Deployment verification: **PENDING — fill with deployment URL, revision, CI run, and authenticated workflow evidence after release.**
 
 `/api/evidence/index` returns only sanitized index metadata to the cockpit. Chunk embeddings are kept in the server-side vector store. The deployed product path uses Qdrant; local-file storage is only a fallback for development or unconfigured runtimes.
 
@@ -127,7 +136,7 @@ The current public demo is Vercel; Railway supplies PostgreSQL/Qdrant and is not
 ```bash
 curl https://<fastapi-host>/health
 curl https://<fastapi-host>/metadata
-curl https://<fastapi-host>/logs
+curl -H "Authorization: Bearer $P42_AUDITOR_TOKEN" https://<fastapi-host>/logs
 curl https://<fastapi-host>/compass/probe
 curl -X POST https://<fastapi-host>/run \
   -H "Content-Type: application/json" \
@@ -140,11 +149,11 @@ Required signal:
 service identifies Parallax42 Compliance Intelligence Agent
 /metadata returns Use Case 21 metadata
 /run accepts the Agentathon wrapper payload
-logs are written under /logs/ or the configured container log directory
+/logs is auditor-only, private/no-store, and returns no trace filenames or records
 ```
 
-Do not reuse a Railway product database/vector endpoint or an unrelated backend URL as FastAPI proof. Do not publish `/logs` or `/compass/probe` without authentication and safe, non-billable probe behavior.
+Do not reuse a Railway product database/vector endpoint or an unrelated backend URL as FastAPI proof. FastAPI `/logs` is role-gated and intentionally non-disclosing; `/compass/probe` still requires separate authentication/non-billable hardening before a public evaluator deployment.
 
 ## Future Azure Deployment
 
-Azure is a migration target, not an alternate set of steps in this runbook. The minimum parity phase moves the product compute while retaining the current Compass gateway and, initially, existing data services; later phases move durable data, tenant-scoped audit, edge/identity, and vector search behind explicit cutover and rollback gates. Follow [the Azure migration plan](AZURE_MIGRATION_PLAN.md) rather than translating Vercel variables ad hoc.
+Azure is a migration target, not an alternate set of steps in this runbook. The minimum parity phase moves product compute while retaining the current Compass gateway and, initially, existing data services. The PostgreSQL tenant-chain implementation moves with the database; immutable Blob export, business/audit transaction coupling, edge/identity, and vector search follow explicit cutover and rollback gates. Follow [the Azure migration plan](AZURE_MIGRATION_PLAN.md) rather than translating Vercel variables ad hoc.

@@ -20,7 +20,7 @@ from app.learning_memory import (
     load_seed_artifacts,
 )
 from app.main import app
-from app.node_bridge import DEFAULT_TIMEOUT_SECONDS, MAX_TIMEOUT_SECONDS, _timeout_seconds
+from app.node_bridge import DEFAULT_TIMEOUT_SECONDS, MAX_TIMEOUT_SECONDS, _node_contract_failures, _timeout_seconds
 from app.trace_logger import TraceLogger, safe_run_id
 
 
@@ -226,6 +226,25 @@ class AuthorizationTests(unittest.TestCase):
         self.assertEqual(find.call_args.kwargs["workspace_id"], "server-workspace")
         self.assertEqual(find.call_args.kwargs["project_id"], "server-project")
 
+    def test_logs_require_auditor_and_never_expose_filenames(self):
+        with patch.dict(os.environ, {**self.base_env, "P42_DEMO_ROLES": "read_only"}, clear=False):
+            self.assertEqual(self.client.get("/logs").status_code, 401)
+            forbidden = self.client.get(
+                "/logs",
+                headers={"Authorization": "Bearer unit-reviewer-token"},
+            )
+            self.assertEqual(forbidden.status_code, 403)
+
+        with patch.dict(os.environ, {**self.base_env, "P42_DEMO_ROLES": "auditor"}, clear=False):
+            response = self.client.get(
+                "/logs",
+                headers={"Authorization": "Bearer unit-reviewer-token"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["entries"], [])
+        self.assertNotIn("file", response.text.lower())
+        self.assertEqual(response.headers["cache-control"], "private, no-store")
+
 
 class TraceAndRuntimeTests(unittest.TestCase):
     def test_repeated_run_ids_never_truncate_or_reuse_trace_file(self):
@@ -250,6 +269,33 @@ class TraceAndRuntimeTests(unittest.TestCase):
         with patch.dict(os.environ, {"MAX_RUNTIME_SECONDS": "200"}, clear=False):
             self.assertEqual(_timeout_seconds({"timeout_seconds": 5}), 5)
             self.assertEqual(_timeout_seconds({"timeout_seconds": 999}), 200)
+
+    def test_node_policy_contract_rejects_incomplete_or_inconsistent_success(self):
+        valid = {
+            "ok": True,
+            "risk_level": "high",
+            "decision": {"status": "conditionally_ready"},
+            "gaps": [],
+            "required_actions": [],
+            "control_plan": [],
+            "decision_readiness": {
+                "status": "conditionally_ready",
+                "approvalEligible": False,
+                "humanApprovalRequired": True,
+            },
+        }
+        self.assertEqual(_node_contract_failures(valid), [])
+        self.assertIn("decision_readiness", _node_contract_failures({"ok": True, "decision": {"status": "ready"}}))
+        contradictory = {
+            **valid,
+            "decision": {"status": "ready"},
+            "decision_readiness": {
+                **valid["decision_readiness"],
+                "status": "ready",
+                "approvalEligible": False,
+            },
+        }
+        self.assertIn("decision_readiness.approvalEligible_consistency", _node_contract_failures(contradictory))
 
     def test_run_route_offloads_sync_orchestrator_with_server_scope(self):
         offload = AsyncMock(

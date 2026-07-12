@@ -2,15 +2,15 @@
   "artifact": "eval_report",
   "sample": false,
   "source": "evidence/benchmark-report.json",
-  "generatedAt": "2026-05-15T16:26:16.078Z",
+  "generatedAt": "2026-07-12T14:32:25.256Z",
   "scope": "local deterministic benchmark suite",
   "summary": {
     "cases": 4,
     "passed": 4,
     "failed": 0,
     "passRate": 1,
-    "totalDurationMs": 8.11,
-    "p95DurationMs": 7.41
+    "totalDurationMs": 19.46,
+    "p95DurationMs": 17.74
   },
   "results": [
     {
@@ -18,8 +18,8 @@
       "expected": "not_ready",
       "actual": "not_ready",
       "passed": true,
-      "durationMs": 7.41,
-      "evidenceCount": 12,
+      "durationMs": 17.74,
+      "evidenceCount": 1,
       "gapCount": 3
     },
     {
@@ -27,8 +27,8 @@
       "expected": "conditionally_ready",
       "actual": "conditionally_ready",
       "passed": true,
-      "durationMs": 0.47,
-      "evidenceCount": 5,
+      "durationMs": 0.88,
+      "evidenceCount": 1,
       "gapCount": 1
     },
     {
@@ -36,8 +36,8 @@
       "expected": "conditionally_ready",
       "actual": "conditionally_ready",
       "passed": true,
-      "durationMs": 0.14,
-      "evidenceCount": 8,
+      "durationMs": 0.4,
+      "evidenceCount": 1,
       "gapCount": 2
     },
     {
@@ -45,10 +45,10 @@
       "expected": "ready",
       "actual": "ready",
       "passed": true,
-      "durationMs": 0.06,
-      "evidenceCount": 6,
+      "durationMs": 0.39,
+      "evidenceCount": 1,
       "gapCount": 0
     }
   ],
-  "caveat": "This artifact reflects the existing benchmark evidence snapshot only; it does not claim live infrastructure health."
+  "caveat": "This artifact reflects the current benchmark evidence snapshot only; it does not claim live infrastructure health."
 }

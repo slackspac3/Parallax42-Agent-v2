@@ -28,7 +28,7 @@ module.exports = async function handler(req, res) {
     const body = await readJsonRequest(req, { limitBytes: ADMIN_BODY_LIMIT_BYTES });
     const updates = body.features && typeof body.features === 'object' ? body.features : body;
     const result = updateFeatureFlags(updates, auth.actor);
-    appendAuditRecord({
+    await appendAuditRecord({
       actor: auth.actor,
       caseId: 'admin-feature-controls',
       status: 'admin_features_updated',

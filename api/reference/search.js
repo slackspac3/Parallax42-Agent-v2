@@ -18,12 +18,8 @@ module.exports = async function handler(req, res) {
     }
 
     const body = await readJsonRequest(req, { limitBytes: EVIDENCE_SEARCH_BODY_LIMIT_BYTES });
-    const result = await searchGovernanceReferences({
-      ...body,
-      workspaceId: auth.actor.workspaceId || process.env.P42_WORKSPACE_ID || 'parallax42',
-      projectId: auth.actor.projectId || process.env.P42_PROJECT_ID || 'compliance-intelligence-agent'
-    });
-    appendAuditRecord({
+    const result = await searchGovernanceReferences(body, { actor: auth.actor });
+    await appendAuditRecord({
       actor: auth.actor,
       caseId: body.caseId || body.sourceId || 'governance-reference-search',
       status: 'governance_reference_searched',

@@ -35,12 +35,14 @@ from app.evidence_memory import (  # noqa: E402
 )
 from app.fixture_documents import (  # noqa: E402
     FixtureDocumentError,
+    enrich_payload_with_fixture_documents,
     extractFixtureDocument,
     getFixtureExpectedProfile,
     listSupportedFixtureDocuments,
     safeResolveFixturePath,
 )
 from app.learning_memory import LocalLearningMemory, load_seed_artifacts, summarize_learning_signals  # noqa: E402
+from app.node_bridge import run_node_bridge  # noqa: E402
 from app.schemas import AgentathonRunRequest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -303,12 +305,30 @@ def assert_base_response(response: Dict[str, Any]) -> None:
     assert_no_raw_vectors(response)
 
 
+def assert_node_policy_parity(payload: Dict[str, Any], response: Dict[str, Any]) -> None:
+    enriched, _ = enrich_payload_with_fixture_documents(payload)
+    node = run_node_bridge(enriched)
+    assert node.get("ok") is True, node
+    output = response["output"]
+    readiness = node.get("decision_readiness") or {}
+    assert output["decision"] == (node.get("decision") or {}).get("status")
+    assert output["decision_details"] == node.get("decision")
+    assert output["risk_level"] == node.get("risk_level")
+    assert output["gaps"] == node.get("gaps")
+    assert output["required_actions"] == node.get("required_actions")
+    assert output["control_plan"] == node.get("control_plan")
+    assert output["decision_readiness"] == readiness
+    assert output["approval_eligible"] is (readiness.get("approvalEligible") is True)
+
+
 def check_sample_runs() -> List[Dict[str, Any]]:
     responses = []
     with patched_env(SAMPLE_MODE="false", REQUIRE_COMPASS="false", LOG_DIR="./logs", OPENAI_API_KEY=None, OPENAI_BASE_URL=None, P42_VECTOR_STORE_PROVIDER="local", QDRANT_URL=None, QDRANT_API_KEY=None, AGENT_RUNTIME="custom", CREWAI_ENABLE_LIVE_LLM="0"):
         for index, name in enumerate(("example_1.json", "example_2.json", "example_3.json"), start=1):
-            response = run_payload(load_example(name, run_id=f"unit-sample-{index}", sample_mode=True))
+            payload = load_example(name, run_id=f"unit-sample-{index}", sample_mode=True)
+            response = run_payload(payload)
             assert_base_response(response)
+            assert_node_policy_parity(payload, response)
             assert response["output"]["live_compass"]["status"] == "skipped_sample_mode"
             assert response["output"]["live_advisory"]["status"] == "skipped_custom_runtime"
             responses.append(response)
@@ -349,12 +369,13 @@ def check_no_static_output_loading() -> None:
 def check_compass_modes() -> None:
     with patched_env(SAMPLE_MODE="false", REQUIRE_COMPASS="false", LOG_DIR="./logs", OPENAI_API_KEY=None, OPENAI_BASE_URL=None, P42_VECTOR_STORE_PROVIDER="local", QDRANT_URL=None, QDRANT_API_KEY=None, AGENT_RUNTIME="custom", CREWAI_ENABLE_LIVE_LLM="0"):
         success = FakeCompassSuccess()
-        response = run_payload(load_example("example_2.json", run_id="unit-compass-success", sample_mode=False), success)
+        payload = load_example("example_2.json", run_id="unit-compass-success", sample_mode=False)
+        response = run_payload(payload, success)
         assert_base_response(response)
+        assert_node_policy_parity(payload, response)
         assert success.calls == 1
         assert response["output"]["live_compass"]["status"] == "available"
         assert "live_compass_review" in event_actions(response)
-        assert response["output"]["decision"] != "approve", "LLM advisory must not override deterministic rejection"
 
         failure = FakeCompassFailure()
         response = run_payload(load_example("example_1.json", run_id="unit-compass-failure", sample_mode=False), failure)
@@ -370,11 +391,12 @@ def check_compass_modes() -> None:
         assert response["output"]["live_compass"]["status"] == "skipped_sample_mode"
 
         html_405 = FakeCompassHtml405()
-        response = run_payload(load_example("example_1.json", run_id="unit-compass-html-405", sample_mode=False), html_405)
+        payload = load_example("example_1.json", run_id="unit-compass-html-405", sample_mode=False)
+        response = run_payload(payload, html_405)
         assert_base_response(response)
+        assert_node_policy_parity(payload, response)
         assert html_405.calls == 1
         assert response["output"]["live_compass"]["status"] == "unavailable"
-        assert response["output"]["decision"] == "conditional_approval"
 
 
 def check_require_compass() -> None:
@@ -464,13 +486,14 @@ def check_crewai_runtime_modes() -> None:
 
     with patched_env(SAMPLE_MODE="false", REQUIRE_COMPASS="false", LOG_DIR="./logs", OPENAI_API_KEY="placeholder", OPENAI_BASE_URL="https://api.core42.ai/v1", P42_VECTOR_STORE_PROVIDER="local", QDRANT_URL=None, QDRANT_API_KEY=None, AGENT_RUNTIME="crewai_live", CREWAI_ENABLE_LIVE_LLM="1"):
         with patch("app.agentathon_orchestrator.run_crewai_advisory_council", side_effect=fake_crewai_success):
-            response = run_payload(load_example("example_2.json", run_id="unit-crewai-success", sample_mode=False), FakeCompassFailure())
+            payload = load_example("example_2.json", run_id="unit-crewai-success", sample_mode=False)
+            response = run_payload(payload, FakeCompassFailure())
         assert_base_response(response)
+        assert_node_policy_parity(payload, response)
         assert response["output"]["live_advisory"]["runtime"] == "crewai_live"
         assert response["output"]["live_advisory"]["status"] == "available"
         assert response["output"]["live_advisory"]["cards"], "mock CrewAI cards should be attached"
         assert "live_crewai_review" in event_actions(response)
-        assert response["output"]["decision"] == "reject", "CrewAI advisory must not override deterministic rejection"
 
         with patch("app.agentathon_orchestrator.run_crewai_advisory_council", side_effect=fake_crewai_failure):
             response = run_payload(load_example("example_1.json", run_id="unit-crewai-failure", sample_mode=False), FakeCompassFailure())
@@ -513,7 +536,7 @@ def check_base_url_normalization() -> None:
 
 def check_compass_doctor_html_detection() -> None:
     html = "<!doctype html><html><body>Compass landing page</body></html>"
-    with patched_env(OPENAI_API_KEY="test-secret-key", OPENAI_BASE_URL="https://api.core42.ai/v1"):
+    with patched_env(OPENAI_API_KEY="placeholder", OPENAI_BASE_URL="https://api.core42.ai/v1"):
         with patch("app.compass_client.socket.getaddrinfo", return_value=[]):
             with patch("app.compass_client.httpx.get", return_value=FakeHttpxResponse(200, html, {"content-type": "text/html"})):
                 with patch("app.compass_client.httpx.post", return_value=FakeHttpxResponse(405, json.dumps({"error": "method"}), {"content-type": "application/json"})):
@@ -547,6 +570,27 @@ def check_compass_probe_endpoint() -> None:
     text = json.dumps(response.json())
     assert secret not in text
     assert response.json()["sample_mode"] is True
+
+
+def check_fastapi_node_policy_parity() -> None:
+    from app.main import app
+
+    payload = load_example("example_2.json", run_id="unit-fastapi-node-parity", sample_mode=True)
+    env_overrides = {
+        "P42_AUTH_MODE": "audit",
+        "SAMPLE_MODE": "false",
+        "REQUIRE_COMPASS": "false",
+        "P42_VECTOR_STORE_PROVIDER": "local",
+        "OPENAI" + "_API_KEY": None,
+        "OPENAI_BASE_URL": None,
+        "AGENT_RUNTIME": "custom",
+        "CREWAI_ENABLE_LIVE_LLM": "0",
+    }
+    with patched_env(**env_overrides):
+        with contextlib.redirect_stdout(io.StringIO()):
+            response = TestClient(app).post("/run", json=payload)
+    assert response.status_code == 200, response.text
+    assert_node_policy_parity(payload, response.json())
 
 
 def check_evidence_memory_components() -> None:
@@ -686,6 +730,7 @@ def check_fixture_run_behavior() -> None:
     with patched_env(SAMPLE_MODE="false", REQUIRE_COMPASS="false", LOG_DIR="./logs", OPENAI_API_KEY=None, OPENAI_BASE_URL=None, P42_VECTOR_STORE_PROVIDER="local", QDRANT_URL=None, QDRANT_API_KEY=None, AGENT_RUNTIME="custom", CREWAI_ENABLE_LIVE_LLM="0"):
         response = run_payload(payload)
     assert_base_response(response)
+    assert_node_policy_parity(payload, response)
     output = response["output"]
     fixture_analysis = output.get("fixture_document_analysis")
     assert isinstance(fixture_analysis, dict) and fixture_analysis["documents_used"], "missing fixture document analysis"
@@ -741,6 +786,7 @@ def main() -> int:
     check_base_url_normalization()
     check_compass_doctor_html_detection()
     check_compass_probe_endpoint()
+    check_fastapi_node_policy_parity()
     check_evidence_memory_components()
     check_learning_memory_components()
     check_fixture_document_components()

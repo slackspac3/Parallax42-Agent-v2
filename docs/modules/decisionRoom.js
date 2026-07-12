@@ -467,6 +467,7 @@
     const loopSpec = agentLoopSpecForResult(result);
     const rubric = loopSpec.rubric;
     const approvalRequired = humanApprovalRequired(result);
+    const approvalEligible = result?.decisionReadiness?.approvalEligible === true;
     const advisorySummary = cleanText(llmOutput?.summary || '');
     const executiveBridge = advisorySummary || businessDecisionSummary(result);
     const primaryDocumentTitle = cleanText(result?.case?.documents?.[0]?.title || result?.case?.documents?.[0]?.fileName || '');
@@ -634,7 +635,7 @@
             </div>
           </div>
           <form class="learning-feedback-form" data-learning-feedback-form>
-            <label><span>Reviewer outcome</span><select name="reviewerDecision"><option value="Request remediation">Request remediation</option><option value="Conditional approval">Conditional approval</option><option value="Reject">Reject</option><option value="Approve after controls">Approve after controls</option></select></label>
+            <label><span>Reviewer outcome</span><select name="reviewerDecision"><option value="Request remediation">Request remediation</option><option value="Continue review">Continue review — not approved</option><option value="Reject">Reject</option>${approvalEligible ? '<option value="Approve">Approved after human sign-off</option>' : ''}</select></label>
             <label><span>Reviewer notes</span><textarea name="reviewerNotes" rows="3" autocomplete="off" placeholder="Example: require signed DPA, transfer basis, access approval, and exit support…"></textarea></label>
             <div class="learning-feedback-grid">
               <label><span>Controls added</span><input name="addedControls" autocomplete="off" placeholder="Example: signed DPA, transfer assessment…"></label>

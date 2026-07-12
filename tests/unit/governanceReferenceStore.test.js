@@ -89,6 +89,85 @@ test('governance reference index stores sanitized context locally without browse
   }
 });
 
+test('governance reference retrieval ignores caller-selected tenant scope', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p42-reference-tenant-'));
+  const actorA = { id: 'reviewer-a', authenticated: true, workspaceId: 'workspace-a', projectId: 'project-a' };
+  const actorB = { id: 'reviewer-b', authenticated: true, workspaceId: 'workspace-b', projectId: 'project-b' };
+  try {
+    await withEnv({
+      P42_VECTOR_STORE_PROVIDER: 'local_file',
+      P42_REFERENCE_CONTEXT_DIR: dir,
+      P42_WORKSPACE_ID: '',
+      P42_PROJECT_ID: '',
+      P42_TRUST_CLIENT_VECTOR_NAMESPACE: '',
+      COMPASS_GATEWAY_TOKEN: '',
+      PARALLAX42_GATEWAY_TOKEN: '',
+      CREWAI_LLM_API_KEY: '',
+      OPENAI_API_KEY: '',
+      QDRANT_URL: '',
+      P42_VECTOR_DB_URL: ''
+    }, async () => {
+      await indexGovernanceReference({
+        markdown: '## Tenant A policy\n\nTENANT A export evidence guidance.',
+        sourceId: 'tenant-a-reference'
+      }, { actor: actorA });
+      await indexGovernanceReference({
+        markdown: '## Tenant B policy\n\nTENANT B CONFIDENTIAL export evidence guidance.',
+        sourceId: 'tenant-b-reference'
+      }, { actor: actorB });
+
+      const result = await searchGovernanceReferences({
+        query: 'export evidence guidance',
+        workspaceId: actorB.workspaceId,
+        projectId: actorB.projectId
+      }, { actor: actorA });
+      const serialized = JSON.stringify(result);
+
+      assert.match(serialized, /TENANT A/);
+      assert.doesNotMatch(serialized, /TENANT B CONFIDENTIAL/);
+      assert.equal(result.context.workspaceId, actorA.workspaceId);
+    });
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('actor-scoped searches include only the trusted read-only public corpus', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p42-reference-public-'));
+  const actor = { id: 'reviewer-a', authenticated: true, workspaceId: 'workspace-a', projectId: 'project-a' };
+  try {
+    await withEnv({
+      P42_VECTOR_STORE_PROVIDER: 'local_file',
+      P42_REFERENCE_CONTEXT_DIR: dir,
+      P42_WORKSPACE_ID: '',
+      P42_PROJECT_ID: '',
+      COMPASS_GATEWAY_TOKEN: '',
+      OPENAI_API_KEY: '',
+      QDRANT_URL: ''
+    }, async () => {
+      await indexGovernanceReference({
+        markdown: '## Public export guidance\n\nPUBLIC SAFE export classification and sanctions guidance.',
+        sourceId: 'public-reference',
+        publicSafe: true
+      }, { trustedNamespace: true });
+      await indexGovernanceReference({
+        markdown: '## Other tenant guidance\n\nOTHER TENANT CONFIDENTIAL export guidance.',
+        sourceId: 'private-reference',
+        publicSafe: false
+      }, { actor: { ...actor, workspaceId: 'workspace-b' } });
+
+      const result = await searchGovernanceReferences({ query: 'export guidance' }, { actor });
+      const serialized = JSON.stringify(result);
+      assert.match(serialized, /PUBLIC SAFE/);
+      assert.doesNotMatch(serialized, /OTHER TENANT CONFIDENTIAL/);
+      assert.equal(result.context.workspaceId, actor.workspaceId);
+      assert.equal(result.context.publicCorpusIncluded, true);
+    });
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('qdrant governance reference index writes typed payloads without vectors in payload', async () => {
   const originalFetch = global.fetch;
   const calls = [];

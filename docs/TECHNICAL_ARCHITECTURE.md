@@ -1,6 +1,6 @@
 # Technical Architecture
 
-> **Verified hosted state (2026-07-12):** the Vercel product uses the named Parallax42 Compass gateway client with GPT-5.1 advisory/smart-intake calls and `text-embedding-3-large` semantic retrieval. Railway Postgres stores case, session, and quota records; Railway Qdrant is the active vector store. Deterministic behavior is the explicit fallback, not the primary hosted retrieval mode. Demo RBAC is enforced, but Microsoft Entra is not configured. Hash-chained audit still lands in ephemeral `/tmp` and is not enterprise-durable. Node specialists are active; Python CrewAI is optional and currently inactive. The Node policy engine is intended to be the sole decision authority; see the open authority-parity finding in the [deep code review](DEEP_CODE_REVIEW.md).
+> **State reviewed 2026-07-12:** the Vercel product uses the named Parallax42 Compass gateway client with GPT-5.1 advisory/smart-intake calls and `text-embedding-3-large` semantic retrieval. Railway Postgres stores case, session, quota, and—after this local remediation—tenant-scoped audit-chain records; Railway Qdrant is the active vector store. Hosted audit writes fail closed without PostgreSQL, while JSONL is local/test-only. Demo RBAC is enforced, but Microsoft Entra is not configured. Node specialists are active; Python CrewAI is optional and currently inactive. Node is the sole policy authority. Full local QA is green; CI, deployment, and authenticated live verification are pending.
 
 For the selected production target and staged transition, see the [Azure migration plan](AZURE_MIGRATION_PLAN.md).
 
@@ -15,7 +15,8 @@ Browser cockpit
   -> compliance agent loop
   -> Qdrant-backed evidence memory in deployed product, local fallback when unconfigured
   -> evidence/domain library and governed learning memory
-  -> decision + control plan + trace
+  -> authoritative Node decision + control plan + trace
+  -> tenant-scoped PostgreSQL audit chain
 ```
 
 Linked online product evidence:
@@ -35,9 +36,9 @@ GitHub Actions / Docker
   -> python run.py
   -> FastAPI 0.0.0.0:8000
   -> POST /run
-  -> Python multi-agent council
+  -> Python multi-agent advisory/evaluator
   -> Node bridge scripts/agentathon_run.js
-  -> deterministic rules engine
+  -> authoritative deterministic Node rules engine
   -> JSON response + logs/*.jsonl
 ```
 
@@ -81,15 +82,15 @@ CourtListener / CUAD-compatible / NIST / legacy CAP local imports
 | Runtime router | `lib/agentRuntime.js` | Routes the Node policy run and reports requested versus actual runtime metadata; Python CrewAI remains optional. |
 | Agent runtime | `lib/complianceAgent.js` | Intake normalization, domain scan, gaps, decision, controls, trace. |
 | Advisory council | `lib/advisoryCouncil.js` | Active GPT-5.1 Privacy, Security, Responsible AI, and Learning/Precedent specialists through the named Compass gateway client; advisory only. |
-| Agentathon evaluator wrapper | `run.py`, `app/`, `scripts/agentathon_run.js` | Standardized FastAPI `/run` path for technical screening, Docker smoke, and JSONL trace generation. |
+| Agentathon evaluator wrapper | `run.py`, `app/`, `scripts/agentathon_run.js` | Standardized FastAPI `/run` path that preserves Node policy fields and adds only advisory/evaluator output. |
 | RBAC policy | `lib/rbac.js` | Route policy, role normalization, bearer JWT validation, and Entra-compatible RS256/JWKS support. |
 | CrewAI Flow adapter | `crewai_adapter/compliance_flow.py` | Flow state/stage mapping and optional live Flow validation. |
-| Evidence layer | `lib/evidenceLibrary.js` | Initial compliance domain library and evidence IDs. |
+| Evidence assertions | `lib/evidenceAssertions.js`, `lib/evidenceLibrary.js` | Normalizes provenance/assertion state, admits only usable supplied/retrieved passages as proof, and retains source-level positive/negative assertions and contradictions. |
 | Shared evidence gateway client | `lib/compassGatewayClient.js` | Server-side bridge to the reusable Parallax42 gateway for GPT-5.1, `text-embedding-3-large`, evidence chunking, and semantic search. |
 | Server-side evidence vector store | `lib/evidenceVectorStore.js` | Stores chunk embeddings behind the API, supports Qdrant-compatible production storage, strips vectors from browser responses, and retrieves evidence by `caseId`. |
-| Governed learning memory | `lib/learningMemory.js` | Stores reviewer feedback, outcomes, control patterns, overrides, and evidence-quality notes as advisory memory. This is not model training. |
+| Governed learning memory | `lib/learningMemory.js`, `lib/serverSideRetrieval.js` | Stores advisory reviewer context and derives learning/governance namespaces from the authenticated actor, ignoring caller-selected workspace/project values. This is not model training. |
 | Reference intelligence corpus | `lib/referenceIntelligenceCorpus.js`, `scripts/import-courtlistener-reference.js`, `scripts/import-cuad-reference.js`, `scripts/import-nist-reference.js`, `reference_context/` | Normalizes legal, contract, compliance, security, procurement, AI governance, sanctions/export, and HSE/ESG reference context for advisory retrieval. |
-| Audit store | `lib/auditStore.js` | Hash-chained append-only JSONL audit with integrity verification. The hosted Vercel path currently writes to ephemeral `/tmp`; this is not durable across instances or deployments. |
+| Audit store | `lib/auditStore.js` | Tenant/project-scoped PostgreSQL hash chains for hosted runtimes, serialized with `SELECT ... FOR UPDATE`; role-gated/scoped reads and fail-closed hosted writes. JSONL is local/test fallback only. Immutable export remains future work. |
 | Review pack builder | `lib/reviewPack.js` | Generates digest-backed executive review packs with evidence quality, retrieval audit, citations, and reviewer actions. |
 | Cockpit UI | `public/` | Chat-first operator workspace with advanced demo/live run modes. |
 | Evidence capture | `scripts/capture-evidence.js` | Generates health, benchmark, readiness, and sample trace artifacts. |
@@ -115,10 +116,13 @@ The selected Azure target and migration gates are defined in [Azure Migration Pl
 - Embedding calls are token-protected server-to-server calls; the browser never receives Compass, Vercel AI Gateway, or embedding provider credentials.
 - Chunk embeddings are stored behind `/api/evidence/index` and retrieved behind `/api/evidence/search`; browser responses strip vectors and raw chunk payloads.
 - Qdrant is the hosted vector provider and currently uses `text-embedding-3-large` semantic embeddings through the named Compass gateway client. Labelled deterministic hash vectors and local-file storage are fallback/reproduction modes.
-- In the current deployed product path, Qdrant and Postgres are isolated Railway services configured server-side through Vercel. Postgres durably stores case, session, and quota records; the audit JSONL path remains ephemeral `/tmp`. Local/FastAPI reproduction remains environment-dependent and falls back when vector settings are missing.
-- Governed learning memory returns similar cases and control suggestions as advisory reviewer context only. It never rewrites the deterministic run output.
-- Output is never automatic approval; it is a human-review decision brief.
-- Live Node specialist output is advisory only. The Node policy engine should exclusively own decision status, approval eligibility, and blocker naming; the [deep code review](DEEP_CODE_REVIEW.md) records the current Python authority-parity defect that must be closed before making that guarantee.
+- In hosted runtimes, Postgres durably stores case/session/quota records and scoped audit chains; audit writes fail closed if PostgreSQL is unavailable. Local/FastAPI reproduction remains environment-dependent and uses explicit local fallbacks.
+- Governed learning and governance retrieval use the authenticated actor's workspace/project. They return advisory context only and never rewrite deterministic output.
+- Only evidence-bearing uploaded or server-retrieved passages satisfy controls. A question, mention, placeholder, or policy reference cannot do so; contradictory assertions remain visible and blocking.
+- Output is never automatic approval. Conditional status is nonterminal, and approval requires the server-owned `approvalEligible: true` plus a human decision.
+- Live Node specialists, Compass, learning, precedent, and Python are advisory. Node exclusively owns decision status, risk, gaps, controls, readiness, approval eligibility, and blocker naming.
+- Council completion returns one authoritative final case snapshot/version; browser state is replaced from that snapshot before the next interaction.
+- Detailed audit is role-gated and tenant-scoped with `private, no-store`; `/api/logs` is a non-disclosing 404 and FastAPI `/logs` returns no trace entries.
 - Raw private documents and secrets must not appear in admin or trace outputs.
 - Any write-capable future tool must use explicit approval and audit logging.
 - The Vercel backend relay forwards only explicit demo routes and blocks arbitrary backend access.

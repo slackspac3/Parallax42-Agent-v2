@@ -30,6 +30,7 @@ LEARNING_REVIEWER_ROLES: FrozenSet[str] = frozenset(
         "hse_bcm_reviewer",
     }
 )
+AUDIT_READER_ROLES: FrozenSet[str] = frozenset({"platform_admin", "auditor"})
 
 
 def _clean_scope(value: Optional[str], fallback: str) -> str:
@@ -131,5 +132,24 @@ async def require_learning_reviewer(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Reviewer or administrator role required.",
+        )
+    return context
+
+
+async def require_audit_reader(
+    context: AuthContext = Depends(request_auth_context),
+) -> AuthContext:
+    """Require an authenticated auditor or platform administrator."""
+
+    if not context.authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Auditor bearer token required.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    if context.roles.isdisjoint(AUDIT_READER_ROLES):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Auditor or platform administrator role required.",
         )
     return context

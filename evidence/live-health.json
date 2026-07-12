@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-05-15T15:57:14.715Z",
+  "generatedAt": "2026-07-12T14:32:24.820Z",
   "backendHealth": {
     "ok": true,
     "status": 200,
-    "durationMs": 591,
+    "durationMs": 311,
     "url": "https://api.parallax42.bhavukarora.com/health",
     "body": {
       "status": "ok",
@@ -83,20 +83,24 @@
   "gatewayHealth": {
     "ok": true,
     "status": 200,
-    "durationMs": 398,
+    "durationMs": 383,
     "url": "https://parallax42-compass-gateway.vercel.app/api/health",
     "body": {
       "ok": true,
-      "service": "parallax42-vercel-compass-gateway",
+      "service": "compass-gateway",
       "config": {
         "compass_api_key_configured": true,
         "compass_base_url_configured": true,
         "parallax42_gateway_token_configured": true,
+        "gateway_clients_configured": 8,
         "compass_model": {
           "configured": true,
           "valid": true,
           "expected": "gpt-5.1"
         },
+        "allowed_chat_models": [
+          "gpt-5.1"
+        ],
         "embeddings": {
           "configured": true,
           "valid": true,

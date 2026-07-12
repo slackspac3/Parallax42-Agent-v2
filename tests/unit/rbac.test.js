@@ -122,3 +122,15 @@ test('audit mode ignores malformed optional bearer tokens on normal routes', asy
     restoreEnv(snapshot);
   }
 });
+
+test('audit reads remain authenticated and role-gated in audit mode', async () => {
+  const snapshot = { ...process.env };
+  try {
+    process.env.P42_AUTH_MODE = 'audit';
+    const result = await authorizeRequest({ headers: {} }, 'audit:read');
+    assert.equal(result.ok, false);
+    assert.equal(result.statusCode, 401);
+  } finally {
+    restoreEnv(snapshot);
+  }
+});

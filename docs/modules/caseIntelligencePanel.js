@@ -28,10 +28,76 @@
       .replace(/\bRbac\b/g, 'RBAC');
   }
 
+  function documentAssertionState(document) {
+    const record = document || {};
+    if (documentEvidenceText(record).includes('?')) return 'requested';
+    const explicit = cleanEvidenceText(record.assertionState).toLowerCase();
+    if (explicit) return explicit;
+    const source = cleanEvidenceText(record.provenance || record.sourceType).toLowerCase();
+    const extraction = cleanEvidenceText(record.extractionStatus).toLowerCase();
+    if (source === 'chat_message') return 'mentioned';
+    if (source === 'semantic_retrieval' || extraction === 'retrieved_chunk') return 'verified';
+    if (/parsed|text_extracted|sampled_text|metadata_fallback/.test(extraction)) return 'parsed';
+    if ((record.fileName || record.filename) && !/binary_registered|metadata_only/.test(extraction)) return 'provided';
+    return 'mentioned';
+  }
+
+  function documentEvidenceText(document) {
+    const record = document || {};
+    return cleanEvidenceText([
+      record.summary,
+      record.text,
+      record.excerpt,
+      ...(Array.isArray(record.signals) ? record.signals : [])
+    ].filter(Boolean).join(' '));
+  }
+
+  function isEvidenceBearingText(value) {
+    const evidenceText = cleanEvidenceText(value);
+    if (evidenceText.length < 20) return false;
+    if (/\b(?:placeholder|dummy content|lorem ipsum|sample (?:document|text)|test (?:document|content))\b/i.test(evidenceText)) return false;
+    return /\b(?:signed|approved|approval authority|contract|agreement|terms|clause|obligation|policy|procedure|control|assurance|attestation|audit report|soc\s*2|iso\s*27001|dpa|data processing|retention|deletion|subprocessor|certificate|permit|licen[cs]e|classification|screening|mfa|access control|encryption|logging|training|fine[- ]?tuning|human oversight|continuity|bcp|disaster recovery|recovery|exit assistance)\b/i.test(evidenceText);
+  }
+
+  function isUsableEvidenceDocument(document) {
+    const record = document || {};
+    const source = cleanEvidenceText(record.provenance || record.sourceType).toLowerCase();
+    const extraction = cleanEvidenceText(record.extractionStatus).toLowerCase();
+    const state = documentAssertionState(record);
+    return source !== 'chat_message'
+      && source !== 'policy_reference'
+      && !/binary_registered|metadata_only/.test(extraction)
+      && /^(provided|parsed|verified)$/.test(state)
+      && isEvidenceBearingText(documentEvidenceText(record));
+  }
+
+  function isUsableRetrievalEvidenceDocument(match) {
+    const record = match || {};
+    return isUsableEvidenceDocument({
+      ...record,
+      text: record.text || record.snippet || '',
+      sourceType: 'semantic_retrieval',
+      provenance: 'semantic_retrieval',
+      extractionStatus: 'retrieved_chunk'
+    });
+  }
+
+  function usableEvidenceCount(draft) {
+    const record = draft || {};
+    const documents = Array.isArray(record.documents) ? record.documents : [];
+    const retrieval = record.retrievalContext || {};
+    const matches = Array.isArray(retrieval.matches)
+      ? retrieval.matches
+      : Array.isArray(retrieval.evidenceMatches) ? retrieval.evidenceMatches : [];
+    return Math.max(
+      documents.filter(isUsableEvidenceDocument).length,
+      matches.filter(isUsableRetrievalEvidenceDocument).length
+    );
+  }
+
   function contextStrength(draft) {
     const record = draft || {};
     const documents = Array.isArray(record.documents) ? record.documents : [];
-    const evidenceSignals = Array.isArray(record.evidenceSignals) ? record.evidenceSignals : [];
     const riskSignals = Array.isArray(record.riskSignals) ? record.riskSignals : [];
     const integrations = Array.isArray(record.integrations) ? record.integrations : [];
     const hasCaseRequest = Boolean(
@@ -48,10 +114,14 @@
     if (cleanEvidenceText(record.geography)) score += 16;
     if (riskSignals.length) score += Math.min(18, 8 + riskSignals.length * 4);
     if (integrations.length) score += Math.min(10, integrations.length * 5);
-    if (hasCaseRequest && (evidenceSignals.length || documents.length)) score += Math.min(28, 12 + (evidenceSignals.length + documents.length) * 4);
+    const usableEvidence = documents.filter(isUsableEvidenceDocument).length;
+    if (hasCaseRequest && usableEvidence) score += Math.min(28, 12 + usableEvidence * 4);
     if (hasCaseRequest && record.indexedEvidence && record.indexedEvidence.chunkCount) score += Math.min(12, 6 + Math.round(record.indexedEvidence.chunkCount / 8));
-    if (hasCaseRequest && record.retrievalContext && Array.isArray(record.retrievalContext.matches) && record.retrievalContext.matches.length) {
-      score += Math.min(10, 4 + record.retrievalContext.matches.length);
+    const retrievalMatches = record.retrievalContext && Array.isArray(record.retrievalContext.matches)
+      ? record.retrievalContext.matches.filter(isUsableRetrievalEvidenceDocument)
+      : [];
+    if (hasCaseRequest && retrievalMatches.length) {
+      score += Math.min(10, 4 + retrievalMatches.length);
     }
     return Math.min(100, score);
   }
@@ -80,9 +150,7 @@
     if (!cleanEvidenceText(source.businessUnit)) missing.push('Accountable owner');
     if (!cleanEvidenceText(source.geography)) missing.push('Geography');
     if (!(
-      (source.evidenceSignals && source.evidenceSignals.length)
-      || (source.documents && source.documents.length)
-      || (source.indexedEvidence && source.indexedEvidence.chunkCount)
+      usableEvidenceCount(source)
       || (result && result.evidenceIds && result.evidenceIds.length)
       || (result && result.citations && result.citations.length)
     )) {
@@ -117,16 +185,52 @@
     const indexMeta = settings.evidenceIndexMeta || {};
     const indexValidation = settings.evidenceIndexValidation || {};
     const docCount = Array.isArray(draft.documents) ? draft.documents.length : 0;
-    const uploadedCount = evidence.length;
-    const indexed = Number((draft.indexedEvidence && draft.indexedEvidence.chunkCount) || indexMeta.chunkCount || 0);
-    const metadataOnly = evidence.filter(function isMetadataOnly(item) {
-      return item.extractionStatus === 'binary_registered';
+    const usableCount = usableEvidenceCount(draft);
+    const retrieval = draft.retrievalContext || {};
+    const retrievalCandidates = Array.isArray(retrieval.matches)
+      ? retrieval.matches
+      : Array.isArray(retrieval.evidenceMatches) ? retrieval.evidenceMatches : [];
+    const usableRetrievalCount = retrievalCandidates.filter(isUsableRetrievalEvidenceDocument).length;
+    const requestedRetrievalCount = retrievalCandidates.filter(function isRequestedRetrieval(item) {
+      return documentAssertionState({
+        ...(item || {}),
+        text: (item && (item.text || item.snippet)) || '',
+        sourceType: 'semantic_retrieval',
+        provenance: 'semantic_retrieval',
+        extractionStatus: 'retrieved_chunk'
+      }) === 'requested';
     }).length;
+    const requestedCount = (Array.isArray(draft.documents) ? draft.documents : []).filter(function isRequested(item) {
+      return documentAssertionState(item) === 'requested';
+    }).length;
+    const metadataOnlyDraftCount = (Array.isArray(draft.documents) ? draft.documents : []).filter(function isMetadataOnlyDraft(item) {
+      return /binary_registered|metadata_only/.test(cleanEvidenceText(item.extractionStatus).toLowerCase());
+    }).length;
+    const pendingValidationCount = (Array.isArray(draft.documents) ? draft.documents : []).filter(function isPendingValidation(item) {
+      return !/binary_registered|metadata_only/.test(cleanEvidenceText(item.extractionStatus).toLowerCase())
+        && /^(provided|parsed|verified)$/.test(documentAssertionState(item))
+        && !isUsableEvidenceDocument(item);
+    }).length;
+    const mentionedCount = Math.max(0, docCount - usableCount - requestedCount - metadataOnlyDraftCount - pendingValidationCount);
+    const indexed = Number((draft.indexedEvidence && draft.indexedEvidence.chunkCount) || indexMeta.chunkCount || 0);
+    const metadataOnly = Math.max(metadataOnlyDraftCount, evidence.filter(function isMetadataOnly(item) {
+      return /binary_registered|metadata_only/.test(cleanEvidenceText(item.extractionStatus).toLowerCase());
+    }).length);
     if (indexValidation.status === 'expired') return 'Previous evidence index expired';
     if (indexed && indexValidation.status === 'not_checked') return `${indexed} chunk${indexed === 1 ? '' : 's'} pending validation`;
-    if (indexed) return `${indexed} citation-ready chunk${indexed === 1 ? '' : 's'}`;
-    if (metadataOnly) return `${metadataOnly} metadata-only file${metadataOnly === 1 ? '' : 's'}`;
-    if (docCount || uploadedCount) return `${docCount || uploadedCount} evidence item${(docCount || uploadedCount) === 1 ? '' : 's'} captured`;
+    if (usableRetrievalCount) return `${usableRetrievalCount} citation-ready match${usableRetrievalCount === 1 ? '' : 'es'}`;
+    if (requestedRetrievalCount) return `${requestedRetrievalCount} evidence request${requestedRetrievalCount === 1 ? '' : 's'} retrieved · not verified`;
+    if (indexed) return `${indexed} indexed chunk${indexed === 1 ? '' : 's'} · claim validation pending`;
+    if (metadataOnly) return `${metadataOnly} metadata-only file${metadataOnly === 1 ? '' : 's'} · not verified`;
+    const usableUploads = evidence.filter(isUsableEvidenceDocument).length;
+    const usableTotal = Math.max(usableCount, usableUploads);
+    if (usableTotal) return `${usableTotal} usable evidence item${usableTotal === 1 ? '' : 's'}`;
+    if (requestedCount) return `${requestedCount} evidence request${requestedCount === 1 ? '' : 's'} noted · not verified`;
+    if (pendingValidationCount) return `${pendingValidationCount} parsed or attached item${pendingValidationCount === 1 ? '' : 's'} · validation pending`;
+    if (mentionedCount || (draft.evidenceSignals && draft.evidenceSignals.length)) {
+      const count = mentionedCount || draft.evidenceSignals.length;
+      return `${count} evidence mention${count === 1 ? '' : 's'} · not verified`;
+    }
     return 'No evidence attached yet';
   }
 
@@ -143,9 +247,13 @@
     contextCopy,
     contextStrength,
     evidenceStatusSummary,
+    isEvidenceBearingText,
+    isUsableEvidenceDocument,
+    isUsableRetrievalEvidenceDocument,
     missingProofItems,
     nextBestAction,
     titleCase,
-    unique
+    unique,
+    usableEvidenceCount
   };
 })(window);

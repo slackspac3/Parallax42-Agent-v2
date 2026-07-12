@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-05-15T15:57:15.318Z",
+  "generatedAt": "2026-07-12T14:32:25.257Z",
   "submissionReadiness": {
     "productionDeployment": "partial_live",
     "sovereignLlmBoundary": "live_gateway_present",
-    "auditTraceability": "hash_chained_append_only_audit_needs_managed_store",
+    "auditTraceability": "hash_chained_audit_present_local_development_only",
     "rbac": "rbac_policy_ready_needs_enforced_env",
     "evidenceRetrieval": "server_side_vector_boundary_ready_needs_managed_store",
     "benchmarks": "parallax42_golden_evals_20_of_20_passed",
@@ -14,6 +14,7 @@
     "auth": {
       "mode": "audit",
       "enforced": false,
+      "productionDefaultEnforced": false,
       "jwt": {
         "hs256Configured": false,
         "jwksConfigured": false,
@@ -29,7 +30,38 @@
           "legal_privacy_reviewer",
           "security_reviewer",
           "finance_project_reviewer",
-          "hse_bcm_reviewer"
+          "hse_bcm_reviewer",
+          "demo_user"
+        ],
+        "case:approve": [
+          "platform_admin",
+          "risk_admin",
+          "compliance_reviewer",
+          "business_approver",
+          "demo_user"
+        ],
+        "learning:read": [
+          "platform_admin",
+          "risk_admin",
+          "compliance_reviewer",
+          "legal_privacy_reviewer",
+          "security_reviewer",
+          "auditor",
+          "read_only",
+          "demo_user"
+        ],
+        "learning:write": [
+          "platform_admin",
+          "risk_admin",
+          "compliance_reviewer"
+        ],
+        "knowledge:write": [
+          "platform_admin",
+          "risk_admin"
+        ],
+        "admin:features:update": [
+          "platform_admin",
+          "risk_admin"
         ],
         "readiness:read": [
           "platform_admin",
@@ -66,13 +98,16 @@
     "audit": {
       "mode": "hash_chained_jsonl",
       "provider": "local_file",
-      "path": "/Users/bhavuk.arora/Parallax42-Compliance-Intelligence-Agent/logs/agent_audit.jsonl",
-      "appendOnly": true,
+      "path": "/Users/bhavuk.arora/Parallax42 Agent v2/logs/agent_audit.jsonl",
+      "appendOnly": false,
+      "applicationAppendOnly": true,
       "hashChained": true,
-      "durable": true,
+      "immutableRetention": false,
+      "durable": false,
       "durableRequired": false,
       "enterpriseReady": false,
-      "durabilityNote": "Audit file is written to the configured filesystem path. Use managed append-only storage for multi-instance production."
+      "durabilityNote": "Local JSONL is a development/test fallback only.",
+      "retentionNote": "PostgreSQL persistence is durable but not immutable/WORM; add an immutable export before claiming enterprise retention."
     },
     "evidenceVectorStore": {
       "provider": "local_file",
@@ -80,9 +115,25 @@
       "durable": false,
       "durableRequired": false,
       "enterpriseReady": false,
+      "features": {
+        "qdrantRagEnabled": true,
+        "compassEmbeddingsEnabled": true,
+        "deterministicDemoEmbeddings": false,
+        "embeddingsEnabled": true
+      },
       "browserEmbeddingsRetained": false,
       "localStorePath": "/var/folders/s7/ch8z1jd96p10gnt99khhwcdw0000gp/T/p42-compliance-intelligence-agent/evidence-vector-index.json",
       "qdrantConfigured": false,
+      "collection": "p42_compliance_evidence",
+      "lastSmokeStatus": {
+        "ok": false,
+        "provider": "local_file",
+        "collection": "p42_compliance_evidence",
+        "qdrantConfigured": false,
+        "timestamp": "2026-07-12T14:31:20.997Z",
+        "skipped": true,
+        "reason": "P42_VECTOR_STORE_PROVIDER=qdrant and QDRANT_URL are required for the Qdrant smoke test."
+      },
       "durabilityNote": "Server-side local vector storage is acceptable for demos only; configure Qdrant or an approved managed store for production."
     }
   },
@@ -100,7 +151,7 @@
         "contract clause review",
         "risk acceptance workflow"
       ],
-      "evidenceIds": [
+      "policyReferenceIds": [
         "p42:vendor-risk-sop",
         "p42:approval-matrix",
         "p42:contract-clause-pack"
@@ -114,7 +165,7 @@
         "subprocessor register",
         "retention and deletion evidence"
       ],
-      "evidenceIds": [
+      "policyReferenceIds": [
         "p42:dpa-review-checklist",
         "p42:model-training-data-use-policy"
       ]
@@ -127,7 +178,7 @@
         "human oversight",
         "rai assessment"
       ],
-      "evidenceIds": [
+      "policyReferenceIds": [
         "p42:ai-supplier-review-playbook",
         "p42:responsible-ai-control-pack"
       ]
@@ -140,7 +191,7 @@
         "disaster recovery evidence",
         "exit assistance"
       ],
-      "evidenceIds": [
+      "policyReferenceIds": [
         "p42:continuity-exit-requirements"
       ]
     },
@@ -152,7 +203,7 @@
         "payment control review",
         "project exception register"
       ],
-      "evidenceIds": [
+      "policyReferenceIds": [
         "p42:finance-project-control-baseline"
       ]
     },
@@ -164,7 +215,7 @@
         "tenant access review",
         "admin privilege review"
       ],
-      "evidenceIds": [
+      "policyReferenceIds": [
         "p42:microsoft-governance-baseline"
       ]
     },
@@ -176,7 +227,7 @@
         "esg attestation",
         "business continuity mapping"
       ],
-      "evidenceIds": [
+      "policyReferenceIds": [
         "p42:esg-hse-bcm-baseline"
       ]
     },
@@ -188,7 +239,7 @@
         "site security review",
         "market-entry compliance check"
       ],
-      "evidenceIds": [
+      "policyReferenceIds": [
         "p42:international-growth-control-pack"
       ]
     },
@@ -200,7 +251,7 @@
         "identity and access controls",
         "integration risk assessment"
       ],
-      "evidenceIds": [
+      "policyReferenceIds": [
         "p42:technical-risk-control-pack",
         "p42:soc2-iso-evidence-map"
       ]
@@ -213,7 +264,7 @@
         "policy exception workflow",
         "audit-ready decision record"
       ],
-      "evidenceIds": [
+      "policyReferenceIds": [
         "p42:regulatory-obligation-register",
         "p42:audit-ready-decision-schema"
       ]

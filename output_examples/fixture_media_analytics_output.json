@@ -15,9 +15,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "Intake Agent",
-      "timestamp": "2026-06-05T08:27:39.852503Z",
+      "timestamp": "2026-07-12T14:19:56.618635Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
       "action": "extract_case_facts",
@@ -37,8 +37,7 @@
             "audience and marketing analytics data"
           ],
           "evidenceReferences": [
-            "fixture-05_media_buying_and_audience_analytics_order_form.pdf",
-            "FIXTURE-05"
+            "fixture-05_media_buying_and_audience_analytics_order_form.pdf"
           ],
           "fixtureDomain": "marketing",
           "geography": "",
@@ -63,9 +62,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "needs_revision",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-05T08:27:39.958808Z",
+      "timestamp": "2026-07-12T14:19:56.801156Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
       "action": "delegate_evidence_search",
@@ -79,9 +78,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "Evidence Retrieval Agent",
-      "timestamp": "2026-06-05T08:27:39.968072Z",
+      "timestamp": "2026-07-12T14:19:56.802851Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
       "action": "ingest_fixture_document",
@@ -124,9 +123,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T08:27:39.974300Z",
+      "timestamp": "2026-07-12T14:19:56.803460Z",
       "tool_used": "fixture_pdf_text_extractor",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
       "action": "retrieve_evidence",
@@ -134,15 +133,10 @@
       "confidence": 0.52,
       "input_summary": "Supplied request evidence, Node citations, local sample snippets, and case-scoped evidence memory.",
       "memory_key": "evidenceMatches",
-      "output_summary": "Retrieved 9 evidence match(es); memory provider=local-fallback; sufficiency=weak.",
+      "output_summary": "Retrieved 8 evidence match(es); memory provider=local-fallback; sufficiency=weak.",
       "payload": {
-        "localEvidenceArtifacts": [
-          "live-health.json",
-          "benchmark-report.json",
-          "readiness.json",
-          "sample-agent-run.json"
-        ],
-        "match_count": 9,
+        "localEvidenceArtifacts": [],
+        "match_count": 8,
         "missingEvidence": [
           "DPA",
           "subprocessor schedule",
@@ -156,8 +150,8 @@
           "business continuity or exit evidence",
           "Business owner is not identified.",
           "Jurisdiction or geography is missing.",
-          "Privacy/data governance is applicable but DPA evidence was not detected.",
-          "ESG, HSE And BCM applicability needs confirmation."
+          "No usable supporting evidence or document content was provided.",
+          "Privacy/data governance is applicable but DPA evidence was not detected."
         ],
         "retrievalContext": {
           "browserEmbeddingsRetained": false,
@@ -287,7 +281,7 @@
               "title": "Media Buying And Audience Analytics Order Form"
             }
           ],
-          "indexedChunkCount": 164,
+          "indexedChunkCount": 163,
           "missingEvidenceSignals": [
             "DPA",
             "subprocessor schedule",
@@ -301,8 +295,8 @@
             "business continuity or exit evidence",
             "Business owner is not identified.",
             "Jurisdiction or geography is missing.",
-            "Privacy/data governance is applicable but DPA evidence was not detected.",
-            "ESG, HSE And BCM applicability needs confirmation."
+            "No usable supporting evidence or document content was provided.",
+            "Privacy/data governance is applicable but DPA evidence was not detected."
           ],
           "provider": "local-fallback",
           "qdrantConfigured": false,
@@ -313,9 +307,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "needs_revision",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T08:27:40.022310Z",
+      "timestamp": "2026-07-12T14:19:56.845011Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
       "action": "retry_evidence_search",
@@ -338,8 +332,8 @@
           "business continuity or exit evidence",
           "Business owner is not identified.",
           "Jurisdiction or geography is missing.",
-          "Privacy/data governance is applicable but DPA evidence was not detected.",
-          "ESG, HSE And BCM applicability needs confirmation."
+          "No usable supporting evidence or document content was provided.",
+          "Privacy/data governance is applicable but DPA evidence was not detected."
         ],
         "retrievalContext": {
           "browserEmbeddingsRetained": false,
@@ -469,7 +463,7 @@
               "title": "Media Buying And Audience Analytics Order Form"
             }
           ],
-          "indexedChunkCount": 164,
+          "indexedChunkCount": 163,
           "missingEvidenceSignals": [
             "DPA",
             "subprocessor schedule",
@@ -483,8 +477,8 @@
             "business continuity or exit evidence",
             "Business owner is not identified.",
             "Jurisdiction or geography is missing.",
-            "Privacy/data governance is applicable but DPA evidence was not detected.",
-            "ESG, HSE And BCM applicability needs confirmation."
+            "No usable supporting evidence or document content was provided.",
+            "Privacy/data governance is applicable but DPA evidence was not detected."
           ],
           "provider": "local-fallback",
           "qdrantConfigured": false,
@@ -495,9 +489,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "retry",
       "target_agent": "Privacy Specialist",
-      "timestamp": "2026-06-05T08:27:40.032991Z",
+      "timestamp": "2026-07-12T14:19:56.849856Z",
       "tool_used": "local-fallback",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
       "action": "critique_privacy_gap",
@@ -523,9 +517,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "needs_revision",
       "target_agent": "Security Specialist",
-      "timestamp": "2026-06-05T08:27:40.047634Z",
+      "timestamp": "2026-07-12T14:19:56.854708Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
       "action": "critique_security_gap",
@@ -544,9 +538,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "needs_revision",
       "target_agent": "Responsible AI Specialist",
-      "timestamp": "2026-06-05T08:27:40.052601Z",
+      "timestamp": "2026-07-12T14:19:56.855580Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
       "action": "validate_evidence",
@@ -565,9 +559,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "Learning & Precedent Specialist",
-      "timestamp": "2026-06-05T08:27:40.056431Z",
+      "timestamp": "2026-07-12T14:19:56.856088Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
       "action": "retrieve_precedent",
@@ -617,15 +611,15 @@
                 "ai-governance",
                 "healthcare"
               ],
-              "finalOutcome": "conditional approval after DPA amendment",
+              "finalOutcome": "continued review pending DPA amendment and rerun",
               "memoryId": "learn-healthcare-training-001",
               "missingEvidence": [
                 "model-training exclusion",
                 "DPA amendment"
               ],
-              "originalDecision": "conditional_approval",
-              "reviewerDecision": "conditional_approval",
-              "score": 0.3527,
+              "originalDecision": "conditionally_ready",
+              "reviewerDecision": "continue_review",
+              "score": 0.3657,
               "title": "Healthcare analytics vendor missing model-training exclusion",
               "type": "case_outcome"
             },
@@ -642,7 +636,7 @@
                 "saas",
                 "cross-border"
               ],
-              "finalOutcome": "conditional approval after retention schedule",
+              "finalOutcome": "continued review pending retention schedule and rerun",
               "memoryId": "learn-cross-border-retention-001",
               "missingEvidence": [
                 "retention and deletion evidence",
@@ -650,8 +644,8 @@
                 "support region confirmation"
               ],
               "originalDecision": "needs_more_information",
-              "reviewerDecision": "conditional_approval",
-              "score": 0.3397,
+              "reviewerDecision": "continue_review",
+              "score": 0.3138,
               "title": "Cross-border SaaS missing retention schedule",
               "type": "evidence_quality_note"
             },
@@ -668,15 +662,15 @@
                 "saas",
                 "third-party-risk"
               ],
-              "finalOutcome": "conditional approval with subprocessor disclosure",
+              "finalOutcome": "continued review pending subprocessor disclosure and rerun",
               "memoryId": "learn-saas-subprocessors-001",
               "missingEvidence": [
                 "subprocessor register",
                 "cross-border transfer mechanism"
               ],
               "originalDecision": "needs_more_information",
-              "reviewerDecision": "conditional_approval",
-              "score": 0.2878,
+              "reviewerDecision": "continue_review",
+              "score": 0.2748,
               "title": "SaaS vendor missing subprocessor list",
               "type": "control_pattern"
             },
@@ -700,7 +694,7 @@
                 "signed DPA",
                 "human oversight plan"
               ],
-              "originalDecision": "conditional_approval",
+              "originalDecision": "conditionally_ready",
               "reviewerDecision": "reject",
               "score": 0.2748,
               "title": "AI vendor permitted customer-data training",
@@ -736,16 +730,16 @@
           "advisoryOnly": true,
           "confidence": 0.62,
           "pattern": "general incomplete evidence -> human review controls",
-          "recommendation": "conditional_human_review"
+          "recommendation": "continue_review"
         }
       },
       "retry_count": 0,
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-05T08:27:40.063907Z",
+      "timestamp": "2026-07-12T14:19:56.859817Z",
       "tool_used": "local-jsonl",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
       "action": "compass_advisory_unavailable",
@@ -759,34 +753,29 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "fallback_used",
       "target_agent": "Deterministic Decision Owner",
-      "timestamp": "2026-06-05T08:27:40.071612Z",
+      "timestamp": "2026-07-12T14:19:56.864321Z",
       "tool_used": "sample_mode",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
-      "action": "revise_required_controls",
+      "action": "record_advisory_challenges",
       "agent_name": "Deterministic Decision Owner",
       "confidence": 0.92,
       "input_summary": "Specialist challenges, precedent pattern, and Compass advisory status.",
       "memory_key": "requiredActions",
-      "output_summary": "Required controls revised to 14 action(s); final risk=high.",
+      "output_summary": "Recorded advisory challenges without changing the Node-owned 9 required control(s).",
       "payload": {
         "llm_advisory_only": true,
         "required_actions": [
           "Assign the accountable business unit or requester before approval.",
           "Confirm the operating geography and regulatory perimeter.",
+          "Upload or reference policy, contract, questionnaire, or assurance evidence.",
           "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
-          "Ask the domain owner whether esg, hse and bcm obligations apply.",
-          "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
-          "Require current subprocessor register and change-notification terms.",
-          "Require retention schedule and deletion assistance evidence.",
-          "Require audience upload approval workflow with data owner, lawful basis, and suppression checks.",
-          "Require media partner destination review and deletion/retention limits.",
-          "Require cross-border transfer mechanism and hosting/support region confirmation.",
-          "Require BCP/DR and exit assistance evidence for critical workflows.",
-          "Resolve evidence gap: Business owner is not identified.",
-          "Resolve evidence gap: Jurisdiction or geography is missing.",
-          "Confirm human oversight and no automated approval for AI-assisted workflow outputs."
+          "Require model-training exclusion or approved data-use terms before approval.",
+          "Ask the domain owner whether business continuity obligations apply.",
+          "Ask the domain owner whether finance and project compliance obligations apply.",
+          "Complete sanctions, denied-party, and destination screening before approval.",
+          "Confirm the remote-support runbook, named access, MFA, logging, and approved support windows."
         ],
         "specialist_challenge_count": 2
       },
@@ -794,9 +783,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "needs_revision",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T08:27:40.076117Z",
+      "timestamp": "2026-07-12T14:19:56.865038Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
       "action": "escalate_human_review",
@@ -806,24 +795,24 @@
       "memory_key": "humanReviewRequired",
       "output_summary": "Escalated to accountable human reviewer; no autonomous approval permitted.",
       "payload": {
-        "decision": "needs_more_information",
+        "decision": "not_ready",
         "risk_level": "high"
       },
       "retry_count": 1,
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "escalated",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T08:27:40.079566Z",
+      "timestamp": "2026-07-12T14:19:56.866140Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
       "action": "apply_deterministic_policy",
       "agent_name": "Deterministic Decision Owner",
       "confidence": 0.95,
-      "input_summary": "Node deterministic result, specialist critiques, precedent, and advisory-only Compass output.",
+      "input_summary": "Authoritative Node decision plus advisory-only specialist, precedent, and Compass context.",
       "memory_key": "decisionDraft",
-      "output_summary": "Final decision sealed as needs_more_information by deterministic policy owner.",
+      "output_summary": "Preserved the Node-owned not_ready decision unchanged.",
       "payload": {
         "compass_status": "skipped_sample_mode",
         "final_owner": "Deterministic Decision Owner",
@@ -834,9 +823,9 @@
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T08:27:40.081861Z",
-      "tool_used": "deterministic_rules_engine",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "timestamp": "2026-07-12T14:19:56.866815Z",
+      "tool_used": "deterministic_node_engine",
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
       "action": "package_audit_trace",
@@ -846,16 +835,16 @@
       "memory_key": "finalDecision",
       "output_summary": "Packaged judge-readable audit trace with evidence, specialist challenges, and final owner.",
       "payload": {
-        "log_file": "logs/trace-fixture-05_media_buying_and_audience_analytics_order_form.jsonl",
+        "log_file": "logs/trace-fixture-05_media_buying_and_audience_analytics_order_form-_order_form-acc9c250.jsonl",
         "trace_events": 15
       },
       "retry_count": 0,
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "Audit Packager",
-      "timestamp": "2026-06-05T08:27:40.084917Z",
+      "timestamp": "2026-07-12T14:19:56.867414Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     },
     {
       "action": "finalize_response",
@@ -863,18 +852,18 @@
       "confidence": 0.94,
       "input_summary": "Final packaged decision and trace summary.",
       "memory_key": "finalDecision",
-      "output_summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+      "output_summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 9 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
       "payload": {
-        "decision": "needs_more_information",
+        "decision": "not_ready",
         "risk_level": "high"
       },
       "retry_count": 0,
       "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
       "status": "success",
       "target_agent": "",
-      "timestamp": "2026-06-05T08:27:40.087130Z",
+      "timestamp": "2026-07-12T14:19:56.867876Z",
       "tool_used": "",
-      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7"
+      "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250"
     }
   ],
   "agents": [
@@ -919,16 +908,17 @@
       "role": "Packages the decision, evidence, collaboration trace, and review artifacts."
     }
   ],
-  "execution_time_seconds": 0.26,
+  "execution_time_seconds": 0.259,
   "log_file": "logs/fixture_media_analytics_trace.jsonl",
   "output": {
+    "approval_eligible": false,
     "artifacts": [
       {
-        "path": "logs/trace-fixture-05_media_buying_and_audience_analytics_order_form.jsonl",
+        "path": "logs/trace-fixture-05_media_buying_and_audience_analytics_order_form-_order_form-acc9c250.jsonl",
         "type": "trace_log"
       },
       {
-        "source": "deterministic_node_bridge_plus_python_council",
+        "source": "deterministic_node_bridge_with_python_advisory",
         "type": "decision_payload"
       }
     ],
@@ -954,7 +944,7 @@
         "synthetic precedent added",
         "governed learning memory updated",
         "Compass advisory skipped in sample mode",
-        "required action added"
+        "advisory challenges recorded without changing policy"
       ],
       "specialist_challenges": [
         "Privacy proof incomplete: DPA, subprocessor schedule, audience-retention table, signed DPA.",
@@ -964,10 +954,71 @@
         "AI/analytics signal remains inside human oversight boundary."
       ]
     },
-    "decision": "needs_more_information",
+    "control_plan": [
+      "signed dpa",
+      "subprocessor register",
+      "retention and deletion evidence",
+      "obligation mapping",
+      "policy exception workflow",
+      "audit-ready decision record",
+      "security assurance review",
+      "identity and access controls",
+      "integration risk assessment",
+      "supplier due diligence",
+      "contract clause review",
+      "risk acceptance workflow",
+      "model-training exclusion",
+      "human oversight"
+    ],
+    "decision": "not_ready",
     "decision_authority": {
       "final_owner": "Deterministic Decision Owner",
       "llm_advisory_only": true
+    },
+    "decision_details": {
+      "approvalEligible": false,
+      "blockingGaps": 9,
+      "evidenceQuality": "weak",
+      "highSeverityGaps": 5,
+      "humanApprovalRequired": true,
+      "mediumSeverityGaps": 4,
+      "rationale": "Multiple high-severity evidence or applicability gaps remain open.",
+      "readinessScore": 0.32,
+      "recommendation": "Do not approve yet",
+      "requiredControls": [
+        "Assign the accountable business unit or requester before approval.",
+        "Confirm the operating geography and regulatory perimeter.",
+        "Upload or reference policy, contract, questionnaire, or assurance evidence.",
+        "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+        "Require model-training exclusion or approved data-use terms before approval.",
+        "Ask the domain owner whether business continuity obligations apply.",
+        "Ask the domain owner whether finance and project compliance obligations apply.",
+        "Complete sanctions, denied-party, and destination screening before approval.",
+        "Confirm the remote-support runbook, named access, MFA, logging, and approved support windows."
+      ],
+      "status": "not_ready"
+    },
+    "decision_readiness": {
+      "approvalEligible": false,
+      "blockingGaps": 9,
+      "evidenceQuality": "weak",
+      "highSeverityGaps": 5,
+      "humanApprovalRequired": true,
+      "mediumSeverityGaps": 4,
+      "rationale": "Multiple high-severity evidence or applicability gaps remain open.",
+      "requiredControls": [
+        "Assign the accountable business unit or requester before approval.",
+        "Confirm the operating geography and regulatory perimeter.",
+        "Upload or reference policy, contract, questionnaire, or assurance evidence.",
+        "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+        "Require model-training exclusion or approved data-use terms before approval.",
+        "Ask the domain owner whether business continuity obligations apply.",
+        "Ask the domain owner whether finance and project compliance obligations apply.",
+        "Complete sanctions, denied-party, and destination screening before approval.",
+        "Confirm the remote-support runbook, named access, MFA, logging, and approved support windows."
+      ],
+      "score": 0.32,
+      "status": "not_ready"
     },
     "evidence_used": [
       {
@@ -1082,15 +1133,9 @@
         "snippet": "shed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-17 | Trigger: critical vulnerability | Evidence: ticket, owner, ...",
         "source": "fixture_pdf",
         "title": "Media Buying And Audience Analytics Order Form"
-      },
-      {
-        "evidence_id": "FIXTURE-05",
-        "snippet": "Media Buying And Audience Analytics Order Form Media Buying And Audience Analytics Order Form CivicMedia Analytics platform order for campaign activation, consented audiences, CRM sync, and measurement reporting Synthetic legal-style test document for agent ev",
-        "source": "node-citation",
-        "title": "Media Buying And Audience Analytics Order Form"
       }
     ],
-    "executive_summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "executive_summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 9 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
     "fixture_document_analysis": {
       "detected_domain": "marketing",
       "documents_used": [
@@ -1121,6 +1166,53 @@
       "rejected": [],
       "target_agent": "Privacy Specialist"
     },
+    "gaps": [
+      {
+        "action": "Assign the accountable business unit or requester before approval.",
+        "gap": "Business owner is not identified.",
+        "severity": "medium"
+      },
+      {
+        "action": "Confirm the operating geography and regulatory perimeter.",
+        "gap": "Jurisdiction or geography is missing.",
+        "severity": "medium"
+      },
+      {
+        "action": "Upload or reference policy, contract, questionnaire, or assurance evidence.",
+        "gap": "No usable supporting evidence or document content was provided.",
+        "severity": "high"
+      },
+      {
+        "action": "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+        "gap": "Privacy/data governance is applicable but DPA evidence was not detected.",
+        "severity": "high"
+      },
+      {
+        "action": "Require model-training exclusion or approved data-use terms before approval.",
+        "gap": "AI/model governance is applicable but training-data handling is unclear.",
+        "severity": "high"
+      },
+      {
+        "action": "Ask the domain owner whether business continuity obligations apply.",
+        "gap": "Business Continuity applicability needs confirmation.",
+        "severity": "medium"
+      },
+      {
+        "action": "Ask the domain owner whether finance and project compliance obligations apply.",
+        "gap": "Finance And Project Compliance applicability needs confirmation.",
+        "severity": "medium"
+      },
+      {
+        "action": "Complete sanctions, denied-party, and destination screening before approval.",
+        "gap": "Sanctions and restricted-party screening remain unresolved.",
+        "severity": "high"
+      },
+      {
+        "action": "Confirm the remote-support runbook, named access, MFA, logging, and approved support windows.",
+        "gap": "Remote-support controls and runbook remain unresolved.",
+        "severity": "high"
+      }
+    ],
     "human_review_required": true,
     "learning_memory": {
       "advisoryOnly": true,
@@ -1167,18 +1259,15 @@
       "status": "skipped_sample_mode"
     },
     "missing_evidence": [
-      "DPA",
-      "subprocessor schedule",
-      "audience-retention table",
-      "upload approval workflow",
-      "media partner destination review",
-      "signed DPA",
-      "retention and deletion evidence",
-      "cross-border transfer mechanism",
-      "subprocessor register",
-      "business continuity or exit evidence",
       "Business owner is not identified.",
-      "Jurisdiction or geography is missing."
+      "Jurisdiction or geography is missing.",
+      "No usable supporting evidence or document content was provided.",
+      "Privacy/data governance is applicable but DPA evidence was not detected.",
+      "AI/model governance is applicable but training-data handling is unclear.",
+      "Business Continuity applicability needs confirmation.",
+      "Finance And Project Compliance applicability needs confirmation.",
+      "Sanctions and restricted-party screening remain unresolved.",
+      "Remote-support controls and runbook remain unresolved."
     ],
     "rag_evidence_memory": {
       "browserEmbeddingsRetained": false,
@@ -1308,7 +1397,7 @@
           "title": "Media Buying And Audience Analytics Order Form"
         }
       ],
-      "indexedChunkCount": 164,
+      "indexedChunkCount": 163,
       "missingEvidenceSignals": [
         "DPA",
         "subprocessor schedule",
@@ -1322,8 +1411,8 @@
         "business continuity or exit evidence",
         "Business owner is not identified.",
         "Jurisdiction or geography is missing.",
-        "Privacy/data governance is applicable but DPA evidence was not detected.",
-        "ESG, HSE And BCM applicability needs confirmation."
+        "No usable supporting evidence or document content was provided.",
+        "Privacy/data governance is applicable but DPA evidence was not detected."
       ],
       "provider": "local-fallback",
       "qdrantConfigured": false,
@@ -1332,34 +1421,30 @@
     "required_actions": [
       "Assign the accountable business unit or requester before approval.",
       "Confirm the operating geography and regulatory perimeter.",
+      "Upload or reference policy, contract, questionnaire, or assurance evidence.",
       "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
-      "Ask the domain owner whether esg, hse and bcm obligations apply.",
-      "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
-      "Require current subprocessor register and change-notification terms.",
-      "Require retention schedule and deletion assistance evidence.",
-      "Require audience upload approval workflow with data owner, lawful basis, and suppression checks.",
-      "Require media partner destination review and deletion/retention limits.",
-      "Require cross-border transfer mechanism and hosting/support region confirmation.",
-      "Require BCP/DR and exit assistance evidence for critical workflows.",
-      "Resolve evidence gap: Business owner is not identified.",
-      "Resolve evidence gap: Jurisdiction or geography is missing.",
-      "Confirm human oversight and no automated approval for AI-assisted workflow outputs."
+      "Require model-training exclusion or approved data-use terms before approval.",
+      "Ask the domain owner whether business continuity obligations apply.",
+      "Ask the domain owner whether finance and project compliance obligations apply.",
+      "Complete sanctions, denied-party, and destination screening before approval.",
+      "Confirm the remote-support runbook, named access, MFA, logging, and approved support windows."
     ],
     "reviewer_questions": [
       "Has any analytics data been used for model improvement or service training?",
       "Are any support teams accessing records outside approved regions?"
     ],
     "risk_level": "high",
-    "summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
+    "summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 9 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
   },
   "result": {
+    "approval_eligible": false,
     "artifacts": [
       {
-        "path": "logs/trace-fixture-05_media_buying_and_audience_analytics_order_form.jsonl",
+        "path": "logs/trace-fixture-05_media_buying_and_audience_analytics_order_form-_order_form-acc9c250.jsonl",
         "type": "trace_log"
       },
       {
-        "source": "deterministic_node_bridge_plus_python_council",
+        "source": "deterministic_node_bridge_with_python_advisory",
         "type": "decision_payload"
       }
     ],
@@ -1385,7 +1470,7 @@
         "synthetic precedent added",
         "governed learning memory updated",
         "Compass advisory skipped in sample mode",
-        "required action added"
+        "advisory challenges recorded without changing policy"
       ],
       "specialist_challenges": [
         "Privacy proof incomplete: DPA, subprocessor schedule, audience-retention table, signed DPA.",
@@ -1395,10 +1480,71 @@
         "AI/analytics signal remains inside human oversight boundary."
       ]
     },
-    "decision": "needs_more_information",
+    "control_plan": [
+      "signed dpa",
+      "subprocessor register",
+      "retention and deletion evidence",
+      "obligation mapping",
+      "policy exception workflow",
+      "audit-ready decision record",
+      "security assurance review",
+      "identity and access controls",
+      "integration risk assessment",
+      "supplier due diligence",
+      "contract clause review",
+      "risk acceptance workflow",
+      "model-training exclusion",
+      "human oversight"
+    ],
+    "decision": "not_ready",
     "decision_authority": {
       "final_owner": "Deterministic Decision Owner",
       "llm_advisory_only": true
+    },
+    "decision_details": {
+      "approvalEligible": false,
+      "blockingGaps": 9,
+      "evidenceQuality": "weak",
+      "highSeverityGaps": 5,
+      "humanApprovalRequired": true,
+      "mediumSeverityGaps": 4,
+      "rationale": "Multiple high-severity evidence or applicability gaps remain open.",
+      "readinessScore": 0.32,
+      "recommendation": "Do not approve yet",
+      "requiredControls": [
+        "Assign the accountable business unit or requester before approval.",
+        "Confirm the operating geography and regulatory perimeter.",
+        "Upload or reference policy, contract, questionnaire, or assurance evidence.",
+        "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+        "Require model-training exclusion or approved data-use terms before approval.",
+        "Ask the domain owner whether business continuity obligations apply.",
+        "Ask the domain owner whether finance and project compliance obligations apply.",
+        "Complete sanctions, denied-party, and destination screening before approval.",
+        "Confirm the remote-support runbook, named access, MFA, logging, and approved support windows."
+      ],
+      "status": "not_ready"
+    },
+    "decision_readiness": {
+      "approvalEligible": false,
+      "blockingGaps": 9,
+      "evidenceQuality": "weak",
+      "highSeverityGaps": 5,
+      "humanApprovalRequired": true,
+      "mediumSeverityGaps": 4,
+      "rationale": "Multiple high-severity evidence or applicability gaps remain open.",
+      "requiredControls": [
+        "Assign the accountable business unit or requester before approval.",
+        "Confirm the operating geography and regulatory perimeter.",
+        "Upload or reference policy, contract, questionnaire, or assurance evidence.",
+        "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+        "Require model-training exclusion or approved data-use terms before approval.",
+        "Ask the domain owner whether business continuity obligations apply.",
+        "Ask the domain owner whether finance and project compliance obligations apply.",
+        "Complete sanctions, denied-party, and destination screening before approval.",
+        "Confirm the remote-support runbook, named access, MFA, logging, and approved support windows."
+      ],
+      "score": 0.32,
+      "status": "not_ready"
     },
     "evidence_used": [
       {
@@ -1513,15 +1659,9 @@
         "snippet": "shed emails, consent flags, CRM segments, suppression lists, campaign events, geography, clickstream data, and spend metrics, assign owner and deadline, and preserve evidence for audit review. - Required decision output: continue, pause, remediate, escalate, or exit. The decision must reference current evidence and any gap affecting DPA, subprocessor schedule, audience-retention table, upload approval workflow, media partner destination review. SCN-17 | Trigger: critical vulnerability | Evidence: ticket, owner, ...",
         "source": "fixture_pdf",
         "title": "Media Buying And Audience Analytics Order Form"
-      },
-      {
-        "evidence_id": "FIXTURE-05",
-        "snippet": "Media Buying And Audience Analytics Order Form Media Buying And Audience Analytics Order Form CivicMedia Analytics platform order for campaign activation, consented audiences, CRM sync, and measurement reporting Synthetic legal-style test document for agent ev",
-        "source": "node-citation",
-        "title": "Media Buying And Audience Analytics Order Form"
       }
     ],
-    "executive_summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
+    "executive_summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 9 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s).",
     "fixture_document_analysis": {
       "detected_domain": "marketing",
       "documents_used": [
@@ -1552,6 +1692,53 @@
       "rejected": [],
       "target_agent": "Privacy Specialist"
     },
+    "gaps": [
+      {
+        "action": "Assign the accountable business unit or requester before approval.",
+        "gap": "Business owner is not identified.",
+        "severity": "medium"
+      },
+      {
+        "action": "Confirm the operating geography and regulatory perimeter.",
+        "gap": "Jurisdiction or geography is missing.",
+        "severity": "medium"
+      },
+      {
+        "action": "Upload or reference policy, contract, questionnaire, or assurance evidence.",
+        "gap": "No usable supporting evidence or document content was provided.",
+        "severity": "high"
+      },
+      {
+        "action": "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+        "gap": "Privacy/data governance is applicable but DPA evidence was not detected.",
+        "severity": "high"
+      },
+      {
+        "action": "Require model-training exclusion or approved data-use terms before approval.",
+        "gap": "AI/model governance is applicable but training-data handling is unclear.",
+        "severity": "high"
+      },
+      {
+        "action": "Ask the domain owner whether business continuity obligations apply.",
+        "gap": "Business Continuity applicability needs confirmation.",
+        "severity": "medium"
+      },
+      {
+        "action": "Ask the domain owner whether finance and project compliance obligations apply.",
+        "gap": "Finance And Project Compliance applicability needs confirmation.",
+        "severity": "medium"
+      },
+      {
+        "action": "Complete sanctions, denied-party, and destination screening before approval.",
+        "gap": "Sanctions and restricted-party screening remain unresolved.",
+        "severity": "high"
+      },
+      {
+        "action": "Confirm the remote-support runbook, named access, MFA, logging, and approved support windows.",
+        "gap": "Remote-support controls and runbook remain unresolved.",
+        "severity": "high"
+      }
+    ],
     "human_review_required": true,
     "learning_memory": {
       "advisoryOnly": true,
@@ -1598,18 +1785,15 @@
       "status": "skipped_sample_mode"
     },
     "missing_evidence": [
-      "DPA",
-      "subprocessor schedule",
-      "audience-retention table",
-      "upload approval workflow",
-      "media partner destination review",
-      "signed DPA",
-      "retention and deletion evidence",
-      "cross-border transfer mechanism",
-      "subprocessor register",
-      "business continuity or exit evidence",
       "Business owner is not identified.",
-      "Jurisdiction or geography is missing."
+      "Jurisdiction or geography is missing.",
+      "No usable supporting evidence or document content was provided.",
+      "Privacy/data governance is applicable but DPA evidence was not detected.",
+      "AI/model governance is applicable but training-data handling is unclear.",
+      "Business Continuity applicability needs confirmation.",
+      "Finance And Project Compliance applicability needs confirmation.",
+      "Sanctions and restricted-party screening remain unresolved.",
+      "Remote-support controls and runbook remain unresolved."
     ],
     "rag_evidence_memory": {
       "browserEmbeddingsRetained": false,
@@ -1739,7 +1923,7 @@
           "title": "Media Buying And Audience Analytics Order Form"
         }
       ],
-      "indexedChunkCount": 164,
+      "indexedChunkCount": 163,
       "missingEvidenceSignals": [
         "DPA",
         "subprocessor schedule",
@@ -1753,8 +1937,8 @@
         "business continuity or exit evidence",
         "Business owner is not identified.",
         "Jurisdiction or geography is missing.",
-        "Privacy/data governance is applicable but DPA evidence was not detected.",
-        "ESG, HSE And BCM applicability needs confirmation."
+        "No usable supporting evidence or document content was provided.",
+        "Privacy/data governance is applicable but DPA evidence was not detected."
       ],
       "provider": "local-fallback",
       "qdrantConfigured": false,
@@ -1763,28 +1947,23 @@
     "required_actions": [
       "Assign the accountable business unit or requester before approval.",
       "Confirm the operating geography and regulatory perimeter.",
+      "Upload or reference policy, contract, questionnaire, or assurance evidence.",
       "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
-      "Ask the domain owner whether esg, hse and bcm obligations apply.",
-      "Require signed DPA covering processing scope, subprocessors, retention, deletion, and transfers.",
-      "Require current subprocessor register and change-notification terms.",
-      "Require retention schedule and deletion assistance evidence.",
-      "Require audience upload approval workflow with data owner, lawful basis, and suppression checks.",
-      "Require media partner destination review and deletion/retention limits.",
-      "Require cross-border transfer mechanism and hosting/support region confirmation.",
-      "Require BCP/DR and exit assistance evidence for critical workflows.",
-      "Resolve evidence gap: Business owner is not identified.",
-      "Resolve evidence gap: Jurisdiction or geography is missing.",
-      "Confirm human oversight and no automated approval for AI-assisted workflow outputs."
+      "Require model-training exclusion or approved data-use terms before approval.",
+      "Ask the domain owner whether business continuity obligations apply.",
+      "Ask the domain owner whether finance and project compliance obligations apply.",
+      "Complete sanctions, denied-party, and destination screening before approval.",
+      "Confirm the remote-support runbook, named access, MFA, logging, and approved support windows."
     ],
     "reviewer_questions": [
       "Has any analytics data been used for model improvement or service training?",
       "Are any support teams accessing records outside approved regions?"
     ],
     "risk_level": "high",
-    "summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 12 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
+    "summary": "Deterministic review needs more information before a compliance decision can progress. Risk is high; 9 evidence gap(s) remain. Compass advisory status: skipped_sample_mode. Learning memory found 5 advisory similar case(s)."
   },
   "run_id": "fixture-05_media_buying_and_audience_analytics_order_form",
   "status": "success",
-  "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-197dece7",
+  "trace_id": "trace-fixture-05_media_buying_and_audience_analytics_order_form-acc9c250",
   "use_case_id": "21"
 }

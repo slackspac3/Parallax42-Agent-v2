@@ -2,7 +2,7 @@
 
 This roadmap starts from the submission end state and works backward into implementation milestones. The sequencing is designed to maximize reviewer proof first, then deepen production hardening.
 
-> **Current checkpoint (2026-07-12):** the hosted product uses the named Compass gateway client with GPT-5.1 and `text-embedding-3-large`, Railway Postgres for case/session/quota records, and Railway Qdrant for semantic retrieval. Deterministic behavior is fallback. Demo RBAC is enforced but Entra is absent; audit remains ephemeral `/tmp`; active specialists are Node-based and Python CrewAI is optional/inactive. P0 correctness and tenant-isolation blockers are tracked in the [deep code review](DEEP_CODE_REVIEW.md). Azure sequencing is tracked in the [Azure migration plan](AZURE_MIGRATION_PLAN.md).
+> **Current checkpoint (2026-07-12):** the hosted product uses the named Compass gateway client with GPT-5.1 and `text-embedding-3-large`, Railway Postgres, and Railway Qdrant. The local P0 remediation adds actor-scoped PostgreSQL audit chains, evidence assertion/contradiction rules, authoritative case versions, and Node-only policy authority; full local QA is green. Demo RBAC is enforced but Entra/membership/RLS and immutable audit export remain absent. CI/live verification is pending. Azure sequencing is tracked in the [Azure migration plan](AZURE_MIGRATION_PLAN.md).
 
 ## Submission End State
 
@@ -62,6 +62,8 @@ Acceptance:
 
 Goal: move from summaries to real evidence handling.
 
+Status: assertion state/provenance, non-proof questions/mentions/policy references, source-aware contradictions, and focused adversarial tests are implemented. Claim-level source spans, immutable canonical documents, and broader groundedness evaluation remain.
+
 Build:
 
 - upload endpoint or reuse Parallax42 upload relay
@@ -82,23 +84,23 @@ Acceptance:
 
 Goal: make the agent enterprise-operable.
 
-Status: partially implemented. Railway Postgres durably stores case, session, and quota records, and demo RBAC is enforced. Audit is still ephemeral `/tmp`, Entra is not configured, and immutable run history is not complete.
+Status: partially implemented. Railway Postgres stores case/session/quota records and the local remediation adds actor-scoped PostgreSQL audit chains with locked heads and fail-closed hosted writes. Demo RBAC is enforced. Entra/membership/RLS, WORM export, business/audit transaction coupling, and immutable run history remain incomplete.
 
 Build:
 
-- hash-chained local audit prototype. `Implemented: append-only JSONL with sequence, previous hash, and record hash`
+- hash-chained audit. `Implemented: hosted PostgreSQL tenant/project chains; JSONL local/test fallback`
 - PostgreSQL-backed generic record store for case, session, and quota state. `Implemented in hosted product; managed schema migrations remain open`
-- append-only audit events. `Implemented`
-- run retrieval endpoint. `Implemented: /api/audit/recent with integrity report`
+- application-append-only audit events. `Implemented; WORM export remains open`
+- run retrieval endpoint. `Implemented: role-gated tenant-scoped /api/audit/recent with integrity report`
 - role policy middleware. `Implemented`
 - Entra JWT validation design and optional implementation switch. `Code exists; hosted demo enforcement is not Entra-backed`
 
 Acceptance:
 
-- every agent run has an immutable, durable run ID. `Open: current case persistence retains only the latest run and audit JSONL is ephemeral`
+- every agent run has an immutable, durable run ID. `Open: current case persistence retains only the latest run; audit durability does not replace immutable run records`
 - audit records include actor, role, case, evidence IDs, decision, gaps, trace count, model mode. `Implemented`
 - reviewer cannot approve without approver role
-- auditor can read but not mutate, and can see only authorized tenant records. `Open: audit read tenancy and public log exposure are P0 review findings`
+- auditor can read but not mutate, and can see only authorized tenant records. `Implemented for detailed audit reads; retain hostile-scope tests`
 
 ## Milestone 4: Evals, Guardrails, And Observability
 

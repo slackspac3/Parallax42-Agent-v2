@@ -140,6 +140,8 @@ function main() {
       const body = raw.trim() ? JSON.parse(raw) : {};
       const caseDraft = buildCaseDraft(body);
       const result = runComplianceAgent(caseDraft, { mode: process.env.AGENT_MODE || 'agentathon_deterministic' });
+      const gaps = Array.isArray(result.gaps) ? result.gaps : [];
+      const decisionReadiness = result.decisionReadiness || {};
       const response = {
         ok: result.ok !== false,
         run_id: firstText(body.run_id, body.runId, caseDraft.caseId),
@@ -147,12 +149,14 @@ function main() {
         case: result.case,
         decision: result.decision || { status: 'blocked', recommendation: result.message || 'Run did not complete.' },
         domains: Array.isArray(result.domains) ? result.domains : [],
-        gaps: Array.isArray(result.gaps) ? result.gaps : [],
+        gaps,
+        risk_level: gaps.some((gap) => gap?.severity === 'high') ? 'high' : gaps.length ? 'medium' : 'low',
+        required_actions: Array.isArray(decisionReadiness.requiredControls) ? decisionReadiness.requiredControls : [],
         control_plan: Array.isArray(result.controlPlan) ? result.controlPlan : [],
         evidence_ids: Array.isArray(result.evidenceIds) ? result.evidenceIds : [],
         citations: Array.isArray(result.citations) ? result.citations : [],
         evidence_quality: result.evidenceQuality || {},
-        decision_readiness: result.decisionReadiness || {},
+        decision_readiness: decisionReadiness,
         node_trace: summarizeTrace(result.trace),
         execution_time_seconds: Number(((Date.now() - startedAt) / 1000).toFixed(3))
       };

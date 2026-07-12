@@ -12,6 +12,7 @@ const {
   learningMemoryHealth,
   recordReviewerFeedback
 } = require('../../lib/learningMemory');
+const { enrichConversationWithServerRetrieval } = require('../../lib/serverSideRetrieval');
 
 function withEnv(overrides, fn) {
   const snapshot = {};
@@ -96,6 +97,66 @@ test('governed learning returns similar cases and control suggestions without ch
       assert.equal(suggestions.advisoryOnly, true);
       assert.ok(suggestions.commonControlsReviewersAdded.some((item) => item.control === 'Data residency confirmation'));
       assert.ok(suggestions.repeatedMissingEvidencePatterns.some((item) => item.evidence === 'Signed DPA'));
+    });
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('learning retrieval ignores caller-selected tenant scope', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p42-learning-tenant-'));
+  const actorA = { id: 'reviewer-a', authenticated: true, workspaceId: 'workspace-a', projectId: 'project-a' };
+  const actorB = { id: 'reviewer-b', authenticated: true, workspaceId: 'workspace-b', projectId: 'project-b' };
+  try {
+    await withEnv({
+      P42_VECTOR_STORE_PROVIDER: 'local_file',
+      P42_LEARNING_MEMORY_DIR: dir,
+      P42_REFERENCE_CONTEXT_DIR: dir,
+      P42_WORKSPACE_ID: '',
+      P42_PROJECT_ID: '',
+      P42_TRUST_CLIENT_VECTOR_NAMESPACE: '',
+      COMPASS_GATEWAY_TOKEN: '',
+      PARALLAX42_GATEWAY_TOKEN: '',
+      CREWAI_LLM_API_KEY: '',
+      OPENAI_API_KEY: '',
+      QDRANT_URL: '',
+      P42_VECTOR_DB_URL: ''
+    }, async () => {
+      await recordReviewerFeedback({
+        caseId: 'case-a',
+        reviewerNotes: 'WORKSPACE A evidence note',
+        finalOutcome: 'Workspace A outcome'
+      }, { actor: actorA });
+      await recordReviewerFeedback({
+        caseId: 'case-b',
+        reviewerNotes: 'WORKSPACE B CONFIDENTIAL NOTE',
+        finalOutcome: 'Workspace B outcome'
+      }, { actor: actorB });
+
+      const result = await findSimilarCases({
+        caseId: 'new-case',
+        brief: 'workspace evidence outcome',
+        workspaceId: actorB.workspaceId,
+        projectId: actorB.projectId
+      }, { actor: actorA });
+      const serialized = JSON.stringify(result);
+
+      assert.match(serialized, /WORKSPACE A/);
+      assert.doesNotMatch(serialized, /WORKSPACE B CONFIDENTIAL/);
+
+      const enriched = await enrichConversationWithServerRetrieval({
+        forceRun: true,
+        workspaceId: actorB.workspaceId,
+        projectId: actorB.projectId,
+        message: 'Review similar workspace evidence outcome controls.',
+        caseDraft: {
+          caseId: 'conversation-case',
+          workspaceId: actorB.workspaceId,
+          projectId: actorB.projectId,
+          brief: 'Review similar workspace evidence outcome controls.'
+        }
+      }, { actor: actorA });
+      assert.doesNotMatch(JSON.stringify(enriched.caseDraft.retrievalContext), /WORKSPACE B CONFIDENTIAL/);
     });
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

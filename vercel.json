@@ -13,10 +13,6 @@
       "destination": "/api/metadata"
     },
     {
-      "source": "/logs",
-      "destination": "/api/logs"
-    },
-    {
       "source": "/compass/probe",
       "destination": "/api/compass/probe"
     }

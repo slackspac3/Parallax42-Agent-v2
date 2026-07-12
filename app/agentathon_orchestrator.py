@@ -147,44 +147,8 @@ def _limited_list(values: List[Any], limit: int = 8) -> List[str]:
     return output
 
 
-def _decision_from_node(node_status: str, missing: List[str], findings: List[Dict[str, Any]], precedent: Dict[str, Any]) -> str:
-    severe_ai = any(finding.get("domain") == "responsible_ai" and finding.get("severity") == "high" for finding in findings)
-    missing_blob = " ".join(_clean(item).lower() for item in missing)
-    normalized_status = node_status.lower()
-    if any(token in missing_blob for token in ("end-use certificate", "license analysis", "final classification")) and len(missing) >= 5:
-        return "needs_more_information"
-    if precedent.get("recommendation") == "reject_or_escalate" or (normalized_status == "not_ready" and severe_ai):
-        return "reject"
-    if any(token in missing_blob for token in ("robustness", "rai assessment", "model rollback", "data owner approval")):
-        return "conditional_approval"
-    if normalized_status in {"ready", "approved", "approval_ready"} and not missing:
-        return "approve"
-    if not missing and normalized_status in {"ready", "approved", "approval_ready"}:
-        return "approve"
-    if normalized_status == "not_ready" and len(missing) >= 4:
-        return "needs_more_information"
-    return "conditional_approval"
-
-
-def _risk_level(node_result: Dict[str, Any], missing: List[str], findings: List[Dict[str, Any]], decision: str) -> str:
-    high_findings = [item for item in findings if item.get("severity") == "high"]
-    gaps = node_result.get("gaps") if isinstance(node_result.get("gaps"), list) else []
-    high_gaps = [gap for gap in gaps if (gap or {}).get("severity") == "high"]
-    missing_blob = " ".join(_clean(item).lower() for item in missing)
-    if any(token in missing_blob for token in ("end-use certificate", "license analysis", "final classification", "import permit")):
-        return "critical" if decision == "reject" or len(missing) >= 5 else "high"
-    if decision == "reject" and (len(high_findings) >= 2 or any(item.get("domain") == "responsible_ai" for item in high_findings)):
-        return "critical"
-    if high_findings or high_gaps or len(missing) >= 3:
-        return "high"
-    if decision == "conditional_approval" or missing:
-        return "medium"
-    return "low"
-
-
 def _node_required_actions(node_result: Dict[str, Any]) -> List[str]:
-    gaps = node_result.get("gaps") if isinstance(node_result.get("gaps"), list) else []
-    return _limited_list([(gap or {}).get("action") for gap in gaps], 10)
+    return list(node_result.get("required_actions")) if isinstance(node_result.get("required_actions"), list) else []
 
 
 def _action_for_missing(item: str) -> str:
@@ -250,14 +214,12 @@ def _format_items(values: List[str], limit: int = 4) -> str:
 
 
 def _summary(decision: str, risk: str, missing: List[str], compass_status: str) -> str:
-    if decision == "approve":
+    if decision == "ready":
         lead = "Deterministic review found the case approvable for accountable human approval."
-    elif decision == "reject":
-        lead = "Deterministic review rejects approval until high-risk compliance gaps are closed."
-    elif decision == "needs_more_information":
+    elif decision == "not_ready":
         lead = "Deterministic review needs more information before a compliance decision can progress."
     else:
-        lead = "Deterministic review supports conditional approval with named controls."
+        lead = "Deterministic review requires continued review with named controls and is not approval-eligible."
     return f"{lead} Risk is {risk}; {len(missing)} evidence gap(s) remain. Compass advisory status: {compass_status}."
 
 
@@ -473,7 +435,7 @@ class AgentathonOrchestrator:
             "nodeDecision": node_result.get("decision") or {},
             "nodeRisk": self._node_risk(node_result),
             "nodeRequiredActions": _node_required_actions(node_result),
-            "humanReviewRequired": True,
+            "humanReviewRequired": _as_dict(node_result.get("decision_readiness")).get("humanApprovalRequired", True),
         }
         shared_context["decisionDraft"] = decision_draft
         live_advisory = self._run_live_crewai(sample_mode, shared_context, logger, collaboration_summary)
@@ -481,6 +443,8 @@ class AgentathonOrchestrator:
         compass_result = self._run_compass(sample_mode, shared_context, logger, collaboration_summary)
         live_compass = self._live_compass_payload(sample_mode, compass_result)
         shared_context["compassAdvisory"] = live_compass.get("advisory") or {}
+        output = self._deterministic_output(node_result, shared_context, live_compass, live_advisory, collaboration_summary)
+        output["artifacts"][0]["path"] = logger.relative_log_file
         if _require_compass() and not sample_mode and not compass_result.get("ok"):
             return self._compass_required_error_response(
                 request,
@@ -489,20 +453,19 @@ class AgentathonOrchestrator:
                 logger,
                 live_compass,
                 collaboration_summary,
+                output,
                 started,
             )
 
-        output = self._deterministic_output(node_result, shared_context, live_compass, live_advisory, collaboration_summary)
-        output["artifacts"][0]["path"] = logger.relative_log_file
         shared_context["requiredActions"] = output["required_actions"]
         shared_context["humanReviewRequired"] = output["human_review_required"]
 
         if output["collaboration_summary"]["specialist_challenges"]:
             logger.log(
                 agent_name="Deterministic Decision Owner",
-                action="revise_required_controls",
+                action="record_advisory_challenges",
                 input_summary="Specialist challenges, precedent pattern, and Compass advisory status.",
-                output_summary=f"Required controls revised to {len(output['required_actions'])} action(s); final risk={output['risk_level']}.",
+                output_summary=f"Recorded advisory challenges without changing the Node-owned {len(output['required_actions'])} required control(s).",
                 target_agent="Audit Packager",
                 confidence=0.92,
                 status="needs_revision",
@@ -513,8 +476,8 @@ class AgentathonOrchestrator:
                     "required_actions": output["required_actions"],
                 },
             )
-            collaboration_summary["shared_context_updates"].append("required action added")
-        if output["risk_level"] in {"high", "critical"} or output["decision"] in {"reject", "needs_more_information"}:
+            collaboration_summary["shared_context_updates"].append("advisory challenges recorded without changing policy")
+        if not output["approval_eligible"]:
             collaboration_summary["escalations"].append("Deterministic Decision Owner escalated unresolved high-risk gaps to human review")
             logger.log(
                 agent_name="Deterministic Decision Owner",
@@ -531,12 +494,12 @@ class AgentathonOrchestrator:
         logger.log(
             agent_name="Deterministic Decision Owner",
             action="apply_deterministic_policy",
-            input_summary="Node deterministic result, specialist critiques, precedent, and advisory-only Compass output.",
-            output_summary=f"Final decision sealed as {output['decision']} by deterministic policy owner.",
+            input_summary="Authoritative Node decision plus advisory-only specialist, precedent, and Compass context.",
+            output_summary=f"Preserved the Node-owned {output['decision']} decision unchanged.",
             target_agent="Audit Packager",
             confidence=0.95,
             status="success",
-            tool_used="deterministic_rules_engine",
+            tool_used="deterministic_node_engine",
             memory_key="decisionDraft",
             payload={
                 "final_owner": "Deterministic Decision Owner",
@@ -590,6 +553,7 @@ class AgentathonOrchestrator:
         logger: TraceLogger,
         live_compass: Dict[str, Any],
         collaboration_summary: Dict[str, Any],
+        output: Dict[str, Any],
         started: float,
     ) -> Dict[str, Any]:
         collaboration_summary["escalations"].append("REQUIRE_COMPASS=true blocked deterministic-only completion because live Compass advisory was unavailable")
@@ -604,26 +568,19 @@ class AgentathonOrchestrator:
             confidence=0.9,
             retry_count=1,
             status="escalated",
-            tool_used="deterministic_rules_engine",
+            tool_used="deterministic_node_engine",
             memory_key="humanReviewRequired",
             payload={"compass_status": live_compass.get("status"), "error_type": live_compass.get("error_type")},
         )
         output = {
+            **output,
             "summary": summary,
             "executive_summary": summary,
-            "decision": "needs_more_information",
-            "risk_level": "high",
-            "required_actions": [
-                "Verify OPENAI_API_KEY and the official template OPENAI_BASE_URL=https://compass.core42.ai/v1, or use https://api.core42.ai/v1 only when Core42/Agentathon confirms it for the issued key; then rerun with REQUIRE_COMPASS=true."
-            ],
-            "evidence_used": [],
-            "missing_evidence": ["live Compass advisory"],
-            "human_review_required": True,
-            "decision_authority": {"final_owner": "Deterministic Decision Owner", "llm_advisory_only": True},
+            "execution_blocked": True,
+            "execution_requirements": ["live Compass advisory"],
             "live_compass": live_compass,
             "live_advisory": self._default_live_advisory("compass_required_error"),
             "collaboration_summary": collaboration_summary,
-            "artifacts": [{"type": "trace_log", "path": logger.relative_log_file}],
         }
         logger.log(
             agent_name="Audit Packager",
@@ -678,9 +635,14 @@ class AgentathonOrchestrator:
         output = {
             "summary": "Execution failed before a compliance decision could be produced.",
             "executive_summary": "Execution failed before a compliance decision could be produced.",
-            "decision": "needs_more_information",
-            "risk_level": "high",
+            "decision": "unavailable",
+            "decision_details": {},
+            "risk_level": "unknown",
             "required_actions": ["Verify Node dependencies are installed and retry the run."],
+            "gaps": [],
+            "control_plan": [],
+            "decision_readiness": {"status": "unavailable", "approvalEligible": False, "humanApprovalRequired": True},
+            "approval_eligible": False,
             "evidence_used": [],
             "missing_evidence": ["deterministic engine output"],
             "human_review_required": True,
@@ -1231,15 +1193,15 @@ class AgentathonOrchestrator:
             if "dpa" in blob or "training" in blob or ai_risk_signal == "analytics_governance":
                 return {
                     "advisoryOnly": True,
-                    "pattern": "healthcare analytics + missing DPA/model-training exclusion -> conditional approval/human review",
-                    "recommendation": "conditional_human_review",
+                    "pattern": "healthcare analytics + missing DPA/model-training exclusion -> continue review; not approval eligible",
+                    "recommendation": "continue_review",
                     "confidence": 0.78,
                 }
         if "saas" in blob and ("subprocessor" in blob or "retention" in blob):
             return {
                 "advisoryOnly": True,
-                "pattern": "SaaS + missing subprocessor list -> conditional approval",
-                "recommendation": "conditional_human_review",
+                "pattern": "SaaS + missing subprocessor list -> continue review; not approval eligible",
+                "recommendation": "continue_review",
                 "confidence": 0.8,
             }
         if not evidence["missing"]:
@@ -1252,7 +1214,7 @@ class AgentathonOrchestrator:
         return {
             "advisoryOnly": True,
             "pattern": "general incomplete evidence -> human review controls",
-            "recommendation": "conditional_human_review",
+            "recommendation": "continue_review",
             "confidence": 0.62,
         }
 
@@ -1481,12 +1443,7 @@ class AgentathonOrchestrator:
         }
 
     def _node_risk(self, node_result: Dict[str, Any]) -> str:
-        gaps = node_result.get("gaps") if isinstance(node_result.get("gaps"), list) else []
-        if any((gap or {}).get("severity") == "high" for gap in gaps):
-            return "high"
-        if gaps:
-            return "medium"
-        return "low"
+        return _clean(node_result.get("risk_level")) or "unknown"
 
     def _deterministic_output(
         self,
@@ -1496,27 +1453,16 @@ class AgentathonOrchestrator:
         live_advisory: Dict[str, Any],
         collaboration_summary: Dict[str, Any],
     ) -> Dict[str, Any]:
-        findings = shared_context["specialistFindings"]
-        precedent = shared_context["precedents"][0] if shared_context["precedents"] else {}
         node_decision = _as_dict(node_result.get("decision"))
-        missing = _limited_list(shared_context["missingEvidence"], 12)
-        decision = _decision_from_node(_clean(node_decision.get("status")), missing, findings, precedent)
-        risk = _risk_level(node_result, missing, findings, decision)
-        required_actions = _limited_list(
-            _node_required_actions(node_result)
-            + [_action_for_missing(item) for item in missing]
-            + [
-                action
-                for finding in findings
-                for action in _as_list(finding.get("requiredActions"))
-            ],
-            14,
-        )
+        node_gaps = [dict(gap) for gap in _as_list(node_result.get("gaps")) if isinstance(gap, dict)]
+        node_readiness = dict(_as_dict(node_result.get("decision_readiness")))
+        decision = _clean(node_decision.get("status")) or "not_ready"
+        risk = self._node_risk(node_result)
+        required_actions = _node_required_actions(node_result)
+        missing = [_clean(gap.get("gap")) for gap in node_gaps if _clean(gap.get("gap"))]
+        advisory_missing = _limited_list(shared_context["missingEvidence"], 12)
         learning_context = shared_context.get("learningContext") if isinstance(shared_context.get("learningContext"), dict) else {}
-        learning_actions, reviewer_questions = self._learning_supported_controls(missing, learning_context)
-        required_actions = _limited_list(required_actions + learning_actions, 14)
-        if not required_actions:
-            required_actions = ["Confirm accountable human reviewer before operational approval."]
+        _, reviewer_questions = self._learning_supported_controls(advisory_missing, learning_context)
 
         evidence_used = [
             {
@@ -1538,8 +1484,13 @@ class AgentathonOrchestrator:
             "summary": summary,
             "executive_summary": summary,
             "decision": decision,
+            "decision_details": node_decision,
             "risk_level": risk,
             "required_actions": required_actions,
+            "gaps": node_gaps,
+            "control_plan": list(node_result.get("control_plan")) if isinstance(node_result.get("control_plan"), list) else [],
+            "decision_readiness": node_readiness,
+            "approval_eligible": node_readiness.get("approvalEligible") is True,
             "evidence_used": evidence_used,
             "missing_evidence": missing,
             "rag_evidence_memory": shared_context.get("retrievalContext") or {
@@ -1549,7 +1500,7 @@ class AgentathonOrchestrator:
                 "indexedChunkCount": 0,
                 "retrievedMatchCount": 0,
                 "evidenceMatches": [],
-                "missingEvidenceSignals": missing,
+                "missingEvidenceSignals": advisory_missing,
                 "browserEmbeddingsRetained": False,
             },
             "learning_memory": {
@@ -1571,7 +1522,7 @@ class AgentathonOrchestrator:
                 "matched_missing_evidence": [],
             },
             "reviewer_questions": reviewer_questions,
-            "human_review_required": True,
+            "human_review_required": node_readiness.get("humanApprovalRequired") is not False,
             "decision_authority": {
                 "final_owner": "Deterministic Decision Owner",
                 "llm_advisory_only": True,
@@ -1599,7 +1550,7 @@ class AgentathonOrchestrator:
             "collaboration_summary": collaboration_summary,
             "artifacts": [
                 {"type": "trace_log", "path": "logs/trace-<run_id>.jsonl"},
-                {"type": "decision_payload", "source": "deterministic_node_bridge_plus_python_council"},
+                {"type": "decision_payload", "source": "deterministic_node_bridge_with_python_advisory"},
             ],
         }
 

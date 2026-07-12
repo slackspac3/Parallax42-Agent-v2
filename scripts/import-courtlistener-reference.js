@@ -209,12 +209,12 @@ async function main() {
       publicSafe: true,
       requiresHumanReview: true,
       markdown: fs.readFileSync(markdownFile, 'utf8')
-    });
+    }, { trustedNamespace: true });
     searchSmoke = await searchGovernanceReferences({
       query: 'contract limitation liability data processing agreement',
       sourceId: 'courtlistener_case_law_reference',
       topK: 3
-    });
+    }, { trustedNamespace: true });
   }
 
   const manifest = {

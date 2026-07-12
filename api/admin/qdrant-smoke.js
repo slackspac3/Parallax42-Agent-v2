@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
       return;
     }
     const result = await runQdrantSmokeTest();
-    appendAuditRecord({
+    await appendAuditRecord({
       actor: auth.actor,
       caseId: result.caseId || 'qdrant-smoke',
       status: result.ok ? 'qdrant_smoke_passed' : result.skipped ? 'qdrant_smoke_skipped' : 'qdrant_smoke_failed',

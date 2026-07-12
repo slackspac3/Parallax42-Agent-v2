@@ -2,7 +2,7 @@
   "artifact": "crewai_parity_report",
   "sample": false,
   "source": "generated from lib/agentRuntime.js using examples/high_risk_ai_saas_case.json",
-  "generatedAt": "2026-05-15T16:49:59.799Z",
+  "generatedAt": "2026-07-12T14:32:24.820Z",
   "comparison": {
     "deterministicStatus": "not_ready",
     "crewaiFlowStatus": "not_ready",
@@ -10,7 +10,8 @@
     "deterministicReadinessScore": 0.32,
     "crewaiFlowReadinessScore": 0.32,
     "gapCountMatches": true,
-    "evidenceIdCountMatches": true
+    "evidenceIdCountMatches": true,
+    "policyReferenceIdCountMatches": true
   },
   "deterministic": {
     "mode": "parity_deterministic",
@@ -19,10 +20,23 @@
       "status": "not_ready",
       "recommendation": "Do not approve yet",
       "readinessScore": 0.32,
-      "rationale": "Multiple high-severity evidence or applicability gaps remain open."
+      "rationale": "Multiple high-severity evidence or applicability gaps remain open.",
+      "approvalEligible": false,
+      "humanApprovalRequired": true,
+      "blockingGaps": 4,
+      "highSeverityGaps": 3,
+      "mediumSeverityGaps": 1,
+      "requiredControls": [
+        "Require model-training exclusion or approved data-use terms before approval.",
+        "Require BCP/DR and exit-assistance evidence for critical operations.",
+        "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+        "Ask the domain owner whether finance and project compliance obligations apply."
+      ],
+      "evidenceQuality": "usable"
     },
     "gapCount": 4,
-    "evidenceIdCount": 13
+    "evidenceIdCount": 1,
+    "policyReferenceIdCount": 12
   },
   "crewaiFlow": {
     "mode": "crewai_flow_dry_run",
@@ -33,10 +47,23 @@
       "status": "not_ready",
       "recommendation": "Do not approve yet",
       "readinessScore": 0.32,
-      "rationale": "Multiple high-severity evidence or applicability gaps remain open."
+      "rationale": "Multiple high-severity evidence or applicability gaps remain open.",
+      "approvalEligible": false,
+      "humanApprovalRequired": true,
+      "blockingGaps": 4,
+      "highSeverityGaps": 3,
+      "mediumSeverityGaps": 1,
+      "requiredControls": [
+        "Require model-training exclusion or approved data-use terms before approval.",
+        "Require BCP/DR and exit-assistance evidence for critical operations.",
+        "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+        "Ask the domain owner whether finance and project compliance obligations apply."
+      ],
+      "evidenceQuality": "usable"
     },
     "gapCount": 4,
-    "evidenceIdCount": 13
+    "evidenceIdCount": 1,
+    "policyReferenceIdCount": 12
   },
-  "boundary": "CrewAI is dry-run/orchestration-shaped by default; deterministic compliance logic owns final decisions."
+  "boundary": "CrewAI is advisory and orchestration-shaped; deterministic Node policy fields remain authoritative."
 }

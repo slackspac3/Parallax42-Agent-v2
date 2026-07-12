@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-15T15:57:15.457Z",
+  "generatedAt": "2026-07-12T14:32:25.385Z",
   "workflow": {
     "id": "golden-ai-saas-compliance-review",
     "title": "High-risk AI SaaS supplier compliance review",
@@ -81,6 +81,7 @@
   },
   "run": {
     "ok": true,
+    "runId": "run_20260712143225_g42-cia-demo-001_oa5pwt",
     "mode": "crewai_flow_dry_run",
     "case": {
       "caseId": "g42-cia-demo-001",
@@ -90,6 +91,15 @@
       "supplierName": "Example AI SaaS",
       "serviceDescription": "Critical AI workflow automation service for finance reporting and operational analytics.",
       "brief": "Procure a critical AI SaaS supplier that processes personal data, integrates with Azure AD and ServiceNow, and supports finance reporting across the UAE.",
+      "exportOriginJurisdiction": "",
+      "exportEndUse": "",
+      "aiUsageScope": null,
+      "reviewFocus": "",
+      "dataCategories": [],
+      "riskSignals": [],
+      "evidenceSignals": [],
+      "knownGaps": [],
+      "sanctionsSensitiveGeographies": [],
       "integrations": [
         "Azure AD",
         "ServiceNow",
@@ -98,7 +108,10 @@
       "documents": [
         {
           "title": "Supplier assurance summary",
-          "summary": "SOC 2 summary available. No signed DPA, model-training exclusion, or continuity plan attached."
+          "summary": "SOC 2 summary available. No signed DPA, model-training exclusion, or continuity plan attached.",
+          "evidenceId": "",
+          "provenance": "submitted_document",
+          "assertionState": "provided"
         }
       ],
       "retrievalContext": null
@@ -107,7 +120,19 @@
       "status": "not_ready",
       "recommendation": "Do not approve yet",
       "readinessScore": 0.32,
-      "rationale": "Multiple high-severity evidence or applicability gaps remain open."
+      "rationale": "Multiple high-severity evidence or applicability gaps remain open.",
+      "approvalEligible": false,
+      "humanApprovalRequired": true,
+      "blockingGaps": 4,
+      "highSeverityGaps": 3,
+      "mediumSeverityGaps": 1,
+      "requiredControls": [
+        "Require model-training exclusion or approved data-use terms before approval.",
+        "Require BCP/DR and exit-assistance evidence for critical operations.",
+        "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+        "Ask the domain owner whether finance and project compliance obligations apply."
+      ],
+      "evidenceQuality": "usable"
     },
     "domains": [
       {
@@ -115,6 +140,32 @@
         "label": "AI And Model Governance",
         "status": "applicable",
         "score": 1,
+        "contradiction": false,
+        "applicabilityAssertions": {
+          "positive": [
+            {
+              "sourceId": "brief:1",
+              "provenance": "case_context",
+              "text": "procure a critical ai saas supplier that processes personal data, integrates with azure ad and servicenow, and supports finance reporting across the uae."
+            },
+            {
+              "sourceId": "service:1",
+              "provenance": "case_context",
+              "text": "critical ai workflow automation service for finance reporting and operational analytics."
+            },
+            {
+              "sourceId": "supplier:1",
+              "provenance": "case_context",
+              "text": "example ai saas"
+            },
+            {
+              "sourceId": "Supplier assurance summary:2",
+              "provenance": "submitted_document",
+              "text": "no signed dpa, model-training exclusion, or continuity plan attached."
+            }
+          ],
+          "negative": []
+        },
         "obligations": [
           "Determine whether customer data is used for training, fine-tuning, or service improvement.",
           "Require model-use limitations, human oversight, and explainability controls for AI services.",
@@ -125,7 +176,7 @@
           "human oversight",
           "rai assessment"
         ],
-        "evidenceIds": [
+        "policyReferenceIds": [
           "p42:ai-supplier-review-playbook",
           "p42:responsible-ai-control-pack"
         ]
@@ -135,6 +186,27 @@
         "label": "Business Continuity",
         "status": "applicable",
         "score": 0.67,
+        "contradiction": false,
+        "applicabilityAssertions": {
+          "positive": [
+            {
+              "sourceId": "brief:1",
+              "provenance": "case_context",
+              "text": "procure a critical ai saas supplier that processes personal data, integrates with azure ad and servicenow, and supports finance reporting across the uae."
+            },
+            {
+              "sourceId": "service:1",
+              "provenance": "case_context",
+              "text": "critical ai workflow automation service for finance reporting and operational analytics."
+            },
+            {
+              "sourceId": "Supplier assurance summary:2",
+              "provenance": "submitted_document",
+              "text": "no signed dpa, model-training exclusion, or continuity plan attached."
+            }
+          ],
+          "negative": []
+        },
         "obligations": [
           "Confirm recovery objectives, continuity evidence, and exit support for critical services.",
           "Treat missing continuity evidence as a blocking gap for operationally critical suppliers.",
@@ -145,7 +217,7 @@
           "disaster recovery evidence",
           "exit assistance"
         ],
-        "evidenceIds": [
+        "policyReferenceIds": [
           "p42:continuity-exit-requirements"
         ]
       },
@@ -154,6 +226,22 @@
         "label": "Privacy And Data Governance",
         "status": "applicable",
         "score": 0.67,
+        "contradiction": false,
+        "applicabilityAssertions": {
+          "positive": [
+            {
+              "sourceId": "brief:1",
+              "provenance": "case_context",
+              "text": "procure a critical ai saas supplier that processes personal data, integrates with azure ad and servicenow, and supports finance reporting across the uae."
+            },
+            {
+              "sourceId": "Supplier assurance summary:2",
+              "provenance": "submitted_document",
+              "text": "no signed dpa, model-training exclusion, or continuity plan attached."
+            }
+          ],
+          "negative": []
+        },
         "obligations": [
           "Validate lawful data-processing basis, retention commitments, and deletion assistance.",
           "Confirm subprocessors, hosting region, and cross-border transfer mechanism.",
@@ -164,7 +252,7 @@
           "subprocessor register",
           "retention and deletion evidence"
         ],
-        "evidenceIds": [
+        "policyReferenceIds": [
           "p42:dpa-review-checklist",
           "p42:model-training-data-use-policy"
         ]
@@ -174,6 +262,27 @@
         "label": "Finance And Project Compliance",
         "status": "needs_confirmation",
         "score": 0.33,
+        "contradiction": false,
+        "applicabilityAssertions": {
+          "positive": [
+            {
+              "sourceId": "brief:1",
+              "provenance": "case_context",
+              "text": "procure a critical ai saas supplier that processes personal data, integrates with azure ad and servicenow, and supports finance reporting across the uae."
+            },
+            {
+              "sourceId": "service:1",
+              "provenance": "case_context",
+              "text": "critical ai workflow automation service for finance reporting and operational analytics."
+            },
+            {
+              "sourceId": "integration_3:1",
+              "provenance": "case_context",
+              "text": "finance reporting"
+            }
+          ],
+          "negative": []
+        },
         "obligations": [
           "Check approval authority, payment-control exposure, and project-governance accountability.",
           "Separate commercial approval from compliance readiness.",
@@ -184,7 +293,7 @@
           "payment control review",
           "project exception register"
         ],
-        "evidenceIds": [
+        "policyReferenceIds": [
           "p42:finance-project-control-baseline"
         ]
       },
@@ -193,6 +302,22 @@
         "label": "Licensing And Microsoft Governance",
         "status": "applicable",
         "score": 0.33,
+        "contradiction": false,
+        "applicabilityAssertions": {
+          "positive": [
+            {
+              "sourceId": "brief:1",
+              "provenance": "case_context",
+              "text": "procure a critical ai saas supplier that processes personal data, integrates with azure ad and servicenow, and supports finance reporting across the uae."
+            },
+            {
+              "sourceId": "integration_1:1",
+              "provenance": "case_context",
+              "text": "azure ad"
+            }
+          ],
+          "negative": []
+        },
         "obligations": [
           "Validate licensing terms, tenant access, data residency, and administrative ownership.",
           "Confirm that automation and analytics use complies with platform licensing limits.",
@@ -203,7 +328,7 @@
           "tenant access review",
           "admin privilege review"
         ],
-        "evidenceIds": [
+        "policyReferenceIds": [
           "p42:microsoft-governance-baseline"
         ]
       },
@@ -212,6 +337,17 @@
         "label": "Technical Risk",
         "status": "applicable",
         "score": 0.33,
+        "contradiction": false,
+        "applicabilityAssertions": {
+          "positive": [
+            {
+              "sourceId": "Supplier assurance summary:1",
+              "provenance": "submitted_document",
+              "text": "soc 2 summary available"
+            }
+          ],
+          "negative": []
+        },
         "obligations": [
           "Review identity, access, encryption, logging, vulnerability, and integration control evidence.",
           "Require technical assurance artifacts before connecting material systems.",
@@ -222,7 +358,7 @@
           "identity and access controls",
           "integration risk assessment"
         ],
-        "evidenceIds": [
+        "policyReferenceIds": [
           "p42:technical-risk-control-pack",
           "p42:soc2-iso-evidence-map"
         ]
@@ -232,6 +368,17 @@
         "label": "Third-Party Compliance",
         "status": "applicable",
         "score": 0.33,
+        "contradiction": false,
+        "applicabilityAssertions": {
+          "positive": [
+            {
+              "sourceId": "brief:1",
+              "provenance": "case_context",
+              "text": "procure a critical ai saas supplier that processes personal data, integrates with azure ad and servicenow, and supports finance reporting across the uae."
+            }
+          ],
+          "negative": []
+        },
         "obligations": [
           "Confirm ownership, scope, and service criticality before approval.",
           "Require evidence of baseline control posture and contractual control commitments.",
@@ -242,7 +389,7 @@
           "contract clause review",
           "risk acceptance workflow"
         ],
-        "evidenceIds": [
+        "policyReferenceIds": [
           "p42:vendor-risk-sop",
           "p42:approval-matrix",
           "p42:contract-clause-pack"
@@ -288,6 +435,9 @@
       "tenant access review"
     ],
     "evidenceIds": [
+      "DOC-01"
+    ],
+    "policyReferenceIds": [
       "p42:ai-supplier-review-playbook",
       "p42:responsible-ai-control-pack",
       "p42:continuity-exit-requirements",
@@ -299,8 +449,7 @@
       "p42:soc2-iso-evidence-map",
       "p42:vendor-risk-sop",
       "p42:approval-matrix",
-      "p42:contract-clause-pack",
-      "DOC-01"
+      "p42:contract-clause-pack"
     ],
     "citations": [
       {
@@ -309,6 +458,8 @@
         "title": "Supplier assurance summary",
         "sourceType": "document",
         "extractionStatus": "attached",
+        "assertionState": "provided",
+        "provenance": "submitted_document",
         "score": 0,
         "text": "SOC 2 summary available. No signed DPA, model-training exclusion, or continuity plan attached.",
         "signals": [],
@@ -329,26 +480,29 @@
         "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
         "Ask the domain owner whether finance and project compliance obligations apply."
       ],
-      "evidenceQuality": "weak",
+      "evidenceQuality": "usable",
       "rationale": "Multiple high-severity evidence or applicability gaps remain open."
     },
     "evidenceQuality": {
-      "status": "weak",
-      "score": 0.3,
+      "status": "usable",
+      "score": 0.5,
       "documents": 1,
       "extractedDocuments": 1,
+      "substantiveDocuments": 1,
       "metadataOnlyDocuments": 0,
       "citations": 1,
       "semanticMatches": 0,
       "positiveSignals": [],
-      "requiresReviewerCaution": true
+      "requiresReviewerCaution": false
     },
     "retrievalAudit": {
       "mode": "not_used",
       "queryPresent": false,
       "model": "",
       "indexedChunkCount": 0,
+      "candidateMatchCount": 0,
       "matchCount": 0,
+      "rejectedMatchCount": 0,
       "chunkIds": [],
       "error": ""
     },
@@ -394,7 +548,7 @@
         },
         {
           "name": "evidence_quality",
-          "status": "needs_review"
+          "status": "passed"
         },
         {
           "name": "retrieval_citations",
@@ -416,8 +570,8 @@
     },
     "trace": [
       {
-        "eventId": "evt_1778860635457_aidzsf",
-        "timestamp": "2026-05-15T15:57:15.457Z",
+        "eventId": "evt_1783866745385_61f64l",
+        "timestamp": "2026-07-12T14:32:25.385Z",
         "agent": "runtime_router",
         "eventType": "runtime_selected",
         "parentEventId": "",
@@ -431,12 +585,13 @@
         }
       },
       {
-        "eventId": "evt_1778860635457_0ua8a0",
-        "timestamp": "2026-05-15T15:57:15.457Z",
+        "eventId": "evt_1783866745384_k1afzq",
+        "timestamp": "2026-07-12T14:32:25.384Z",
         "agent": "intake_agent",
         "eventType": "case_loaded",
         "parentEventId": "",
         "payload": {
+          "runId": "run_20260712143225_g42-cia-demo-001_oa5pwt",
           "caseId": "g42-cia-demo-001",
           "requester": "Group Technology Risk",
           "businessUnit": "Group Technology Risk",
@@ -444,11 +599,11 @@
         }
       },
       {
-        "eventId": "evt_1778860635457_1x7gfp",
-        "timestamp": "2026-05-15T15:57:15.457Z",
+        "eventId": "evt_1783866745384_0avp4o",
+        "timestamp": "2026-07-12T14:32:25.384Z",
         "agent": "domain_scanner_agent",
         "eventType": "domains_scanned",
-        "parentEventId": "evt_1778860635457_0ua8a0",
+        "parentEventId": "evt_1783866745384_k1afzq",
         "payload": {
           "matchedDomains": [
             {
@@ -522,25 +677,13 @@
         }
       },
       {
-        "eventId": "evt_1778860635457_uy8o2z",
-        "timestamp": "2026-05-15T15:57:15.457Z",
+        "eventId": "evt_1783866745384_fzx98q",
+        "timestamp": "2026-07-12T14:32:25.384Z",
         "agent": "evidence_agent",
         "eventType": "evidence_mapped",
-        "parentEventId": "evt_1778860635457_0ua8a0",
+        "parentEventId": "evt_1783866745384_k1afzq",
         "payload": {
           "evidenceIds": [
-            "p42:ai-supplier-review-playbook",
-            "p42:responsible-ai-control-pack",
-            "p42:continuity-exit-requirements",
-            "p42:dpa-review-checklist",
-            "p42:model-training-data-use-policy",
-            "p42:finance-project-control-baseline",
-            "p42:microsoft-governance-baseline",
-            "p42:technical-risk-control-pack",
-            "p42:soc2-iso-evidence-map",
-            "p42:vendor-risk-sop",
-            "p42:approval-matrix",
-            "p42:contract-clause-pack",
             "DOC-01"
           ],
           "citationCount": 1,
@@ -549,22 +692,22 @@
         }
       },
       {
-        "eventId": "evt_1778860635457_1upvao",
-        "timestamp": "2026-05-15T15:57:15.457Z",
+        "eventId": "evt_1783866745384_6f339a",
+        "timestamp": "2026-07-12T14:32:25.384Z",
         "agent": "control_agent",
         "eventType": "controls_recommended",
-        "parentEventId": "evt_1778860635457_0ua8a0",
+        "parentEventId": "evt_1783866745384_k1afzq",
         "payload": {
           "controlCount": 14,
           "highSeverityGaps": 3
         }
       },
       {
-        "eventId": "evt_1778860635457_7qpad7",
-        "timestamp": "2026-05-15T15:57:15.457Z",
+        "eventId": "evt_1783866745384_kll1k0",
+        "timestamp": "2026-07-12T14:32:25.384Z",
         "agent": "output_review_agent",
         "eventType": "output_review_completed",
-        "parentEventId": "evt_1778860635457_0ua8a0",
+        "parentEventId": "evt_1783866745384_k1afzq",
         "payload": {
           "status": "needs_revision",
           "finalOutputSafeForHumanReview": true,
@@ -575,7 +718,7 @@
             },
             {
               "name": "evidence_quality",
-              "status": "needs_review"
+              "status": "passed"
             },
             {
               "name": "retrieval_citations",
@@ -649,32 +792,32 @@
           "tasks": [
             {
               "agent": "compliance_orchestrator",
-              "expected_output": "JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
+              "expected_output": "Compact JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
               "key": "triage_case"
             },
             {
               "agent": "regulatory_obligation_mapper",
-              "expected_output": "JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
+              "expected_output": "Compact JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
               "key": "map_obligations"
             },
             {
               "agent": "evidence_examiner",
-              "expected_output": "JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
+              "expected_output": "Compact JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
               "key": "examine_evidence"
             },
             {
               "agent": "risk_control_analyst",
-              "expected_output": "JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
+              "expected_output": "Compact JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
               "key": "recommend_controls"
             },
             {
               "agent": "responsible_ai_reviewer",
-              "expected_output": "JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
+              "expected_output": "Compact JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
               "key": "review_responsible_ai"
             },
             {
               "agent": "audit_packager",
-              "expected_output": "JSON decision brief suitable for human approval and audit review.\n",
+              "expected_output": "Compact JSON decision brief suitable for human approval and audit review.\n",
               "key": "package_audit_brief"
             }
           ]
@@ -689,7 +832,7 @@
             {
               "agent": "compliance_orchestrator",
               "expectedTraceEvent": "case_loaded",
-              "expected_output": "JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
+              "expected_output": "Compact JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
               "id": "intake",
               "kind": "start",
               "method": "load_case",
@@ -699,7 +842,7 @@
             {
               "agent": "regulatory_obligation_mapper",
               "expectedTraceEvent": "domains_scanned",
-              "expected_output": "JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
+              "expected_output": "Compact JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
               "id": "obligations",
               "kind": "listen",
               "method": "map_obligations",
@@ -709,7 +852,7 @@
             {
               "agent": "evidence_examiner",
               "expectedTraceEvent": "evidence_mapped",
-              "expected_output": "JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
+              "expected_output": "Compact JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
               "id": "evidence",
               "kind": "listen",
               "method": "examine_evidence",
@@ -719,7 +862,7 @@
             {
               "agent": "risk_control_analyst",
               "expectedTraceEvent": "controls_recommended",
-              "expected_output": "JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
+              "expected_output": "Compact JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
               "id": "controls",
               "kind": "listen",
               "method": "recommend_controls",
@@ -729,7 +872,7 @@
             {
               "agent": "responsible_ai_reviewer",
               "expectedTraceEvent": "output_review_completed",
-              "expected_output": "JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
+              "expected_output": "Compact JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
               "id": "rai_review",
               "kind": "listen",
               "method": "review_responsible_ai",
@@ -739,7 +882,7 @@
             {
               "agent": "audit_packager",
               "expectedTraceEvent": "output_review_completed",
-              "expected_output": "JSON decision brief suitable for human approval and audit review.\n",
+              "expected_output": "Compact JSON decision brief suitable for human approval and audit review.\n",
               "id": "audit_pack",
               "kind": "listen",
               "method": "package_audit_brief",
@@ -764,13 +907,15 @@
           "workPlan": "triage and domain scope"
         }
       },
+      "crewaiOutput": null,
       "llm": {
         "requested": false,
-        "enabled": false,
+        "enabled": true,
         "model": "gpt-5.1",
         "baseUrlConfigured": true,
         "providerEnv": "OPENAI_API_KEY",
         "apiKeyConfigured": true,
+        "remoteServiceConfigured": false,
         "outputAvailable": false
       },
       "llmOutput": null
@@ -789,7 +934,7 @@
           {
             "agent": "compliance_orchestrator",
             "expectedTraceEvent": "case_loaded",
-            "expected_output": "JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
+            "expected_output": "Compact JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
             "id": "intake",
             "kind": "start",
             "method": "load_case",
@@ -799,7 +944,7 @@
           {
             "agent": "regulatory_obligation_mapper",
             "expectedTraceEvent": "domains_scanned",
-            "expected_output": "JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
+            "expected_output": "Compact JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
             "id": "obligations",
             "kind": "listen",
             "method": "map_obligations",
@@ -809,7 +954,7 @@
           {
             "agent": "evidence_examiner",
             "expectedTraceEvent": "evidence_mapped",
-            "expected_output": "JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
+            "expected_output": "Compact JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
             "id": "evidence",
             "kind": "listen",
             "method": "examine_evidence",
@@ -819,7 +964,7 @@
           {
             "agent": "risk_control_analyst",
             "expectedTraceEvent": "controls_recommended",
-            "expected_output": "JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
+            "expected_output": "Compact JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
             "id": "controls",
             "kind": "listen",
             "method": "recommend_controls",
@@ -829,7 +974,7 @@
           {
             "agent": "responsible_ai_reviewer",
             "expectedTraceEvent": "output_review_completed",
-            "expected_output": "JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
+            "expected_output": "Compact JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
             "id": "rai_review",
             "kind": "listen",
             "method": "review_responsible_ai",
@@ -839,7 +984,7 @@
           {
             "agent": "audit_packager",
             "expectedTraceEvent": "output_review_completed",
-            "expected_output": "JSON decision brief suitable for human approval and audit review.\n",
+            "expected_output": "Compact JSON decision brief suitable for human approval and audit review.\n",
             "id": "audit_pack",
             "kind": "listen",
             "method": "package_audit_brief",
@@ -857,13 +1002,15 @@
         "responsibleAiReview": "approval boundary and safety checks",
         "workPlan": "triage and domain scope"
       },
+      "crewaiOutput": null,
       "liveLlm": {
         "requested": false,
-        "enabled": false,
+        "enabled": true,
         "model": "gpt-5.1",
         "baseUrlConfigured": true,
         "providerEnv": "OPENAI_API_KEY",
         "apiKeyConfigured": true,
+        "remoteServiceConfigured": false,
         "outputAvailable": false
       },
       "llmOutput": null,

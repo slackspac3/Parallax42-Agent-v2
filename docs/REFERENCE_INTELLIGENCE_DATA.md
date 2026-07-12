@@ -41,7 +41,7 @@ This is a curated/static reference snapshot, not live regulatory monitoring. It 
 - **Uploaded evidence** is what the council can cite for the current case: contracts, DPAs, SOWs, SOC reports, policy excerpts, approvals, and user-provided facts.
 - **Reference intelligence** is public or curated advisory context used to ask better questions, identify likely obligations, compare clause patterns, and suggest reviewer checks.
 - **Learning memory** is auditable reviewer feedback and prior internal outcomes. It is not model training and never silently changes a decision.
-- **Deterministic Node council decisioning** is intended to remain the final system owner. Human approval is still required, and the current authority-parity defect must be closed before that ownership is guaranteed.
+- **Deterministic Node council decisioning** is the final system owner. Python preserves Node policy fields unchanged; reference intelligence remains advisory, and human approval is still required.
 
 Reference intelligence must not be described as legal advice, a sanctions determination, a control certification, or production authorization.
 

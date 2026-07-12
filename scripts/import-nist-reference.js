@@ -175,12 +175,12 @@ async function main() {
         fs.readFileSync(securityMarkdownFile, 'utf8'),
         fs.readFileSync(aiMarkdownFile, 'utf8')
       ].join('\n\n')
-    });
+    }, { trustedNamespace: true });
     searchSmoke = await searchGovernanceReferences({
       query: 'access control incident response privacy ai governance human oversight',
       sourceId: 'nist_public_reference_manifest',
       topK: 3
-    });
+    }, { trustedNamespace: true });
   }
 
   const manifest = {

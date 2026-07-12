@@ -2,7 +2,7 @@
   "artifact": "golden_demo_run",
   "sample": false,
   "source": "evidence/golden-demo-run.json",
-  "generatedAt": "2026-05-15T16:26:16.211Z",
+  "generatedAt": "2026-07-12T14:32:25.385Z",
   "workflow": {
     "id": "golden-ai-saas-compliance-review",
     "title": "High-risk AI SaaS supplier compliance review",
@@ -86,7 +86,19 @@
     "status": "not_ready",
     "recommendation": "Do not approve yet",
     "readinessScore": 0.32,
-    "rationale": "Multiple high-severity evidence or applicability gaps remain open."
+    "rationale": "Multiple high-severity evidence or applicability gaps remain open.",
+    "approvalEligible": false,
+    "humanApprovalRequired": true,
+    "blockingGaps": 4,
+    "highSeverityGaps": 3,
+    "mediumSeverityGaps": 1,
+    "requiredControls": [
+      "Require model-training exclusion or approved data-use terms before approval.",
+      "Require BCP/DR and exit-assistance evidence for critical operations.",
+      "Require DPA, subprocessors, retention, deletion, and transfer evidence.",
+      "Ask the domain owner whether finance and project compliance obligations apply."
+    ],
+    "evidenceQuality": "usable"
   },
   "evidenceChecklist": {
     "decisionStatus": "not_ready",
@@ -107,7 +119,8 @@
   "metrics": {
     "domainCount": 7,
     "gapCount": 4,
-    "evidenceIdCount": 13,
+    "evidenceIdCount": 1,
+    "policyReferenceIdCount": 12,
     "citationCount": 1,
     "traceEventCount": 6
   },
@@ -163,32 +176,32 @@
         "tasks": [
           {
             "agent": "compliance_orchestrator",
-            "expected_output": "JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
+            "expected_output": "Compact JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
             "key": "triage_case"
           },
           {
             "agent": "regulatory_obligation_mapper",
-            "expected_output": "JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
+            "expected_output": "Compact JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
             "key": "map_obligations"
           },
           {
             "agent": "evidence_examiner",
-            "expected_output": "JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
+            "expected_output": "Compact JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
             "key": "examine_evidence"
           },
           {
             "agent": "risk_control_analyst",
-            "expected_output": "JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
+            "expected_output": "Compact JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
             "key": "recommend_controls"
           },
           {
             "agent": "responsible_ai_reviewer",
-            "expected_output": "JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
+            "expected_output": "Compact JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
             "key": "review_responsible_ai"
           },
           {
             "agent": "audit_packager",
-            "expected_output": "JSON decision brief suitable for human approval and audit review.\n",
+            "expected_output": "Compact JSON decision brief suitable for human approval and audit review.\n",
             "key": "package_audit_brief"
           }
         ]
@@ -203,7 +216,7 @@
           {
             "agent": "compliance_orchestrator",
             "expectedTraceEvent": "case_loaded",
-            "expected_output": "JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
+            "expected_output": "Compact JSON with case_summary, review_domains, assumptions, and missing_intake_fields.\n",
             "id": "intake",
             "kind": "start",
             "method": "load_case",
@@ -213,7 +226,7 @@
           {
             "agent": "regulatory_obligation_mapper",
             "expectedTraceEvent": "domains_scanned",
-            "expected_output": "JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
+            "expected_output": "Compact JSON with obligations, applicability_status, evidence_required, and domain_owner.\n",
             "id": "obligations",
             "kind": "listen",
             "method": "map_obligations",
@@ -223,7 +236,7 @@
           {
             "agent": "evidence_examiner",
             "expectedTraceEvent": "evidence_mapped",
-            "expected_output": "JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
+            "expected_output": "Compact JSON with supported_claims, evidence_ids, missing_evidence, and confidence_notes.\n",
             "id": "evidence",
             "kind": "listen",
             "method": "examine_evidence",
@@ -233,7 +246,7 @@
           {
             "agent": "risk_control_analyst",
             "expectedTraceEvent": "controls_recommended",
-            "expected_output": "JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
+            "expected_output": "Compact JSON with controls, blocking_gaps, non_blocking_gaps, owners, and remediation_plan.\n",
             "id": "controls",
             "kind": "listen",
             "method": "recommend_controls",
@@ -243,7 +256,7 @@
           {
             "agent": "responsible_ai_reviewer",
             "expectedTraceEvent": "output_review_completed",
-            "expected_output": "JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
+            "expected_output": "Compact JSON with responsible_ai_checks, required_corrections, and final_output_safe_for_human_review.\n",
             "id": "rai_review",
             "kind": "listen",
             "method": "review_responsible_ai",
@@ -253,7 +266,7 @@
           {
             "agent": "audit_packager",
             "expectedTraceEvent": "output_review_completed",
-            "expected_output": "JSON decision brief suitable for human approval and audit review.\n",
+            "expected_output": "Compact JSON decision brief suitable for human approval and audit review.\n",
             "id": "audit_pack",
             "kind": "listen",
             "method": "package_audit_brief",
@@ -278,23 +291,17 @@
         "workPlan": "triage and domain scope"
       }
     },
+    "crewaiOutput": null,
     "llm": {
       "requested": false,
-      "enabled": false,
+      "enabled": true,
       "model": "gpt-5.1",
       "baseUrlConfigured": true,
       "providerEnv": "OPENAI_API_KEY",
       "apiKeyConfigured": true,
+      "remoteServiceConfigured": false,
       "outputAvailable": false
     },
     "llmOutput": null
-  },
-  "orchestration": {
-    "framework": "CrewAI Flow",
-    "primaryRuntime": true,
-    "manifestSource": "python_dry_run",
-    "humanApprovalRequired": true,
-    "deterministicDecisionEngine": true
-  },
-  "caveat": "Curated from the golden demo evidence snapshot; raw full run remains in evidence/golden-demo-run.json."
+  }
 }

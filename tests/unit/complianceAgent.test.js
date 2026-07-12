@@ -2,6 +2,8 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 
 const { runComplianceAgent } = require('../../lib/complianceAgent');
 const { fixtureDocumentSummary } = require('../../lib/fixtureDocuments');
@@ -278,4 +280,279 @@ test('normalization preserves structured risk context and blocks unsupported hig
   assert.deepEqual(result.case.sanctionsSensitiveGeographies, ['Iran']);
   assert.notEqual(result.decision.status, 'ready');
   assert.ok(result.gaps.some((gap) => /High-risk AI use/i.test(gap.gap)));
+});
+
+test('chat mentions and placeholders cannot become approval evidence', () => {
+  const mentioned = runComplianceAgent({
+    businessUnit: 'Operations',
+    geography: 'UAE',
+    supplierName: 'Mention Only Vendor',
+    brief: 'Review a vendor that processes personal data.',
+    evidenceSignals: ['SOC 2', 'DPA'],
+    documents: [{
+      evidenceId: 'CHAT-01',
+      sourceType: 'chat_message',
+      extractionStatus: 'nlp_extracted',
+      summary: 'Is SOC 2 evidence available, and is there a signed DPA?',
+      signals: ['SOC 2', 'DPA']
+    }]
+  });
+  const placeholder = runComplianceAgent({
+    businessUnit: 'Operations',
+    geography: 'UAE',
+    supplierName: 'Placeholder Vendor',
+    brief: 'Review a low criticality consulting vendor with no personal data.',
+    documents: [{
+      title: 'Compliance pack',
+      summary: 'Weekly status meeting notes cover staffing updates and the office lunch schedule.'
+    }]
+  });
+  const metadataOnly = runComplianceAgent({
+    businessUnit: 'Operations',
+    geography: 'UAE',
+    supplierName: 'Metadata Only Vendor',
+    brief: 'Review a vendor contract that processes personal data.',
+    documents: [{
+      evidenceId: 'UP-01',
+      fileName: 'supplier-agreement.pdf',
+      sourceType: 'pdf',
+      extractionStatus: 'binary_registered',
+      summary: 'Evidence registered without browser parsing: supplier-agreement.pdf.'
+    }]
+  });
+
+  assert.equal(mentioned.case.documents[0].assertionState, 'requested');
+  assert.equal(mentioned.case.documents[0].provenance, 'chat_message');
+  assert.ok(mentioned.gaps.some((gap) => /No usable supporting evidence/i.test(gap.gap)));
+  assert.ok(mentioned.gaps.some((gap) => /DPA evidence/i.test(gap.gap)));
+  assert.equal(mentioned.evidenceIds.includes('CHAT-01'), false);
+  assert.equal(mentioned.decisionReadiness.approvalEligible, false);
+  assert.ok(placeholder.gaps.some((gap) => /No usable supporting evidence/i.test(gap.gap)));
+  assert.equal(placeholder.decisionReadiness.approvalEligible, false);
+  assert.ok(metadataOnly.gaps.some((gap) => /No usable supporting evidence/i.test(gap.gap)));
+  assert.equal(metadataOnly.evidenceIds.length, 0);
+  assert.equal(metadataOnly.decisionReadiness.approvalEligible, false);
+});
+
+test('policy references stay separate from supplied evidence', () => {
+  const result = runComplianceAgent({
+    businessUnit: 'Operations',
+    geography: 'UAE',
+    supplierName: 'Reference Only Vendor',
+    brief: 'Review a vendor contract.'
+  });
+
+  assert.deepEqual(result.evidenceIds, []);
+  assert.ok(result.policyReferenceIds.some((id) => id.startsWith('p42:')));
+  assert.equal(result.decisionReadiness.approvalEligible, false);
+});
+
+test('Agentathon evaluator treats trailing-question evidence as requested, not proof', () => {
+  const completed = spawnSync(process.execPath, ['scripts/agentathon_run.js'], {
+    cwd: path.join(__dirname, '..', '..'),
+    encoding: 'utf8',
+    input: JSON.stringify({
+      run_id: 'unit-evaluator-question-evidence',
+      input: {
+        query: 'Review supplier onboarding.',
+        case: {
+          business_unit: 'Procurement',
+          geography: 'UAE',
+          supplier_name: 'Question Evidence Vendor'
+        },
+        evidence: [
+          'Signed contract available?',
+          'Approval authority documented?',
+          'Security assurance review completed?'
+        ]
+      }
+    })
+  });
+  assert.equal(completed.status, 0, completed.stderr);
+  const result = JSON.parse(completed.stdout);
+  assert.notEqual(result.decision.status, 'ready');
+  assert.equal(result.decision_readiness.approvalEligible, false);
+  assert.deepEqual(result.evidence_ids, []);
+  assert.deepEqual(result.citations, []);
+});
+
+test('semantic question matches are rejected before citations, quality, and approval', () => {
+  const result = runComplianceAgent({
+    businessUnit: 'Procurement',
+    geography: 'UAE',
+    supplierName: 'Retrieved Question Vendor',
+    brief: 'Review a supplier that processes customer personal data for onboarding.',
+    retrievalContext: {
+      query: 'supplier evidence',
+      chunkCount: 3,
+      matchCount: 3,
+      matches: [
+        { chunkId: 'Q-1', evidenceId: 'RET-Q-1', text: 'Signed contract available?' },
+        { chunkId: 'Q-2', evidenceId: 'RET-Q-2', text: 'Approval authority documented?' },
+        { chunkId: 'Q-3', evidenceId: 'RET-Q-3', text: 'No personal data is processed?' }
+      ]
+    }
+  });
+
+  assert.notEqual(result.decision.status, 'ready');
+  assert.equal(result.decisionReadiness.approvalEligible, false);
+  assert.deepEqual(result.evidenceIds, []);
+  assert.deepEqual(result.citations, []);
+  assert.equal(result.evidenceQuality.semanticMatches, 0);
+  assert.equal(result.retrievalAudit.candidateMatchCount, 3);
+  assert.equal(result.retrievalAudit.matchCount, 0);
+  assert.equal(result.retrievalAudit.rejectedMatchCount, 3);
+  assert.equal(result.retrievalContext.evidenceMatches.length, 0);
+  assert.ok(result.retrievalContext.matches.every((match) => match.assertionState === 'requested'));
+  const privacy = result.domains.find((domain) => domain.id === 'privacy_data_governance');
+  assert.equal(privacy.status, 'applicable');
+  assert.equal(privacy.applicabilityAssertions.negative.length, 0);
+  assert.ok(result.outputReview.checks.some((check) => check.name === 'retrieval_citations' && check.status === 'needs_review'));
+});
+
+test('positive and negative applicability assertions create blocking contradictions', () => {
+  const cases = [
+    {
+      domain: 'ai_model_governance',
+      brief: 'Review the vendor terms.',
+      evidence: 'The vendor says no AI is used, but the contract permits model training and fine-tuning.'
+    },
+    {
+      domain: 'privacy_data_governance',
+      brief: 'The vendor says it processes no personal data.',
+      evidence: 'The DPA states that customer PII is processed.'
+    },
+    {
+      domain: 'business_continuity',
+      brief: 'The vendor says the service is not critical.',
+      evidence: 'The contract describes a critical payment service with recovery obligations.'
+    }
+  ];
+
+  for (const item of cases) {
+    const result = runComplianceAgent({
+      businessUnit: 'Operations',
+      geography: 'UAE',
+      supplierName: 'Contradictory Vendor',
+      brief: item.brief,
+      documents: [{ title: 'Contract terms', summary: item.evidence }]
+    });
+    const domain = result.domains.find((entry) => entry.id === item.domain);
+    assert.ok(domain, `${item.domain} must not be suppressed`);
+    assert.equal(domain.contradiction, true);
+    assert.ok(result.gaps.some((gap) => gap.code === `applicability_contradiction:${item.domain}`));
+    assert.equal(result.decision.status, 'not_ready');
+    assert.equal(result.decisionReadiness.approvalEligible, false);
+  }
+});
+
+test('missing-control negation cannot suppress an applicable risk domain', () => {
+  const cases = [
+    {
+      domain: 'ai_model_governance',
+      brief: 'No AI governance controls are documented for model training.'
+    },
+    {
+      domain: 'privacy_data_governance',
+      brief: 'No personal data inventory or DPA is available.'
+    },
+    {
+      domain: 'business_continuity',
+      brief: 'The service is not critical and has no continuity plan.'
+    },
+    {
+      domain: 'ai_model_governance',
+      brief: 'No AI safeguards are in place for model training.'
+    },
+    {
+      domain: 'ai_model_governance',
+      brief: 'No AI risk management framework exists for the deployed model.'
+    },
+    {
+      domain: 'privacy_data_governance',
+      brief: 'No personal data governance framework exists for customer records.'
+    },
+    {
+      domain: 'business_continuity',
+      brief: 'The service is not critical because continuity testing has never occurred.'
+    },
+    {
+      domain: 'ai_model_governance',
+      brief: 'The service does not use AI safeguards for model training.'
+    },
+    {
+      domain: 'ai_model_governance',
+      brief: 'The service does not use AI governance controls for deployed models.'
+    },
+    {
+      domain: 'privacy_data_governance',
+      brief: 'The service does not process personal data controls for customer records.'
+    },
+    {
+      domain: 'privacy_data_governance',
+      brief: 'No personal data processing safeguards are in place.'
+    },
+    {
+      domain: 'ai_model_governance',
+      brief: 'No AI processing safeguards are in place.'
+    },
+    {
+      domain: 'ai_model_governance',
+      brief: 'No AI models safeguards are documented.'
+    },
+    {
+      domain: 'privacy_data_governance',
+      brief: 'No personal data processing framework exists.'
+    },
+    {
+      domain: 'ai_model_governance',
+      brief: 'No AI processing framework exists.'
+    },
+    {
+      domain: 'ai_model_governance',
+      brief: 'No AI model validation exists.'
+    },
+    {
+      domain: 'business_continuity',
+      brief: 'The service is not critical and no recovery objectives are defined.'
+    }
+  ];
+
+  for (const item of cases) {
+    const result = runComplianceAgent({
+      businessUnit: 'Operations',
+      geography: 'UAE',
+      supplierName: 'Negation Boundary Vendor',
+      brief: item.brief,
+      documents: [{
+        provenance: 'uploaded_document',
+        assertionState: 'parsed',
+        extractionStatus: 'text_extracted',
+        title: 'Generic supplier assurance',
+        summary: 'A signed supplier contract and general security assurance review are documented.'
+      }]
+    });
+
+    assert.ok(result.domains.some((domain) => domain.id === item.domain), `${item.domain} must remain applicable`);
+    assert.ok(result.gaps.length > 0, `${item.domain} must retain a blocking evidence or control gap`);
+    assert.notEqual(result.decision.status, 'ready');
+    assert.equal(result.decisionReadiness.approvalEligible, false);
+  }
+});
+
+test('one unresolved medium gap is conditional and never approval eligible', () => {
+  const result = runComplianceAgent({
+    geography: 'UAE',
+    supplierName: 'Low Risk Services',
+    brief: 'Renew a consulting vendor. The service is low criticality. The service does not process personal data.',
+    documents: [{
+      title: 'Compliance pack',
+      summary: 'Signed contract, approval authority, and security assurance review are documented.'
+    }]
+  });
+
+  assert.equal(result.gaps.filter((gap) => gap.severity === 'medium').length, 1);
+  assert.equal(result.decision.status, 'conditionally_ready');
+  assert.equal(result.decision.approvalEligible, false);
+  assert.equal(result.decisionReadiness.approvalEligible, false);
 });

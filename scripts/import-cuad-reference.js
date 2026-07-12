@@ -97,12 +97,12 @@ async function main() {
       publicSafe: true,
       requiresHumanReview: true,
       markdown: fs.readFileSync(markdownFile, 'utf8')
-    });
+    }, { trustedNamespace: true });
     searchSmoke = await searchGovernanceReferences({
       query: 'limitation of liability indemnification termination data security',
       sourceId: 'cuad_contract_clause_reference',
       topK: 3
-    });
+    }, { trustedNamespace: true });
   }
 
   const manifest = {

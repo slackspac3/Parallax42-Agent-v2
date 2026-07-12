@@ -11,9 +11,9 @@ The final Agentathon submission is an online-first product demo plus a reproduci
 - Online product demo: Vercel browser + Node product APIs (with GitHub Pages as a static mirror) -> named Compass gateway client (GPT-5.1 and `text-embedding-3-large`) -> isolated Railway Postgres/Qdrant.
 - Evaluator reproduction: root `run.py` / FastAPI / Docker / `POST /run` on port `8000`.
 - Compass is used server-side. Browser clients never receive Compass keys, Qdrant keys, service tokens, or raw embeddings.
-- Active Node specialists are advisory; Python CrewAI is optional and currently inactive. The Node policy engine should be the sole final authority, but the deep review records an open Python authority-parity defect.
-- Demo RBAC is enforced, but Entra-backed identity, enterprise-durable audit, arbitrary scanned-PDF OCR, and live Python CrewAI are not claimed.
-- Railway Postgres durably stores case, session, and quota records. Audit still writes to ephemeral `/tmp` and is not durable.
+- Active Node specialists are advisory; Python CrewAI is optional/inactive. Node is the sole final authority and Python preserves its policy fields unchanged.
+- Demo RBAC is enforced, but Entra-backed identity, immutable audit retention, arbitrary scanned-PDF OCR, and live Python CrewAI are not claimed.
+- Railway Postgres stores case/session/quota records and scoped audit chains. Hosted audit fails closed without Postgres; JSONL is local/test-only. WORM export, restore proof, and business/audit transaction coupling remain open.
 
 ## North Star
 
@@ -112,10 +112,10 @@ The submission should include:
 | Gap | Why It Matters |
 | --- | --- |
 | Python CrewAI is optional and inactive; Node specialists are live. | Runtime labels must report requested, attempted, and actually executed paths, and Python must not override the Node decision. |
-| Evidence index/search APIs call the shared embedding gateway and store chunk vectors behind the API; the optional parser relay is disabled in the verified hosted configuration. | Hosted Qdrant uses live semantic embeddings, but evidence assertion/provenance and vector-generation controls have P0/P1 defects in the deep review. |
-| Audit is hash-chained locally but Vercel uses ephemeral `/tmp` unless durable storage is configured. | Enterprise review needs retained records across deployments and function instances. |
+| Evidence index/search APIs call the shared embedding gateway and store chunk vectors behind the API; assertion state/provenance and source-aware contradictions are implemented; the optional parser relay is disabled. | Claim-level source spans, vector-generation controls, canonical documents, and broader groundedness evaluation remain. |
+| Hosted audit uses scoped PostgreSQL hash chains with locked heads; local JSONL is development/test-only. | Enterprise review still needs WORM range export, restore drills, schema migrations, and atomic business/audit evidence. |
 | Demo RBAC is enforced, but live Entra config is not set. | Enterprise identity needs verified tenant, issuer, audience, app roles, JWKS, and tenant-scoped authorization. |
-| Automated coverage is broad but misses critical adversarial and multi-turn behavior. | Add acceptance gates for evidence-question abuse, contradictions, cross-tenant memory, authority parity, and two-turn post-council continuation. |
+| P0 adversarial, tenant, parity, audit, and two-council regressions pass locally. | Add deployed authenticated E2E, resource-wide/RLS tests, signed policy hashes, restore/WORM, accessibility, load and live-provider parity. |
 | Demo video is not recorded. | G42 explicitly asks for "Watch the Agent Work." |
 
 ## Source Anchors

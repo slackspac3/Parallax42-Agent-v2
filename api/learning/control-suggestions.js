@@ -15,11 +15,7 @@ module.exports = async function handler(req, res) {
       return;
     }
     const body = req.method === 'POST' ? await readJsonRequest(req, { limitBytes: STANDARD_RUN_BODY_LIMIT_BYTES }) : {};
-    sendJson(req, res, 200, await getControlSuggestions({
-      ...body,
-      workspaceId: auth.actor.workspaceId || process.env.P42_WORKSPACE_ID || 'parallax42',
-      projectId: auth.actor.projectId || process.env.P42_PROJECT_ID || 'compliance-intelligence-agent'
-    }));
+    sendJson(req, res, 200, await getControlSuggestions(body, { actor: auth.actor }));
   } catch (error) {
     if (error?.statusCode) {
       sendJsonError(req, res, error, { error: 'control_suggestions_failed' });

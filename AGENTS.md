@@ -17,11 +17,12 @@ Do not replace the current vanilla frontend/Node product, existing FastAPI evalu
 Current hosted truth (verified 2026-07-12):
 
 - Vercel serves the Node product API; the local Node mirror defaults to `http://127.0.0.1:3020`.
-- Railway PostgreSQL persists sessions, cases, and quotas; Railway Qdrant stores hosted vectors.
+- Railway PostgreSQL persists sessions, cases, quotas, and actor-scoped audit chains; Railway Qdrant stores hosted vectors.
 - A named authenticated shared-gateway client supplies GPT-5.1 chat/advisory calls and `text-embedding-3-large` semantic embeddings. The provider key remains only inside the shared Compass gateway.
 - JavaScript advisory specialists are active. Python CrewAI is optional and inactive in the hosted product.
 - Demo/session RBAC is enforced; Microsoft Entra SSO is not implemented.
-- Hash-chained audit JSONL is written under serverless `/tmp` and is not durable.
+- Hosted audit uses PostgreSQL hash chains and fails closed without Postgres; JSONL is local/test-only. WORM export and business/audit coupling are not implemented.
+- Node is the sole policy authority; Python/Compass/retrieval/learning output is advisory. Conditional is nonterminal and approval requires explicit `approvalEligible: true`.
 
 Before changing claims or architecture, consult [`docs/DEEP_CODE_REVIEW.md`](docs/DEEP_CODE_REVIEW.md) and [`docs/AZURE_MIGRATION_PLAN.md`](docs/AZURE_MIGRATION_PLAN.md).
 
@@ -68,7 +69,7 @@ For the Advisor desktop view, preserve a SaaS workbench structure:
 ## Product Truthfulness
 
 Keep the UI and docs honest:
-- Deterministic Node policy is the intended final decision owner; do not claim this as a proven invariant until the parity/authority findings in the deep review are closed.
+- Deterministic Node policy is the final decision owner; Python preserves its policy fields. Keep the parity regression green and do not expand advisory outputs into policy authority.
 - Human approval remains required.
 - Active JavaScript Compass specialists and optional Python CrewAI outputs are advisory only.
 - Technical runtime details should remain available, but the main screen should be executive and business-readable.
