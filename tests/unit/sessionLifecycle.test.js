@@ -394,6 +394,42 @@ test('draft persistence enforces optimistic versions and fixture identity', asyn
   }
 });
 
+test('upload-first demo interaction creates a valid client version-zero case', async () => {
+  const cleanup = isolatedStore();
+  try {
+    const session = await createDemoSession();
+    const fixture = fixtureDocumentSummary('02_data_processing_addendum_and_cross_border_terms.pdf').evidence;
+    const caseId = `case_${Date.now()}_upload`;
+    const response = await handleConversation({
+      req: { headers: { authorization: `Bearer ${session.token}`, 'x-agent-runtime': 'deterministic' } },
+      body: {
+        message: 'Evidence uploaded: review the DPA and ask the next best question.',
+        eventType: 'evidence_uploaded',
+        caseVersion: 0,
+        caseDraft: {
+          caseId,
+          caseVersion: 0,
+          supplierName: 'Upload First Supplier',
+          brief: fixture.summary,
+          documents: [fixture]
+        }
+      },
+      dependencies: {
+        planConversationTurn: async (input) => input,
+        appendAuditRecord: async () => ({ ok: true })
+      }
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.caseDraft.caseId, caseId);
+    assert.equal(response.body.caseDraft.caseVersion, 1);
+    assert.equal(response.body.caseDraft.documents[0].provenance, 'demo_fixture');
+    assert.equal(response.body.caseDraft.documents[0].assertionState, 'parsed');
+  } finally {
+    cleanup();
+  }
+});
+
 test('demo run downgrades forged client documents and cannot become approval eligible', async () => {
   const cleanup = isolatedStore();
   try {
