@@ -22,9 +22,10 @@
 - Evaluator reproduction path is present: root `run.py`, Dockerfile, FastAPI `/run` on port `8000`, metadata, examples, output examples, and logs.
 - Multi-agent collaboration is visible in JSONL traces and the architecture docs.
 - A named shared-Compass client is active server-side for smart intake, Node advisory specialists, and semantic embeddings; browser clients do not receive provider keys. Deterministic fallback is reported when live output cannot be used.
-- Railway PostgreSQL and Qdrant are durable/active in the previously verified deployment; the local remediation stores tenant/project audit chains in Postgres and fails hosted writes closed without it. CI/live verification of that release is pending; WORM export remains absent.
+- Railway PostgreSQL and Qdrant are durable/active in the verified deployment; the remediation stores tenant/project audit chains in Postgres and fails hosted writes closed without it. WORM export remains absent and is not a submission claim.
 - Hosted advisory specialists are implemented in Node. Live Python CrewAI is optional and inactive.
 - The hosted demo uses enforced demo authentication. Microsoft Entra tenant configuration, app roles, and enterprise SSO proof remain pending.
+- Release proof for implementation `457c7c2`: full `npm run qa` passed with 276/276 Node tests and 13/13 Python security tests; CI, Agentathon Preflight, and Pages are green; <https://parallax42-agent-v2.vercel.app/> passed an authenticated real-browser flow covering real upload, Qdrant, Compass, Council, an authoritative post-council rerun, and an HTTP `200` case narrative.
 
 ### Historical Phase 1: Clean Repo And Runnable Agent
 
@@ -63,7 +64,7 @@
 
 - Demo video still needs to be recorded and linked before final submission.
 - The named Compass gateway and semantic retrieval are active in the current product path; keep a credential-safe live smoke and deterministic-fallback test in release evidence.
-- Evidence/readiness, learning/governance scope, post-council versioning, Node/Python authority, and audit exposure/durability P0s pass local QA; CI/live verification is still required. Review-pack integrity remains open.
+- Evidence/readiness, learning/governance scope, post-council versioning, Node/Python authority, and audit exposure/durability P0s pass local QA, CI, and the authenticated production workflow. Review-pack integrity remains open.
 - Demo authentication is enforced, but enterprise Entra/membership/RLS and immutable audit export/business coupling remain hardening items, not submitted claims.
 - Arbitrary scanned-PDF OCR is not claimed; fixture PDFs and backend/parser relay paths are the safe demo scope.
 - The parser relay is disabled in the verified production configuration; do not present it as active without a fresh approved-data-flow test.

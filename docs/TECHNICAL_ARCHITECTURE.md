@@ -1,6 +1,6 @@
 # Technical Architecture
 
-> **State reviewed 2026-07-12:** the Vercel product uses the named Parallax42 Compass gateway client with GPT-5.1 advisory/smart-intake calls and `text-embedding-3-large` semantic retrieval. Railway Postgres stores case, session, quota, and—after this local remediation—tenant-scoped audit-chain records; Railway Qdrant is the active vector store. Hosted audit writes fail closed without PostgreSQL, while JSONL is local/test-only. Demo RBAC is enforced, but Microsoft Entra is not configured. Node specialists are active; Python CrewAI is optional and currently inactive. Node is the sole policy authority. Full local QA is green; CI, deployment, and authenticated live verification are pending.
+> **Verified remediation release, 2026-07-12:** implementation SHA `457c7c2` passed 276 Node tests and 13 Python security tests. GitHub Actions CI, Agentathon Preflight (including Docker smoke), and GitHub Pages deployment are green. The authenticated production workflow was verified at <https://parallax42-agent-v2.vercel.app>. The Vercel product uses the named Parallax42 Compass gateway client with GPT-5.1 advisory/smart-intake calls and `text-embedding-3-large` semantic retrieval. Railway Postgres durably stores case, session, quota, and tenant-scoped audit-chain records; Railway Qdrant is the active vector store. Hosted audit writes fail closed without PostgreSQL, while JSONL is local/test-only. Demo RBAC is enforced, but Microsoft Entra is not configured. Node specialists are active; Python CrewAI is optional and currently inactive. Node is the sole policy authority.
 
 For the selected production target and staged transition, see the [Azure migration plan](AZURE_MIGRATION_PLAN.md).
 
@@ -25,7 +25,7 @@ Linked online product evidence:
 Vercel working demo (primary) or GitHub Pages static mirror
   -> Vercel Node product APIs
   -> named Compass gateway client (GPT-5.1 + text-embedding-3-large)
-  -> isolated Railway Postgres (case/session/quota records)
+  -> isolated Railway Postgres (case/session/quota records + scoped audit chains)
   -> authenticated Qdrant collection p42_compliance_evidence_v2 (semantic retrieval)
 ```
 
@@ -90,7 +90,7 @@ CourtListener / CUAD-compatible / NIST / legacy CAP local imports
 | Server-side evidence vector store | `lib/evidenceVectorStore.js` | Stores chunk embeddings behind the API, supports Qdrant-compatible production storage, strips vectors from browser responses, and retrieves evidence by `caseId`. |
 | Governed learning memory | `lib/learningMemory.js`, `lib/serverSideRetrieval.js` | Stores advisory reviewer context and derives learning/governance namespaces from the authenticated actor, ignoring caller-selected workspace/project values. This is not model training. |
 | Reference intelligence corpus | `lib/referenceIntelligenceCorpus.js`, `scripts/import-courtlistener-reference.js`, `scripts/import-cuad-reference.js`, `scripts/import-nist-reference.js`, `reference_context/` | Normalizes legal, contract, compliance, security, procurement, AI governance, sanctions/export, and HSE/ESG reference context for advisory retrieval. |
-| Audit store | `lib/auditStore.js` | Tenant/project-scoped PostgreSQL hash chains for hosted runtimes, serialized with `SELECT ... FOR UPDATE`; role-gated/scoped reads and fail-closed hosted writes. JSONL is local/test fallback only. Immutable export remains future work. |
+| Audit store | `lib/auditStore.js` | Tenant/project-scoped PostgreSQL hash chains for hosted runtimes, serialized with `SELECT ... FOR UPDATE`; role-gated/scoped reads and fail-closed hosted writes. Records are append-only through the application API, while JSONL is local/test fallback only. This is not immutable/WORM storage and does not make the system `enterpriseReady`; export, restore proof, database policy, and business/audit transaction coupling remain future work. |
 | Review pack builder | `lib/reviewPack.js` | Generates digest-backed executive review packs with evidence quality, retrieval audit, citations, and reviewer actions. |
 | Cockpit UI | `public/` | Chat-first operator workspace with advanced demo/live run modes. |
 | Evidence capture | `scripts/capture-evidence.js` | Generates health, benchmark, readiness, and sample trace artifacts. |
@@ -116,7 +116,7 @@ The selected Azure target and migration gates are defined in [Azure Migration Pl
 - Embedding calls are token-protected server-to-server calls; the browser never receives Compass, Vercel AI Gateway, or embedding provider credentials.
 - Chunk embeddings are stored behind `/api/evidence/index` and retrieved behind `/api/evidence/search`; browser responses strip vectors and raw chunk payloads.
 - Qdrant is the hosted vector provider and currently uses `text-embedding-3-large` semantic embeddings through the named Compass gateway client. Labelled deterministic hash vectors and local-file storage are fallback/reproduction modes.
-- In hosted runtimes, Postgres durably stores case/session/quota records and scoped audit chains; audit writes fail closed if PostgreSQL is unavailable. Local/FastAPI reproduction remains environment-dependent and uses explicit local fallbacks.
+- In hosted runtimes, Postgres durably stores case/session/quota records and scoped audit chains; audit writes fail closed if PostgreSQL is unavailable. The chain is append-only at the application layer, not immutable/WORM storage. Local/FastAPI reproduction remains environment-dependent and uses explicit local fallbacks.
 - Governed learning and governance retrieval use the authenticated actor's workspace/project. They return advisory context only and never rewrite deterministic output.
 - Only evidence-bearing uploaded or server-retrieved passages satisfy controls. A question, mention, placeholder, or policy reference cannot do so; contradictory assertions remain visible and blocking.
 - Output is never automatic approval. Conditional status is nonterminal, and approval requires the server-owned `approvalEligible: true` plus a human decision.

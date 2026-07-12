@@ -5,13 +5,28 @@
 Primary demo surfaces:
 
 - Static cockpit: `https://slackspac3.github.io/Parallax42-Agent-v2/`
-- Compliance Intelligence Agent API: `https://parallax42-agent-v2.vercel.app`
+- Vercel working demo and Compliance Intelligence Agent API: `https://parallax42-agent-v2.vercel.app`
 - API health: `https://parallax42-agent-v2.vercel.app/api/health`
 - Compass gateway health: `https://parallax42-compass-gateway.vercel.app/api/health`
 
 State reviewed 2026-07-12: a named authenticated client on the shared Compass gateway supplies GPT-5.1 smart intake/advisory calls and `text-embedding-3-large` semantic embeddings. The underlying provider key remains only in the gateway. JavaScript advisory specialists are active; Python CrewAI is optional/inactive. Deterministic Node policy is the final decision authority and fallback.
 
-Railway PostgreSQL persists hosted sessions/cases/quotas and, after the local remediation, actor-scoped audit chains; authenticated Railway Qdrant stores vectors. Demo/session RBAC is enforced, but Microsoft Entra SSO is not implemented. Full local QA is green; CI/live verification is pending. PostgreSQL audit is not immutable/WORM and is not yet atomically coupled to every critical business write. Review residual risks in the [Deep Code Review](docs/DEEP_CODE_REVIEW.md), and use the [Azure Migration Plan](docs/AZURE_MIGRATION_PLAN.md) for the selected cloud path.
+Railway PostgreSQL persists hosted sessions/cases/quotas and actor-scoped audit chains; authenticated Railway Qdrant stores vectors. Demo/session RBAC is enforced, but Microsoft Entra SSO is not implemented. Implementation SHA `457c7c2` passes full `npm run qa` with 276/276 Node tests, 13/13 Python security tests, and a 4/4 benchmark; CI, Agentathon Preflight, and GitHub Pages succeeded for that SHA. PostgreSQL audit is durable, hash-chained, and application append-only, but it is not immutable/WORM, is not yet atomically coupled to every critical business write, and does not establish `enterpriseReady`. Review residual risks in the [Deep Code Review](docs/DEEP_CODE_REVIEW.md), and use the [Azure Migration Plan](docs/AZURE_MIGRATION_PLAN.md) for the selected cloud path.
+
+## Verified Remediation Release
+
+Authenticated real-browser acceptance passed against `https://parallax42-agent-v2.vercel.app` for implementation SHA `457c7c2`:
+
+- an actual PDF upload completed through the live Qdrant/Compass path;
+- Council completed with approval locked;
+- a material post-council update and rerun returned HTTP 200 with authoritative server state/version;
+- narrative generation returned HTTP 200;
+- anonymous `/api/logs` returned 404;
+- audit access returned 401 without authentication and 403 for an insufficient role;
+- health returned 401/200 according to role; and
+- every probed response used `Cache-Control: private, no-store`.
+
+The implementation SHA names the code that was tested and deployed. A later documentation-only commit that records these results must not be presented as the implementation SHA. These checks support a working governed demo, not multi-tenant or enterprise production approval; the documented residual P1 gates remain.
 
 ## Selected Hackathon Use Case
 
@@ -102,6 +117,7 @@ Implemented:
 - PostgreSQL-backed demo session/case/quota lifecycle state with an in-process development fallback.
 - Local deterministic vector fallback plus authenticated Railway Qdrant configured through Vercel; the hosted demo uses live `text-embedding-3-large` semantic vectors from the shared Compass gateway.
 - Tenant/project PostgreSQL hash chains in hosted runtimes, with JSONL limited to local/test fallback.
+- Full local QA and hosted release acceptance for implementation SHA `457c7c2`, including CI, Agentathon Preflight, GitHub Pages, real-browser PDF/Qdrant/Compass, Council, post-council rerun, narrative, and access/cache checks.
 
 Not implemented or not claimed:
 

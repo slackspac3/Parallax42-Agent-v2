@@ -2,10 +2,10 @@
 
 **Review date:** 2026-07-12
 
-**Reviewed revision:** `a98556c` (`main`); remediation implementation reviewed in the 2026-07-12 local worktree.
+**Reviewed revision:** original review at `a98556c`; remediation implementation and live acceptance verified at `457c7c2` (`main`) on 2026-07-12.
 
 **Scope:** product architecture, agent behavior, policy logic, evidence handling, tenant isolation, security, reliability, performance, code quality, testing, accessibility, UI/UX, deployment, and operations.
-**Status:** current review, P0 remediation record, and residual backlog. The seven P0 findings below are remediated and full local QA is green. CI, deployment, and authenticated live-workflow verification remain pending the release run.
+**Status:** current review, verified P0 remediation record, and residual backlog. The seven P0 findings below are remediated; full local QA, CI, GitHub Pages, production deployment, and the authenticated live workflow are green.
 
 ## Executive verdict
 
@@ -21,7 +21,7 @@ Parallax42 Agent v2 is a credible and unusually complete demo foundation. It has
 
 The live Compass service is not the root cause of these defects. A production probe on the reviewed deployment reported an authenticated named client, GPT-5.1 chat, `text-embedding-3-large` embeddings, active semantic retrieval, durable PostgreSQL and Qdrant, and enforced demo authentication. The highest-risk failures occur after or around those integrations—in evidence classification, state authority, tenancy, and presentation.
 
-**Release recommendation:** run the complete local QA suite, CI, production deployment, and the authenticated two-council browser workflow before presenting the remediation as live. Keep the site synthetic/demo-only until the remaining P1 security and artifact controls are closed: Entra/membership/RLS, immutable server-loaded runs/packs, WORM audit export and restore proof, atomic business/audit writes, retention/erasure, and distributed admission controls.
+**Release recommendation:** the remediation is suitable for the working demo and is live at `https://parallax42-agent-v2.vercel.app`. Keep it demo-only until the remaining P1 security and artifact controls are closed: Entra/membership/RLS, immutable server-loaded runs/packs, WORM audit export and restore proof, atomic business/audit writes, retention/erasure, and distributed admission controls.
 
 ## Verified current state
 
@@ -35,11 +35,11 @@ The live Compass service is not the root cause of these defects. A production pr
 | Retrieval | Qdrant active and durable; semantic embeddings active; deterministic embeddings are a fallback |
 | Authentication | Demo/session authorization enforced; enterprise Entra identity is not implemented |
 | Parser relay | Disabled in the probed production deployment; the code path still needs hardening before enablement |
-| Audit | Local remediation uses tenant/project PostgreSQL hash chains for hosted runtimes; JSONL is local/test-only; immutable retention remains absent |
-| GitHub | At the original review, CI/Pages/preflight were green; remediation CI is pending. `main` has no branch protection. |
-| Tests | Final remediation worktree: 271/271 Node and 13/13 Python security tests; full local `npm run qa`, upload-first/synthetic-upload isolation, two-turn Playwright mock, and 4/4 benchmark pass. CI/live re-verification is pending. |
+| Audit | Production uses tenant/project PostgreSQL hash chains for hosted runtimes; JSONL is local/test-only. It is durable, hash-chained, and application-append-only, but immutable/WORM retention remains absent and `enterpriseReady` remains false. |
+| GitHub | CI, Agentathon Preflight, and the Pages deployment completed successfully for implementation commit `457c7c2`. `main` has no branch protection. |
+| Tests | Release worktree: 276/276 Node and 13/13 Python security tests; full local `npm run qa`, upload-first/synthetic-upload isolation, two-turn Playwright mock, and 4/4 benchmark pass. Authenticated live upload, retrieval, Compass, council, follow-up/rerun, narrative, and access-control probes also passed. |
 
-Hosted-service facts above are point-in-time observations. Local remediation claims are code/test observations, not proof that the production URL has been updated; environment-specific capability labels must come from the server response for the current interaction.
+Hosted-service facts above are point-in-time observations from the verified production deployment. Environment-specific capability labels must still come from the server response for the current interaction.
 
 ## Method
 
@@ -67,7 +67,7 @@ No destructive production mutations were made. The production probe used an ephe
 
 ### P42-REV-001 — Evidence questions and mentions become proof
 
-**Status:** Remediated locally.
+**Status:** Remediated and release-verified.
 
 **Implementation:** `lib/evidenceAssertions.js` normalizes `assertionState` and `provenance`, treats question-mark assertions as requests regardless of source, and applies one usable-evidence predicate to documents and semantic matches. `lib/conversationState.js` retains chat assertions without promoting them to usable proof. `lib/caseLifecycle.js` treats every caller-supplied document as unverified chat provenance; only a real demo session may resolve its server-issued canonical fixture. `lib/complianceAgent.js` separates candidate retrieval matches from verified evidence matches before citations, evidence quality, or eligibility. Policy references stay separate from supplied evidence.
 
@@ -94,7 +94,7 @@ The question produced a `CHAT-01` evidence record, `evidenceQuality.usable: true
 
 ### P42-REV-002 — Global negation suppresses contradictory risk
 
-**Status:** Remediated locally.
+**Status:** Remediated and release-verified.
 
 **Implementation:** `lib/evidenceLibrary.js` splits case/document/retrieval text into source-tagged statements, uses predicate-specific non-applicability grammar, defaults ambiguous or control-absence negation to review, exposes positive/negative assertion sets, and marks a domain contradiction when they coexist. `lib/complianceAgent.js` converts that contradiction into a blocking gap.
 
@@ -116,7 +116,7 @@ The question produced a `CHAT-01` evidence record, `evidenceQuality.usable: true
 
 ### P42-REV-003 — One medium gap produces inconsistent approval readiness
 
-**Status:** Remediated locally.
+**Status:** Remediated and release-verified.
 
 **Implementation:** `lib/complianceAgent.js` derives status, rationale, counts, controls, and eligibility from one decision builder. Any unresolved high or medium gap returns `conditionally_ready` or `not_ready`; only `ready` yields `approvalEligible: true`. `lib/caseApproval.js` and the browser consume that explicit field and reject/hide approval otherwise.
 
@@ -132,7 +132,7 @@ The question produced a `CHAT-01` evidence record, `evidenceQuality.usable: true
 
 ### P42-REV-004 — Authenticated cross-workspace learning-memory retrieval
 
-**Status:** Remediated locally for the confirmed learning/governance enrichment paths.
+**Status:** Remediated and release-verified for the confirmed learning/governance enrichment paths.
 
 **Implementation:** `lib/serverSideRetrieval.js`, `lib/learningMemory.js`, and `lib/governanceReferenceStore.js` derive workspace/project from the authenticated actor and ignore caller-selected namespace fields. Offline import scripts can write only explicitly public-safe material into a dedicated immutable-read public corpus that actor-scoped searches may include; tenant-private records never use that namespace.
 
@@ -156,7 +156,7 @@ Evidence retrieval passes the authenticated actor, but conversation learning enr
 
 ### P42-REV-005 — Council completion leaves the next interaction stale
 
-**Status:** Remediated locally.
+**Status:** Remediated and release-verified.
 
 **Implementation:** `lib/httpHandlers.js` returns one completed case snapshot and assigns its final version to the run and case draft; runtime failure and post-completion audit failure responses also carry the authoritative recovered/persisted snapshot. `public/app.js` replaces local draft state on success and recovery.
 
@@ -179,7 +179,7 @@ The handler saves a pre-run draft version, council begin/complete increments it 
 
 ### P42-REV-006 — Python can override the authoritative Node decision
 
-**Status:** Remediated locally.
+**Status:** Remediated and release-verified.
 
 **Implementation:** `app/agentathon_orchestrator.py` no longer recomputes decision/risk/actions from precedent or specialist output. It returns Node `decision`, `risk_level`, `gaps`, `control_plan`, `decision_readiness`, and approval eligibility unchanged; advisory challenges are recorded separately.
 
@@ -200,7 +200,7 @@ Python spawns Node for a result and then recomputes the decision. An advisory pr
 
 ### P42-REV-007 — Audit is global, partly public, and nondurable
 
-**Status:** Remediated locally for public access, tenant scope, and hosted durability; enterprise immutability remains residual.
+**Status:** Remediated and release-verified for public access, tenant scope, and hosted durability; enterprise immutability remains residual.
 
 **Implementation:** `lib/auditStore.js` stores actor-derived workspace/project chains in PostgreSQL, locks each head with `SELECT ... FOR UPDATE`, commits event/head together, tenant-filters reads/verification, cross-checks duplicated SQL integrity columns and the persisted chain head, and enforces hosted/explicit durable-storage requirements on append/read/verify. `api/audit/recent.js` requires `audit:read`; health/audit/log responses set private no-store policy before guards; `api/logs.js` is a non-disclosing 404. FastAPI `/logs` requires auditor/platform-admin and returns no trace records or filenames.
 
@@ -332,12 +332,14 @@ Keep Node as the product authority. Reduce Python to a CI evaluator or a narrow,
 
 ### Results
 
-- Final remediation worktree Node unit suite: **271/271 passing**.
-- Final remediation worktree Python security suite: **13/13 passing**.
+- Release worktree Node unit suite: **276/276 passing**.
+- Release worktree Python security suite: **13/13 passing**.
 - Full local `npm run qa`: **passing**.
-- npm dependency audit at the original review: **0 known vulnerabilities**.
+- Release `npm audit --omit=dev`: **0 known vulnerabilities**.
 - Experimental Node coverage at the original review: **89.13% lines, 68.44% branches, 91.92% functions**; refresh after merge.
-- CI and live deployment verification: **pending**.
+- CI, Agentathon Preflight, GitHub Pages deployment, and production deployment for implementation commit `457c7c2`: **passing**.
+- Authenticated production workflow: real PDF upload and Qdrant indexing, live Compass intake, approval-locked council result, authoritative post-council follow-up/rerun, and compact narrative request: **passing**.
+- Production access-control probes: anonymous `/api/logs` 404; audit 401 anonymous/403 demo; health 401 anonymous/200 demo; all responses private/no-store: **passing**.
 
 Important low-line-coverage modules include `councilNarrative` (12.57%), `evaluatorRun` (18.06%), `evidencePipeline` (22.58%), `recordStore` (57.55%), and `httpHandlers` (58.41%). API wrappers and the deployed browser/server integration are not fully represented by the unit aggregate.
 
@@ -354,14 +356,14 @@ Important low-line-coverage modules include `councilNarrative` (12.57%), `evalua
 ### High-value coverage still missing
 
 1. Resource-wide tenant A/B tests for cases, review packs, exports, deletion, membership and RLS.
-2. Deployed authenticated intake -> upload -> council -> follow-up -> second council -> review/export E2E.
+2. Deployed authenticated review-pack/export E2E; the intake -> upload -> council -> follow-up -> second-council path is now verified live.
 3. Live Compass/CrewAI/fallback parity with a signed policy version/hash.
 4. Immutable review-pack load/hash/tamper and audit WORM export/restore tests.
 5. Qdrant stale-delete, model/dimension mismatch, purpose isolation, and score-threshold tests.
 6. Model call-count, abort/deadline, retry, budget, multi-replica flag/rate-limit tests.
 7. Keyboard, 200% zoom, high contrast, reduced motion, and long-content browser tests.
 
-Python security tests are not currently part of the JavaScript QA/CI entry point. Both CI workflows also repeat much of the same full suite on each push. Run one reusable QA workflow and invoke it from the required checks.
+Python security tests now run from `npm run qa` and both CI workflows. The workflows still repeat much of the same full suite on each push; consolidate them behind one reusable QA workflow and invoke it from the required checks.
 
 ## Simplification opportunities
 

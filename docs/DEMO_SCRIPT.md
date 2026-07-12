@@ -1,6 +1,6 @@
 # Watch The Agent Work Demo Script
 
-> Current-state script, reviewed 2026-07-12. The seven P0 remediations pass full local QA; use this script only after CI, deployment, and authenticated live verification are recorded. The [Azure migration plan](AZURE_MIGRATION_PLAN.md) describes a future hosting target; it is not the current run path.
+> Current-state script, reviewed 2026-07-12. Release implementation `457c7c2` passes full `npm run qa` (276/276 Node and 13/13 Python security tests), its CI, Agentathon Preflight, and Pages workflows are green, and this production flow has been rehearsed in an authenticated real browser. The [Azure migration plan](AZURE_MIGRATION_PLAN.md) describes a future hosting target; it is not the current run path.
 
 ## Goal
 
@@ -24,8 +24,10 @@ Not for HR decisions or automated compliance approvals.
 
 5. Run Council.
 6. Show the decision: `Do not approve yet` or `Continue review with named controls`. Explain that conditional is nonterminal and the Approve action remains disabled until the server returns `approvalEligible: true` after remediation and rerun.
-7. Show assertion provenance, evidence gaps/contradictions, the human-review boundary, and the audit pack.
-8. Continue with a material case amendment, then run Council a second time without reloading. Show that the server-confirmed case version is retained.
+7. Show assertion provenance, evidence gaps/contradictions, the human-review boundary, the case narrative, and the audit pack.
+8. Continue with a material case amendment, then run Council a second time without reloading. Show that the server-confirmed case version is retained and the narrative request returns HTTP `200`.
+
+Verified rehearsal baseline: <https://parallax42-agent-v2.vercel.app/> accepted a real PDF upload, indexed and retrieved it through Qdrant, used live Compass intake/advisory output, completed Council, and completed the post-council continuation/rerun from the authoritative server version. This proves the working demo flow; it does not prove immutable or WORM-retained audit.
 
 ## Suggested 2:30-3:00 Voiceover
 

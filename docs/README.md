@@ -39,7 +39,7 @@ Current hosted-state shorthand:
 - Demo/session authorization is enforced; enterprise Entra identity is not implemented.
 - Hosted audit uses actor-scoped PostgreSQL hash chains; it is durable but not immutable/WORM or atomically coupled to every business write.
 
-Full local QA for the seven P0 remediations is green; CI/live verification is pending. See the [deep review](DEEP_CODE_REVIEW.md) before relying on approval, enterprise tenancy, immutable audit retention, or review-pack output.
+Release implementation `457c7c2` passed full `npm run qa` (276/276 Node and 13/13 Python security tests), with CI, Agentathon Preflight, and Pages green. The authenticated production flow at <https://parallax42-agent-v2.vercel.app/> was verified in a real browser through real upload, Qdrant, Compass, Council, an authoritative post-council rerun, and an HTTP `200` narrative response. This is working-demo proof, not immutable/WORM audit or enterprise authorization; see the [deep review](DEEP_CODE_REVIEW.md) before relying on approval, enterprise tenancy, audit retention, or review-pack output.
 
 ## Demo and delivery
 
@@ -110,4 +110,4 @@ When behavior changes:
 
 ## Review record
 
-The 2026-07-12 reconciliation inventoried every tracked Markdown file, corrected material current-state drift in living documents, labeled dated reports as historical, added reference-data review ownership, and introduced the current review/security/Azure documents. Remaining inconsistencies should be reported against this map and resolved from code plus deployed evidence.
+The 2026-07-12 reconciliation inventoried every tracked Markdown file, corrected material current-state drift in living documents, labeled dated reports as historical, added reference-data review ownership, and introduced the current review/security/Azure documents. The release record was then updated for implementation `457c7c2`, its green QA/CI/Preflight/Pages gates, and its authenticated production-browser verification. Remaining inconsistencies should be reported against this map and resolved from code plus deployed evidence.

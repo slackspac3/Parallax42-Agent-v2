@@ -13,6 +13,7 @@ Strengthen compliance visibility across enterprise workflows by turning intake, 
 ## Current Core Capabilities
 
 - Online-first judge demo through GitHub Pages and Vercel product APIs, using a named Parallax42 Compass gateway client, isolated Railway Postgres, and Railway Qdrant.
+- Verified remediation release SHA `457c7c2`: 276 Node tests and 13 Python security tests pass; CI, Agentathon Preflight, and GitHub Pages are green; and an authenticated production workflow completed at <https://parallax42-agent-v2.vercel.app>.
 - Root Agentathon evaluator wrapper: `run.py` exposes `POST /run`, `GET /health`, `GET /metadata`, role-gated non-disclosing `GET /logs`, and `GET /compass/probe` on port `8000`.
 - FastAPI evaluator proof is currently the repository plus GitHub Actions Docker smoke, not a separate public FastAPI URL.
 - Compliance-domain triage across third-party, privacy, AI/model governance, continuity, finance/project compliance, Microsoft licensing, ESG/HSE/BCM, physical security, technical risk, and regulatory reporting.
@@ -20,8 +21,8 @@ Strengthen compliance visibility across enterprise workflows by turning intake, 
 - Blocking-gap identification with action owners expressed as concrete controls.
 - Human-review decision posture uses the exact contract values `ready`, `conditionally_ready`, or `not_ready`.
 - Multi-agent trace event output for intake, delegation, evidence retrieval, retry/fallback, specialist critique, validation, learning/precedent, deterministic decisioning, and audit packaging.
-- Council completion returns one authoritative completed case snapshot/version; local unit and browser mock regressions cover follow-up plus second council, with deployed verification pending.
-- Hosted audit uses scoped PostgreSQL hash chains with integrity verification and fail-closed writes; local JSONL is test/development-only. Immutable export/restore/business coupling remain open.
+- Council completion returns one authoritative completed case snapshot/version; unit, browser mock, and authenticated production verification cover follow-up continuation after council completion.
+- Hosted audit uses durable scoped PostgreSQL hash chains with integrity verification and fail-closed writes; writes are append-only through the application and local JSONL is test/development-only. This is not immutable/WORM storage or proof of `enterpriseReady`; export, restore proof, database policy, and critical business/audit transaction coupling remain open.
 - Route-level RBAC is enforced for the demo identity model. Entra-compatible validation code exists, but Entra tenant, issuer, audience, and app-role integration is not configured.
 - Deployed product evidence for GPT-5.1 smart intake and Node specialists, `text-embedding-3-large` semantic retrieval, document/fixture analysis, Railway Postgres/Qdrant, admin health, and golden evals.
 
@@ -43,8 +44,8 @@ Strengthen compliance visibility across enterprise workflows by turning intake, 
 - Public online product URLs are GitHub Pages/Vercel/remote services. They should not be described as the FastAPI evaluator wrapper unless the repo Dockerfile is deployed as a public container API and `/metadata` plus official `/run` are verified.
 - Direct Compass strict verification depends on a valid Compass key and the official template `OPENAI_BASE_URL=https://compass.core42.ai/v1`; the runtime also accepts `https://api.core42.ai/v1` when confirmed for the issued key. The product demo uses a separate server-side gateway boundary.
 - Demo RBAC is enforced, but Entra-backed enterprise identity is not claimed until tenant, issuer, audience, app roles, and JWKS configuration are set and tested.
-- Audit records are tenant-scoped PostgreSQL hash chains in hosted runtimes; production retention still needs WORM export, restore proof, and critical business/audit transaction coupling.
+- Audit records are durable tenant-scoped PostgreSQL hash chains in hosted runtimes and append-only through the application; production retention still needs WORM export, restore proof, database policy, and critical business/audit transaction coupling. `enterpriseReady` is not claimed.
 - The deployed product path uses Qdrant-backed semantic memory; deterministic vectors/local storage remain fallback modes, and local/FastAPI Qdrant remains environment-dependent.
-- Evidence classification, exploited learning/governance scope, decision consistency, case-version, Python authority, and audit P0s pass local QA. CI/live verification and residual enterprise controls remain; see the deep review before real use.
+- Evidence classification, learning/governance scope, decision consistency, case-version continuation, Python authority, and audit P0s pass the 276-test Node suite and 13 Python security tests. CI/Preflight/Pages and the authenticated production workflow are verified for SHA `457c7c2`; residual enterprise controls remain, so see the deep review before real use.
 - Fixture PDF support is for generated text-based demo PDFs only, not arbitrary scanned-PDF OCR.
 - Demo video is not recorded yet.

@@ -1,6 +1,6 @@
 # CrewAI Architecture
 
-> **Current state (2026-07-12):** Python CrewAI is optional and inactive in the hosted product. The Vercel product uses Node specialists through the named Compass gateway client with GPT-5.1; `text-embedding-3-large` powers semantic retrieval. A configured/runtime label such as `crewai_llm` is not proof that Python CrewAI executed. Node is the sole decision authority; FastAPI/Python preserves its policy fields and adds advisory output only. Full local QA is green; CI/live verification is pending. CrewAI is not required for the selected [Azure migration path](AZURE_MIGRATION_PLAN.md).
+> **Verified state (2026-07-12):** implementation SHA `457c7c2` passed 276 Node tests and 13 Python security tests; CI, Agentathon Preflight, and GitHub Pages are green; and the authenticated production workflow was verified at <https://parallax42-agent-v2.vercel.app>. Python CrewAI remains optional and inactive in the hosted product. The Vercel product uses Node specialists through the named Compass gateway client with GPT-5.1; `text-embedding-3-large` powers semantic retrieval. A configured/runtime label such as `crewai_llm` is not proof that Python CrewAI executed. Node is the sole decision authority; FastAPI/Python preserves its policy fields and adds advisory output only. CrewAI is not required for the selected [Azure migration path](AZURE_MIGRATION_PLAN.md).
 
 ## Why CrewAI
 

@@ -2,7 +2,7 @@
 
 This document is the judge-facing architecture view for the G42 Agentathon submission. It explains how the repository satisfies the evaluator API shape while preserving the existing Parallax42 product runtime.
 
-> **State reviewed 2026-07-12:** the product uses the named Parallax42 Compass gateway client with GPT-5.1 plus `text-embedding-3-large`, isolated Railway Postgres, and Railway Qdrant. The local remediation adds actor-scoped PostgreSQL audit chains and makes Node the sole policy authority across Python. Demo RBAC is enforced but Entra is absent; immutable/WORM audit export is not implemented. Full local QA is green; CI, deployment, and authenticated live verification remain pending. See the [deep code review](DEEP_CODE_REVIEW.md) and [Azure migration plan](AZURE_MIGRATION_PLAN.md).
+> **Verified remediation release, 2026-07-12:** implementation SHA `457c7c2` passed 276 Node tests and 13 Python security tests. GitHub Actions CI, Agentathon Preflight (including Docker smoke), and GitHub Pages deployment are green, and the authenticated production workflow was verified at <https://parallax42-agent-v2.vercel.app>. The product uses the named Parallax42 Compass gateway client with GPT-5.1 plus `text-embedding-3-large`, isolated Railway Postgres, and Railway Qdrant. Actor-scoped PostgreSQL audit chains are durable and application-append-only, and Node is the sole policy authority across Python. Demo RBAC is enforced but Entra is absent; immutable/WORM audit storage is not implemented and `enterpriseReady` is not claimed. See the [deep code review](DEEP_CODE_REVIEW.md) and [Azure migration plan](AZURE_MIGRATION_PLAN.md).
 
 ## 1. Architectural Position
 
@@ -29,7 +29,7 @@ Vercel cockpit (primary) or GitHub Pages mirror
 
 The local and Docker paths are reproduction/evaluator paths, not the primary product demo. The root `run.py` path exposes the standardized Agentathon API surface on port `8000`: `GET /health`, `GET /metadata`, role-gated non-disclosing `GET /logs`, `GET /compass/probe`, and `POST /run`.
 
-Current public-hosting status: the product cockpit is hosted on GitHub Pages and its Node/CommonJS APIs are hosted on Vercel. Dedicated Railway v2 services provide Postgres and Qdrant, not the FastAPI evaluator. The FastAPI wrapper is implemented in the repository and verified through Docker/GitHub Actions; v2 does not claim the legacy public evaluator as a deployment from this clone.
+Current public-hosting status: the product cockpit is hosted on GitHub Pages and its Node/CommonJS APIs are hosted on Vercel. At implementation SHA `457c7c2`, CI, Agentathon Preflight, and Pages are green and an authenticated end-to-end production workflow is verified at <https://parallax42-agent-v2.vercel.app>. Dedicated Railway v2 services provide Postgres and Qdrant, not the FastAPI evaluator. The FastAPI wrapper is implemented in the repository and verified through Docker/GitHub Actions; v2 does not claim the legacy public evaluator as a deployment from this clone.
 
 The browser never receives database keys, Qdrant keys, Compass keys, service tokens, or raw embeddings. The hosted product uses the named gateway client for GPT-5.1 smart intake/advisory calls and `text-embedding-3-large` semantic embeddings. Labelled deterministic hash embeddings remain a fallback/reproduction mode. The direct `OPENAI_API_KEY` / `OPENAI_BASE_URL` contract is preserved separately for evaluator-style FastAPI execution and strict diagnostics.
 
@@ -142,7 +142,7 @@ Browser cockpit in public/
 | Agentathon direct Compass | `OPENAI_API_KEY`, `OPENAI_BASE_URL=https://compass.core42.ai/v1` | `app/compass_client.py`, `/compass/probe`, `/run`, `scripts/compass_doctor.py`, optional embeddings | Official Agentathon template base first; runtime also accepts `https://api.core42.ai/v1` when confirmed for the issued key. | Not the browser product gateway or the Railway persistence services. |
 | Product Compass gateway | `COMPASS_GATEWAY_BASE_URL`, named client token | Existing Node/Vercel product APIs and `lib/compassGatewayClient.js` | Active server-side product boundary for GPT-5.1 smart intake/advisory work and `text-embedding-3-large` embeddings. | Not proof of the official Agentathon direct Compass endpoint and not a browser credential. |
 | Optional product backend | `PARALLAX42_BACKEND_URL`, optional `P42_CREWAI_SERVICE_URL` | Parser/OCR support and optional remote product services | Optional infrastructure for richer hosted workflows. | Not a Compass API and should not be used as `OPENAI_BASE_URL`. |
-| Product persistence | Encrypted Vercel `DATABASE_URL`, `QDRANT_URL`, `QDRANT_API_KEY`; `QDRANT_COLLECTION=p42_compliance_evidence_v2` | Case/session/quota lifecycle, audit chains, and evidence/learning memory | Isolated Railway Postgres plus Qdrant; hosted audit fails closed without Postgres and retrieval is semantic through `text-embedding-3-large`. | Local/FastAPI providers remain environment-specific; PostgreSQL audit is not immutable/WORM retention. |
+| Product persistence | Encrypted Vercel `DATABASE_URL`, `QDRANT_URL`, `QDRANT_API_KEY`; `QDRANT_COLLECTION=p42_compliance_evidence_v2` | Case/session/quota lifecycle, audit chains, and evidence/learning memory | Isolated Railway Postgres plus Qdrant; hosted audit is durable, hash-chained, application-append-only, and fails closed without Postgres; retrieval is semantic through `text-embedding-3-large`. | Local/FastAPI providers remain environment-specific; PostgreSQL audit is not immutable/WORM retention or proof of `enterpriseReady`. |
 | Local fallback memory | no external service required | CI, local demos, sample mode | Deterministic fallback for evidence and governed learning memory. | Not production-durable RAG. |
 
 The active `.env.example` Compass placeholder is the official Agentathon template `https://compass.core42.ai/v1`. Runtime diagnostics also accept `https://api.core42.ai/v1` as an alternate Core42 public API base when Core42/Agentathon confirms it for the issued key. If either host returns HTML or `405` from OpenAI-compatible paths, treat that as endpoint/key mismatch evidence rather than live Compass proof.
@@ -363,7 +363,7 @@ Default Docker/CI does not require CrewAI. If live CrewAI is enabled and fails, 
 | Browser keys | Browser never receives Compass, gateway, Qdrant, or embedding provider keys. |
 | Embeddings | Raw embedding vectors are not returned to browser/API callers. |
 | Documents | Sample/evaluator data is synthetic. Production OCR/parser persistence is not claimed in this repo. |
-| Audit | Hosted runtimes use actor-derived workspace/project PostgreSQL hash chains; detailed reads are role-gated/scoped/private, `/api/logs` is removed, and JSONL is local/test-only. WORM export/restore/business coupling remain open. |
+| Audit | Hosted runtimes use durable actor-derived workspace/project PostgreSQL hash chains; writes are append-only through the application, detailed reads are role-gated/scoped/private, `/api/logs` is removed, and JSONL is local/test-only. This is not immutable/WORM storage; export, restore proof, database policy, and critical business/audit transaction coupling remain open. |
 | RBAC | Demo RBAC is enforced. Entra tenant/issuer/audience/app-role/membership and PostgreSQL RLS are not configured. |
 | Approval | No autonomous approval. Conditional is nonterminal; only Node `approvalEligible: true` permits a human approval action. |
 
@@ -396,6 +396,8 @@ Primary online checks:
 | Vercel evidence API | `POST https://parallax42-agent-v2.vercel.app/api/evidence/index`, `POST /api/evidence/search` | Online Qdrant proof path returns `provider=qdrant`, `storage=server_side_qdrant_vector_db`, and sanitized matches. |
 | Agentathon Preflight | <https://github.com/slackspac3/Parallax42-Agent-v2/actions/workflows/agentathon-preflight.yml> | `agentathon-preflight` and `docker-smoke` jobs pass. |
 | CI | <https://github.com/slackspac3/Parallax42-Agent-v2/actions/workflows/ci.yml> | `npm run qa` passes online. |
+
+Release evidence for implementation SHA `457c7c2`: 276 Node tests and 13 Python security tests passed; CI, Agentathon Preflight, and GitHub Pages are green; and an authenticated create/intake/run/follow-up production workflow completed successfully at <https://parallax42-agent-v2.vercel.app>.
 
 The online `docker-smoke` job is the evaluator reproducibility proof: it builds the image, runs `python run.py` inside the container, calls `GET /health`, and posts `input_examples/example_1.json` to `POST /run`.
 
@@ -468,7 +470,8 @@ Safe claims when the current checks pass:
 - Output examples are generated from runtime examples and are not loaded as canned responses.
 - Deployed product evidence indexing/search uses Qdrant through Vercel and the isolated Railway v2 collection.
 - The hosted product uses the named Compass gateway client with GPT-5.1 and `text-embedding-3-large` semantic retrieval.
-- Railway Postgres durably stores case, session, and quota records.
+- Railway Postgres durably stores case, session, quota, and scoped hash-chained audit records; the audit API is application-append-only.
+- Implementation SHA `457c7c2` has green CI, Agentathon Preflight, and Pages checks plus an authenticated production workflow verification at <https://parallax42-agent-v2.vercel.app>.
 - Local/FastAPI Qdrant is env-dependent and falls back when Qdrant or embeddings are unavailable.
 - Active hosted specialists are Node-based; live Python CrewAI is optional and inactive.
 
@@ -480,7 +483,7 @@ Unsafe claims unless separately verified:
 - Live CrewAI is active.
 - PostgreSQL audit is immutable/WORM retained or atomically coupled to every business write.
 - Entra/membership/RLS and full resource-wide tenant isolation are implemented.
-- CI or the live deployment is green before the release run has been recorded.
+- A future implementation remains green or production-verified without rerunning the release checks.
 - Mentioning or asking about an evidence artifact proves that it was supplied or verified (it does not).
 - Product gateway, Vercel, or Railway persistence endpoints are the official Agentathon `OPENAI_BASE_URL`.
 
@@ -489,5 +492,5 @@ Unsafe claims unless separately verified:
 The concise architecture narrative is:
 
 ```text
-Parallax42 preserves the Node/Vercel product and adds a root FastAPI Agentathon wrapper for reproducible screening. The wrapper is independently verified through Docker CI rather than claimed as a public v2 deployment. The hosted product uses a named Compass gateway client for GPT-5.1 smart intake/advisory specialists and `text-embedding-3-large` semantic retrieval, Railway Postgres for case/session/quota plus scoped audit chains, and Railway Qdrant for vector memory. The evaluator delegates policy execution to Node and preserves that policy contract unchanged; Compass, retrieval, learning memory, and optional Python CrewAI are advisory. Human review stays explicit, conditional is nonterminal, and only Node approval eligibility permits approval. Entra/membership/RLS, immutable audit export/business coupling, immutable artifacts, admission controls, CI deployment, and live workflow verification remain open.
+Parallax42 preserves the Node/Vercel product and adds a root FastAPI Agentathon wrapper for reproducible screening. The wrapper is independently verified through Docker CI rather than claimed as a public v2 deployment. Implementation SHA `457c7c2` passed 276 Node tests and 13 Python security tests, has green CI/Preflight/Pages checks, and completed an authenticated production workflow at <https://parallax42-agent-v2.vercel.app>. The hosted product uses a named Compass gateway client for GPT-5.1 smart intake/advisory specialists and `text-embedding-3-large` semantic retrieval, Railway Postgres for case/session/quota plus durable scoped hash-chained audit records, and Railway Qdrant for vector memory. The audit API is application-append-only but is not immutable/WORM or `enterpriseReady`. The evaluator delegates policy execution to Node and preserves that policy contract unchanged; Compass, retrieval, learning memory, and optional Python CrewAI are advisory. Human review stays explicit, conditional is nonterminal, and only Node approval eligibility permits approval. Entra/membership/RLS, immutable audit export/restore/business coupling, immutable artifacts, and admission controls remain open.
 ```

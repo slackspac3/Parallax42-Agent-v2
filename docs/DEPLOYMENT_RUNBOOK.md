@@ -1,6 +1,6 @@
 # Deployment Runbook
 
-> This runbook covers the Vercel/Railway deployment, reviewed 2026-07-12. The seven deep-review P0 remediations plus upload-first and synthetic-upload isolation regressions pass final-worktree QA (271/271 Node and 13/13 Python security tests); CI and authenticated live-workflow re-verification are pending. It does not deploy the future Azure architecture; use the separate [Azure migration plan](AZURE_MIGRATION_PLAN.md).
+> This runbook covers the Vercel/Railway deployment, reviewed 2026-07-12. Release implementation `457c7c2` passed full `npm run qa` (276/276 Node and 13/13 Python security tests), and its CI, Agentathon Preflight, and Pages workflows are green. The authenticated production workflow was also verified in a real browser. It does not deploy the future Azure architecture; use the separate [Azure migration plan](AZURE_MIGRATION_PLAN.md).
 
 ## Surfaces
 
@@ -94,7 +94,16 @@ curl -i https://parallax42-agent-v2.vercel.app/api/audit/recent
 curl -i -H "Authorization: Bearer $P42_AUDITOR_TOKEN" https://parallax42-agent-v2.vercel.app/api/audit/recent
 ```
 
-Expected: `/api/logs` is `404` with `private, no-store`; anonymous detailed audit is `401`; an auditor receives only their workspace/project chain. Deployment verification: **PENDING — fill with deployment URL, revision, CI run, and authenticated workflow evidence after release.**
+Expected: `/api/logs` is `404` with `private, no-store`; anonymous detailed audit is `401`; an auditor receives only their workspace/project chain.
+
+Release verification recorded 2026-07-12:
+
+- implementation revision: `457c7c2`
+- production origin: <https://parallax42-agent-v2.vercel.app/>
+- automated gates: full `npm run qa` passed with 276/276 Node tests and 13/13 Python security tests; CI, Agentathon Preflight, and Pages are green for the implementation revision
+- authenticated browser workflow: a real PDF upload was parsed and indexed in Qdrant, Compass handled live intake/advisory work, Council completed, and a material post-council continuation reran without reload using the authoritative server version; `/api/case/narrative` returned HTTP `200`
+
+This verification proves the working demo path, not immutable/WORM audit retention. PostgreSQL audit remains durable and tenant-scoped, with the WORM, restore, migration, and atomic business/audit gates above still open.
 
 `/api/evidence/index` returns only sanitized index metadata to the cockpit. Chunk embeddings are kept in the server-side vector store. The deployed product path uses Qdrant; local-file storage is only a fallback for development or unconfigured runtimes.
 

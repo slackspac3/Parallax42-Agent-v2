@@ -2,7 +2,7 @@
 
 This roadmap starts from the submission end state and works backward into implementation milestones. The sequencing is designed to maximize reviewer proof first, then deepen production hardening.
 
-> **Current checkpoint (2026-07-12):** the hosted product uses the named Compass gateway client with GPT-5.1 and `text-embedding-3-large`, Railway Postgres, and Railway Qdrant. The local P0 remediation adds actor-scoped PostgreSQL audit chains, evidence assertion/contradiction rules, authoritative case versions, and Node-only policy authority; full local QA is green. Demo RBAC is enforced but Entra/membership/RLS and immutable audit export remain absent. CI/live verification is pending. Azure sequencing is tracked in the [Azure migration plan](AZURE_MIGRATION_PLAN.md).
+> **Current checkpoint (2026-07-12):** the hosted product uses the named Compass gateway client with GPT-5.1 and `text-embedding-3-large`, Railway Postgres, and Railway Qdrant. Release implementation `457c7c2` adds actor-scoped PostgreSQL audit chains, evidence assertion/contradiction rules, authoritative case versions, and Node-only policy authority. Full `npm run qa` is green (276/276 Node and 13/13 Python security tests), CI/Agentathon Preflight/Pages are green, and the authenticated production workflow is verified at <https://parallax42-agent-v2.vercel.app/> through real upload, Qdrant, Compass, Council, authoritative rerun, and an HTTP `200` narrative response. Demo RBAC is enforced, but Entra/membership/RLS and immutable/WORM audit export remain absent. Azure sequencing is tracked in the [Azure migration plan](AZURE_MIGRATION_PLAN.md).
 
 ## Submission End State
 
@@ -169,6 +169,8 @@ Acceptance:
 
 Goal: package the proof.
 
+Status: release QA, CI, deployment, and authenticated browser rehearsal are complete for implementation `457c7c2`; final video recording and submission freeze remain open.
+
 Build:
 
 - record "Watch the Agent Work"
@@ -179,12 +181,12 @@ Build:
 
 Acceptance:
 
-- live cockpit works
-- Vercel API works
-- Agentathon Preflight workflow verifies Docker plus `/health` and `/run`
-- online product evidence API shows Qdrant provider without exposing keys
+- live cockpit works. `Verified at the production origin`
+- Vercel API works. `Verified at https://parallax42-agent-v2.vercel.app/`
+- Agentathon Preflight workflow verifies Docker plus `/health` and `/run`. `Green for 457c7c2`
+- online product evidence API shows Qdrant provider without exposing keys. `Verified in the authenticated real-browser flow`
 - evidence artifacts are current
-- CI and Pages workflows are green
+- CI and Pages workflows are green. `Green for 457c7c2`
 - submission packet has no unsupported production claims
 
 ## Priority Rule

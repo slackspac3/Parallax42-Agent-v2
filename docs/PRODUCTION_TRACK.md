@@ -1,6 +1,6 @@
 # Production Track
 
-This is the current implementation and hardening ledger, reviewed 2026-07-12. The app is a working demo, not an enterprise-authorized compliance decision system. The seven P0 review findings pass full local QA; CI, deployment, and authenticated live verification are pending. See the [deep code review](DEEP_CODE_REVIEW.md) and [Azure migration plan](AZURE_MIGRATION_PLAN.md).
+This is the current implementation and hardening ledger, reviewed 2026-07-12. The app is a working demo, not an enterprise-authorized compliance decision system. Release implementation `457c7c2` passes full `npm run qa` (276/276 Node and 13/13 Python security tests), its CI, Agentathon Preflight, and Pages workflows are green, and the authenticated production workflow is verified at <https://parallax42-agent-v2.vercel.app/>. See the [deep code review](DEEP_CODE_REVIEW.md) and [Azure migration plan](AZURE_MIGRATION_PLAN.md).
 
 ## Already Implemented
 
@@ -24,6 +24,12 @@ This is the current implementation and hardening ledger, reviewed 2026-07-12. Th
 | Benchmarking | Local benchmark runner plus generated evidence artifacts. |
 | Golden demo replay | `GET /api/demo/golden` plus `evidence/golden-demo-run.json`. |
 
+## Verified Remediation Release
+
+The 2026-07-12 release check exercised the production app in an authenticated real browser: a real document upload reached server-side parsing, Qdrant indexing/retrieval was active, Compass supplied live intake/advisory output, Council completed, and a material follow-up plus second Council run continued from the authoritative post-council version without a stale-version failure. The case narrative request returned HTTP `200`.
+
+That evidence verifies the demo path at implementation revision `457c7c2`; it does not make the audit ledger immutable or WORM-retained. Enterprise Entra/membership/RLS, immutable export, atomic business/audit coupling, managed migrations, retention/erasure, distributed admission controls, and review-pack integrity remain hardening gates.
+
 ## Next Hardening Steps
 
 | Area | Implementation Target | Why It Matters |
@@ -46,4 +52,4 @@ Position the agent as a production-track compliance intelligence worker:
 - It runs a real Vercel demo with durable Railway PostgreSQL/Qdrant, named-Compass semantic retrieval, Node advisory specialists, and observable deterministic fallback.
 - Its FastAPI evaluator contract is reproduced locally and in CI; there is no claimed public Railway evaluator.
 - Python CrewAI remains an optional adapter rather than a hosted dependency.
-- Immutable audit retention/business-write coupling, Entra SSO/memberships/RLS, retention/erasure, distributed admission controls, and final production verification remain blockers before enterprise authorization.
+- Immutable audit retention/business-write coupling, Entra SSO/memberships/RLS, retention/erasure, distributed admission controls, and review-pack integrity remain blockers before enterprise authorization; the working-demo production path itself is verified for this release.

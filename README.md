@@ -19,9 +19,9 @@ Memory is separated into scratchpad state, episodic audit/reviewer logs, and reu
 
 The hosted product uses a named, authenticated client on the shared Compass gateway for GPT-5.1 chat/advisory calls and `text-embedding-3-large` semantic embeddings. JavaScript advisory specialists are active; the Python CrewAI runtime remains optional and is not active in the hosted product. Deterministic Node policy is the final decision authority, with deterministic fallback when live advisory output is unavailable.
 
-Current engineering status and the selected cloud path are maintained in the [Deep Code Review](docs/DEEP_CODE_REVIEW.md) and [Azure Migration Plan](docs/AZURE_MIGRATION_PLAN.md). The seven P0 review findings are remediated in the local implementation with focused regressions. Enterprise residuals remain, including Entra/membership/RLS, immutable/WORM audit export, coupling audit events to critical business transactions, retention/erasure, distributed admission controls, and production verification.
+Current engineering status and the selected cloud path are maintained in the [Deep Code Review](docs/DEEP_CODE_REVIEW.md) and [Azure Migration Plan](docs/AZURE_MIGRATION_PLAN.md). The seven P0 review findings are remediated with focused regressions and verified on the hosted demo. Enterprise residuals remain, including Entra/membership/RLS, immutable/WORM audit export, coupling audit events to critical business transactions, retention/erasure, distributed admission controls, and the other documented P1 gates.
 
-Remediation verification status (2026-07-12): final-worktree `npm run qa` is green (271/271 Node tests and 13/13 Python security tests), including upload-first lifecycle, synthetic-upload isolation, and two-turn Playwright mock coverage plus a 4/4 benchmark. CI and authenticated live-demo re-verification are pending the release run.
+Verified remediation release (2026-07-12): implementation SHA `457c7c2` passes full `npm run qa` with 276/276 Node tests, 13/13 Python security tests, upload-first lifecycle, synthetic-upload isolation, two-turn Playwright mock coverage, and a 4/4 benchmark. CI, Agentathon Preflight, and GitHub Pages also succeeded for that implementation SHA. The SHA identifies the implementation under test; a later documentation-only commit does not become the implementation SHA.
 
 ## Judge Quick Start
 
@@ -34,6 +34,8 @@ The judge demo is intended to be run online first:
 | Vercel product API health | <https://parallax42-agent-v2.vercel.app/api/health> | Authenticated route used by the demo to show safe runtime capability state; it is not an anonymous diagnostics endpoint. |
 | GitHub source | <https://github.com/slackspac3/Parallax42-Agent-v2> | Root `run.py`, Dockerfile, examples, logs, docs, workflows, and source evidence for this submission clone. |
 | Agentathon Preflight workflow | <https://github.com/slackspac3/Parallax42-Agent-v2/actions/workflows/agentathon-preflight.yml> | Online Docker plus `/health` and `/run` proof for the root FastAPI evaluator wrapper. |
+
+Authenticated real-browser acceptance also passed against <https://parallax42-agent-v2.vercel.app> for implementation SHA `457c7c2`: an actual PDF upload completed through the live Qdrant/Compass path; Council returned a locked, non-approval-ready result; a material post-council update and rerun returned HTTP 200 with the authoritative server state/version; and narrative generation returned HTTP 200. The deployed security matrix returned anonymous `/api/logs` as 404, audit access as 401 without authentication and 403 for an insufficient role, and health as 401/200 according to role. Every probed response used `Cache-Control: private, no-store`.
 
 The primary working demo serves the browser and Node product APIs from Vercel; GitHub Pages is a static mirror that calls those APIs. An isolated Railway project provides PostgreSQL session/case/quota state plus Qdrant vector storage. The deployed demo uses a named, least-privilege client on the shared Parallax42 Compass gateway for GPT-5.1 smart intake, `text-embedding-3-large` semantic retrieval, and advisory specialists. Deterministic Node policy is the decision owner. Runtime responses expose live/fallback metadata, but current labeling defects mean that metadata must be verified rather than assumed accurate. Local commands are secondary reproduction tools.
 
@@ -299,7 +301,7 @@ Current model split:
 
 Credential boundary:
 
-- The deployed public demo uses live Compass smart intake, semantic embeddings, and advisory specialists through the shared server-side gateway. Deterministic Node policy is the final decision owner and available fallback; full local P0 QA is green, while CI/live release verification and residual enterprise controls remain.
+- The deployed public demo uses live Compass smart intake, semantic embeddings, and advisory specialists through the shared server-side gateway. Deterministic Node policy is the final decision owner and available fallback; local QA, CI, Agentathon Preflight, GitHub Pages, and authenticated live release verification are green for implementation SHA `457c7c2`, while residual enterprise controls remain.
 - The repo does not contain a real Compass key.
 - The system does not depend on an Agentathon-provided key being committed or available locally.
 - If evaluators provide their own Compass key, they can set `OPENAI_API_KEY` with the official template `OPENAI_BASE_URL=https://compass.core42.ai/v1`, or use `https://api.core42.ai/v1` if Core42/Agentathon confirms that base for the issued key.
@@ -698,4 +700,4 @@ Learning memory endpoints are advisory:
 
 ## Build Direction
 
-The P0 correctness/isolation milestone is implemented and passes full local QA: evidence assertion/provenance, source-aware contradictions, actor-scoped learning/governance/audit, authoritative post-council versions, nonterminal conditional status, and Node-only policy authority. Next, verify CI/live deployment and close the residual P1 gates in the [Deep Code Review](docs/DEEP_CODE_REVIEW.md). Azure work should follow the phased [Azure Migration Plan](docs/AZURE_MIGRATION_PLAN.md), beginning with compute parity rather than a platform rewrite.
+The P0 correctness/isolation milestone is implemented and verified locally, in CI, and on the authenticated Vercel demo: evidence assertion/provenance, source-aware contradictions, actor-scoped learning/governance/audit, authoritative post-council versions, nonterminal conditional status, and Node-only policy authority. Next, close the residual P1 gates in the [Deep Code Review](docs/DEEP_CODE_REVIEW.md). PostgreSQL audit is durable, hash-chained, and application append-only, but it is not immutable/WORM and does not make the system `enterpriseReady`. Azure work should follow the phased [Azure Migration Plan](docs/AZURE_MIGRATION_PLAN.md), beginning with compute parity rather than a platform rewrite.

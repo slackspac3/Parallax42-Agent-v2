@@ -2,10 +2,10 @@
 
 **Review date:** 2026-07-12
 
-**Reviewed revision:** `a98556c` (`main`); remediation implementation reviewed in the 2026-07-12 local worktree.
+**Reviewed implementation revision:** `457c7c2` (`main`). A later documentation-only commit records this evidence and must not be described as the implementation SHA.
 
 **Scope:** Node/CommonJS product API, Vercel routes, FastAPI/Node-bridge evaluator, vanilla browser client, Compass/model boundary, parser relay, PostgreSQL/Qdrant/learning/audit stores, CI/CD, GitHub Pages, container, and planned Azure migration.
-**Status:** current residual-risk register and remediation addendum. P42-SEC-001, P42-SEC-003, and P42-SEC-004 are remediated in the local implementation with focused tests. Full local QA is green; CI, deployment, and authenticated live verification are pending.
+**Status:** current residual-risk register and verified remediation addendum. P42-SEC-001, P42-SEC-003, and P42-SEC-004 are remediated with focused tests and hosted verification. Full local QA, CI, Agentathon Preflight, GitHub Pages, and authenticated production-demo verification are green for implementation SHA `457c7c2`.
 
 ## Executive summary
 
@@ -13,16 +13,18 @@ The repository has useful security foundations: server-side AI credentials, para
 
 It is not ready for multi-tenant production. This remediation closes the confirmed public/global audit disclosure path, the authenticated learning-memory escape, and the matching governance scope defect. Hosted audit now uses actor-derived workspace/project PostgreSQL hash chains; detailed Node reads are role-gated/scoped and private; `/api/logs` is a non-disclosing 404; FastAPI `/logs` is role-gated and returns no trace records. Learning/governance retrieval ignores caller-selected workspace/project values.
 
-The remaining P0 is P42-SEC-002: FastAPI production auth can still default to audit mode. Enterprise blockers also remain in P1: complete Entra/membership/RLS enforcement, immutable server-loaded artifacts, active-probe/admission controls, WORM audit export and restore proof, and atomic coupling between critical business changes and their audit event.
+The remaining P0 is P42-SEC-002: FastAPI production auth can still default to audit mode. Enterprise blockers also remain in P1: complete Entra/membership/RLS enforcement, immutable server-loaded artifacts, active-probe/admission controls, WORM audit export and restore proof, and atomic coupling between critical business changes and their audit event. PostgreSQL audit is durable, hash-chained, and application append-only, but it is not immutable/WORM and must not be used to claim `enterpriseReady`.
 
 ## Live and repository verification
 
-- Production Vercel deployment was `Ready` at review time; separate functions run in `iad1`.
-- Original live observation: anonymous `GET /api/logs` returned `200` with public caching and an instance-local `local_tmp` provider. The local remediation changes that route to `404` with `private, no-store`; live deployment verification is pending.
+- Production Vercel deployment <https://parallax42-agent-v2.vercel.app> was `Ready` and authenticated real-browser acceptance passed for implementation SHA `457c7c2`; separate functions run in `iad1`.
+- Original live observation: anonymous `GET /api/logs` returned `200` with public caching and an instance-local `local_tmp` provider. The verified remediation returns a non-disclosing 404, and every probed security response uses `Cache-Control: private, no-store`.
+- The deployed authorization matrix returned 401 for unauthenticated audit access, 403 for an authenticated insufficient role, and 401/200 on health according to role.
+- Authenticated browser proof used an actual PDF upload through live Qdrant/Compass, completed Council with approval locked, completed a material post-council rerun with HTTP 200 and authoritative server state/version, and returned HTTP 200 from narrative generation.
 - Vercel supplied HSTS, `X-Content-Type-Options`, referrer, and permissions headers. A restrictive CSP and frame protection were absent.
 - Environment-name inventory showed dedicated Compass gateway, PostgreSQL, Qdrant, auth, sample-mode, and durable-storage settings; values were not accessed. The remediation reuses the existing PostgreSQL connection for audit rather than adding another credential.
-- `main` is not branch-protected. CI, Pages, and Agentathon preflight were green at the original review; the remediation revision has not yet been pushed/verified.
-- Final remediation worktree: 271/271 Node tests, 13/13 Python security tests, full local `npm run qa`, upload-first/synthetic-upload isolation and two-turn lifecycle coverage, and 4/4 benchmark pass. At the original review, `npm audit --omit=dev` reported zero known advisories.
+- `main` is not branch-protected. CI, GitHub Pages, and Agentathon Preflight succeeded for implementation SHA `457c7c2`; branch protection and the remaining supply-chain controls in P42-SEC-022 are still open.
+- Verified remediation implementation: 276/276 Node tests, 13/13 Python security tests, full `npm run qa`, upload-first/synthetic-upload isolation and two-turn lifecycle coverage, and a 4/4 benchmark pass. The release refresh of `npm audit --omit=dev` reported zero known vulnerabilities.
 - No committed raw Compass token, provider key, or private key was found.
 
 Point-in-time live checks do not replace an authenticated penetration test, cloud control review, or data-protection assessment.
@@ -65,7 +67,7 @@ Data supplied in chat, documents, retrieved chunks, or model output is untrusted
 ### P42-SEC-001 — Audit entries are unauthenticated, global, publicly cacheable, and nondurable
 
 **Severity:** Critical
-**Status:** Remediated locally for the reported access, scope, cache, and hosted-durability defects. Immutable retention and business/audit atomicity remain residual production controls.
+**Status:** Remediated and verified on the hosted demo for the reported access, scope, cache, and hosted-durability defects. Immutable retention and business/audit atomicity remain residual production controls.
 
 **Original evidence**
 
@@ -88,6 +90,8 @@ Data supplied in chat, documents, retrieved chunks, or model output is untrusted
 4. `app/auth.py:139-155` and `app/main.py:178-185` role-gate FastAPI `/logs`; it returns no trace entries or filenames.
 
 **Regression evidence:** `tests/unit/auditRoutes.test.js`, `tests/unit/auditStore.test.js`, `tests/unit/rbac.test.js`, and `tests/python/test_security_boundaries.py` cover public removal, private caching, auth/role boundaries, A/B scope, concurrent ordering, tail/head integrity, hosted fail-closed behavior, and non-disclosing FastAPI logs.
+
+**Hosted verification:** anonymous `/api/logs` returned 404; the audit route returned 401 without authentication and 403 for an insufficient role; health returned 401/200 according to role; and all probed responses were `private, no-store`.
 
 **Residual:** PostgreSQL provides durable, scoped application hash chains, not immutable/WORM retention. Add versioned migrations, sealed range export, restore drills, and same-transaction coupling between critical PostgreSQL business mutations and their audit event (or an outbox across service boundaries).
 
@@ -191,7 +195,7 @@ Data supplied in chat, documents, retrieved chunks, or model output is untrusted
 
 ### Chain A — durable-audit migration creates an immediate disclosure
 
-**Status:** Broken by the local remediation; live deployment verification pending.
+**Status:** Broken by the remediation and verified on the authenticated hosted demo for implementation SHA `457c7c2`.
 
 Original chain:
 
@@ -265,7 +269,7 @@ The selected design and phased runbook are in [docs/AZURE_MIGRATION_PLAN.md](doc
 
 ### Before state migration
 
-- close the remaining FastAPI-auth P0 and verify the two remediated P0s in CI/live before any user or pilot traffic;
+- close the remaining FastAPI-auth P0 and keep the remediated P0 CI/live verification green before any user or pilot traffic;
 - versioned schema migrations and explicit memberships;
 - private PostgreSQL/Blob endpoints, least-privilege identities;
 - canonical evidence objects and hashes;
@@ -289,7 +293,7 @@ The selected design and phased runbook are in [docs/AZURE_MIGRATION_PLAN.md](doc
 
 ## Priority remediation order
 
-1. Deploy/verify the protected/scoped log and memory fixes; protect active probes and make FastAPI/JWT configuration fail closed.
+1. Preserve the deployed protected/scoped log and memory fixes; protect active probes and make FastAPI/JWT configuration fail closed.
 2. Add memberships/RLS and extend actor-derived hostile-scope coverage to every resource.
 3. Remove public Pages token handling and client-selected credential destinations.
 4. Add immutable server-side runs/reviews/exports and maker-checker approval.

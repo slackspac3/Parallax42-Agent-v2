@@ -14,7 +14,7 @@ Start with the online GitHub evidence rather than a local checkout:
 | CI | <https://github.com/slackspac3/Parallax42-Agent-v2/actions/workflows/ci.yml> | Latest `main` run passes `npm run qa`. |
 | Architecture | <https://github.com/slackspac3/Parallax42-Agent-v2/blob/main/docs/AGENTATHON_SYSTEM_ARCHITECTURE.md> | Online-first evaluator path, product path, and runtime boundaries are documented. |
 
-State reviewed 2026-07-12: the product uses a named authenticated client on the shared Compass gateway for GPT-5.1 chat/advisory calls and `text-embedding-3-large` semantic embeddings. JavaScript advisory specialists, Railway PostgreSQL, Railway Qdrant, and demo/session RBAC are active. Python CrewAI and Microsoft Entra SSO are not active. The local remediation adds tenant-scoped PostgreSQL audit chains and Node-only policy authority; full local QA is green, while CI/live deployment verification is pending. Immutable audit export remains absent.
+State reviewed 2026-07-12: the product uses a named authenticated client on the shared Compass gateway for GPT-5.1 chat/advisory calls and `text-embedding-3-large` semantic embeddings. JavaScript advisory specialists, Railway PostgreSQL, Railway Qdrant, and demo/session RBAC are active. Python CrewAI and Microsoft Entra SSO are not active. Remediation implementation SHA `457c7c2` passes full `npm run qa` with 276/276 Node tests, 13/13 Python security tests, and a 4/4 benchmark; CI, Agentathon Preflight, and GitHub Pages succeeded for the same implementation SHA. A later documentation-only commit records this evidence but is not the implementation SHA.
 
 Evaluation must keep the remediated P0 regressions green and account for the remaining P1/P2 findings in the [Deep Code Review](docs/DEEP_CODE_REVIEW.md). Cloud migration claims should be assessed against the selected [Azure Migration Plan](docs/AZURE_MIGRATION_PLAN.md), not against older option lists.
 
@@ -24,7 +24,21 @@ The online product demo uses Vercel for server-side product APIs and a dedicated
 
 Final submission positioning: the judge-facing product demo is online-first on Vercel, with GitHub Pages retained as a static mirror. Vercel product APIs keep database and Qdrant credentials plus the named Compass gateway client token server-side. The local Docker/FastAPI path remains the evaluator reproduction path for `run.py`, `/health`, `/metadata`, role-gated non-disclosing `/logs`, `/compass/probe`, and `/run`. Compass, retrieval, learning, and Python outputs are advisory; deterministic Node policy is the final authority.
 
-The hosted chat supports post-council continuation. Council completion returns an authoritative completed snapshot/version, the browser replaces local state, and a new material fact retains evidence/prior output while marking the old result pending rerun. Unit and Playwright mock regressions cover follow-up plus second council; repeat that sequence on the deployed authenticated URL as a release acceptance test.
+The hosted chat supports post-council continuation. Council completion returns an authoritative completed snapshot/version, the browser replaces local state, and a new material fact retains evidence/prior output while marking the old result pending rerun. Unit and Playwright mock regressions cover follow-up plus second council, and the sequence passed on the deployed authenticated URL.
+
+### Verified Remediation Release Evidence
+
+Authenticated real-browser acceptance against <https://parallax42-agent-v2.vercel.app> used an actual PDF upload and proved the live Qdrant/Compass path, a Council result with approval locked, a material post-council rerun returning HTTP 200 with authoritative server state/version, and narrative generation returning HTTP 200. The production access checks returned:
+
+| Probe | Verified result |
+| --- | --- |
+| Anonymous `GET /api/logs` | 404, non-disclosing |
+| Audit route without authentication | 401 |
+| Audit route with an insufficient role | 403 |
+| Health route | 401 without the required identity; 200 for the authorized role |
+| Cache policy | Every probed response was `private, no-store` |
+
+This is demo-release evidence, not an enterprise-production approval. Hosted PostgreSQL audit is durable, tenant-scoped, hash-chained, and application append-only, but it is not immutable/WORM and does not establish `enterpriseReady`. Entra/membership/RLS, immutable server-loaded artifacts, maker-checker controls, WORM export/restore proof, business/audit transaction coupling, distributed admission controls, retention/erasure, and the other documented P1 gates remain open.
 
 ### FastAPI Evaluator Status
 
@@ -304,5 +318,5 @@ The generated snapshots are written under `evidence/`, including readiness, live
 - Hosted audit is an actor-scoped PostgreSQL hash chain with locked heads and scoped reads; local JSONL is test/development-only. It is not immutable/WORM retention and is not yet atomically coupled to every critical business write.
 - Redis, durable queues, and OpenClaw are not implemented or claimed. PostgreSQL stores hosted product session/case/quota state and scoped audit chains; filesystem JSONL is an explicit local/test fallback only.
 - Demo/session RBAC is enforced; Microsoft Entra SSO is not implemented.
-- The remediated P0 correctness/cross-tenant regressions and remaining enterprise findings are documented in the [Deep Code Review](docs/DEEP_CODE_REVIEW.md); CI/live verification and residual P1 gates must close before production-readiness claims.
+- The remediated P0 correctness/cross-tenant regressions and remaining enterprise findings are documented in the [Deep Code Review](docs/DEEP_CODE_REVIEW.md). CI/live verification passed for implementation SHA `457c7c2`; the residual P1 gates must still close before production-readiness claims.
 - Human approval remains required; the agent does not auto-approve operational compliance decisions.
