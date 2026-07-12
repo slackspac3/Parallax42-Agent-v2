@@ -675,11 +675,26 @@ test('conversation keeps the completed case version through a follow-up and seco
 
     const secondCouncil = await handleConversation({
       req,
-      body: { forceRun: true, message: 'rerun council', caseDraft: followUp.body.caseDraft },
+      body: {
+        forceRun: true,
+        eventType: 'run_request',
+        message: 'rerun council',
+        caseVersion: followUp.body.caseDraft.caseVersion,
+        caseDraft: {
+          caseId: followUp.body.caseDraft.caseId,
+          caseVersion: followUp.body.caseDraft.caseVersion,
+          indexedEvidence: { chunkCount: 1, evidenceIds: ['DOC-01'] }
+        },
+        history: [],
+        uploadedEvidence: []
+      },
       dependencies
     });
     assert.equal(secondCouncil.status, 200);
     assert.equal(runCount, 2);
+    assert.equal(secondCouncil.body.caseDraft.supplierName, 'Versioned Supplier');
+    assert.equal(secondCouncil.body.caseDraft.businessUnit, 'Procurement');
+    assert.equal(secondCouncil.body.caseDraft.geography, 'UAE');
     assert.equal(secondCouncil.body.caseDraft.caseVersion, secondCouncil.body.completedCase.version);
     assert.equal(secondCouncil.body.run.caseVersion, secondCouncil.body.completedCase.version);
   } finally {

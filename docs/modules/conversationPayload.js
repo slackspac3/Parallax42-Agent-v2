@@ -270,11 +270,23 @@
     return next;
   }
 
+  function sanitizeRunRequestDraftForConversationPayload(draft = {}) {
+    if (!draft || typeof draft !== 'object') return {};
+    const next = {};
+    copyString(next, 'caseId', draft.caseId, 160);
+    copyString(next, 'currentEventType', draft.currentEventType, 120);
+    copyNumber(next, 'caseVersion', draft.caseVersion);
+    const indexedEvidence = sanitizeIndexedEvidence(draft.indexedEvidence);
+    if (indexedEvidence) next.indexedEvidence = indexedEvidence;
+    return next;
+  }
+
   window.P42ModuleRegistry = window.P42ModuleRegistry || {};
   window.P42ModuleRegistry.conversationPayload = {
     MAX_DOCUMENT_TEXT_CHARS,
     sanitizeDocumentForConversation,
     sanitizeDraftForConversationPayload,
+    sanitizeRunRequestDraftForConversationPayload,
     sanitizeUploadedEvidenceForConversationPayload
   };
 })(window);

@@ -1662,7 +1662,11 @@ function sanitizeDraftForConversationPayload(draft = chatCaseDraft) {
   };
 }
 
-function chatCaseDraftForConversation(draft = chatCaseDraft) {
+function chatCaseDraftForConversation(draft = chatCaseDraft, options = {}) {
+  const policy = conversationPayloadPolicy();
+  if (options.runRequest && typeof policy.sanitizeRunRequestDraftForConversationPayload === 'function') {
+    return policy.sanitizeRunRequestDraftForConversationPayload(draft);
+  }
   return sanitizeDraftForConversationPayload(draft);
 }
 
@@ -5656,6 +5660,12 @@ async function submitChatMessage(rawMessage = '', options = {}) {
   }
 
   try {
+    const compactRunRequest = Boolean(
+      options.forceRun
+      && activeBrowserSession?.workspaceId
+      && chatCaseDraft.caseId
+      && Number.isInteger(Number(chatCaseDraft.caseVersion))
+    );
     const serverChunkCount = indexedChunkCountForRetrieval();
     if (options.forceRun && serverChunkCount) {
       pendingMessage.text = 'Preparing server-side evidence retrieval before council execution…';
@@ -5678,12 +5688,13 @@ async function submitChatMessage(rawMessage = '', options = {}) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message,
-        caseDraft: chatCaseDraftForConversation(),
+        caseDraft: chatCaseDraftForConversation(chatCaseDraft, { runRequest: compactRunRequest }),
+        ...(compactRunRequest ? { caseVersion: Number(chatCaseDraft.caseVersion) } : {}),
         activeQuestion: questionAtTurnStart,
         activeQuestionId: questionIdAtTurnStart,
         activeQuestionField: questionFieldAtTurnStart,
         eventType,
-        history: chatMessages
+        history: compactRunRequest ? [] : chatMessages
           .filter((item) => item && !item.pending && (item.role === 'user' || item.role === 'assistant'))
           .slice(-conversationPayloadHistoryTurns)
           .map((item) => ({
@@ -5696,8 +5707,8 @@ async function submitChatMessage(rawMessage = '', options = {}) {
             answeringQuestionId: item.answeringQuestionId || '',
             answeringQuestionField: item.answeringQuestionField || ''
           })),
-        uploadedEvidence: uploadedEvidenceForConversation(),
-        retrievalQuery: options.forceRun ? retrievalQueryFromDraft() : '',
+        uploadedEvidence: compactRunRequest ? [] : uploadedEvidenceForConversation(),
+        retrievalQuery: options.forceRun && !compactRunRequest ? retrievalQueryFromDraft() : '',
         forceRun: Boolean(options.forceRun),
         retrySmartIntake: Boolean(options.retrySmartIntake)
       })

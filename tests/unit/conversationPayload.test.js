@@ -96,3 +96,36 @@ test('uploaded evidence conversation payload contains metadata only', () => {
   assert.doesNotMatch(serialized, /UPLOAD_RAW_/);
   assert.doesNotMatch(serialized, /UPLOAD_SEMANTIC_PARSE_SHOULD_NOT_SURVIVE/);
 });
+
+test('run-request payload carries only durable identity, version, and index metadata', () => {
+  const payload = loadConversationPayloadModule();
+  const sensitive = `SENSITIVE_PRIOR_PROSE ${'x'.repeat(4000)}`;
+  const sanitized = payload.sanitizeRunRequestDraftForConversationPayload({
+    caseId: 'case_compact_run_001',
+    caseVersion: 7,
+    currentEventType: 'user_answer',
+    supplierName: 'Sensitive Supplier',
+    brief: sensitive,
+    llmIntake: { naturalResponse: sensitive },
+    retrievalContext: { matches: [{ text: sensitive }] },
+    documents: [{ evidenceId: 'DOC-01', text: sensitive }],
+    indexedEvidence: {
+      caseId: 'case_compact_run_001',
+      model: 'text-embedding-3-large',
+      storage: 'server_side_qdrant_vector_db',
+      provider: 'qdrant',
+      updatedAt: '2026-07-12T00:00:00.000Z',
+      chunkCount: 2,
+      evidenceIds: ['DOC-01'],
+      chunkIds: ['chunk-1', 'chunk-2'],
+      browserEmbeddingsRetained: false
+    }
+  });
+  const serialized = JSON.stringify(sanitized);
+
+  assert.deepEqual(Object.keys(sanitized).sort(), ['caseId', 'caseVersion', 'currentEventType', 'indexedEvidence']);
+  assert.equal(sanitized.caseVersion, 7);
+  assert.equal(sanitized.indexedEvidence.chunkCount, 2);
+  assert.doesNotMatch(serialized, /SENSITIVE_PRIOR_PROSE|Sensitive Supplier/);
+  assert.equal(serialized.length < 800, true);
+});
