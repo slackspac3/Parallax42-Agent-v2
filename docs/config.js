@@ -3,6 +3,8 @@ window.P42_CONFIG = {
   defaultRelayUrl: /\.vercel\.app$/i.test(window.location.hostname)
     ? window.location.origin
     : "https://parallax42-agent-v2.vercel.app",
+  backendEnabled: false,
+  gatewayEnabled: false,
   defaultBackendUrl: "https://api.parallax42.bhavukarora.com",
   defaultGatewayHealthUrl: "https://parallax42-compass-gateway.vercel.app/api/health"
 };

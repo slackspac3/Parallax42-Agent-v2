@@ -627,6 +627,8 @@ function currentConfig() {
     configuredMode,
     resolvedMode,
     relayUrl: stripTrailingSlash(readStorage(storageKeys.relayUrl), runtimeDefaults.defaultRelayUrl || window.location.origin),
+    backendEnabled: runtimeDefaults.backendEnabled !== false,
+    gatewayEnabled: runtimeDefaults.gatewayEnabled !== false,
     backendUrl: stripTrailingSlash(readStorage(storageKeys.backendUrl), runtimeDefaults.defaultBackendUrl || 'https://api.parallax42.bhavukarora.com'),
     gatewayHealthUrl: String(runtimeDefaults.defaultGatewayHealthUrl || 'https://parallax42-compass-gateway.vercel.app/api/health').trim()
   };
@@ -661,11 +663,39 @@ function backendStatusCheck(config) {
       detail: 'Live health is captured in evidence/live-health.json; switch to relay mode for browser relay checks.'
     };
   }
+  if (!config.backendEnabled) {
+    return {
+      label: 'Optional parser relay',
+      url: backendHealthUrl(config),
+      skipFetch: true,
+      status: 'disabled',
+      tone: 'ready',
+      detail: 'External parser/OCR is intentionally disabled. Replay fixtures, typed evidence, deterministic council execution, Qdrant retrieval, and PDF export remain available.'
+    };
+  }
   return {
     label: 'Parallax42 backend',
     url: backendHealthUrl(config),
     sessionAuth: true,
     detail: (body) => body?.status || body?.service || body?.ok || 'Backend responded'
+  };
+}
+
+function gatewayStatusCheck(config) {
+  if (!config.gatewayEnabled) {
+    return {
+      label: 'Optional Compass gateway',
+      url: config.gatewayHealthUrl,
+      skipFetch: true,
+      status: 'not configured',
+      tone: 'ready',
+      detail: 'Compass smart intake and semantic embeddings are optional. This public demo uses deterministic intake, policy logic, and labelled hash-vector retrieval.'
+    };
+  }
+  return {
+    label: 'Compass gateway',
+    url: config.gatewayHealthUrl,
+    detail: (body) => body?.status || body?.mode || body?.service || 'Gateway responded'
   };
 }
 
@@ -6100,8 +6130,8 @@ function renderCapabilityFallbacks(results = []) {
 
   if (appBody.evidenceGateway && !appBody.evidenceGateway.tokenConfigured) {
     notes.push({
-      label: 'Compass gateway required',
-      detail: 'Smart intake is unavailable until the Compass gateway token is configured. Replay/live structured runs, deterministic council execution, audit trace, and PDF export remain available.'
+      label: 'Deterministic public demo mode',
+      detail: 'Compass smart intake is not configured. Structured intake, deterministic council execution, Qdrant hash-vector retrieval, audit trace, and PDF export remain fully testable.'
     });
   } else if (gateway.status === 'unavailable') {
     notes.push({
@@ -6374,11 +6404,12 @@ async function setAdminFeature(featureId, enabled) {
 async function loadDeploymentStatus() {
   const config = currentConfig();
   const backendCheck = backendStatusCheck(config);
+  const gatewayCheck = gatewayStatusCheck(config);
   updateJsonLinks();
   renderStatusCards([
     { label: 'Compliance API', status: 'checking', tone: 'checking', url: apiUrl('/api/health'), detail: 'Checking runnable agent API.' },
     { label: 'Parallax42 backend', status: backendCheck.skipFetch ? backendCheck.status : 'checking', tone: backendCheck.skipFetch ? backendCheck.tone : 'checking', url: backendCheck.url, detail: backendCheck.skipFetch ? backendCheck.detail : 'Checking live backend proof.' },
-    { label: 'Compass gateway', status: 'checking', tone: 'checking', url: config.gatewayHealthUrl, detail: 'Checking model gateway boundary.' }
+    { label: gatewayCheck.label, status: gatewayCheck.skipFetch ? gatewayCheck.status : 'checking', tone: gatewayCheck.skipFetch ? gatewayCheck.tone : 'checking', url: gatewayCheck.url, detail: gatewayCheck.skipFetch ? gatewayCheck.detail : 'Checking model gateway boundary.' }
   ]);
 
   const checks = [
@@ -6391,11 +6422,7 @@ async function loadDeploymentStatus() {
         : body?.status || body?.service || 'API responded'
     },
     backendCheck,
-    {
-      label: 'Compass gateway',
-      url: config.gatewayHealthUrl,
-      detail: (body) => body?.status || body?.mode || body?.service || 'Gateway responded'
-    }
+    gatewayCheck
   ];
 
   const results = await Promise.all(checks.map(async (check) => {
