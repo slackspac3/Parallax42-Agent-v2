@@ -482,7 +482,7 @@ test('conversation LLM assessor requests JSON mode and handles OpenAI response o
         }
         assert.deepEqual(body.response_format, { type: 'json_object' });
         assert.equal(body.temperature, 0);
-        assert.equal(body.max_tokens, 800);
+        assert.equal(body.max_tokens, 1600);
         return {
           ok: true,
           status: 200,
@@ -1209,6 +1209,57 @@ test('conversation LLM assessor recovers uploaded document turns with Compass pr
   }
 });
 
+test('conversation LLM assessor recovers truncated export-control JSON with live Compass prose', async () => {
+  const originalFetch = global.fetch;
+  try {
+    await withEnv({
+      P42_ADMIN_FEATURE_CONFIG_PATH: featureConfigPath(),
+      COMPASS_GATEWAY_BASE_URL: 'https://gateway.example/api',
+      COMPASS_GATEWAY_TOKEN: 'test-token',
+      CONVERSATION_LLM_MODEL: 'gpt-5.1',
+      CONVERSATION_LLM_MAX_ATTEMPTS: '2'
+    }, async () => {
+      const requests = [];
+      global.fetch = async (url, options) => {
+        const body = JSON.parse(options.body);
+        requests.push(body);
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            model: 'gpt-5.1',
+            choices: [{
+              message: {
+                content: body.response_format
+                  ? '{"intent":"case_context","requestType":"export_control"'
+                  : 'I understand this as an AI accelerator import into the UAE and Singapore with restricted hardware, firmware support, and a missing final end-use certificate. Please upload the export-control pack when available.'
+              }
+            }]
+          })
+        };
+      };
+
+      const result = await assessConversationWithLlm({
+        message: 'Review an AI accelerator import for UAE and Singapore. The supplier will ship restricted hardware, provide firmware support, and has no final end-use certificate.'
+      });
+
+      assert.equal(requests.length, 3);
+      assert.equal(result.llmAssessment.used, true);
+      assert.equal(result.llmAssessment.structuredFallbackUsed, true);
+      assert.equal(result.llmAssessment.invalidCompassResponse, false);
+      assert.equal(result.llmAssessment.compassFailureType, 'structured_json_recovered_with_compass_prose');
+      assert.equal(result.llmAssessment.requestType, 'export_control');
+      assert.equal(result.llmAssessment.workflowType, 'export_control_review');
+      assert.match(result.llmAssessment.naturalResponse, /AI accelerator import/i);
+      assert.equal(result.llmAssessment.attemptCount, 2);
+      assert.equal(result.caseDraft.geography, 'UAE and Singapore');
+      assert.ok(result.caseDraft.riskSignals.includes('export control'));
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test('conversation LLM assessor retries malformed Compass output with compact JSON prompt then populates prose', async () => {
   const originalFetch = global.fetch;
   try {
@@ -1282,7 +1333,7 @@ test('conversation LLM assessor retries malformed Compass output with compact JS
       assert.deepEqual(requests[0].response_format, { type: 'json_object' });
       assert.deepEqual(requests[1].response_format, { type: 'json_object' });
       assert.match(requests[1].messages[0].content, /one valid minified JSON object only/i);
-      assert.equal(requests[1].max_tokens, 800);
+      assert.equal(requests[1].max_tokens, 1600);
       assert.equal(requests[2].response_format, undefined);
       assert.equal(requests[2].temperature, 0.4);
       assert.equal(requests[2].max_tokens, 900);

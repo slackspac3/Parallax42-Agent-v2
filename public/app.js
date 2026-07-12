@@ -384,8 +384,8 @@ const fallbackLlmRetrySettings = {
   retryJitterMs: 150
 };
 const fallbackLlmTokenSettings = {
-  structuredMaxTokens: 800,
-  retryStructuredMaxTokens: 800,
+  structuredMaxTokens: 1600,
+  retryStructuredMaxTokens: 1600,
   naturalResponseMaxTokens: 900,
   naturalResponseMaxChars: 3600
 };
