@@ -50,6 +50,9 @@ test('demo sessions are isolated and quota bounded', async () => {
   try {
     const first = await createDemoSession();
     const second = await createDemoSession();
+    assert.equal(first.capabilities.liveCompassRequired, false);
+    assert.equal(typeof first.capabilities.liveCompassConfigured, 'boolean');
+    assert.equal(first.capabilities.sampleEvidence, true);
     const actor = await authenticateSessionToken(first.token);
     assert.equal(actor.workspaceId, first.workspaceId);
     assert.notEqual(first.workspaceId, second.workspaceId);

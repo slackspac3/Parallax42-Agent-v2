@@ -1,0 +1,6 @@
+.git
+.playwright-cli
+.venv*
+node_modules
+output
+tmp
