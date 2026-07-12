@@ -22,7 +22,7 @@ The remaining P0 is P42-SEC-002: FastAPI production auth can still default to au
 - Vercel supplied HSTS, `X-Content-Type-Options`, referrer, and permissions headers. A restrictive CSP and frame protection were absent.
 - Environment-name inventory showed dedicated Compass gateway, PostgreSQL, Qdrant, auth, sample-mode, and durable-storage settings; values were not accessed. The remediation reuses the existing PostgreSQL connection for audit rather than adding another credential.
 - `main` is not branch-protected. CI, Pages, and Agentathon preflight were green at the original review; the remediation revision has not yet been pushed/verified.
-- Final remediation worktree: 270/270 Node tests, 13/13 Python security tests, full local `npm run qa`, upload-first and two-turn lifecycle coverage, and 4/4 benchmark pass. At the original review, `npm audit --omit=dev` reported zero known advisories.
+- Final remediation worktree: 271/271 Node tests, 13/13 Python security tests, full local `npm run qa`, upload-first/synthetic-upload isolation and two-turn lifecycle coverage, and 4/4 benchmark pass. At the original review, `npm audit --omit=dev` reported zero known advisories.
 - No committed raw Compass token, provider key, or private key was found.
 
 Point-in-time live checks do not replace an authenticated penetration test, cloud control review, or data-protection assessment.

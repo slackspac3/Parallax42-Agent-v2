@@ -425,6 +425,7 @@ test('upload-first demo interaction creates a valid client version-zero case', a
     assert.equal(response.body.caseDraft.caseVersion, 1);
     assert.equal(response.body.caseDraft.documents[0].provenance, 'demo_fixture');
     assert.equal(response.body.caseDraft.documents[0].assertionState, 'parsed');
+    assert.deepEqual(response.body.caseDraft.evidenceIds, [fixture.evidenceId]);
   } finally {
     cleanup();
   }

@@ -37,7 +37,7 @@ The live Compass service is not the root cause of these defects. A production pr
 | Parser relay | Disabled in the probed production deployment; the code path still needs hardening before enablement |
 | Audit | Local remediation uses tenant/project PostgreSQL hash chains for hosted runtimes; JSONL is local/test-only; immutable retention remains absent |
 | GitHub | At the original review, CI/Pages/preflight were green; remediation CI is pending. `main` has no branch protection. |
-| Tests | Final remediation worktree: 270/270 Node and 13/13 Python security tests; full local `npm run qa`, upload-first lifecycle, two-turn Playwright mock, and 4/4 benchmark pass. CI/live re-verification is pending. |
+| Tests | Final remediation worktree: 271/271 Node and 13/13 Python security tests; full local `npm run qa`, upload-first/synthetic-upload isolation, two-turn Playwright mock, and 4/4 benchmark pass. CI/live re-verification is pending. |
 
 Hosted-service facts above are point-in-time observations. Local remediation claims are code/test observations, not proof that the production URL has been updated; environment-specific capability labels must come from the server response for the current interaction.
 
@@ -332,7 +332,7 @@ Keep Node as the product authority. Reduce Python to a CI evaluator or a narrow,
 
 ### Results
 
-- Final remediation worktree Node unit suite: **270/270 passing**.
+- Final remediation worktree Node unit suite: **271/271 passing**.
 - Final remediation worktree Python security suite: **13/13 passing**.
 - Full local `npm run qa`: **passing**.
 - npm dependency audit at the original review: **0 known vulnerabilities**.
@@ -347,7 +347,7 @@ Important low-line-coverage modules include `councilNarrative` (12.57%), `evalua
 2. Source-aware contradiction fixtures plus 13 adversarial negation variants covering controls, safeguards, frameworks, validation, and recovery objectives.
 3. One-medium-gap readiness, authoritative approval eligibility, and removal of conditional-approval UI vocabulary.
 4. Learning/governance and audit tenant A/B hostile-scope tests.
-5. Upload-first version-zero case creation plus council -> follow-up -> second council unit and Playwright mock flow, including runtime-failure and post-completion audit-failure recovery.
+5. Upload-first version-zero case creation, isolation of synthetic upload transport/LLM output from document-grounded facts, plus council -> follow-up -> second council unit and Playwright mock flow, including runtime-failure and post-completion audit-failure recovery.
 6. Direct Node/FastAPI policy-field parity and atomic bridge-schema validation.
 7. Concurrent PostgreSQL chain-head serialization, scoped reads, hosted fail-closed audit, chain-head/tail tamper detection, and Node/FastAPI log-route tests.
 

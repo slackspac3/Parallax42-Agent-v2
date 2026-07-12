@@ -1117,6 +1117,12 @@ test('conversation uses uploaded evidence event to ask document-aware question b
 
   assert.ok(result.questions.some((question) => /uploaded agreement|access and security|data processing|commercial terms|all risks/i.test(question)));
   assert.ok(!result.questions.some((question) => /business owner|accountable business unit|workflow owner|geography|regulatory perimeter/i.test(question)));
+  assert.equal(result.caseDraft.supplierName, 'Services Agreement');
+  assert.equal(result.caseDraft.geography, '');
+  assert.equal(result.caseDraft.brief, 'Uploaded services agreement for review.');
+  assert.equal(result.caseDraft.documents.length, 1);
+  assert.equal(result.caseDraft.documents[0].evidenceId, 'UP-01');
+  assert.doesNotMatch(result.caseDraft.brief, /Classify the uploaded document/i);
 });
 
 test('conversation classifies SaaS agreement review into the SaaS workflow before metadata', () => {

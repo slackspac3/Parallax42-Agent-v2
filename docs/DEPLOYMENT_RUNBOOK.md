@@ -1,6 +1,6 @@
 # Deployment Runbook
 
-> This runbook covers the Vercel/Railway deployment, reviewed 2026-07-12. The seven deep-review P0 remediations and upload-first lifecycle regression pass final-worktree QA (270/270 Node and 13/13 Python security tests); CI and authenticated live-workflow re-verification are pending. It does not deploy the future Azure architecture; use the separate [Azure migration plan](AZURE_MIGRATION_PLAN.md).
+> This runbook covers the Vercel/Railway deployment, reviewed 2026-07-12. The seven deep-review P0 remediations plus upload-first and synthetic-upload isolation regressions pass final-worktree QA (271/271 Node and 13/13 Python security tests); CI and authenticated live-workflow re-verification are pending. It does not deploy the future Azure architecture; use the separate [Azure migration plan](AZURE_MIGRATION_PLAN.md).
 
 ## Surfaces
 

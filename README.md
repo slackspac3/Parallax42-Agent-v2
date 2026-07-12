@@ -21,7 +21,7 @@ The hosted product uses a named, authenticated client on the shared Compass gate
 
 Current engineering status and the selected cloud path are maintained in the [Deep Code Review](docs/DEEP_CODE_REVIEW.md) and [Azure Migration Plan](docs/AZURE_MIGRATION_PLAN.md). The seven P0 review findings are remediated in the local implementation with focused regressions. Enterprise residuals remain, including Entra/membership/RLS, immutable/WORM audit export, coupling audit events to critical business transactions, retention/erasure, distributed admission controls, and production verification.
 
-Remediation verification status (2026-07-12): final-worktree `npm run qa` is green (270/270 Node tests and 13/13 Python security tests), including upload-first lifecycle and two-turn Playwright mock coverage plus a 4/4 benchmark. CI and authenticated live-demo re-verification are pending the release run.
+Remediation verification status (2026-07-12): final-worktree `npm run qa` is green (271/271 Node tests and 13/13 Python security tests), including upload-first lifecycle, synthetic-upload isolation, and two-turn Playwright mock coverage plus a 4/4 benchmark. CI and authenticated live-demo re-verification are pending the release run.
 
 ## Judge Quick Start
 

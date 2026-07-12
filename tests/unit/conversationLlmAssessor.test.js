@@ -628,6 +628,46 @@ test('LLM merge preserves established owner and geography unless the user ground
   assert.equal(corrected.geography, 'UAE');
 });
 
+test('evidence-upload LLM assessment stays advisory and cannot overwrite case facts', () => {
+  const draft = {
+    supplierName: 'Apex DataWorks Ltd.',
+    businessUnit: 'Procurement',
+    geography: 'UAE',
+    integrations: ['Microsoft 365'],
+    evidenceSignals: ['signed DPA'],
+    riskSignals: ['personal data'],
+    knownGaps: ['retention schedule']
+  };
+  const merged = mergeAssessmentIntoDraft(draft, {
+    used: true,
+    confidence: 0.99,
+    intent: 'case_context',
+    provider: 'compass_gateway',
+    model: 'gpt-5.1',
+    caseUpdate: {
+      supplierName: 'Evil Corp',
+      businessUnit: 'Finance',
+      geography: 'Singapore',
+      integrations: ['Untrusted system'],
+      evidenceSignals: ['invented approval'],
+      riskSignals: ['invented risk'],
+      knownGaps: ['invented gap']
+    }
+  }, {
+    eventType: 'evidence_uploaded',
+    message: 'Evidence uploaded. Classify it before requesting generic metadata.'
+  });
+
+  assert.equal(merged.supplierName, draft.supplierName);
+  assert.equal(merged.businessUnit, draft.businessUnit);
+  assert.equal(merged.geography, draft.geography);
+  assert.deepEqual(merged.integrations, draft.integrations);
+  assert.deepEqual(merged.evidenceSignals, draft.evidenceSignals);
+  assert.deepEqual(merged.riskSignals, draft.riskSignals);
+  assert.deepEqual(merged.knownGaps, draft.knownGaps);
+  assert.equal(merged.llmIntake.advisoryOnly, true);
+});
+
 test('conversation LLM assessor sends full chat context for terse answer interpretation', async () => {
   const originalFetch = global.fetch;
   try {
