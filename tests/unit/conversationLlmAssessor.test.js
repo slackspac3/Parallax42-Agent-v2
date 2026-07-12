@@ -520,8 +520,8 @@ test('conversation LLM assessor requests JSON mode and handles OpenAI response o
       assert.equal(assessed.llmAssessment.used, true);
       assert.equal(assessed.llmAssessment.requestType, 'vendor_onboarding');
       assert.equal(assessed.llmAssessment.workflowType, 'procurement_vendor_review');
-      assert.equal(assessed.caseDraft.supplierName, 'managed integration partner');
-      assert.ok(assessed.caseDraft.integrations.includes('Oracle ERP'));
+      assert.equal(assessed.caseDraft.supplierName, undefined);
+      assert.ok(assessed.caseDraft.integrations.includes('Finance reporting'));
       assert.ok(assessed.caseDraft.riskSignals.includes('privileged access'));
     });
   } finally {
@@ -585,10 +585,10 @@ test('conversation LLM assessor does not accept invented owner or geography upda
       });
 
       assert.equal(assessed.llmAssessment.used, true);
-      assert.equal(assessed.caseDraft.supplierName, 'managed integration partner');
+      assert.equal(assessed.caseDraft.supplierName, undefined);
       assert.equal(assessed.caseDraft.businessUnit, undefined);
       assert.equal(assessed.caseDraft.geography, undefined);
-      assert.ok(assessed.caseDraft.integrations.includes('Oracle ERP'));
+      assert.ok(assessed.caseDraft.integrations.includes('Finance reporting'));
       assert.ok(assessed.caseDraft.riskSignals.includes('privileged access'));
     });
   } finally {
@@ -598,6 +598,7 @@ test('conversation LLM assessor does not accept invented owner or geography upda
 
 test('LLM merge preserves established owner and geography unless the user grounds a correction', () => {
   const draft = {
+    supplierName: 'Apex DataWorks Ltd.',
     businessUnit: 'HR',
     geography: 'UAE'
   };
@@ -606,11 +607,13 @@ test('LLM merge preserves established owner and geography unless the user ground
     confidence: 0.9,
     intent: 'evidence_answer',
     caseUpdate: {
+      supplierName: 'Invented Supplier',
       businessUnit: 'Finance',
       geography: 'KSA'
     }
   }, { message: 'Yes, the evidence is attached.' });
 
+  assert.equal(hallucinated.supplierName, 'Apex DataWorks Ltd.');
   assert.equal(hallucinated.businessUnit, 'HR');
   assert.equal(hallucinated.geography, 'UAE');
 
@@ -626,6 +629,343 @@ test('LLM merge preserves established owner and geography unless the user ground
 
   assert.equal(corrected.businessUnit, 'Finance');
   assert.equal(corrected.geography, 'UAE');
+
+  const compound = mergeAssessmentIntoDraft({
+    supplierName: 'Apex DataWorks Ltd.',
+    businessUnit: '',
+    geography: '',
+    activeQuestion: 'Should I focus on all risks?',
+    activeQuestionField: 'review_focus'
+  }, {
+    used: true,
+    confidence: 0.9,
+    intent: 'case_context',
+    caseUpdate: {
+      supplierName: 'Apex DataWorks Ltd.',
+      businessUnit: 'Procurement',
+      geography: 'UAE'
+    }
+  }, { message: 'Review all risks. Procurement owns this case and the geography is UAE.' });
+
+  assert.equal(compound.supplierName, 'Apex DataWorks Ltd.');
+  assert.equal(compound.businessUnit, 'Procurement');
+  assert.equal(compound.geography, 'UAE');
+
+  const genericScope = mergeAssessmentIntoDraft({ supplierName: 'Apex DataWorks Ltd.' }, {
+    used: true,
+    confidence: 0.99,
+    intent: 'case_context',
+    caseUpdate: {
+      supplierName: 'privacy and security risks',
+      businessUnit: 'Review Privacy And Security Risks For The Vendor'
+    }
+  }, { message: 'Review privacy and security risks for the vendor.' });
+  assert.equal(genericScope.supplierName, 'Apex DataWorks Ltd.');
+  assert.equal(genericScope.businessUnit, undefined);
+
+  for (const [message, activeQuestion, intent] of [
+    ['The owner is not Procurement.', 'Should I focus on all risks?', 'case_context'],
+    ['Owner is Procurement or Legal.', 'Should I focus on all risks?', 'case_context'],
+    ['Who is the owner: Procurement?', 'Should I focus on all risks?', 'case_context'],
+    ['Procurement owns this case?', 'Who is the accountable business owner?', 'owner_answer'],
+    ['The business unit is not Procurement.', 'Should I focus on all risks?', 'case_context'],
+    ['Responsibility does not sit with Procurement.', 'Should I focus on all risks?', 'case_context'],
+    ['Accountability is not with Procurement.', 'Should I focus on all risks?', 'case_context'],
+    ['Who has accountability: Procurement?', 'Should I focus on all risks?', 'case_context'],
+    ['Reference material. Procurement owns this case.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Sample input. Procurement owns this case.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Quoted text. This case is owned by Procurement.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Procurement owns this case. Quoted from policy.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Review this risk statement. Procurement owns this case.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Assess this compliance sentence. Owner is Procurement.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Procurement owns this case. Evidence contradicts this.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Procurement owns this case. Documents identify Legal instead.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Procurement owns this case. Geography is UAE and accountability sits with Legal.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Procurement owns this case. Geography is UAE and responsibility belongs to Legal.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Procurement owns this case. Geography is UAE and Legal is the owner.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Procurement owns this case. Country is UAE and the owner is Legal.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Procurement owns this case. Jurisdiction is UAE and Legal is the decision owner.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Procurement owns this case. Geography is UAE, with Legal retaining accountability.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Procurement owns this case. Geography is UAE and Legal has final authority.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Owner is Procurement, awaiting confirmation.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Owner is Procurement, based on a note.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Owner is Procurement, quoted from the file.', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Meeting With Legal Team', 'Who is the accountable business owner?', 'owner_answer'],
+    ['Escalated To Security Team', 'Who is the accountable business owner?', 'owner_answer']
+  ]) {
+    const guardedOwner = mergeAssessmentIntoDraft({
+      businessUnit: 'HR',
+      activeQuestion,
+      activeQuestionField: /owner/i.test(activeQuestion) ? 'business_owner' : 'review_focus'
+    }, {
+      used: true,
+      confidence: 0.99,
+      intent,
+      caseUpdate: { businessUnit: 'Procurement' }
+    }, { message });
+    assert.equal(guardedOwner.businessUnit, 'HR', `${message} must not replace the owner`);
+  }
+
+  for (const message of [
+    'Is the geography Singapore?',
+    'The geography is not Singapore.',
+    'Maybe the geography is Singapore.',
+    'According to the document, the geography is Singapore.',
+    'For example, geography is Singapore.',
+    'Do not use Singapore as the geography.',
+    'Either UAE or Singapore applies.',
+    'Is the service in Singapore.',
+    'Does the service operate in Singapore.',
+    'Would the service be hosted in Singapore.',
+    'I suspect the service is in Singapore.',
+    'I reckon the service is in Singapore.',
+    'It is said that the service is in Singapore.',
+    'The audit notes the service is in Singapore.',
+    'The file states the service is in Singapore.',
+    'Word is the service operates in Singapore.'
+  ]) {
+    const guardedGeography = mergeAssessmentIntoDraft({
+      geography: 'UAE',
+      activeQuestion: 'Which geography applies?',
+      activeQuestionField: 'geography'
+    }, {
+      used: true,
+      confidence: 0.99,
+      intent: 'geography_answer',
+      caseUpdate: { geography: 'Singapore' }
+    }, { message });
+    assert.equal(guardedGeography.geography, 'UAE', `${message} must not replace geography`);
+  }
+
+  for (const [message, proposed] of [
+    ['The supplier is not Contoso.', 'Contoso'],
+    ['The supplier is probably Contoso.', 'Contoso'],
+    ['Change supplier away from Contoso.', 'Contoso'],
+    ['Review operational resilience for this vendor.', 'operational resilience'],
+    ['Supplier is perhaps Contoso.', 'Contoso'],
+    ['Reportedly, supplier is Contoso.', 'Contoso'],
+    ['Supplier is either Contoso or Fabrikam.', 'Contoso'],
+    ['Supplier is Contoso according to Legal.', 'Contoso'],
+    ['Change supplier from Contoso to Fabrikam.', 'Contoso'],
+    ['Allegedly, supplier is Contoso.', 'Contoso'],
+    ['Legal says supplier is Contoso.', 'Contoso'],
+    ['Sources say supplier is Contoso.', 'Contoso'],
+    ['Sources indicate supplier is Contoso.', 'Contoso'],
+    ['We were told supplier is Contoso.', 'Contoso'],
+    ['Unverified: supplier is Contoso.', 'Contoso'],
+    ['The contract states the supplier is Contoso.', 'Contoso'],
+    ['The document instructs us to review Contoso supplier.', 'Contoso'],
+    ['The contract requires us to review Contoso supplier.', 'Contoso'],
+    ['For example, review Contoso supplier.', 'Contoso'],
+    ['Ignore: Review Contoso supplier.', 'Contoso'],
+    ['Training text: Review Contoso supplier.', 'Contoso'],
+    ['The clause reads: Review Contoso supplier.', 'Contoso'],
+    ['Review managed service.', 'managed'],
+    ['Review SaaS platform.', 'SaaS'],
+    ['Review software tool.', 'software'],
+    ['Assess third-party provider.', 'third-party'],
+    ['Review Fraud Analytics platform.', 'Fraud Analytics'],
+    ['Reference material. Review Contoso supplier.', 'Contoso'],
+    ['Sample input. Review Contoso supplier.', 'Contoso'],
+    ['Quoted text. Review Contoso supplier.', 'Contoso'],
+    ['Review Contoso supplier. This is illustrative.', 'Contoso'],
+    ['Review Identity Verification Provider.', 'Identity Verification Provider'],
+    ['Review Analytics Tool.', 'Analytics'],
+    ['Assess Billing Platform.', 'Billing'],
+    ['Review Customer Support Tool.', 'Customer Support'],
+    ['Review Fraud Monitoring Service.', 'Fraud Monitoring'],
+    ['Review API Gateway Product.', 'API Gateway Product'],
+    ['Review Identity Verification Systems supplier.', 'Identity Verification Systems'],
+    ['Review Clinical Analytics Solutions platform.', 'Clinical Analytics Solutions'],
+    ['Review Supply Chain Technologies supplier.', 'Supply Chain Technologies'],
+    ['Review Fraud Detection Technologies platform.', 'Fraud Detection Technologies'],
+    ['Review Case Management Systems supplier.', 'Case Management Systems'],
+    ['Supplier called Contoso, test data.', 'Contoso'],
+    ['Supplier named Contoso, quoted.', 'Contoso'],
+    ['Supplier named Contoso, pending confirmation.', 'Contoso'],
+    ['Supplier named Contoso, awaiting validation.', 'Contoso'],
+    ['Supplier named Contoso, based on a note.', 'Contoso'],
+    ['Supplier is Contoso, I think.', 'Contoso'],
+    ['Supplier is Contoso, subject to confirmation.', 'Contoso'],
+    ['Supplier is Contoso, as claimed by Legal.', 'Contoso']
+  ]) {
+    const guardedSupplier = mergeAssessmentIntoDraft({ supplierName: 'Apex DataWorks Ltd.' }, {
+      used: true,
+      confidence: 0.99,
+      intent: 'case_context',
+      caseUpdate: { supplierName: proposed }
+    }, { message });
+    assert.equal(guardedSupplier.supplierName, 'Apex DataWorks Ltd.', `${message} must not replace the supplier`);
+  }
+
+  const emptyDraftScope = mergeAssessmentIntoDraft({}, {
+    used: true,
+    confidence: 0.99,
+    intent: 'case_context',
+    caseUpdate: { supplierName: 'operational resilience' }
+  }, { message: 'Review operational resilience for this vendor.' });
+  assert.equal(emptyDraftScope.supplierName, undefined);
+
+  for (const [message, proposed] of [
+    ['Assess compliance posture for this vendor.', 'compliance posture'],
+    ['Review resilience controls for this service.', 'resilience controls'],
+    ['Review security systems for this vendor.', 'security systems'],
+    ['Review all systems risks for this vendor.', 'all systems risks'],
+    ['Assess regulatory exposure for this vendor.', 'regulatory exposure'],
+    ['Review governance gaps for this service.', 'governance gaps'],
+    ['Review sanctions exposure for this vendor.', 'sanctions exposure'],
+    ['Review financial exposure for this vendor.', 'financial exposure'],
+    ['Review technology solutions for this vendor.', 'technology solutions'],
+    ['Review group risk for this vendor.', 'group risk'],
+    ['Review all technologies risks for this vendor.', 'all technologies risks'],
+    ['Review data residency for this vendor.', 'data residency']
+  ]) {
+    const emptyScope = mergeAssessmentIntoDraft({}, {
+      used: true,
+      confidence: 0.99,
+      intent: 'case_context',
+      caseUpdate: { supplierName: proposed }
+    }, { message });
+    assert.equal(emptyScope.supplierName, undefined, `${message} must not create a supplier`);
+  }
+
+  const directedChange = mergeAssessmentIntoDraft({ supplierName: 'Contoso' }, {
+    used: true,
+    confidence: 0.99,
+    intent: 'case_context',
+    caseUpdate: { supplierName: 'Fabrikam' }
+  }, { message: 'Change supplier from Contoso to Fabrikam.' });
+  assert.equal(directedChange.supplierName, 'Fabrikam');
+
+  const explicitIdentity = mergeAssessmentIntoDraft({ supplierName: 'Apex DataWorks Ltd.' }, {
+    used: true,
+    confidence: 0.99,
+    intent: 'case_context',
+    caseUpdate: { supplierName: 'Contoso' }
+  }, { message: 'The supplier is Contoso.' });
+  assert.equal(explicitIdentity.supplierName, 'Contoso');
+
+  for (const message of [
+    'Is personal data processed?',
+    'Example: handles personal data and AI.',
+    'Is SOC 2 available?',
+    'The policy says SOC 2 is available.',
+    'I suspect the service uses AI and Azure AD.',
+    'I reckon the service uses AI and Azure AD.',
+    'It is said that the service uses AI and Azure AD.',
+    'The audit notes AI and Azure AD.',
+    'The file states AI and Azure AD are used.',
+    'Word is the service uses AI and Azure AD.',
+    'The spreadsheet lists AI and Azure AD.',
+    'The database records AI and Azure AD.',
+    'Does the service use AI.',
+    'Is patient data processed in ServiceNow.',
+    'Are Azure AD and Microsoft 365 integrated.',
+    'Would the platform process patient data.'
+  ]) {
+    const guardedSignals = mergeAssessmentIntoDraft({
+      riskSignals: ['outsourced service'],
+      evidenceSignals: ['signed contract']
+    }, {
+      used: true,
+      confidence: 0.99,
+      intent: 'case_context',
+      caseUpdate: {
+        riskSignals: ['personal data', 'AI/model use'],
+        evidenceSignals: ['SOC 2', 'DPA'],
+        integrations: ['Microsoft 365']
+      }
+    }, { message });
+    assert.deepEqual(guardedSignals.riskSignals, ['outsourced service'], `${message} must not add risks`);
+    assert.deepEqual(guardedSignals.evidenceSignals, ['signed contract'], `${message} must not add evidence`);
+    assert.deepEqual(guardedSignals.integrations, [], `${message} must not add integrations`);
+  }
+
+  const mixedAiQuestion = mergeAssessmentIntoDraft({
+    riskSignals: [],
+    evidenceSignals: ['signed contract']
+  }, {
+    used: true,
+    confidence: 0.99,
+    intent: 'case_context',
+    caseUpdate: {
+      riskSignals: ['AI/model use'],
+      evidenceSignals: ['SOC 2']
+    }
+  }, { message: 'The service uses AI. Is SOC 2 available?' });
+  assert.ok(mixedAiQuestion.riskSignals.includes('AI/model use'));
+  assert.deepEqual(mixedAiQuestion.evidenceSignals, ['signed contract']);
+
+  const mixedPatientQuestion = mergeAssessmentIntoDraft({}, {
+    used: true,
+    confidence: 0.99,
+    intent: 'case_context',
+    caseUpdate: {
+      riskSignals: ['personal data'],
+      evidenceSignals: ['DPA']
+    }
+  }, { message: 'The platform processes patient data. Is the DPA attached?' });
+  assert.ok(mixedPatientQuestion.riskSignals.includes('personal data'));
+  assert.deepEqual(mixedPatientQuestion.evidenceSignals, []);
+
+  const mixedIntegrationQuestion = mergeAssessmentIntoDraft({}, {
+    used: true,
+    confidence: 0.99,
+    intent: 'case_context',
+    caseUpdate: {
+      integrations: ['ServiceNow'],
+      evidenceSignals: ['DPA']
+    }
+  }, { message: 'The service integrates with ServiceNow. Is the DPA attached?' });
+  assert.ok(mixedIntegrationQuestion.integrations.includes('ServiceNow'));
+  assert.deepEqual(mixedIntegrationQuestion.evidenceSignals, []);
+
+  for (const message of [
+    'Is the export end-use missing?',
+    'Could end-use be pending?',
+    'Example: export end-use is pending.',
+    'Prompt: end-use is missing.',
+    'The policy says end-use is pending.',
+    'Does the report say sanctions screening is missing?',
+    'Sample text: sanctions screening is pending.',
+    'The document states sanctions screening is missing.',
+    'According to Legal, sanctions screening is unavailable.',
+    'Is export end-use missing.',
+    'Is the final end-use pending.',
+    'Are sanctions screening results missing.',
+    'Does sanctions screening remain unavailable.',
+    'Would end-use be missing.'
+  ]) {
+    const guardedGaps = mergeAssessmentIntoDraft({ knownGaps: ['retention_schedule'] }, {
+      used: true,
+      confidence: 0.99,
+      intent: 'case_context',
+      caseUpdate: { knownGaps: ['export_end_use', 'sanctions_screening', 'invented_gap'] }
+    }, { message });
+    assert.deepEqual(guardedGaps.knownGaps, ['retention_schedule'], `${message} must not authorize a gap`);
+  }
+
+  for (const message of [
+    'The geography is Singapore.',
+    'Owner is Procurement.',
+    'The supplier is Contoso.'
+  ]) {
+    const ungroundedSignals = mergeAssessmentIntoDraft({}, {
+      used: true,
+      confidence: 0.99,
+      intent: 'case_context',
+      caseUpdate: {
+        riskSignals: ['personal data', 'AI/model use'],
+        integrations: ['Azure AD', 'ServiceNow'],
+        knownGaps: ['retention_schedule'],
+        dataOrAssets: ['patient records']
+      }
+    }, { message });
+    assert.ok(!ungroundedSignals.riskSignals.includes('personal data'), `${message} must not authorize invented personal-data risk`);
+    assert.ok(!ungroundedSignals.riskSignals.includes('AI/model use'), `${message} must not authorize invented AI risk`);
+    assert.deepEqual(ungroundedSignals.integrations, [], `${message} must not authorize invented integrations`);
+    assert.deepEqual(ungroundedSignals.knownGaps, [], `${message} must not authorize invented gaps`);
+  }
 });
 
 test('evidence-upload LLM assessment stays advisory and cannot overwrite case facts', () => {
@@ -666,6 +1006,30 @@ test('evidence-upload LLM assessment stays advisory and cannot overwrite case fa
   assert.deepEqual(merged.riskSignals, draft.riskSignals);
   assert.deepEqual(merged.knownGaps, draft.knownGaps);
   assert.equal(merged.llmIntake.advisoryOnly, true);
+
+  const runRequest = mergeAssessmentIntoDraft(draft, {
+    used: true,
+    confidence: 0.99,
+    intent: 'run_request',
+    provider: 'compass_gateway',
+    model: 'gpt-5.1',
+    caseUpdate: {
+      supplierName: 'Invented Supplier',
+      businessUnit: 'Finance',
+      geography: 'Singapore',
+      integrations: ['Invented integration'],
+      evidenceSignals: ['invented approval'],
+      riskSignals: ['invented risk'],
+      knownGaps: ['invented gap']
+    }
+  }, { eventType: 'run_request', message: 'Run council.' });
+  assert.equal(runRequest.supplierName, draft.supplierName);
+  assert.equal(runRequest.businessUnit, draft.businessUnit);
+  assert.equal(runRequest.geography, draft.geography);
+  assert.deepEqual(runRequest.integrations, draft.integrations);
+  assert.deepEqual(runRequest.evidenceSignals, draft.evidenceSignals);
+  assert.deepEqual(runRequest.riskSignals, draft.riskSignals);
+  assert.deepEqual(runRequest.knownGaps, draft.knownGaps);
 });
 
 test('conversation LLM assessor sends full chat context for terse answer interpretation', async () => {
@@ -824,7 +1188,7 @@ test('conversation LLM assessor sends the configured recent chat turns with late
       });
 
       assert.equal(result.llmAssessment.used, true);
-      assert.ok(result.caseDraft.evidenceSignals.includes('DPA is uploaded'));
+      assert.deepEqual(result.caseDraft.evidenceSignals, []);
     });
   } finally {
     global.fetch = originalFetch;
@@ -1385,7 +1749,7 @@ test('conversation LLM assessor retries malformed Compass output with compact JS
       assert.equal(result.llmAssessment.attempts[0].retryAfterUsed, false);
       assert.match(result.llmAssessment.naturalResponse, /managed integration partner review/i);
       assert.equal(result.llmAssessment.requestType, 'supplier_risk');
-      assert.ok(result.caseDraft.integrations.includes('Oracle ERP'));
+      assert.deepEqual(result.caseDraft.integrations, []);
     });
   } finally {
     global.fetch = originalFetch;

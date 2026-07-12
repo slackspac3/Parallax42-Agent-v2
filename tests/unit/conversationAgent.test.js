@@ -28,14 +28,14 @@ function withEnv(overrides, fn) {
     });
 }
 
-test('conversation NLP normalizes supplier names with leading articles', () => {
+test('conversation NLP does not promote a generic review target to supplier identity', () => {
   const result = processConversation({
     message: 'Assess an AI SaaS supplier processing employee data with Azure AD access, SOC 2 evidence, no signed DPA, and no continuity plan.'
   }, { runtime: 'deterministic' });
 
-  assert.equal(result.caseDraft.supplierName, 'AI SaaS');
-  assert.ok(!result.caseDraft.supplierName.startsWith('n '));
-  assert.ok(result.caseDraft.evidenceSignals.includes('SOC 2'));
+  assert.equal(result.caseDraft.supplierName, 'Conversation-supplied case');
+  assert.equal(result.caseDraft.evidenceSignals.length, 0);
+  assert.ok(result.caseDraft.mentionedEvidenceSignals.includes('SOC 2'));
   assert.ok(!result.caseDraft.evidenceSignals.includes('DPA'));
   assert.ok(!result.caseDraft.evidenceSignals.includes('BCP/DR'));
 });
@@ -543,7 +543,7 @@ test('conversation NLP resolves short owner and geography follow-up answers', ()
 
 test('conversation NLP does not swallow geography label into accountable owner', () => {
   const result = processConversation({
-    message: 'Review an AI chip import for Zenith Compute. The accountable owner is Infrastructure Procurement. Geography is UAE and KSA. The shipment includes accelerator cards, remote firmware support, freight forwarding, and no final end-use certificate yet.'
+    message: 'The accountable owner is Infrastructure Procurement. Geography is UAE and KSA. The shipment includes AI accelerator hardware, remote firmware support, freight forwarding, and no final end-use certificate yet.'
   }, { runtime: 'deterministic' });
 
   assert.equal(result.ok, true);
@@ -935,7 +935,7 @@ test('conversation force-run does not execute when owner and geography are missi
 
 test('conversation run readiness allows council with core intake while preserving advisory gaps', () => {
   const result = processConversation({
-    message: 'Review an AI accelerator import from the US for UAE. The accountable owner is Trade Compliance. Final end use is internal research compute. Attached export classification, end-use certificate, import permit, sanctions screening, MFA, session logging, and approved support window.',
+    message: 'The accountable owner is Trade Compliance. Geography is UAE. Export origin is US for an AI accelerator import. Final end use is internal research compute. Attached export classification, end-use certificate, import permit, sanctions screening, MFA, session logging, and approved support window.',
     caseDraft: {
       supplierName: 'Zenith Compute',
       documents: [{
@@ -1000,7 +1000,9 @@ test('conversation treats broad unknown phrases as contextual answers without lo
   assert.ok(third.caseDraft.knownGaps.includes('business_owner'));
   assert.ok(third.questions.some((question) => /evidence is available|contract terms|DPA|SOC 2/i.test(question)));
   assert.ok(fourth.caseDraft.knownGaps.includes('evidence'));
-  assert.equal(fourth.questions.length, 0);
+  assert.equal(fourth.questions.length, 1);
+  assert.match(fourth.questions[0], /supplier|service|workflow name/i);
+  assert.ok(!fourth.questions.some((question) => /evidence is available|contract terms|DPA|SOC 2/i.test(question)));
 });
 
 test('conversation maps unknown answers from full chat history when draft questions are missing', () => {
@@ -1450,6 +1452,346 @@ test('conversation maps focus on all the areas to active review focus question',
   assert.ok(!result.questions.some((question) => /should the review focus|focus primarily|all of these areas/i.test(question)));
 });
 
+test('compound review-focus answer preserves supplier and captures explicit owner plus geography', () => {
+  const focusQuestion = 'I can review the uploaded clauses first. Should I focus on termination, liability, data processing, audit rights, or all risks?';
+  const result = processConversation({
+    message: 'Review all risks. Procurement owns this case and the geography is UAE.',
+    eventType: 'user_answer',
+    activeQuestion: focusQuestion,
+    activeQuestionField: 'review_focus',
+    history: [
+      { role: 'assistant', text: focusQuestion, displayedQuestion: focusQuestion, displayedQuestionField: 'review_focus' },
+      { role: 'user', text: 'Review all risks. Procurement owns this case and the geography is UAE.', answeringQuestion: focusQuestion, answeringQuestionField: 'review_focus' }
+    ],
+    caseDraft: {
+      supplierName: 'Apex DataWorks Ltd.',
+      brief: 'Review the Data Processing Addendum and cross-border transfer terms.',
+      businessUnit: '',
+      geography: '',
+      activeQuestion: focusQuestion,
+      activeQuestionField: 'review_focus',
+      questions: [focusQuestion],
+      askedQuestions: [focusQuestion],
+      llmIntake: { used: true, advisoryOnly: true },
+      documents: [{ evidenceId: 'DPA-01', title: 'Data Processing Addendum', extractionStatus: 'backend_parsed' }],
+      evidenceSignals: ['DPA'],
+      riskSignals: ['privacy', 'cross-border transfer']
+    }
+  }, { runtime: 'deterministic' });
+
+  assert.equal(result.nlp.extracted.supplierName, '');
+  assert.equal(result.nlp.extracted.businessUnit, 'Procurement');
+  assert.equal(result.nlp.extracted.geography, 'UAE');
+  assert.equal(result.caseDraft.supplierName, 'Apex DataWorks Ltd.');
+  assert.equal(result.caseDraft.businessUnit, 'Procurement');
+  assert.equal(result.caseDraft.geography, 'UAE');
+  assert.equal(result.caseDraft.reviewFocus, 'all listed review areas');
+  assert.equal(result.caseDraft.recentlyAnsweredFields.review_focus > 0, true);
+  assert.equal(result.caseDraft.recentlyAnsweredFields.business_owner > 0, true);
+  assert.equal(result.caseDraft.recentlyAnsweredFields.geography > 0, true);
+  assert.ok(!result.missingFields.includes('business_owner'));
+  assert.ok(!result.questions.some((question) => /business owner|workflow owner|which geography|review focus|all risks/i.test(question)));
+
+  const nonClaims = [
+    'Who owns this case?',
+    'Which team owns this case?',
+    'Nobody owns this case.',
+    'No team owns this case.',
+    'We need to determine who owns this case.',
+    'Who is the owner: Procurement?',
+    'Owner might be Procurement.',
+    'If Procurement owns this case, continue.',
+    'I think Procurement owns this case.',
+    'Owner is Procurement or Legal.',
+    'This case is owned by Procurement according to Legal.',
+    'Reportedly, Procurement owns this case.',
+    'According to Legal, Procurement owns this case.',
+    'The policy says Procurement owns this case.',
+    'Assuming Procurement owns this case, continue.',
+    'Owner is Procurement and Legal.',
+    'Owner is Procurement / Legal.',
+    'Owner is Procurement per Legal.',
+    'Supposedly, Procurement owns this case.',
+    'Allegedly, Procurement owns this case.',
+    'Procurement allegedly owns this case.',
+    'The memo says Procurement owns this case.',
+    'The evidence confirms this case is owned by Procurement.',
+    'The document records that this case is owned by Procurement.',
+    'In a hypothetical scenario, this case is owned by Procurement.',
+    'For example, this case is owned by Procurement.',
+    'Imagine this case is owned by Procurement.',
+    'The system inferred the case is owned by Procurement.',
+    'Example: Procurement owns this case.',
+    'Ignore: Procurement owns this case.',
+    'Training text: Procurement owns this case.',
+    'The contract confirms Legal and Privacy owns this case.',
+    'Reference material. Procurement owns this case.',
+    'Sample input. Procurement owns this case.',
+    'Untrusted text. Procurement owns this case.',
+    'Here is an excerpt. Procurement owns this case.',
+    'Quoted text. This case is owned by Procurement.',
+    'Please verify. Procurement owns this case.',
+    'Question. Procurement owns this case.',
+    'Counterexample. Procurement owns this case.',
+    'False statement. Procurement owns this case.',
+    'The attachment confirms. This case is owned by Procurement.',
+    'Procurement owns this case. Quoted from policy.',
+    'Review this risk statement. Procurement owns this case.',
+    'Assess this compliance sentence. Owner is Procurement.',
+    'Review this case wording. This case is owned by Procurement.',
+    'Procurement owns this case. Evidence contradicts this.',
+    'Procurement owns this case. Evidence disputes that.',
+    'Procurement owns this case. Documents identify Legal instead.',
+    'Procurement owns this case. Evidence points to Legal.',
+    'Owner is Procurement, awaiting confirmation.',
+    'Owner is Procurement, tentative.',
+    'Owner is Procurement, to be confirmed.',
+    'Owner is Procurement, based on a note.',
+    'Owner is Procurement, as claimed by Legal.',
+    'Owner is Procurement, test data.',
+    'Owner is Procurement, copied from notes.',
+    'Owner is Procurement, quoted from the file.',
+    'Procurement owns this case. The vendor denies this.',
+    'Procurement owns this case. The platform contradicts this.',
+    'Review all risks. Procurement owns this case. The supplier disputes ownership.',
+    'Review all risks. Procurement owns this case. The vendor confirms Legal owns it.',
+    'Review all risks. Procurement owns this case. The supplier rejects that.',
+    'Procurement owns this case. The supplier is accountable for this case.',
+    'Procurement owns this case. The vendor will own this case.',
+    'Procurement owns this case. The platform is responsible for this case.',
+    'Procurement owns this case. The vendor is Legal and owns the case.',
+    'Legal says Procurement owns this case.',
+    'I heard Procurement owns this case.',
+    'Suppose Procurement owns this case.',
+    'Provided Procurement owns this case, continue.',
+    'As long as Procurement owns this case, continue.',
+    'Procurement owns this case per Legal.',
+    'Owner is Procurement but Legal approves.',
+    'Not Procurement.',
+    'Not sure, maybe Procurement.',
+    'The responsible department is not Procurement.',
+    'Sources indicate Procurement owns this case.',
+    'Subject to confirmation, Procurement owns this case.',
+    'It is probably Procurement.',
+    'According to Legal, Head of IT.',
+    "Owner definitely isn't Procurement.",
+    'Anyone except Procurement owns this case.',
+    'Anything except Procurement.',
+    'Other than Procurement.',
+    'Procurement is ruled out.',
+    'Procurement cannot own this case.',
+    "Procurement won't own this case.",
+    'Procurement no longer owns this case.',
+    'Hardly Procurement.',
+    'It appears Procurement owns this case.',
+    'Potentially Procurement owns this case.',
+    'Owner is Procurement; alternatively Legal.',
+    'Procurement owns this case? Please confirm.',
+    'Alleged owner is Procurement.',
+    'Potential owner is Procurement.',
+    'Candidate owner is Procurement.',
+    'Former owner is Procurement.',
+    'Procurement owns this case, right.',
+    'Procurement reviewed the contract.',
+    'I spoke to Head of IT.',
+    'Head of IT reviewed the contract.',
+    'We consulted the Director of Procurement.',
+    'The Director of Legal attended the meeting.',
+    'Meeting With Legal Team',
+    'Met Legal Team',
+    'Escalated To Security Team',
+    'Please Ask Legal Team',
+    'Finance will confirm tomorrow.',
+    'Procurement excluded.',
+    'Procurement lacks ownership.',
+    'Review privacy and security risks for the vendor.',
+    'Review service levels for Apex.',
+    'Review the contract for the Apex supplier.',
+    'Assess tool performance for Apex.'
+  ];
+  for (const message of nonClaims) {
+    const guarded = processConversation({
+      message,
+      eventType: 'user_answer',
+      activeQuestion: focusQuestion,
+      activeQuestionField: 'review_focus',
+      caseDraft: {
+        supplierName: 'Apex DataWorks Ltd.',
+        activeQuestion: focusQuestion,
+        activeQuestionField: 'review_focus',
+        questions: [focusQuestion]
+      }
+    }, { runtime: 'deterministic' });
+    assert.equal(guarded.caseDraft.supplierName, 'Apex DataWorks Ltd.', `${message} must not replace the supplier`);
+    assert.equal(guarded.caseDraft.businessUnit, '', `${message} must not become the owner`);
+  }
+
+  const confirmed = processConversation({
+    message: 'I can confirm Procurement owns this case.',
+    eventType: 'user_answer',
+    activeQuestion: focusQuestion,
+    activeQuestionField: 'review_focus',
+    caseDraft: { supplierName: 'Apex DataWorks Ltd.', activeQuestion: focusQuestion, activeQuestionField: 'review_focus' }
+  }, { runtime: 'deterministic' });
+  assert.equal(confirmed.caseDraft.businessUnit, 'Procurement');
+
+  const knownCompound = processConversation({
+    message: 'Owner is Legal and Privacy.',
+    eventType: 'user_answer',
+    activeQuestion: 'Who is the accountable business owner?',
+    activeQuestionField: 'business_owner',
+    caseDraft: { activeQuestion: 'Who is the accountable business owner?', activeQuestionField: 'business_owner' }
+  }, { runtime: 'deterministic' });
+  assert.equal(knownCompound.caseDraft.businessUnit, 'Legal And Privacy');
+
+  for (const message of ['Legal and Privacy', 'Legal and Privacy owns this case.', 'This case is owned by Legal and Privacy.']) {
+    const compoundOwner = processConversation({
+      message,
+      eventType: 'user_answer',
+      activeQuestion: 'Who is the accountable business owner?',
+      activeQuestionField: 'business_owner',
+      caseDraft: { activeQuestion: 'Who is the accountable business owner?', activeQuestionField: 'business_owner' }
+    }, { runtime: 'deterministic' });
+    assert.equal(compoundOwner.caseDraft.businessUnit, 'Legal And Privacy');
+  }
+
+  for (const [message, expectedSupplier] of [
+    ['Supplier named Contoso will handle support.', 'Contoso'],
+    ['Vendor called Contoso is based in UAE.', 'Contoso'],
+    ['Supplier named Contoso in the UAE.', 'Contoso'],
+    ['Vendor called Contoso headquartered in Dubai.', 'Contoso'],
+    ['The supplier is Contoso.', 'Contoso'],
+    ['Vendor is now Fabrikam.', 'Fabrikam'],
+    ['supplier named acme corp.', 'acme corp']
+  ]) {
+    const named = processConversation({ message }, { runtime: 'deterministic' });
+    assert.equal(named.caseDraft.supplierName, expectedSupplier);
+  }
+
+  for (const message of [
+    'Review sanctions exposure for this vendor.',
+    'Review financial exposure for this vendor.',
+    'Review technology solutions for this vendor.',
+    'Should we review Contoso supplier?',
+    'Do not review Contoso supplier.',
+    'Maybe review Contoso supplier.',
+    'According to Legal, review Contoso supplier.',
+    'If we review Contoso supplier, continue.',
+    'Review Contoso supplier? Then continue.',
+    'Don’t review Contoso supplier.',
+    'Review Operational Risk for this vendor.',
+    'Review Identity Lifecycle for this vendor.',
+    'Review Data Residency for this vendor.',
+    'Review Cybersecurity Posture for this vendor.',
+    'Review Third-Party Concentration for this vendor.',
+    'Review Incident Response Maturity for this vendor.',
+    'Review Cloud Exit Readiness for this vendor.',
+    'Review Technology Solutions for this vendor.',
+    'Review Sanctions Exposure for this vendor.',
+    'Review Financial Exposure for this vendor.',
+    'Review Group Risk for this vendor.',
+    'Review Customer Data for this vendor.',
+    'Review payroll service.',
+    'Potential supplier named Contoso.',
+    'The policy lists a supplier named Contoso.',
+    'Supplier named Contoso is one option.',
+    'Review cloud service.',
+    'Assess payment provider.',
+    'Review hosting platform.',
+    'Review HR tool.',
+    'Assess implementation partner.',
+    'Review managed service.',
+    'Review SaaS platform.',
+    'Review software tool.',
+    'Assess third-party provider.',
+    'Review Fraud Analytics platform.',
+    'The document instructs us to review Contoso supplier.',
+    'The contract requires us to review Contoso supplier.',
+    'For example, review Contoso supplier.',
+    'Ignore: Review Contoso supplier.',
+    'Training text: Review Contoso supplier.',
+    'The clause reads: Review Contoso supplier.',
+    'Reference material. Review Contoso supplier.',
+    'Sample input. Review Contoso supplier.',
+    'Quoted text. Review Contoso supplier.',
+    'Review Contoso supplier. This is illustrative.',
+    'Review Identity Verification Provider.',
+    'Review Analytics Tool.',
+    'Assess Billing Platform.',
+    'Review Customer Support Tool.',
+    'Review Fraud Monitoring Service.',
+    'Review API Gateway Product.',
+    'Review Identity Verification Systems supplier.',
+    'Review Clinical Analytics Solutions platform.',
+    'Review Supply Chain Technologies supplier.',
+    'Review Enterprise Resource Planning Systems supplier.',
+    'Review Environmental Monitoring Systems supplier.',
+    'Review Workforce Planning Solutions supplier.',
+    'Review Fraud Detection Technologies platform.',
+    'Review Case Management Systems supplier.',
+    'Supplier called Contoso, test data.',
+    'Supplier named Contoso, quoted.',
+    'Supplier named Contoso, pending confirmation.',
+    'Supplier named Contoso, awaiting validation.',
+    'Supplier named Contoso, based on a note.',
+    'Supplier is Contoso for testing.',
+    'Supplier is Contoso for discussion only.',
+    'Supplier is Contoso for reference.',
+    'Supplier is Contoso for demonstration.',
+    'Supplier is Contoso in training.',
+    'Supplier is Contoso with uncertain identity.',
+    'Supplier is Contoso with disputed status.',
+    'Supplier is Contoso with no confirmation.',
+    'Supplier is Contoso that may be wrong.',
+    'Supplier is Contoso that could be wrong.',
+    'Supplier is Contoso will be confirmed tomorrow.',
+    'Supplier named Contoso will be decided tomorrow.',
+    'Supplier named Contoso has yet to be confirmed.',
+    'Scenario: Supplier is Contoso.',
+    'Quote: Supplier named Contoso.'
+  ]) {
+    const scoped = processConversation({ message }, { runtime: 'deterministic' });
+    assert.equal(scoped.nlp.extracted.supplierName, '', `${message} must not create a supplier`);
+  }
+
+  const directSupplier = processConversation({ message: 'Review Contoso supplier.' }, { runtime: 'deterministic' });
+  assert.equal(directSupplier.caseDraft.supplierName, 'Conversation-supplied case');
+
+  const establishedSupplier = processConversation({
+    message: 'Review Contoso supplier.',
+    caseDraft: { supplierName: 'Apex DataWorks Ltd.' }
+  }, { runtime: 'deterministic' });
+  assert.equal(establishedSupplier.caseDraft.supplierName, 'Apex DataWorks Ltd.');
+});
+
+test('run-request transport cannot mutate canonical case facts before council execution', () => {
+  const existing = {
+    supplierName: 'Apex DataWorks Ltd.',
+    businessUnit: 'HR',
+    geography: 'UAE',
+    brief: 'Review the current supplier case.',
+    integrations: ['Microsoft 365'],
+    riskSignals: ['privacy'],
+    evidenceSignals: ['signed DPA'],
+    knownGaps: ['retention_schedule']
+  };
+  const result = processConversation({
+    eventType: 'run_request',
+    forceRun: true,
+    message: 'Review Contoso supplier. Procurement owns this case. The geography is Singapore. It uses AI.',
+    caseDraft: existing
+  }, { planOnly: true, runtime: 'deterministic' });
+
+  assert.equal(result.caseDraft.supplierName, existing.supplierName);
+  assert.equal(result.caseDraft.businessUnit, existing.businessUnit);
+  assert.equal(result.caseDraft.geography, existing.geography);
+  assert.equal(result.caseDraft.brief, existing.brief);
+  assert.deepEqual(result.caseDraft.integrations, existing.integrations);
+  assert.deepEqual(result.caseDraft.riskSignals, existing.riskSignals);
+  assert.deepEqual(result.caseDraft.evidenceSignals, existing.evidenceSignals);
+  assert.deepEqual(result.caseDraft.knownGaps, existing.knownGaps);
+});
+
 test('conversation maps review focus from full assistant prose when active question metadata is stale', () => {
   const assistantText = [
     'Got it, Compliance is the accountable owner for this SOW.',
@@ -1837,6 +2179,315 @@ test('an evidence availability question stays requested and cannot make intake r
 
   assert.equal(result.caseDraft.documents[0].assertionState, 'requested');
   assert.equal(result.caseDraft.documents[0].provenance, 'chat_message');
+  assert.deepEqual(result.caseDraft.evidenceSignals, []);
+  assert.ok(result.caseDraft.requestedEvidenceSignals.includes('SOC 2'));
   assert.equal(result.readyToRun, false);
   assert.ok(result.missingFields.includes('evidence'));
+});
+
+test('non-assertive geography, evidence, and risk language cannot mutate canonical case facts', () => {
+  for (const message of [
+    'Is the export end-use missing?',
+    'Could end-use be pending?',
+    'Example: export end-use is pending.',
+    'Prompt: end-use is missing.',
+    'The policy says end-use is pending.',
+    'Does the report say sanctions screening is missing?',
+    'Sample text: sanctions screening is pending.',
+    'The document states sanctions screening is missing.',
+    'According to Legal, sanctions screening is unavailable.',
+    'Is export end-use missing.',
+    'Is the final end-use pending.',
+    'Are sanctions screening results missing.',
+    'Does sanctions screening remain unavailable.',
+    'Would end-use be missing.'
+  ]) {
+    const result = processConversation({
+      message,
+      caseDraft: { knownGaps: ['retention_schedule'] }
+    }, { runtime: 'deterministic' });
+    assert.deepEqual(result.caseDraft.knownGaps, ['retention_schedule'], `${message} must not create a canonical gap`);
+  }
+
+  const assertedEndUseGap = processConversation({ message: 'The final end-use certificate is pending.' }, { runtime: 'deterministic' });
+  assert.deepEqual(assertedEndUseGap.caseDraft.knownGaps, ['export_end_use']);
+  const terseGapAnswer = processConversation({
+    message: 'Pending.',
+    activeQuestion: 'What is the final end-use and end-user?',
+    activeQuestionField: 'export_end_use',
+    caseDraft: {
+      activeQuestion: 'What is the final end-use and end-user?',
+      activeQuestionField: 'export_end_use'
+    }
+  }, { runtime: 'deterministic' });
+  assert.deepEqual(terseGapAnswer.caseDraft.knownGaps, ['export_end_use']);
+  for (const message of ['Unknown.', 'TBD.']) {
+    const punctuatedGapAnswer = processConversation({
+      message,
+      activeQuestion: 'What is the sanctions-screening result?',
+      activeQuestionField: 'sanctions_screening',
+      caseDraft: {
+        activeQuestion: 'What is the sanctions-screening result?',
+        activeQuestionField: 'sanctions_screening'
+      }
+    }, { runtime: 'deterministic' });
+    assert.deepEqual(punctuatedGapAnswer.caseDraft.knownGaps, ['sanctions_screening'], `${message} must map to the active gap`);
+    assert.notEqual(punctuatedGapAnswer.caseDraft.answerValidation?.status, 'needs_clarification');
+  }
+
+  const geographyQuestion = 'Which geography applies?';
+  for (const message of [
+    'Is the geography Singapore?',
+    'The geography is not Singapore.',
+    'Maybe the geography is Singapore.',
+    'According to the document, the geography is Singapore.',
+    'For example, geography is Singapore.',
+    'Do not use Singapore as the geography.',
+    'Either UAE or Singapore applies.',
+    'The geography is Singapore, I think.',
+    'The geography is Singapore if confirmed.',
+    'The geography is Singapore unless Legal objects.',
+    'The geography is Singapore per the memo.',
+    'The geography is Singapore, source disputed.',
+    'The geography is Singapore for testing.',
+    'Could be Singapore.',
+    'May be Singapore.',
+    'Uncertain: Singapore.',
+    'Unclear whether Singapore.',
+    'Singapore is disputed.',
+    'No confirmation: Singapore.',
+    'Suppose Singapore applies.',
+    'If Singapore applies, continue.',
+    'Singapore for reference.',
+    'The email notes Singapore.',
+    'The evidence suggests Singapore.',
+    'Legal believes Singapore applies.',
+    'I heard Singapore.',
+    'We were told Singapore.',
+    'Scenario: service operates in Singapore.',
+    'Quoted: service operates in Singapore.',
+    'Policy: service operates in Singapore.',
+    'The document confirms the service operates in Singapore.',
+    'The attachment confirms data is hosted in Singapore.',
+    'The policy requires the service to operate in Singapore.',
+    'The service is located in Singapore, I guess.',
+    'The vendor operates in Singapore to my knowledge.',
+    'The supplier is in Singapore, per Bob.',
+    'It seems the service is in Singapore.',
+    'The platform appears to be hosted in Singapore.',
+    'Is the service in Singapore.',
+    'Does the service operate in Singapore.',
+    'Would the service be hosted in Singapore.',
+    'I suspect the service is in Singapore.',
+    'I reckon the service is in Singapore.',
+    'It is said that the service is in Singapore.',
+    'The audit notes the service is in Singapore.',
+    'The file states the service is in Singapore.',
+    'Word is the service operates in Singapore.'
+  ]) {
+    const result = processConversation({
+      message,
+      activeQuestion: geographyQuestion,
+      activeQuestionField: 'geography',
+      caseDraft: { activeQuestion: geographyQuestion, activeQuestionField: 'geography' }
+    }, { runtime: 'deterministic' });
+    assert.equal(result.caseDraft.geography, '', `${message} must not set geography`);
+  }
+
+  for (const message of [
+    'Is personal data processed?',
+    'Example: handles personal data and AI.',
+    'Sample text: processes patient data.',
+    'The policy says this service uses AI.',
+    'If this service uses AI, it integrates with Azure AD.',
+    'Unless it uses AI, it connects to ServiceNow.',
+    'It may use AI and Azure AD.',
+    'It could process patient data via ServiceNow.',
+    'Either Azure AD or ServiceNow may be used.',
+    'Assume it uses AI and Microsoft 365.',
+    'Suppose patient data flows through Salesforce.',
+    'The email notes AI and Azure AD.',
+    'The evidence suggests patient data and ServiceNow.',
+    'Legal believes it uses AI and Microsoft 365.',
+    'Rumor has it that ServiceNow is connected.',
+    'I suspect the service uses AI and Azure AD.',
+    'I reckon the service uses AI and Azure AD.',
+    'It is said that the service uses AI and Azure AD.',
+    'The audit notes AI and Azure AD.',
+    'The file states AI and Azure AD are used.',
+    'Word is the service uses AI and Azure AD.',
+    'The spreadsheet lists AI and Azure AD.',
+    'The database records AI and Azure AD.',
+    'Does the service use AI.',
+    'Is patient data processed in ServiceNow.',
+    'Are Azure AD and Microsoft 365 integrated.',
+    'Would the platform process patient data.'
+  ]) {
+    const result = processConversation({ message }, { runtime: 'deterministic' });
+    assert.deepEqual(result.caseDraft.riskSignals, [], `${message} must not set canonical risk signals`);
+    assert.deepEqual(result.caseDraft.integrations, [], `${message} must not set canonical integrations`);
+    assert.ok(
+      result.caseDraft.mentionedRiskSignals.length > 0 || result.caseDraft.mentionedIntegrations.length > 0,
+      `${message} should retain a non-authoritative mention`
+    );
+  }
+
+  const runnableBase = {
+    supplierName: 'Mixed Clause Vendor',
+    businessUnit: 'Procurement',
+    geography: 'UAE',
+    brief: 'Review the supplier service.',
+    documents: [{
+      evidenceId: 'UP-MIXED-01',
+      title: 'Signed services agreement',
+      extractionStatus: 'backend_parsed',
+      indexStatus: 'indexed',
+      assertionState: 'provided',
+      sourceType: 'uploaded_file',
+      signals: ['signed contract']
+    }],
+    evidenceSignals: ['signed contract']
+  };
+  const mixedAiQuestion = processConversation({
+    message: 'The service uses AI. Is SOC 2 available?',
+    caseDraft: runnableBase
+  }, { runtime: 'deterministic' });
+  assert.ok(mixedAiQuestion.caseDraft.riskSignals.includes('AI/model use'));
+  assert.ok(mixedAiQuestion.caseDraft.requestedEvidenceSignals.includes('SOC 2'));
+  assert.ok(mixedAiQuestion.missingFields.includes('ai_usage_scope'));
+  assert.equal(mixedAiQuestion.readyToRun, false);
+
+  const mixedPatientQuestion = processConversation({
+    message: 'The platform processes patient data. Is the DPA attached?',
+    caseDraft: runnableBase
+  }, { runtime: 'deterministic' });
+  assert.ok(mixedPatientQuestion.caseDraft.riskSignals.includes('personal data'));
+  assert.ok(mixedPatientQuestion.caseDraft.dataCategories.includes('sensitive personal data'));
+  assert.ok(mixedPatientQuestion.caseDraft.requestedEvidenceSignals.includes('DPA'));
+
+  const mixedIntegrationQuestion = processConversation({
+    message: 'The service integrates with ServiceNow. Is the DPA attached?',
+    caseDraft: runnableBase
+  }, { runtime: 'deterministic' });
+  assert.ok(mixedIntegrationQuestion.caseDraft.integrations.includes('ServiceNow'));
+  assert.ok(mixedIntegrationQuestion.caseDraft.requestedEvidenceSignals.includes('DPA'));
+
+  for (const [message, blockedRisk, blockedIntegration] of [
+    ['The service does not use AI and does not integrate with Azure AD.', 'AI/model use', 'Azure AD'],
+    ['No personal data is processed and there is no ServiceNow integration.', 'personal data', 'ServiceNow'],
+    ['The service never connects to Microsoft 365.', '', 'Microsoft 365'],
+    ['The service operates without any CRM integration.', '', 'CRM'],
+    ['AI is ruled out and Azure AD is excluded.', 'AI/model use', 'Azure AD'],
+    ['The service cannot access patient data or ServiceNow.', 'personal data', 'ServiceNow']
+  ]) {
+    const result = processConversation({ message }, { runtime: 'deterministic' });
+    if (blockedRisk) assert.ok(!result.caseDraft.riskSignals.includes(blockedRisk), `${message} must not assert ${blockedRisk}`);
+    assert.ok(!result.caseDraft.integrations.includes(blockedIntegration), `${message} must not assert ${blockedIntegration}`);
+    if (blockedRisk) assert.ok(result.caseDraft.negatedRiskSignals.includes(blockedRisk) || result.caseDraft.mentionedRiskSignals.includes(blockedRisk));
+    assert.ok(result.caseDraft.negatedIntegrations.includes(blockedIntegration) || result.caseDraft.mentionedIntegrations.includes(blockedIntegration));
+  }
+
+  const negativeThenPositive = processConversation({
+    message: 'We do not use Azure AD, but process payroll data.'
+  }, { runtime: 'deterministic' });
+  assert.ok(!negativeThenPositive.caseDraft.integrations.includes('Azure AD'));
+  assert.ok(negativeThenPositive.caseDraft.riskSignals.includes('personal data'));
+  assert.ok(negativeThenPositive.caseDraft.riskSignals.includes('finance exposure'));
+
+  const positiveThenNegative = processConversation({
+    message: 'We use Azure AD, but payroll data is not processed.'
+  }, { runtime: 'deterministic' });
+  assert.ok(positiveThenNegative.caseDraft.integrations.includes('Azure AD'));
+  assert.ok(!positiveThenNegative.caseDraft.riskSignals.includes('personal data'));
+
+  const sameLabelConflict = processConversation({
+    message: 'We use Azure AD, but we do not use Azure AD.'
+  }, { runtime: 'deterministic' });
+  assert.ok(sameLabelConflict.caseDraft.integrations.includes('Azure AD'));
+  assert.ok(sameLabelConflict.caseDraft.negatedIntegrations.includes('Azure AD'));
+  assert.ok(sameLabelConflict.caseDraft.contradictedIntegrations.includes('Azure AD'));
+
+  const reverseConflict = processConversation({
+    message: 'We do not use Azure AD, but we use Azure AD.'
+  }, { runtime: 'deterministic' });
+  assert.ok(reverseConflict.caseDraft.integrations.includes('Azure AD'));
+  assert.ok(reverseConflict.caseDraft.contradictedIntegrations.includes('Azure AD'));
+
+  const riskConflict = processConversation({
+    message: 'No payroll data is processed, but the supplier processes personal data.'
+  }, { runtime: 'deterministic' });
+  assert.ok(riskConflict.caseDraft.riskSignals.includes('personal data'));
+  assert.ok(riskConflict.caseDraft.contradictedRiskSignals.includes('personal data'));
+
+  for (const [message, affirmativeIntegration, negatedIntegration] of [
+    ['We do not use Azure AD while using ServiceNow.', 'ServiceNow', 'Azure AD'],
+    ['We do not use Azure AD though using ServiceNow.', 'ServiceNow', 'Azure AD'],
+    ['We do not use Azure AD yet use ServiceNow.', 'ServiceNow', 'Azure AD'],
+    ['We use ServiceNow instead of Azure AD.', 'ServiceNow', 'Azure AD'],
+    ['We use ServiceNow rather than Azure AD.', 'ServiceNow', 'Azure AD'],
+    ['Azure AD is out of scope; ServiceNow is used.', 'ServiceNow', 'Azure AD'],
+    ['No integrations except ServiceNow.', 'ServiceNow', '']
+  ]) {
+    const result = processConversation({ message }, { runtime: 'deterministic' });
+    assert.ok(result.caseDraft.integrations.includes(affirmativeIntegration), `${message} must retain ${affirmativeIntegration}`);
+    if (negatedIntegration) {
+      assert.ok(!result.caseDraft.integrations.includes(negatedIntegration), `${message} must exclude ${negatedIntegration}`);
+      assert.ok(result.caseDraft.negatedIntegrations.includes(negatedIntegration));
+    }
+  }
+
+  for (const [message, negatedRisk] of [
+    ['AI does not apply.', 'AI/model use'],
+    ['AI cannot be used.', 'AI/model use'],
+    ['Patient data will not be processed.', 'personal data'],
+    ["AI isn’t used.", 'AI/model use'],
+    ['Neither AI nor Azure AD is used.', 'AI/model use'],
+    ['The service lacks AI and ServiceNow.', 'AI/model use'],
+    ['This is a non-AI service.', 'AI/model use'],
+    ['This service is AI-free.', 'AI/model use'],
+    ['AI was removed.', 'AI/model use'],
+    ['Patient data is prohibited.', 'personal data']
+  ]) {
+    const result = processConversation({ message }, { runtime: 'deterministic' });
+    assert.ok(!result.caseDraft.riskSignals.includes(negatedRisk), `${message} must not assert ${negatedRisk}`);
+    assert.ok(result.caseDraft.negatedRiskSignals.includes(negatedRisk), `${message} must record negated ${negatedRisk}`);
+  }
+
+  for (const [message, expectedRisks, expectedIntegrations] of [
+    ['The service neither uses AI nor integrates with Azure AD.', ['AI/model use'], ['Azure AD']],
+    ['It does not use AI nor does it process patient data.', ['AI/model use', 'personal data'], []],
+    ['It does not use AI nor integrate with ServiceNow.', ['AI/model use'], ['ServiceNow']]
+  ]) {
+    const result = processConversation({ message }, { runtime: 'deterministic' });
+    assert.deepEqual(result.caseDraft.riskSignals, [], `${message} must not assert a negated risk`);
+    assert.deepEqual(result.caseDraft.integrations, [], `${message} must not assert a negated integration`);
+    for (const risk of expectedRisks) assert.ok(result.caseDraft.negatedRiskSignals.includes(risk), `${message} must negate ${risk}`);
+    for (const integration of expectedIntegrations) assert.ok(result.caseDraft.negatedIntegrations.includes(integration), `${message} must negate ${integration}`);
+  }
+
+  for (const message of ['No AI except a model used for triage.', 'No personal data except patient data.']) {
+    const result = processConversation({ message }, { runtime: 'deterministic' });
+    const expected = /personal/i.test(message) ? 'personal data' : 'AI/model use';
+    assert.ok(result.caseDraft.riskSignals.includes(expected), `${message} must retain the affirmative exception`);
+    assert.ok(result.caseDraft.contradictedRiskSignals.includes(expected), `${message} must record the contradiction`);
+  }
+
+  for (const message of [
+    'Is SOC 2 available?',
+    'Do we have a signed DPA?',
+    'Could the DPA be attached?',
+    'For example, SOC 2 is available.',
+    'Sample text: SOC 2 is available.',
+    'The policy says SOC 2 is available.'
+  ]) {
+    const result = processConversation({ message }, { runtime: 'deterministic' });
+    assert.deepEqual(result.caseDraft.evidenceSignals, [], `${message} must not set canonical evidence signals`);
+    assert.equal(result.caseDraft.documents.every((document) => ['requested', 'mentioned'].includes(document.assertionState)), true);
+  }
+
+  const affirmative = processConversation({
+    message: 'The geography is Singapore. The service processes personal data.'
+  }, { runtime: 'deterministic' });
+  assert.equal(affirmative.caseDraft.geography, 'Singapore');
+  assert.ok(affirmative.caseDraft.riskSignals.includes('personal data'));
 });
