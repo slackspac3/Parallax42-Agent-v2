@@ -129,3 +129,35 @@ test('run-request payload carries only durable identity, version, and index meta
   assert.doesNotMatch(serialized, /SENSITIVE_PRIOR_PROSE|Sensitive Supplier/);
   assert.equal(serialized.length < 800, true);
 });
+
+test('council narrative request omits specialist trace and source excerpts', () => {
+  const payload = loadConversationPayloadModule();
+  const sensitive = `SENSITIVE_COUNCIL_TRACE ${'z'.repeat(5000)}`;
+  const sanitized = payload.sanitizeCouncilNarrativeRequestPayload({
+    ok: true,
+    case: {
+      supplierName: 'Compact Supplier',
+      businessUnit: 'Procurement',
+      geography: 'UAE',
+      integrations: ['ServiceNow'],
+      documents: [{ title: 'Signed MSA', text: sensitive }]
+    },
+    decision: {
+      recommendation: 'Do not proceed yet',
+      status: 'not_ready',
+      readinessScore: 0.32,
+      humanApprovalRequired: true
+    },
+    evidenceQuality: { status: 'strong', score: 0.8, raw: sensitive },
+    gaps: [{ gap: 'signed DPA', severity: 'high', action: 'Obtain the signed DPA.', raw: sensitive }],
+    domains: [{ label: 'Privacy', status: 'blocked', score: 0.4, raw: sensitive }],
+    trace: [{ detail: sensitive }],
+    specialistAssessments: [{ output: sensitive }]
+  });
+  const serialized = JSON.stringify(sanitized);
+
+  assert.deepEqual(sanitized.evidenceTitles, ['Signed MSA']);
+  assert.equal(sanitized.gaps[0].gap, 'signed DPA');
+  assert.doesNotMatch(serialized, /SENSITIVE_COUNCIL_TRACE|specialistAssessments|trace/);
+  assert.equal(serialized.length < 1800, true);
+});

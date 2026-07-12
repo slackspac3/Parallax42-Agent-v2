@@ -281,10 +281,53 @@
     return next;
   }
 
+  function sanitizeCouncilNarrativeRequestPayload(result = {}) {
+    if (!result || typeof result !== 'object') return {};
+    const citations = Array.isArray(result.citations) ? result.citations : [];
+    const documents = Array.isArray(result.case?.documents) ? result.case.documents : [];
+    const evidenceTitles = unique((citations.length ? citations : documents).map(function title(item) {
+      return cleanText(item?.title || item?.fileName || item?.sourceTitle || item?.documentTitle || '');
+    }).filter(Boolean)).slice(0, 3);
+    return {
+      case: {
+        supplierName: capText(result.case?.supplierName, 300),
+        businessUnit: capText(result.case?.businessUnit, 300),
+        geography: capText(result.case?.geography, 300),
+        integrations: sanitizeStringList(result.case?.integrations, 8)
+      },
+      decision: {
+        recommendation: capText(result.decision?.recommendation, 500),
+        status: capText(result.decision?.status, 120),
+        readinessScore: Number(result.decision?.readinessScore || 0),
+        humanApprovalRequired: result.decision?.humanApprovalRequired !== false
+      },
+      evidenceTitles,
+      evidenceQuality: {
+        status: capText(result.evidenceQuality?.status, 120),
+        score: Number(result.evidenceQuality?.score || 0)
+      },
+      gaps: (Array.isArray(result.gaps) ? result.gaps : []).slice(0, 3).map(function gap(item) {
+        return {
+          gap: capText(item?.gap || item?.label, 300),
+          severity: capText(item?.severity, 80),
+          action: capText(item?.action, 500)
+        };
+      }),
+      domains: (Array.isArray(result.domains) ? result.domains : []).slice(0, 5).map(function domain(item) {
+        return {
+          label: capText(item?.label, 200),
+          status: capText(item?.status, 100),
+          score: Number(item?.score || 0)
+        };
+      })
+    };
+  }
+
   window.P42ModuleRegistry = window.P42ModuleRegistry || {};
   window.P42ModuleRegistry.conversationPayload = {
     MAX_DOCUMENT_TEXT_CHARS,
     sanitizeDocumentForConversation,
+    sanitizeCouncilNarrativeRequestPayload,
     sanitizeDraftForConversationPayload,
     sanitizeRunRequestDraftForConversationPayload,
     sanitizeUploadedEvidenceForConversationPayload

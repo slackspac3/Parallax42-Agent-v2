@@ -4738,10 +4738,14 @@ async function loadCouncilNarrative(result = {}) {
   const remediationEls = Array.from(specialistList.querySelectorAll('[data-gap-remediation-index]'));
   if (!summaryEl && !remediationEls.length) return;
   try {
+    const payloadPolicy = conversationPayloadPolicy();
+    const narrativeResult = typeof payloadPolicy.sanitizeCouncilNarrativeRequestPayload === 'function'
+      ? payloadPolicy.sanitizeCouncilNarrativeRequestPayload(result)
+      : result;
     const narrative = await apiFetch('/api/case/narrative', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ result })
+      body: JSON.stringify({ result: narrativeResult })
     });
     lastCouncilNarrative = narrative;
     if (narrative?.summary && summaryEl) {
